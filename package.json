@@ -1,0 +1,8 @@
+{
+  "name": "hexbatch-core-flow",
+  "version": "1.0.0",
+  "main": "index.php",
+  "repository": "git@github.com:hexbatch/hexbatch-core-flow.git",
+  "author": "willwoodlief <willwoodlief@gmail.com>",
+  "license": "MIT"
+}
