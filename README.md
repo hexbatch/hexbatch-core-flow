@@ -25,3 +25,14 @@ https://github.com/delight-im/PHP-Auth for user verification and authentication
 
 ### installation uses npm
  Run `nmp i` to install js dependencies that are not saved in the repo
+ 
+
+## Environmental Notes
+the docker php uses the php.ini loaded in from the tools/.docker/.shared/config/php folder to change it
+restart the container. The xdebug is on the last section.
+The important things to add to the docker-compose.yml file for xdebug to work is
+       
+        environment:
+          - XDEBUG_SESSION=PHPSTORM
+        extra_hosts:
+          host.docker.internal: host-gateway
