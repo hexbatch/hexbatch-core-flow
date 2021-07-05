@@ -1,1 +1,9 @@
 .idea/
+
+/vendor/
+/junk
+
+/node_modules/
+
+
+.env

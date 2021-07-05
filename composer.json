@@ -1,0 +1,21 @@
+{
+    "name": "hexbatch/core",
+    "description": "Website for organizing the ideas, and code for the core",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Will Woodlief",
+            "email": "willwoodlief@hexbatch.com"
+        }
+    ],
+    "require": {
+        "slim/slim": "4.*",
+        "slim/psr7": "^1.4",
+        "php-di/slim-bridge": "^3.1",
+        "delight-im/auth": "^8.3",
+        "lulco/phoenix": "^1.8",
+        "symfony/yaml": "^5.3",
+        "slim/twig-view": "^3.0"
+    }
+}

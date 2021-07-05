@@ -1,8 +1,25 @@
 {
   "name": "hexbatch-core-flow",
   "version": "1.0.0",
+  "description": "Sets up the organization and work flow for the core",
   "main": "index.php",
-  "repository": "git@github.com:hexbatch/hexbatch-core-flow.git",
-  "author": "willwoodlief <willwoodlief@gmail.com>",
-  "license": "MIT"
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hexbatch/hexbatch-core-flow.git"
+  },
+  "keywords": [
+    "hexbatch"
+  ],
+  "author": "Will Woodlief",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hexbatch/hexbatch-core-flow/issues"
+  },
+  "homepage": "https://github.com/hexbatch/hexbatch-core-flow#readme",
+  "dependencies": {
+    "select2": "^4.1.0-rc.0"
+  }
 }
