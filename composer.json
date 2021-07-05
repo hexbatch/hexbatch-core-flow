@@ -16,6 +16,13 @@
         "delight-im/auth": "^8.3",
         "lulco/phoenix": "^1.8",
         "symfony/yaml": "^5.3",
-        "slim/twig-view": "^3.0"
+        "slim/twig-view": "^3.0",
+      "ext-json": "*",
+        "neitanod/forceutf8": "^2.0",
+        "ext-mbstring": "*",
+        "ext-mysqli": "*"
+    },
+    "autoload": {
+        "psr-4": {"hexlet\\": "hexlet/"}
     }
 }

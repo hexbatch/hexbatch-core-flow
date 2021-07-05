@@ -1,6 +1,17 @@
 # hexbatch-core-flow
 Sets up the organization and work flow for the core
 
+## Database 
+
+The project uses migrations from the phoenix library. see https://github.com/lulco/phoenix
+The migrations need to be done in the fpm container
+Run `sudo docker exec -it hexbatch_dev_php-fpm_1 bash` and then inside do commands similar to
+
+    php vendor/bin/phoenix create "hexlet_migrations\AddDelightIMUserSupport"
+    php vendor/bin/phoenix status
+    php vendor/bin/phoenix migrate
+    php vendor/bin/phoenix rollback
+
 ## PHP Libraries and Frameworks Used
 
 ### Installation Uses Composer
@@ -28,8 +39,15 @@ https://github.com/delight-im/PHP-Auth for user verification and authentication
  
 
 ## Environmental Notes
+
+The database connection is set as constants in the flow-config.php (not included in the repo):
+
+
+### php ini and xdebug    
 the docker php uses the php.ini loaded in from the tools/.docker/.shared/config/php folder to change it
-restart the container. The xdebug is on the last section.
+restart the container. 
+
+The xdebug is on the last section.
 The important things to add to the docker-compose.yml file for xdebug to work is
        
         environment:

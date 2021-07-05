@@ -1,10 +1,15 @@
 <?php
+
+use hexlet\DBSelector;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
 use Slim\Routing\RouteContext;
 
+require_once 'flow-config.php';
 require __DIR__ . '/vendor/autoload.php';
+
+$con = DBSelector::getConnection('flow');
 
 $app = AppFactory::create();
 
