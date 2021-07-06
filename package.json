@@ -20,6 +20,13 @@
   },
   "homepage": "https://github.com/hexbatch/hexbatch-core-flow#readme",
   "dependencies": {
-    "select2": "^4.1.0-rc.0"
+    "@fortawesome/fontawesome-free": "^5.15.3",
+    "@ttskch/select2-bootstrap4-theme": "^1.5.2",
+    "bootstrap": "^5.0.2",
+    "bs4-toast": "^1.2.0",
+    "jquery": "^3.6.0",
+    "lodash": "^4.17.21",
+    "select2": "^4.1.0-rc.0",
+    "tingle.js": "^0.16.0"
   }
 }

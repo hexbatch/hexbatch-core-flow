@@ -20,7 +20,8 @@
       "ext-json": "*",
         "neitanod/forceutf8": "^2.0",
         "ext-mbstring": "*",
-        "ext-mysqli": "*"
+        "ext-mysqli": "*",
+        "paragonie/easydb": "^2"
     },
     "autoload": {
         "psr-4": {"hexlet\\": "hexlet/"}
