@@ -1,9 +1,9 @@
 <?php
 /** @noinspection PhpUnused */
-namespace hexlet;
+namespace src\hexlet;
 use Exception;
-use hexlet\hexlet_exceptions\SQLDataException;
-use hexlet\hexlet_exceptions\SQLException;
+use src\hexlet\hexlet_exceptions\SQLDataException;
+use src\hexlet\hexlet_exceptions\SQLException;
 use mysqli;
 use mysqli_result;
 use mysqli_stmt;

@@ -1,0 +1,11 @@
+error_settings:
+  display_error_details: true
+  log_error_details: true
+  log_errors: true
+logger:
+  name: slim-app
+  level: debug
+  file_name: app.log
+twig:
+    cache: false
+    strict_variables: true

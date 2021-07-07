@@ -21,9 +21,10 @@
         "neitanod/forceutf8": "^2.0",
         "ext-mbstring": "*",
         "ext-mysqli": "*",
-        "paragonie/easydb": "^2"
+        "paragonie/easydb": "^2",
+        "monolog/monolog": "^2.3"
     },
     "autoload": {
-        "psr-4": {"hexlet\\": "hexlet/"}
+        "psr-4": {"app\\": "src/"}
     }
 }

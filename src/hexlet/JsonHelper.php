@@ -1,9 +1,9 @@
 <?php
 /** @noinspection PhpUnused */
-namespace hexlet;
+namespace src\hexlet;
 
 use ForceUTF8\Encoding;
-use hexlet\hexlet_exceptions\JsonException;
+use src\hexlet\hexlet_exceptions\JsonException;
 use ReflectionClass;
 use ReflectionException;
 

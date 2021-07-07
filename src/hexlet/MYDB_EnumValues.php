@@ -1,6 +1,6 @@
 <?php /** @noinspection ALL */
 
-namespace hexlet;
+namespace src\hexlet;
 
 use function mysqli_fetch_object;
 

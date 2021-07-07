@@ -8,40 +8,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css" >
+    <link rel="stylesheet" href="{{ root_url }}/node_modules/bootstrap/dist/css/bootstrap.min.css" >
 
     <!-- Toast Wrapper -->
-    <link rel="stylesheet" href="node_modules/bs4-toast/dist/toast.min.css">
+    <link rel="stylesheet" href="{{ root_url }}/node_modules/bs4-toast/dist/toast.min.css">
 
 
     <!-- Select2 -->
-    <link href="node_modules/select2/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="{{ root_url }}/node_modules/select2/dist/css/select2.min.css" rel="stylesheet" />
 
     <!-- Select2 bootstrap theme -->
-    <link href="node_modules/@ttskch/select2-bootstrap4-theme/dist/select2-bootstrap4.min.css" rel="stylesheet" />
+    <link href="{{ root_url }}/node_modules/@ttskch/select2-bootstrap4-theme/dist/select2-bootstrap4.min.css" rel="stylesheet" />
 
     <!-- Tingle -->
-    <link href="node_modules/tingle.js/dist/tingle.min.css" rel="stylesheet" />
+    <link href="{{ root_url }}/node_modules/tingle.js/dist/tingle.min.css" rel="stylesheet" />
 
     <!-- Font Awesome -->
-    <link href="node_modules/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet" />
+    <link href="{{ root_url }}/node_modules/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet" />
 
     <title>{{ page_title }}</title>
 
-    <link rel="stylesheet" href="resources/css/app.css" />
-    <script src="resources/js/app.js"></script>
+    <link rel="stylesheet" href="{{ root_url }}/resources/css/app.css" />
+    <script src="{{ root_url }}/resources/js/app.js"></script>
 </head>
 <body>
 {{ include('partials/top-nav.twig') }}
 {{ include( page_template_name ) }}
 {{ include('partials/bottom-nav.twig') }}
 
-<script src="node_modules/jquery/dist/jquery.min.js" ></script>
-<script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js" ></script>
-<script src="node_modules/bs4-toast/dist/toast.min.js"></script>
-<script src="node_modules/lodash/lodash.min.js"></script>
-<script src="node_modules/select2/dist/js/select2.min.js"></script>
-<script src="node_modules/tingle.js/dist/tingle.min.js"></script>
+<script src="{{ root_url }}/node_modules/jquery/dist/jquery.min.js" ></script>
+<script src="{{ root_url }}/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js" ></script>
+<script src="{{ root_url }}/node_modules/bs4-toast/dist/toast.min.js"></script>
+<script src="{{ root_url }}/node_modules/lodash/lodash.min.js"></script>
+<script src="{{ root_url }}/node_modules/select2/dist/js/select2.min.js"></script>
+<script src="{{ root_url }}/node_modules/tingle.js/dist/tingle.min.js"></script>
 
 </body>
 </html>

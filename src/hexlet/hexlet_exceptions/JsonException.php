@@ -1,4 +1,4 @@
 <?php
-namespace hexlet\hexlet_exceptions;
+namespace src\hexlet\hexlet_exceptions;
 
 class JsonException extends FlowLibException {}

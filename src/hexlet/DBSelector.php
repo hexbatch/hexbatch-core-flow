@@ -1,8 +1,8 @@
 <?php
 /** @noinspection PhpUnused */
-namespace hexlet;
+namespace src\hexlet;
 
-use hexlet\hexlet_exceptions\SQLException;
+use src\hexlet\hexlet_exceptions\SQLException;
 
 require_once realpath(dirname(__FILE__)) . '/MYDB.php';
 require_once realpath(dirname(__FILE__)) . '/JsonHelper.php';

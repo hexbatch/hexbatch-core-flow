@@ -7,5 +7,5 @@
 
 
 .env
-flow-config.php
-junk/flow-config.php
+database.yaml
+
