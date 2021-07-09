@@ -1,6 +1,12 @@
 <?php
 
-require_once 'flow-config.php';
+use app\hexlet\DBSelector;
+use Symfony\Component\Yaml\Yaml;
+
+const HEXLET_BASE_PATH = __DIR__ ;
+require_once 'config/flow-config-paths.php';
+require_once HEXLET_BASE_PATH . '/vendor/autoload.php';
+$db = Yaml::parseFile(HEXLET_BASE_PATH . '/config/database.yaml',Yaml::PARSE_OBJECT_FOR_MAP)->database;
 
 $what =  [
     'log_table_name' => 'db_flow_migration_log',
@@ -10,13 +16,13 @@ $what =  [
     'environments' => [
         'local' => [
             'adapter' => 'mysql',
-            'host' => DB_FLOW_HOST,
-            'port' => DB_FLOW_HOSTPORT,
-            'username' => DB_FLOW_USER,
-            'password' => DB_FLOW_PASSWORD,
-            'db_name' => DB_FLOW_DATABASE,
-            'charset' => DB_FLOW_CHARSET,
-            'collation' => DB_FLOW_COLLATION
+            'host' => $db->host,
+            'port' => $db->hostport,
+            'username' => $db->user,
+            'password' => $db->password,
+            'db_name' => $db->database,
+            'charset' => $db->charset,
+            'collation' => $db->collation
         ]
     ],
     'default_environment ' => 'local',

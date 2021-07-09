@@ -1,9 +1,9 @@
 <?php
 /** @noinspection PhpUnused */
-namespace src\hexlet;
+namespace app\hexlet;
 use Exception;
-use src\hexlet\hexlet_exceptions\SQLDataException;
-use src\hexlet\hexlet_exceptions\SQLException;
+use app\hexlet\hexlet_exceptions\SQLDataException;
+use app\hexlet\hexlet_exceptions\SQLException;
 use mysqli;
 use mysqli_result;
 use mysqli_stmt;
@@ -122,16 +122,18 @@ class MYDB
      * </p>
      * @param array|null $db_setup <p>
      *  if creating new connection ($mysqli is null above) then this must be filled out
+     *   @see MYDB::getMySqliDatabase() for details
+     *  but if passing in mysqli object above, then this will be ignored
+     *  default is null
+     *
+     * </p>
      *   @param bool $bIgnoreAardvark <p>
      *    if set to false, then an exception will be thrown if more than one database connection is kept open at one time
      *    if set to true then this behavior is turned off
      *    default is false, which means the default will be throwing exceptions if more than one db connection open
      * </p>
      * @throws SQLException  if connection cannot be made, or $bIgnoreAardvark is false and a second connection made
-     *@see MYDB::getMySqliDatabase() for details
-     *  but if passing in mysqli object above, then this will be ignored
-     *  default is null
-     *
+
      * </p>
      */
     public function __construct(?object $mysqli, array $db_setup = null, $bIgnoreAardvark = false)
@@ -539,7 +541,7 @@ class MYDB
         if (!empty($params)) {
             if (!call_user_func_array(array($stmt, 'bind_param'), $this->refValues($params))) {
 
-                self::throwSQLStatement("Could not bind param ", $stmt,$sql);
+                self::throwSQLStatement("Could not bind param ", $stmt,$sql . " " . json_encode($params));
             }
         }
 
@@ -602,7 +604,7 @@ class MYDB
         {
             $refs = array();
             foreach ($arr as $key => $value)
-                $refs[$key] = &$value;
+                $refs[$key] = &$arr[$key];
             return $refs;
         }
         return $arr;
@@ -857,9 +859,11 @@ class MYDB
      * @param object|mysqli database object
      *
      * @return mysqli_result the result of the query
+     * @return bool|mysqli_result
      * @throws SQLException if anything goes wrong
+     * @noinspection PhpMissingReturnTypeInspection
      */
-    public static function staticExecute(string $query, $mysqli): mysqli_result
+    public static function staticExecute(string $query, $mysqli)
     {
         if ((!isset($query)) || (empty($query))) {
             throw new SQLException("sql was null or empty");
@@ -1077,7 +1081,7 @@ class MYDB
 				throw new SQLException("Cannot Find the folder path $folder_path");
 			}
 
-			$files = self::recursive_search($dir);
+			$files = self::recursive_search_sql_files($dir);
 
 			foreach ($files as $file) {
 				$sql = trim(file_get_contents($file));
@@ -1092,7 +1096,7 @@ class MYDB
 		}
 	}
 
-	private static function recursive_search($folder): array
+	public static function recursive_search_sql_files($folder): array
     {
         $dir = new RecursiveDirectoryIterator($folder);
 		$ite = new RecursiveIteratorIterator($dir);

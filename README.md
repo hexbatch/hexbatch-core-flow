@@ -9,8 +9,8 @@ Run `sudo docker exec -it hexbatch_dev_php-fpm_1 bash` and then inside do comman
 
     php vendor/bin/phoenix create "hexlet_migrations\AddDelightIMUserSupport"
     php vendor/bin/phoenix status
-    php vendor/bin/phoenix migrate
-    php vendor/bin/phoenix rollback
+    php vendor/bin/phoenix migrate      (--first ,--dry, others)
+    php vendor/bin/phoenix rollback     (--dry, --all)
 
 ## PHP Libraries and Frameworks Used
 

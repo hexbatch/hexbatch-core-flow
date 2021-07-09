@@ -1,5 +1,5 @@
 <?php
-namespace src\hexlet;
+namespace app\hexlet;
 
 
 

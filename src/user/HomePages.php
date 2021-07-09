@@ -3,24 +3,14 @@ namespace app\user;
 
 use app\exceptions\HexletErrorToUser;
 use Delight\Auth\Auth;
-use Delight\Auth\AuthError;
-use Delight\Auth\EmailNotVerifiedException;
-use Delight\Auth\InvalidEmailException;
-use Delight\Auth\InvalidPasswordException;
-use Delight\Auth\InvalidSelectorTokenPairException;
-use Delight\Auth\TokenExpiredException;
-use Delight\Auth\TooManyRequestsException;
-use Delight\Auth\UserAlreadyExistsException;
 use DI\Container;
 use DI\DependencyException;
 use DI\NotFoundException;
 use Exception;
-use InvalidArgumentException;
 use Monolog\Logger;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Slim\Exception\HttpInternalServerErrorException;
-use Slim\Routing\RouteContext;
 use Slim\Views\Twig;
 
 

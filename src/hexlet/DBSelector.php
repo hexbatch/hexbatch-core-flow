@@ -1,8 +1,9 @@
 <?php
 /** @noinspection PhpUnused */
-namespace src\hexlet;
+namespace app\hexlet;
 
-use src\hexlet\hexlet_exceptions\SQLException;
+use app\hexlet\hexlet_exceptions\SQLException;
+use Symfony\Component\Yaml\Yaml;
 
 require_once realpath(dirname(__FILE__)) . '/MYDB.php';
 require_once realpath(dirname(__FILE__)) . '/JsonHelper.php';
@@ -33,7 +34,7 @@ class DBSelector {
      * @throws SQLException
      *
      */
-    public static function getConnection($what = 'hexlet') {
+    public static function getConnection($what = 'flow') {
         if (isset(self::$cache[$what])) {
             $mysqli =  self::$cache[$what]->getDBHandle();
             return new MYDB($mysqli); //smart pointer, db will only go out of scope when the static class def does
@@ -46,14 +47,15 @@ class DBSelector {
                     break;
                 }
                 case 'flow':
+                    $db = Yaml::parseFile(HEXLET_BASE_PATH . '/config/database.yaml',Yaml::PARSE_OBJECT_FOR_MAP)->database;
 	                $db_stuff = [
-                        'host' => DB_FLOW_HOST,
-                        'port' => DB_FLOW_HOSTPORT,
-                        'username' => DB_FLOW_USER,
-                        'password' => DB_FLOW_PASSWORD,
-                        'database_name' => DB_FLOW_DATABASE,
-                        'character_set' => DB_FLOW_CHARSET,
-                        'collation' => DB_FLOW_COLLATION,
+                        'host' => $db->host,
+                        'port' => $db->hostport,
+                        'username' => $db->user,
+                        'password' => $db->password,
+                        'database_name' => $db->database,
+                        'character_set' => $db->charset,
+                        'collation' => $db->collation
 
 	                ];
                     $mydb = new MYDB(null,$db_stuff,true);

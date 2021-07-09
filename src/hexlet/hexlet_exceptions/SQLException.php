@@ -1,5 +1,5 @@
 <?php
-namespace src\hexlet\hexlet_exceptions;
+namespace app\hexlet\hexlet_exceptions;
 
 /**
  * Class SQLException
