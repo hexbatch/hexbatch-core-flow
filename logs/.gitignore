@@ -1,4 +1,5 @@
-# for caching twig
-.gitignore
-*/
+# exclude everything
+*
+
+# exception to the rule
 !.gitignore
