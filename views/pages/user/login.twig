@@ -1,0 +1,33 @@
+<div class="container">
+    <div class="row">
+        <div class="col-md-4 offset-md-4">
+            <div class="login-form bg-light mt-4 p-4">
+                <form method="post" action="{{ url_for("submit_login") }}" class="row g-3">
+                    <h4>Welcome Back</h4>
+                    <div class="col-12">
+                        <label for="hexbatch_email_or_username">Username Or Email</label>
+                        <input type="email" id="hexbatch_email_or_username" name="hexbatch_email_or_username"
+                               class="form-control" placeholder="Email or Username" required autofocus>
+                    </div>
+                    <div class="col-12">
+                        <label for="hexbatch_password">Password</label>
+                        <input type="password" id="hexbatch_password" name="hexbatch_password" class="form-control" placeholder="Password" required>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="hexbatch_remember_me" name="hexbatch_remember_me" value="1">
+                            <label class="form-check-label" for="hexbatch_remember_me"> Remember me</label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-dark float-end">Login</button>
+                    </div>
+                </form>
+                <hr class="mt-4">
+                <div class="col-12">
+                    <p class="text-center mb-0">Have no account yet? <a href="{{ url_for('register') }}">Signup</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -6,6 +6,7 @@ use Slim\App;
 use Slim\Views\Twig;
 use Slim\Views\TwigMiddleware;
 use Twig\Environment;
+use Twig\Extension\DebugExtension;
 use Twig\Loader\FilesystemLoader;
 use DI\Container;
 
@@ -33,17 +34,20 @@ return function (App $app) {
         if ($settings->cache) {
             $settings->cache = HEXLET_TWIG_CATCHE_PATH;
         }
-        $loader = new FilesystemLoader([HEXLET_TWIG_TEMPLATE_PATH, HEXLET_TWIG_PAGES_PATH, HEXLET_TWIG_PARTIALS_PATH]);
+        $loader = new FilesystemLoader([HEXLET_TWIG_TEMPLATE_PATH, HEXLET_TWIG_PAGES_PATH, HEXLET_TWIG_PARTIALS_PATH],
+            HEXLET_TWIG_TEMPLATE_PATH);
 
         $settings_as_array = json_decode(json_encode($settings),true);
         $twig =  new Twig($loader, $settings_as_array);
         $twig->addExtension(new Hexlet_Twig_Extension());
 
+        $twig->addExtension(new DebugExtension());
+
         //$env->addGlobal('root_url', );
         return $twig;
     });
 
-    $container->set('viewMiddleware', function() use ($app, $container) {
+    $container->set('twigMiddleware', function() use ($app, $container) {
         return new TwigMiddleware($container->get('view'), $app->getRouteCollector()->getRouteParser());
     });
 

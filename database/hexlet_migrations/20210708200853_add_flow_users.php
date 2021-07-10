@@ -33,7 +33,7 @@ class AddFlowUsers extends AbstractMigration
                 `base_user_id` INT UNSIGNED NOT NULL , 
                 `created_at_ts` INT NULL DEFAULT NULL,
                 `flow_user_guid` BINARY(16) NOT NULL ,
-                `flow_user_display_name` VARCHAR(40) NULL DEFAULT NULL ,
+                `flow_user_name` VARCHAR(39) NULL DEFAULT NULL ,
                 PRIMARY KEY (`id`)
            ) ENGINE = InnoDB COMMENT = 'defines the users for a flow, extends separate auth system';
 
@@ -41,6 +41,7 @@ class AddFlowUsers extends AbstractMigration
 
         $this->execute("ALTER TABLE `flow_users` ADD UNIQUE `udx_base_user_id`   (`base_user_id`);");
         $this->execute("ALTER TABLE `flow_users` ADD UNIQUE `udx_flow_user_guid` (`flow_user_guid`);");
+        $this->execute("ALTER TABLE `flow_users` ADD UNIQUE `udx_flow_user_name` (`flow_user_name`);");
 
         $this->execute("ALTER TABLE `flow_users` ADD CONSTRAINT `fk_flow_users_has_user_id` 
             FOREIGN KEY (`base_user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;");

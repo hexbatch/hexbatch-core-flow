@@ -3,7 +3,7 @@
 use app\hexlet\DBSelector;
 use Symfony\Component\Yaml\Yaml;
 
-const HEXLET_BASE_PATH = __DIR__ ;
+require_once 'top-constants.php';
 require_once 'config/flow-config-paths.php';
 require_once HEXLET_BASE_PATH . '/vendor/autoload.php';
 $db = Yaml::parseFile(HEXLET_BASE_PATH . '/config/database.yaml',Yaml::PARSE_OBJECT_FOR_MAP)->database;

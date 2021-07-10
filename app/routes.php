@@ -13,9 +13,13 @@ return function (App $app) {
 
     $app->group('', function (RouteCollectorProxy $group) use($app)  {
 
-        $group->get('/', ['homePages', 'home'])->setName('home');
-        $group->get('/home', ['homePages', 'home'])->setName('home_alt');
+        $group->get('/', ['homePages', 'root'])->setName('root');
+
         $app->get('/phpinfo', ['homePages', 'php_info'])->setName('debug');
+        $group->get('/projects', ['projectPages', 'all_projects'])->setName('all_projects');
+
+        $group->get('/home', ['userPages', 'user_home'])->setName('user_home');
+
 
 
         $group->group('/user', function (RouteCollectorProxy $group) {
@@ -45,7 +49,16 @@ return function (App $app) {
                 return $response;
             });
         })->add('checkLoggedInMiddleware');
-    })->add($container->get('viewMiddleware'));
+
+
+        $group->get('/{user_name:[[:alnum:]\-]+}', ['userPages', 'user_page'])->setName('user_page');
+
+        $group->group('/{user_name:[[:alnum:]\-]+}', function (RouteCollectorProxy $group) {
+            $group->get('/{project_name:[[:alnum:]\-]+}', ['projectPages', 'single_project_home'])->setName('single_project_home');
+
+        });
+
+    })->add($container->get('twigMiddleware'));
 
 
 

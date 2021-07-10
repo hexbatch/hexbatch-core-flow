@@ -28,12 +28,23 @@
 
     <title>{{ page_title }}</title>
 
-    <link rel="stylesheet" href="{{ root_url }}/resources/css/app.css" />
-    <script src="{{ root_url }}/resources/js/app.js"></script>
+    <link rel="stylesheet" href="{{ root_url }}/public/resources/css/app.css" />
+    <script src="{{ root_url }}/public/resources/js/app.js"></script>
 </head>
-<body>
+<body class="px-sm-1 px-xl-3 ">
+
 {{ include('partials/top-nav.twig') }}
-{{ include( page_template_name ) }}
+
+{{ include('partials/flash.twig') }}
+
+<main>
+    <div class="container-fluid ">
+
+    {{ include( page_template_path ) }}
+
+    </div> <!-- /.container-fluid -->
+</main>
+
 {{ include('partials/bottom-nav.twig') }}
 
 <script src="{{ root_url }}/node_modules/jquery/dist/jquery.min.js" ></script>

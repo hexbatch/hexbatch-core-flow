@@ -5,7 +5,6 @@ declare(strict_types=1);
 use app\user\CheckLoggedInMiddleware;
 use Delight\Auth\Auth;
 use Delight\Auth\AuthError;
-use Delight\Cookie\Session;
 use DI\Container;
 use Psr\Log\LoggerInterface;
 
@@ -14,7 +13,7 @@ return function (Container $container) {
 
         $connection = $container->get('connection');
         $db = $connection->getPdo();
-        Session::start('Strict');
+
 
         try {
             $auth = new Auth($db);
@@ -31,7 +30,7 @@ return function (Container $container) {
         $auth = $container->get('auth');
 
         $user_info = (object)[
-            'id' => $auth->getUserId(),
+            'id' => (int)$auth->getUserId(),
             'username' =>$auth->getUsername(),
             'email' => $auth->getEmail()
         ];

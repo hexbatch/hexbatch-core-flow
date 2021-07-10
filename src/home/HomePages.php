@@ -1,5 +1,5 @@
 <?php
-namespace app\user;
+namespace app\home;
 
 use app\exceptions\HexletErrorToUser;
 use Delight\Auth\Auth;
@@ -52,13 +52,12 @@ class HomePages
      * @throws HttpInternalServerErrorException
      * @noinspection PhpUnused
      */
-    public function home(RequestInterface $request, ResponseInterface $response) :ResponseInterface {
+    public function root(RequestInterface $request, ResponseInterface $response) :ResponseInterface {
         try {
             return $this->view->render($response, 'main.twig', [
-                'page_template_name' => 'home.twig',
-                'page_title' => 'Home',
+                'page_template_path' => 'root.twig',
+                'page_title' => 'Root',
                 'page_description' => 'No Place Like Home',
-                'user' => $this->user
             ]);
         } catch (Exception $e) {
             $this->logger->error("Could not render log in form page",['exception'=>$e]);

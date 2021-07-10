@@ -2,7 +2,8 @@
 
 declare(strict_types=1);
 
-use app\user\HomePages;
+use app\home\HomePages;
+use app\project\ProjectPages;
 use app\user\UserPages;
 use Psr\Log\LoggerInterface;
 use Slim\App;
@@ -20,6 +21,10 @@ return function (App $app) {
 
     $container->set('homePages', function() use ($app, $container) {
         return new HomePages($container->get('auth'),$container->get(LoggerInterface::class),$container);
+    });
+
+    $container->set('projectPages', function() use ($app, $container) {
+        return new ProjectPages($container->get('auth'),$container->get(LoggerInterface::class),$container);
     });
 
 };

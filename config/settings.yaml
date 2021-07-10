@@ -6,6 +6,10 @@ logger:
   name: slim-app
   level: debug
   file_name: app.log
+session:
+  session_name: hexbatch_flow_session
+  flash_key : hexbatch_flow_flash
 twig:
     cache: false
     strict_variables: true
+    debug: true
