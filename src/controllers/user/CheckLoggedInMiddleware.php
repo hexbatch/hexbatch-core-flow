@@ -1,5 +1,5 @@
 <?php
-namespace app\user;
+namespace app\controllers\user;
 
 use Delight\Auth\Auth;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;

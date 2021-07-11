@@ -17,12 +17,13 @@
         "lulco/phoenix": "^1.8",
         "symfony/yaml": "^5.3",
         "slim/twig-view": "^3.0",
-      "ext-json": "*",
         "neitanod/forceutf8": "^2.0",
         "ext-mbstring": "*",
         "ext-mysqli": "*",
         "paragonie/easydb": "^2",
-        "monolog/monolog": "^2.3"
+        "monolog/monolog": "^2.3",
+      "ext-pdo": "*",
+      "ext-json": "*"
     },
     "autoload": {
         "psr-4": {"app\\": "src/"}

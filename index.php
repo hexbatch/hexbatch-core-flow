@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use app\user\UserPages;
+use app\controllers\user\UserPages;
 use Delight\Cookie\Session;
 use DI\Bridge\Slim\Bridge;
 use DI\Container;
@@ -32,7 +32,8 @@ $settings_init_function($container);
     }
 })();
 
-
+$model_connection = require_once HEXLET_BASE_PATH . '/app/models.php';
+$model_connection($container);
 
 $logger = require_once HEXLET_BASE_PATH . '/app/logger.php';
 $logger($container);

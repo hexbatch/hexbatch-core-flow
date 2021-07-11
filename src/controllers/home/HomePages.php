@@ -1,16 +1,13 @@
 <?php
-namespace app\home;
+namespace app\controllers\home;
 
-use app\exceptions\HexletErrorToUser;
 use Delight\Auth\Auth;
 use DI\Container;
 use DI\DependencyException;
 use DI\NotFoundException;
 use Exception;
 use Monolog\Logger;
-use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Slim\Exception\HttpInternalServerErrorException;
 use Slim\Views\Twig;
 
 
@@ -46,13 +43,12 @@ class HomePages
     }
 
     /**
-     * @param RequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
-     * @throws HttpInternalServerErrorException
+     * @throws Exception
      * @noinspection PhpUnused
      */
-    public function root(RequestInterface $request, ResponseInterface $response) :ResponseInterface {
+    public function root( ResponseInterface $response) :ResponseInterface {
         try {
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'root.twig',
@@ -60,8 +56,8 @@ class HomePages
                 'page_description' => 'No Place Like Home',
             ]);
         } catch (Exception $e) {
-            $this->logger->error("Could not render log in form page",['exception'=>$e]);
-            throw new HexletErrorToUser($request,$e->getMessage());
+            $this->logger->error("Could not render root page",['exception'=>$e]);
+            throw $e;
         }
     }
 

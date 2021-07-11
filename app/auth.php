@@ -2,7 +2,8 @@
 
 declare(strict_types=1);
 
-use app\user\CheckLoggedInMiddleware;
+use app\models\user\FlowUser;
+use app\controllers\user\CheckLoggedInMiddleware;
 use Delight\Auth\Auth;
 use Delight\Auth\AuthError;
 use DI\Container;
@@ -28,13 +29,10 @@ return function (Container $container) {
     $container->set('user', function() use ($container) {
 
         $auth = $container->get('auth');
-
-        $user_info = (object)[
-            'id' => (int)$auth->getUserId(),
-            'username' =>$auth->getUsername(),
-            'email' => $auth->getEmail()
-        ];
-
+        $user_info = FlowUser::find_one(strval($auth->getUserID()));
+        if (!$user_info) {
+            $user_info = new FlowUser();
+        }
         return $user_info;
 
     });

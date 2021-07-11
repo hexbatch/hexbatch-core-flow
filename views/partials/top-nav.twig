@@ -25,7 +25,7 @@
                     {% if user.id %}
                         <li class="nav-item">
                             <a  class="btn btn-outline-primary border border-light" role="button" href="{{ url_for('logout') }}">
-                                Logout {{ user.email }}
+                                Logout {{ user.flow_user_name }}
                             </a>
                         </li>
                     {% else %}

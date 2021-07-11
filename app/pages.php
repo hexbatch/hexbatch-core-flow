@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use app\home\HomePages;
-use app\project\ProjectPages;
-use app\user\UserPages;
+use app\controllers\home\HomePages;
+use app\controllers\project\ProjectPages;
+use app\controllers\user\UserPages;
 use Psr\Log\LoggerInterface;
 use Slim\App;
 use DI\Container;

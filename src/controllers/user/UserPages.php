@@ -1,7 +1,8 @@
 <?php
-namespace app\user;
+namespace app\controllers\user;
 
-use app\exceptions\HexletErrorToUser;
+use app\models\project\FlowProject;
+use app\models\user\FlowUser;
 use Delight\Auth\Auth;
 use Delight\Auth\AuthError;
 use Delight\Auth\EmailNotVerifiedException;
@@ -19,9 +20,11 @@ use InvalidArgumentException;
 use Monolog\Logger;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use RuntimeException;
 use Slim\Exception\HttpInternalServerErrorException;
 use Slim\Routing\RouteContext;
 use Slim\Views\Twig;
+
 
 
 class UserPages {
@@ -42,6 +45,7 @@ class UserPages {
     public static function set_flash_key_in_session($key) {
         static::$flash_key_in_session = $key;
     }
+
 
     public static function add_flash_message($type,$message) {
         $flash_key = static::$flash_key_in_session ;
@@ -72,6 +76,8 @@ class UserPages {
     }
 
 
+
+
     /**
      * @param RequestInterface $request
      * @param ResponseInterface $response
@@ -88,7 +94,7 @@ class UserPages {
             ]);
         } catch (Exception $e) {
             $this->logger->error("Could not render log in form page",['exception'=>$e]);
-            throw new HexletErrorToUser($request,$e->getMessage());
+            throw new HttpInternalServerErrorException($request,$e->getMessage());
         }
     }
 
@@ -110,7 +116,7 @@ class UserPages {
             return $response->withHeader('Location', $url);
         } catch (Exception $e) {
             $this->logger->error("Could not logout",['exception'=>$e]);
-            throw new HexletErrorToUser($request,$e->getMessage());
+            throw new HttpInternalServerErrorException($request,$e->getMessage());
         }
     }
 
@@ -131,7 +137,7 @@ class UserPages {
             ]);
         } catch (Exception $e) {
             $this->logger->error("Could not render log in form page",['exception'=>$e]);
-            throw new HexletErrorToUser($request,$e->getMessage());
+            throw new HttpInternalServerErrorException($request,$e->getMessage());
         }
     }
 
@@ -139,7 +145,7 @@ class UserPages {
      * @param RequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
-     * @throws HttpInternalServerErrorException
+     * @throws Exception
      * @noinspection PhpUnused
      */
     public function submit_login(RequestInterface $request, ResponseInterface $response) :ResponseInterface  {
@@ -169,8 +175,8 @@ class UserPages {
                 $response = $response->withStatus(302);
                 return $response->withHeader('Location', $url);
             } catch (Exception $e) {
-                $this->logger->error("Could not render logged in page",['exception'=>$e]);
-                throw new HexletErrorToUser($request,$e->getMessage());
+                $this->logger->error("Could not redirect to user home after successful log in",['exception'=>$e]);
+                throw $e;
             }
 
         } catch (InvalidEmailException $e) {
@@ -183,7 +189,7 @@ class UserPages {
             $message = ('Too many requests');
         } catch (Exception $e) {
             $this->logger->error('some sort of error in user login',['exception'=>$e]);
-            throw new HexletErrorToUser($request,$e->getMessage());
+            throw $e;
         }
 
         try {
@@ -194,7 +200,7 @@ class UserPages {
             return $response->withHeader('Location', $url);
         } catch (Exception $e) {
             $this->logger->error("Could not render logged in page",['exception'=>$e]);
-            throw new HexletErrorToUser($request,$e->getMessage());
+            throw $e;
         }
 
 
@@ -205,7 +211,7 @@ class UserPages {
      * @param RequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
-     * @throws HttpInternalServerErrorException
+     * @throws Exception
      * @noinspection PhpUnused
      */
     public function submit_registration(RequestInterface $request, ResponseInterface $response) :ResponseInterface {
@@ -215,9 +221,10 @@ class UserPages {
         $password = $args['hexbatch_password'];
         $confirm_password = $args['hexbatch_confirm_password'];
 
+
         $b_name_ok = false;
         if (preg_match('/[\x00-\x1f\x7f\/:\\\\]/', $user_name) === 0) {
-            if (mb_strlen($user_name) > 3 && mb_strlen($user_name) < 30) {
+            if (mb_strlen($user_name) > 3 && mb_strlen($user_name) < 39) {
                 $b_name_ok = true;
             }
         }
@@ -238,7 +245,12 @@ class UserPages {
             }
 
             if (!$b_password_ok) {
-                throw new InvalidArgumentException('Password cannot have invisible chars and be between 4 and 29 characters and match the confirmation password');
+                throw new InvalidArgumentException('Password cannot have invisible characters;  and be between 4 and 29 characters ; and match the confirmation password');
+            }
+
+            $b_match = FlowProject::check_valid_title($user_name);
+            if (!$b_match) {
+                throw new InvalidArgumentException("User Name needs to be all alpha numeric or dash only. First character cannot be a number");
             }
 
 
@@ -266,7 +278,17 @@ class UserPages {
 
             });
 
-            $message = 'We have signed up a new user with the ID ' . $userId;
+            if (empty($error_message)) {
+                $b_found = FlowUser::get_base_details($userId, $base_email, $base_username);
+                if (!$b_found) {
+                    throw new RuntimeException("Could not find just created user");
+                }
+                $flow_user = new FlowUser();
+                $flow_user->base_user_id = $userId;
+                $flow_user->flow_user_name = $base_username;
+                $flow_user->flow_user_email = $base_email;
+                $flow_user->save();
+            }
         } catch (InvalidEmailException $e) {
             $message = 'Invalid email address';
         } catch (InvalidPasswordException $e) {
@@ -283,32 +305,40 @@ class UserPages {
             $message = 'General' . $e->getMessage();
         }
 
-        try {
-            return $this->view->render($response, 'main.twig', [
-                'page_template_path' => 'user/submit_registration.twig',
-                'page_title' => 'Thank You',
-                'page_description' => 'The check is in the mail',
-                'user_name' => $user_name,
-                'email' => $email,
-                'password' => $password,
-                'confirm_password' => $confirm_password,
-                'message' => $message
+        if (empty($message)) {
+            try {
 
-            ]);
-        } catch (Exception $e) {
-            $this->logger->error("Could not render submit registration page",['exception'=>$e]);
-            throw new HexletErrorToUser($request,$e->getMessage());
+                static::add_flash_message('success',"Successfully Registered, please log in");
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                $url = $routeParser->urlFor('login');
+                $response = $response->withStatus(302);
+                return $response->withHeader('Location', $url);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to login after successful registration",['exception'=>$e]);
+                throw $e;
+            }
+        } else {
+            try {
+
+                static::add_flash_message('danger',$message);
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                $url = $routeParser->urlFor('register');
+                $response = $response->withStatus(302);
+                return $response->withHeader('Location', $url);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to registration after problem registering",['exception'=>$e]);
+                throw $e;
+            }
         }
     }
 
     /**
-     * @param RequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
-     * @throws HttpInternalServerErrorException
+     * @throws Exception
      * @noinspection PhpUnused
      */
-    public function user_home(RequestInterface $request, ResponseInterface $response) :ResponseInterface {
+    public function user_home( ResponseInterface $response) :ResponseInterface {
         try {
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'user/user_home.twig',
@@ -316,38 +346,36 @@ class UserPages {
                 'page_description' => 'No Place Like Home',
             ]);
         } catch (Exception $e) {
-            $this->logger->error("Could not render log in form page",['exception'=>$e]);
-            throw new HexletErrorToUser($request,$e->getMessage());
+            $this->logger->error("Could not render user_home",['exception'=>$e]);
+            throw $e;
         }
     }
 
     /**
-     * @param RequestInterface $request
      * @param ResponseInterface $response
      * @param string $user_name
      * @return ResponseInterface
-     * @throws HttpInternalServerErrorException
+     * @throws Exception
      * @noinspection PhpUnused
      */
-    public function user_page(RequestInterface $request, ResponseInterface $response, string $user_name) :ResponseInterface {
+    public function user_page( ResponseInterface $response, string $user_name) :ResponseInterface {
         if ($this->user->id) {
-            return $this->user_page_for_self($request, $response,$user_name);
+            return $this->user_page_for_self( $response,$user_name);
         } else {
-            return $this->user_page_for_others($request, $response,$user_name);
+            return $this->user_page_for_others( $response,$user_name);
         }
     }
 
 
 
     /**
-     * @param RequestInterface $request
      * @param ResponseInterface $response
      * @param string $user_name
      * @return ResponseInterface
-     * @throws HttpInternalServerErrorException
+     * @throws Exception
      * @noinspection PhpUnused
      */
-    public function user_page_for_self(RequestInterface $request, ResponseInterface $response, string $user_name) :ResponseInterface {
+    public function user_page_for_self( ResponseInterface $response, string $user_name) :ResponseInterface {
         try {
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'user/user_page_for_self.twig',
@@ -356,20 +384,19 @@ class UserPages {
                 'requested_user' => ['user_name'=>$user_name]
             ]);
         } catch (Exception $e) {
-            $this->logger->error("Could not render log in form page",['exception'=>$e]);
-            throw new HexletErrorToUser($request,$e->getMessage());
+            $this->logger->error("Could not render user_page_for_self",['exception'=>$e]);
+            throw $e;
         }
     }
 
     /**
-     * @param RequestInterface $request
      * @param ResponseInterface $response
      * @param string $user_name
      * @return ResponseInterface
-     * @throws HttpInternalServerErrorException
+     * @throws Exception
      * @noinspection PhpUnused
      */
-    public function user_page_for_others(RequestInterface $request, ResponseInterface $response, string $user_name) :ResponseInterface {
+    public function user_page_for_others( ResponseInterface $response, string $user_name) :ResponseInterface {
         try {
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'user/user_page_for_others.twig',
@@ -379,8 +406,8 @@ class UserPages {
                 'requested_user' => ['user_name'=>$user_name]
             ]);
         } catch (Exception $e) {
-            $this->logger->error("Could not render log in form page",['exception'=>$e]);
-            throw new HexletErrorToUser($request,$e->getMessage());
+            $this->logger->error("Could not render user_page_for_others",['exception'=>$e]);
+            throw $e;
         }
     }
 }

@@ -34,6 +34,7 @@ class AddFlowUsers extends AbstractMigration
                 `created_at_ts` INT NULL DEFAULT NULL,
                 `flow_user_guid` BINARY(16) NOT NULL ,
                 `flow_user_name` VARCHAR(39) NULL DEFAULT NULL ,
+                `flow_user_email` varchar(100) NULL DEFAULT NULL,
                 PRIMARY KEY (`id`)
            ) ENGINE = InnoDB COMMENT = 'defines the users for a flow, extends separate auth system';
 

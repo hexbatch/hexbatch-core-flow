@@ -29,7 +29,7 @@ class AddFlowProjects extends AbstractMigration
 
             CREATE TABLE flow_projects (
                 `id` INT NOT NULL AUTO_INCREMENT ,
-                `admin_flow_user_id` INT UNSIGNED NOT NULL , 
+                `admin_flow_user_id` INT NOT NULL , 
                 `parent_flow_project_id` INT NULL DEFAULT NULL, 
                 `created_at_ts` INT NULL DEFAULT NULL,
                 `flow_project_guid` BINARY(16) NOT NULL ,
@@ -51,7 +51,7 @@ class AddFlowProjects extends AbstractMigration
         $this->execute("ALTER TABLE `flow_projects` ADD FULLTEXT `ft_flow_project_readme` (`flow_project_readme`);");
 
         $this->execute("ALTER TABLE `flow_projects` ADD CONSTRAINT `fk_flow_projects_has_flow_user_id` 
-            FOREIGN KEY (`admin_flow_user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
+            FOREIGN KEY (`admin_flow_user_id`) REFERENCES `flow_users`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
 
         $this->execute("ALTER TABLE `flow_projects` ADD CONSTRAINT `fk_flow_projects_has_parent_id` 
             FOREIGN KEY (`parent_flow_project_id`) REFERENCES `flow_projects`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
