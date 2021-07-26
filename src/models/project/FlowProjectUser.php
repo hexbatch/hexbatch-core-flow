@@ -96,29 +96,46 @@ class FlowProjectUser {
     }
 
     /**
-     * @param ?string $id
+     * @param ?string $project_title_or_id
+     * @param ?string $user_name_or_id
      * @return FlowProjectUser|null
      * @throws Exception
      */
-    public static function find_one(?string $id): ?FlowProjectUser
+    public static function find_user_in_project(?string $project_title_or_id,?string $user_name_or_id = null): ?FlowProjectUser
     {
         if (empty($id)) {return null;}
 
         $db = static::get_connection();
 
+        if (ctype_digit($project_title_or_id)) {
+            $where_condition = " p.id = ?";
+            $args = [(int)$project_title_or_id];
+        } else {
+            if (ctype_digit($user_name_or_id)) {
+                $where_condition = " u.id = ? AND p.flow_project_title = ?";
+                $args = [(int)$user_name_or_id,$project_title_or_id];
+            } else {
+                $where_condition = " u.flow_user_name = ? AND p.flow_project_title = ?";
+                $args = [$user_name_or_id,$project_title_or_id];
+            }
+        }
+
         $sql = "SELECT 
-                id,
-                created_at_ts,
-                HEX(flow_project_user_guid) as flow_project_user_guid,
-                flow_project_id,
-                flow_user_id,
-                can_write,
-                can_read
-                FROM flow_project_users u 
-                WHERE id = ?";
+                f.id,
+                f.created_at_ts,
+                HEX(f.flow_project_user_guid) as flow_project_user_guid,
+                f.flow_project_id,
+                f.flow_user_id,
+                f.can_write,
+                f.can_read
+                FROM flow_project_users f 
+                INNER JOIN flow_users u on f.flow_user_id = u.id
+                INNER JOIN flow_projects p on f.flow_project_id = p.id
+                WHERE 1 AND $where_condition
+                ";
 
         try {
-            $what = $db->safeQuery($sql, [(int)$id], PDO::FETCH_OBJ);
+            $what = $db->safeQuery($sql, $args, PDO::FETCH_OBJ);
             if (empty($what)) {
                 return null;
             }

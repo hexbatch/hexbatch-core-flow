@@ -23,8 +23,8 @@ return function (App $app) {
             $group->get('/projects', ['projectPages', 'all_projects'])->setName('all_projects');
 
             $group->group('', function (RouteCollectorProxy $group) {
-                $group->post('/create_new_project', ['projectPages', 'create_new_project'])->setName('create_new_project');
-                $group->get('/new_project', ['projectPages', 'new_project_form'])->setName('new_project_form');
+                $group->post('/create_project', ['projectPages', 'create_project'])->setName('create_project');
+                $group->get('/new_project', ['projectPages', 'new_project'])->setName('new_project');
             })->add('checkLoggedInMiddleware');
 
         });
@@ -53,6 +53,8 @@ return function (App $app) {
 
         $group->group('/{user_name:[[:alnum:]\-]+}', function (RouteCollectorProxy $group) {
             $group->get('/{project_name:[[:alnum:]\-]+}', ['projectPages', 'single_project_home'])->setName('single_project_home');
+            $group->get('/{project_name:[[:alnum:]\-]+}/edit', ['projectPages', 'edit_project'])->setName('edit_project');
+            $group->post('/{project_name:[[:alnum:]\-]+}/edit', ['projectPages', 'update_project'])->setName('update_project');
 
         });
 

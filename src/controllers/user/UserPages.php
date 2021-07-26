@@ -18,7 +18,7 @@ use DI\NotFoundException;
 use Exception;
 use InvalidArgumentException;
 use Monolog\Logger;
-use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
 use Slim\Exception\HttpInternalServerErrorException;
@@ -79,13 +79,13 @@ class UserPages {
 
 
     /**
-     * @param RequestInterface $request
+     * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
      * @throws HttpInternalServerErrorException
      * @noinspection PhpUnused
      */
-    public function login_form(RequestInterface $request, ResponseInterface $response) :ResponseInterface {
+    public function login_form(ServerRequestInterface $request, ResponseInterface $response) :ResponseInterface {
         try {
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'user/login.twig',
@@ -99,13 +99,13 @@ class UserPages {
     }
 
     /**
-     * @param RequestInterface $request
+     * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
      * @throws HttpInternalServerErrorException
      * @noinspection PhpUnused
      */
-    public function do_logout(RequestInterface $request, ResponseInterface $response) :ResponseInterface {
+    public function do_logout(ServerRequestInterface $request, ResponseInterface $response) :ResponseInterface {
 
         try {
             $this->auth->logOut();
@@ -122,13 +122,13 @@ class UserPages {
 
 
     /**
-     * @param RequestInterface $request
+     * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
      * @throws HttpInternalServerErrorException
      * @noinspection PhpUnused
      */
-    public function register_form(RequestInterface $request, ResponseInterface $response) :ResponseInterface {
+    public function register_form(ServerRequestInterface $request, ResponseInterface $response) :ResponseInterface {
         try {
             return $this->view->render($response, 'main.twig',  [
                 'page_template_path' => 'user/register.twig',
@@ -142,13 +142,13 @@ class UserPages {
     }
 
     /**
-     * @param RequestInterface $request
+     * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
      * @throws Exception
      * @noinspection PhpUnused
      */
-    public function submit_login(RequestInterface $request, ResponseInterface $response) :ResponseInterface  {
+    public function submit_login(ServerRequestInterface $request, ResponseInterface $response) :ResponseInterface  {
 
 
         $args = $request->getParsedBody();
@@ -208,13 +208,13 @@ class UserPages {
 
 
     /**
-     * @param RequestInterface $request
+     * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
      * @throws Exception
      * @noinspection PhpUnused
      */
-    public function submit_registration(RequestInterface $request, ResponseInterface $response) :ResponseInterface {
+    public function submit_registration(ServerRequestInterface $request, ResponseInterface $response) :ResponseInterface {
         $args = $request->getParsedBody();
         $user_name = $args['hexbatch_username'];
         $email = $args['hexbatch_email'];

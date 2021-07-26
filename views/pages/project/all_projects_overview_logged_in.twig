@@ -2,15 +2,23 @@
 
 <ul>
     <li>
-        <h4>see own project links</h4>
+        <h4>Your Projects</h4>
         <ul>
         {% for project in my_projects %}
-            <li>{{ project.flow_project_title }}</li>
+            <li>
+                <a href="{{ url_for('single_project_home',{
+                                            user_name: project.admin_flow_user_name ,
+                                            project_name: project.flow_project_title
+                                        } )
+                        }}">
+                    {{ project.flow_project_title }}
+                </a>
+            </li>
         {% endfor %}
         </ul>
     </li>
     <li>
-        <a  class="btn btn-outline-primary border border-light" role="button" href="{{ url_for('new_project_form') }}">
+        <a  class="btn btn-outline-primary border border-light" role="button" href="{{ url_for('new_project') }}">
             Make a new project
         </a>
     </li>

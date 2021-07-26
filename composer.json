@@ -10,6 +10,10 @@
         }
     ],
     "require": {
+        "ext-pdo": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-mysqli": "*",
         "slim/slim": "4.*",
         "slim/psr7": "^1.4",
         "php-di/slim-bridge": "^3.1",
@@ -18,12 +22,12 @@
         "symfony/yaml": "^5.3",
         "slim/twig-view": "^3.0",
         "neitanod/forceutf8": "^2.0",
-        "ext-mbstring": "*",
-        "ext-mysqli": "*",
         "paragonie/easydb": "^2",
         "monolog/monolog": "^2.3",
-      "ext-pdo": "*",
-      "ext-json": "*"
+        "jbbcode/jbbcode": "^1.4",
+        "paquettg/php-html-parser": "^3.1",
+        "ramsey/uuid": "^4.1"
+
     },
     "autoload": {
         "psr-4": {"app\\": "src/"}

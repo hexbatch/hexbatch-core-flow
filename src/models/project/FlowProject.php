@@ -2,6 +2,7 @@
 
 namespace app\models\project;
 
+use app\models\user\FlowUser;
 use DI\Container;
 use Exception;
 use InvalidArgumentException;
@@ -35,6 +36,8 @@ class FlowProject {
      */
     public array $project_users;
 
+    protected ?FlowUser $admin_user ;
+
 
     /**
      * @var Container $container
@@ -43,6 +46,19 @@ class FlowProject {
 
     public static function set_container($c) {
         static::$container = $c;
+    }
+
+    /**
+     * @return FlowUser|null
+     * @throws Exception
+     */
+    public function get_admin_user(): ?FlowUser
+    {
+        if ($this->admin_user) {return $this->admin_user;}
+        if ($this->admin_flow_user_id) {
+            $this->admin_user =  FlowUser::find_one($this->admin_flow_user_id);
+        }
+        return $this->admin_user;
     }
 
     /**
@@ -59,6 +75,8 @@ class FlowProject {
 
 
 
+
+
     /**
      * @return LoggerInterface
      */
@@ -71,6 +89,7 @@ class FlowProject {
     }
 
     public function __construct($object=null){
+        $this->admin_user = null;
         if (empty($object)) {
             $this->flow_project_blurb = null;
             $this->flow_project_title = null;

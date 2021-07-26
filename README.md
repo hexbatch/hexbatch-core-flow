@@ -1,6 +1,10 @@
 # hexbatch-core-flow
 Sets up the organization and work flow for the core
 
+This is also a sub repo for https://github.com/hexbatch/hexbatch-core-flow
+To create the php , server and db then go two levels up and do 
+`make -C tools docker-up`
+
 ## Database 
 
 The project uses migrations from the phoenix library. see https://github.com/lulco/phoenix
@@ -36,6 +40,14 @@ Twig 3.3 see https://twig.symfony.com/doc/3.x/
 
 
 https://github.com/paragonie/easydb for easier db use
+
+http://jbbcode.com/docs for bb code
+
+https://github.com/paquettg/php-html-parser to help with bbcode
+
+https://github.com/ramsey/uuid for making uuid in php
+
+todo gmp in docker image
 
 
 ## Javascript Libraries Used
