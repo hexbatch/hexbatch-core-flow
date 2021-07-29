@@ -85,7 +85,7 @@ class ProjectPages
                 'page_description' => 'Shows all projects',
             ]);
         } catch (Exception $e) {
-            $this->logger->error("Could not render log in form page",['exception'=>$e]);
+            $this->logger->error("Could not all pages for anon page",['exception'=>$e]);
             throw $e;
         }
     }
@@ -107,7 +107,7 @@ class ProjectPages
                 'my_projects' => $my_projects
             ]);
         } catch (Exception $e) {
-            $this->logger->error("Could not render log in form page",['exception'=>$e]);
+            $this->logger->error("Could not all projects for logged in page",['exception'=>$e]);
             throw $e;
         }
     }
@@ -136,7 +136,7 @@ class ProjectPages
                 'project' => $project
             ]);
         } catch (Exception $e) {
-            $this->logger->error("Could not render log in form page",['exception'=>$e]);
+            $this->logger->error("Could not render single project home page",['exception'=>$e]);
             throw $e;
         }
     }
@@ -163,16 +163,18 @@ class ProjectPages
             } else {
                 $form_in_progress = new FlowProject();
             }
+            $form_in_progress->admin_flow_user_id = $this->user->id;
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/new_project.twig',
                 'page_title' => 'Make A New Project',
                 'page_description' => 'New Project Form',
-                'form_in_progress' => $form_in_progress
+                'project' => $form_in_progress,
+                'project_form_action' => 'create_project'
 
 
             ]);
         } catch (Exception $e) {
-            $this->logger->error("Could not render log in form page",['exception'=>$e]);
+            $this->logger->error("Could not render new project page",['exception'=>$e]);
             throw $e;
         }
     }
@@ -197,7 +199,7 @@ class ProjectPages
             $args = $request->getParsedBody();
             $project->flow_project_title = $args['flow_project_title'];
             $project->flow_project_blurb = $args['flow_project_blurb'];
-            $project->flow_project_readme = $args['flow_project_readme'];
+            $project->set_read_me($args['flow_project_readme_bb_code']);
 
             $project->save();
             $_SESSION[static::REM_NEW_PROJECT_WITH_ERROR_SESSION_KEY] = null;
@@ -238,33 +240,31 @@ class ProjectPages
      */
     protected  function get_project_with_permissions(
         ServerRequestInterface $request,string $user_name, string $project_name,string $permission) : ?FlowProject {
-        if ($permission !== 'read' && $permission !== 'write') {
-            throw new InvalidArgumentException("permission has to be read or write");
+        if ($permission !== 'read' && $permission !== 'write' && $permission !== 'admin') {
+            throw new InvalidArgumentException("permission has to be read or write or admin");
         }
-        $project = null;
-        if ($this->user->flow_user_name !== $user_name) {
+        if (($this->user->flow_user_name !== $user_name)) {
+
+            if ($permission === 'admin') {
+                throw new HttpForbiddenException($request,"Only the admin can edit this part of the project $project_name");
+            }
             //if we are not checking for the project admin user, then check for other users that can edit
-            $maybe_edit_permissions = FlowProjectUser::find_user_in_project($project_name,$user_name);
-            if (!$maybe_edit_permissions) {
-                throw new HttpForbiddenException($request,"Only Project Admin Can Edit");
+            $maybe_edit_permissions = FlowProjectUser::find_users_in_project($project_name,$user_name);
+            if (empty($maybe_edit_permissions)) {
+                throw new HttpForbiddenException($request,"Cannot edit this project $project_name");
             }
             if ($permission === 'write') {
-                if ( $maybe_edit_permissions->can_write) {
-                    $project = FlowProject::find_one($project_name);
-                } else {
+                if ( ! $maybe_edit_permissions[0]->can_write) {
                     throw new HttpForbiddenException($request,"You can view but not edit this project");
                 }
             } elseif ($permission === 'read') {
-                if ( $maybe_edit_permissions->can_read) {
-                    $project = FlowProject::find_one($project_name);
-                } else {
+                if ( ! $maybe_edit_permissions[0]->can_read) {
                     throw new HttpForbiddenException($request,"You cannot view this project");
                 }
             }
+        } //end if the project user is not the logged in user
 
-        } else {
-            $project = FlowProject::find_one($project_name,$user_name);
-        }
+        $project = FlowProject::find_one($project_name,$user_name);
         return $project;
     }
     /**
@@ -285,13 +285,14 @@ class ProjectPages
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");
             }
             return $this->view->render($response, 'main.twig', [
-                'page_template_path' => 'project/edit_project_form.twig',
+                'page_template_path' => 'project/edit_project.twig',
                 'page_title' => "Edit Project $project_name",
                 'page_description' => 'Edits this project',
-                'project' => $project
+                'project' => $project,
+                'project_form_action' => 'update_project'
             ]);
         } catch (Exception $e) {
-            $this->logger->error("Could not render log in form page",['exception'=>$e]);
+            $this->logger->error("Could not render edit project page",['exception'=>$e]);
             throw $e;
         }
     }
@@ -315,7 +316,7 @@ class ProjectPages
             $args = $request->getParsedBody();
             $project->flow_project_title = $args['flow_project_title'];
             $project->flow_project_blurb = $args['flow_project_blurb'];
-            $project->flow_project_readme = $args['flow_project_readme'];
+            $project->set_read_me($args['flow_project_readme_bb_code']);
 
             $project->save();
 
@@ -346,6 +347,80 @@ class ProjectPages
             }
         }
 
+    }
+
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function edit_project_permissions( ServerRequestInterface $request,ResponseInterface $response,
+                                  string $user_name, string $project_name) :ResponseInterface {
+        try {
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'admin');
+
+            if (!$project) {
+                throw new HttpNotFoundException($request,"Project $project_name Not Found");
+            }
+
+            $write_users = [];
+            $read_users = [];
+            $users_in_project = $project->get_flow_project_users();
+            foreach ($users_in_project as $up) {
+                if ($up->can_write) {
+                    $write_users[] = $up;
+                }
+                if ($up->can_read) {
+                    $read_users[] = $up;
+                }
+            }
+            return $this->view->render($response, 'main.twig', [
+                'page_template_path' => 'project/project_permission.twig',
+                'page_title' => "Edit Permissions for Project $project_name",
+                'page_description' => 'Sets who can update and see this',
+                'project' => $project,
+                'write_users' => $write_users,
+                'read_users' => $read_users
+            ]);
+        } catch (Exception $e) {
+            $this->logger->error("Could not render permissions page",['exception'=>$e]);
+            throw $e;
+        }
+    }
+
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function edit_project_tags( ServerRequestInterface $request,ResponseInterface $response,
+                                              string $user_name, string $project_name) :ResponseInterface {
+        try {
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'admin');
+
+            if (!$project) {
+                throw new HttpNotFoundException($request,"Project $project_name Not Found");
+            }
+            return $this->view->render($response, 'main.twig', [
+                'page_template_path' => 'project/project_tags.twig',
+                'page_title' => "Edit Tags for Project $project_name",
+                'page_description' => 'Manage the tags set in this project',
+                'project' => $project,
+            ]);
+        } catch (Exception $e) {
+            $this->logger->error("Could not render tags page",['exception'=>$e]);
+            throw $e;
+        }
     }
 
 

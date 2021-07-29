@@ -1,11 +1,24 @@
-<h1> Page for individual project {{ project.get_admin_user().flow_user_name }}/{{ project.flow_project_title }}</h1>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{  url_for('all_projects')  }}">{{ project.get_admin_user().flow_user_name }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ project.flow_project_title }}</li>
+    </ol>
+</nav>
+
+
+<div class="row">
+    <div class="col-12 col-lg-auto ">
+        {{ include('partials/project/edit-side-menu.twig') }}
+    </div><!-- /.col -->
+
+    <div class="col ">
+        {{ include('partials/project/display-project.twig') }}
+    </div><!-- /.col -->
+
+</div> <!-- /.row -->
 
 
 
-<a href="{{ url_for('edit_project',{
-    user_name: project.get_admin_user().flow_user_name ,
-    project_name: project.flow_project_title
-} )
-}}">
-    Edit {{ project.flow_project_title }}
-</a>
+
+

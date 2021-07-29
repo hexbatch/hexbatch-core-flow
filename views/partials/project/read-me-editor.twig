@@ -1,0 +1,31 @@
+<script>
+    jQuery(function($){ //should execute immediately after load happens if late loading
+        let max_length_for_chapter = {{ project.max_read_me }};
+        let textarea_jq = $('textarea#flow_project_readme_textarea');
+        let textarea = textarea_jq[0];
+        let hidden_input = $('input#flow_project_readme_bb_code');
+
+        sceditor.create(textarea, {
+            format: 'bbcode',
+            style:  '{{ root_url }}/node_modules/sceditor/minified/themes/content/default.min.css',
+            toolbarExclude: 'email,unlink,youtube,date,time,ltr,rtl',//,source,emoticon,cut,copy,paste,pastetext,maximize,
+            emoticonsRoot: '{{ root_url }}/node_modules/sceditor/',
+            emoticonsEnabled: false,
+            bbcodeTrim: false,
+            height:400,
+
+        });
+        let da_editor = textarea._sceditor;
+        da_editor.bind('valuechange  keyup blur paste pasteraw',function(/* e */) {
+            let words = da_editor.val();
+
+            if (words.length > max_length_for_chapter) {
+                do_toast({title:'ReadMe is too long, Max size is ${ max_length_for_chapter }',subtitle:'',
+                    content: 'There was an issue saving the readme',delay:10000,type:'warning'});
+                return;
+            }
+            words = words.replace('%','&percnt;');
+            hidden_input.val( words);
+        },false,false);
+    })
+</script>

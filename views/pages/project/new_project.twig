@@ -1,0 +1,18 @@
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+
+        <li class="breadcrumb-item">
+            <a href="{{  url_for('all_projects')  }}">{{ project.get_admin_user().flow_user_name }}</a>
+        </li>
+
+        <li class="breadcrumb-item active" aria-current="page">Create New Project</li>
+    </ol>
+</nav>
+
+<div class="row">
+
+    <div class="col ">
+        {{ include('partials/project/project-form.twig') }}
+    </div><!-- /.col -->
+
+</div> <!-- /.row -->

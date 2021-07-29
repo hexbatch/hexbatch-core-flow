@@ -52,7 +52,7 @@ class AddFlowProjectUsers extends AbstractMigration
             FOREIGN KEY (`flow_project_id`) REFERENCES `flow_projects`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
 
         $this->execute("ALTER TABLE `flow_project_users` ADD CONSTRAINT `fk_flow_project_user_has_flow_user_id` 
-            FOREIGN KEY (`flow_user_id`) REFERENCES `flow_project_users`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
+            FOREIGN KEY (`flow_user_id`) REFERENCES `flow_users`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
 
         //NOW UPDATE THE TRIGGERS !
         $files = MYDB::recursive_search_sql_files(static::TRIGGER_DIR);

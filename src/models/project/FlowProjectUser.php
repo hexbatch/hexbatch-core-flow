@@ -3,6 +3,7 @@
 namespace app\models\project;
 use DI\Container;
 use Exception;
+use InvalidArgumentException;
 use ParagonIE\EasyDB\EasyDB;
 use PDO;
 use Psr\Log\LoggerInterface;
@@ -16,6 +17,9 @@ class FlowProjectUser {
     public ?int $flow_user_id;
     public ?int $can_write;
     public ?int $can_read;
+
+    public ?string $flow_user_name;
+    public ?string $flow_user_guid;
 
     /**
      * @var Container $container
@@ -52,7 +56,17 @@ class FlowProjectUser {
     }
 
     public function __construct($object=null){
-        if (empty($object)) {return;}
+        if (empty($object)) {
+            $this->id = null;
+            $this->can_read = null;
+            $this->can_write = null;
+            $this->flow_user_id = null;
+            $this->flow_project_user_guid = null;
+            $this->created_at_ts = null;
+            $this->flow_user_name = null;
+            $this->flow_user_guid = null;
+            return;
+        }
         foreach ($object as $key => $val) {
             if (property_exists($this,$key)) {
                 $this->$key = $val;
@@ -98,27 +112,40 @@ class FlowProjectUser {
     /**
      * @param ?string $project_title_or_id
      * @param ?string $user_name_or_id
-     * @return FlowProjectUser|null
+     * @return FlowProjectUser[]
      * @throws Exception
      */
-    public static function find_user_in_project(?string $project_title_or_id,?string $user_name_or_id = null): ?FlowProjectUser
+    public static function find_users_in_project(?string $project_title_or_id, ?string $user_name_or_id = null): array
     {
-        if (empty($id)) {return null;}
 
         $db = static::get_connection();
 
+        $args = [];
+        $wheres = [];
+
         if (ctype_digit($project_title_or_id)) {
-            $where_condition = " p.id = ?";
-            $args = [(int)$project_title_or_id];
+            $wheres[] = " p.id = ?";
+            $args[] = (int)$project_title_or_id;
+        } elseif (trim($project_title_or_id)) {
+            $wheres[] = " p.flow_project_title = ?";
+            $args[] = $project_title_or_id;
         } else {
-            if (ctype_digit($user_name_or_id)) {
-                $where_condition = " u.id = ? AND p.flow_project_title = ?";
-                $args = [(int)$user_name_or_id,$project_title_or_id];
-            } else {
-                $where_condition = " u.flow_user_name = ? AND p.flow_project_title = ?";
-                $args = [$user_name_or_id,$project_title_or_id];
-            }
+            throw new InvalidArgumentException("Need to specify the project in find_users_in_project");
         }
+
+        if (ctype_digit($user_name_or_id)) {
+            $wheres[] = " u.id = ?";
+            $args[] = (int)$user_name_or_id;
+        } elseif (trim($user_name_or_id)) {
+            $wheres[] = " u.flow_user_name = ?";
+            $args[] = $user_name_or_id;
+        }
+
+        $where_condition = 2;
+        if (count($wheres)) {
+            $where_condition = implode(' AND ',$wheres);
+        }
+
 
         $sql = "SELECT 
                 f.id,
@@ -127,7 +154,9 @@ class FlowProjectUser {
                 f.flow_project_id,
                 f.flow_user_id,
                 f.can_write,
-                f.can_read
+                f.can_read,
+                u.flow_user_name,
+                u.flow_user_guid
                 FROM flow_project_users f 
                 INNER JOIN flow_users u on f.flow_user_id = u.id
                 INNER JOIN flow_projects p on f.flow_project_id = p.id
@@ -135,11 +164,13 @@ class FlowProjectUser {
                 ";
 
         try {
-            $what = $db->safeQuery($sql, $args, PDO::FETCH_OBJ);
-            if (empty($what)) {
-                return null;
+            $res = $db->safeQuery($sql, $args, PDO::FETCH_OBJ);
+
+            $ret = [];
+            foreach ($res as $row) {
+                $ret[] = new FlowProjectUser($row);
             }
-            return new FlowProjectUser($what[0]);
+            return  $ret;
         } catch (Exception $e) {
             static::get_logger()->alert("FlowProjectUser model cannot find_one ",['exception'=>$e]);
             throw $e;

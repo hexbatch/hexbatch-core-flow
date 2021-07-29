@@ -60,6 +60,7 @@ tingle.js https://robinparisi.github.io/tingle/
 jquery https://api.jquery.com/
 lodash https://lodash.com/docs/
 font-awesome-free  https://fontawesome.com/
+sceditor to edit bbcode https://www.sceditor.com/
 
 ### installation uses npm
  Run `nmp i` to install js dependencies that are not saved in the repo

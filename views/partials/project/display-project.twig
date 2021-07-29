@@ -1,0 +1,20 @@
+<div class="container p-0 m-1">
+
+    <div class="card" style="width: fit-content">
+
+        <div class="card-header">
+            {{ project.flow_project_title }}
+        </div>
+
+        <div class="card-body">
+            <h5 class="card-title">
+                {{ project.flow_project_blurb }}
+            </h5>
+
+            <div class="flow-project-readme-display">
+                {{ project.flow_project_readme_html| raw }}
+            </div>
+
+        </div>
+    </div>
+</div>

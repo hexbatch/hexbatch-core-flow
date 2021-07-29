@@ -55,6 +55,8 @@ return function (App $app) {
             $group->get('/{project_name:[[:alnum:]\-]+}', ['projectPages', 'single_project_home'])->setName('single_project_home');
             $group->get('/{project_name:[[:alnum:]\-]+}/edit', ['projectPages', 'edit_project'])->setName('edit_project');
             $group->post('/{project_name:[[:alnum:]\-]+}/edit', ['projectPages', 'update_project'])->setName('update_project');
+            $group->get('/{project_name:[[:alnum:]\-]+}/permissions', ['projectPages', 'edit_project_permissions'])->setName('project_permissions');
+            $group->get('/{project_name:[[:alnum:]\-]+}/t', ['projectPages', 'edit_project_tags'])->setName('project_tags');
 
         });
 

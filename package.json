@@ -26,6 +26,7 @@
     "bs4-toast": "^1.2.0",
     "jquery": "^3.6.0",
     "lodash": "^4.17.21",
+    "sceditor": "^3.0.0",
     "select2": "^4.1.0-rc.0",
     "tingle.js": "^0.16.0"
   }

@@ -22,24 +22,27 @@
                         <a class="nav-link active" aria-current="page" href="{{ url_for('all_projects') }}">Projects</a>
                     </li>
 
-                    {% if user.id %}
-                        <li class="nav-item">
-                            <a  class="btn btn-outline-primary border border-light" role="button" href="{{ url_for('logout') }}">
-                                Logout {{ user.flow_user_name }}
-                            </a>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a  class="btn btn-outline-primary border border-light" role="button" href="{{ url_for('login') }}">
-                                Login or Register
-                            </a>
-                        </li>
-                    {% endif %}
+                    <li class="nav-item">
+                        <form class="d-flex">
+                            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                            <button class="btn btn-outline-success" type="submit">Search</button>
+                        </form>
+                    </li>
                 </ul>
-                <form class="d-flex">
-                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                    <button class="btn btn-outline-success" type="submit">Search</button>
-                </form>
+
+                <div class="d-flex">
+
+
+                {% if user.id %}
+                        <a  class="btn btn-outline-primary border border-light" role="button" href="{{ url_for('logout') }}">
+                            Logout {{ user.flow_user_name }}
+                        </a>
+                {% else %}
+                        <a  class="btn btn-outline-primary border border-light" role="button" href="{{ url_for('login') }}">
+                            Login or Register
+                        </a>
+                {% endif %}
+                </div>
             </div>
         </div>
     </nav>

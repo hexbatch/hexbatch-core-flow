@@ -1,0 +1,64 @@
+<div class="container">
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-10 offset-md-1 col-lg-10 offset-lg-1 col-xl-10 offset-xl-1">
+            <div class=" bg-light mt-3 px-4">
+                <form method="post" action="{%- if project_form_action == 'create_project' -%}
+                                     {{- url_for(project_form_action) -}}
+                                {%- elseif project_form_action == 'update_project' -%}
+                                      {{- url_for(project_form_action,{
+                                                                        user_name: project.get_admin_user().flow_user_name ,
+                                                                        project_name: project.flow_project_title
+                                                                    } )
+                                      -}}
+                                {%- else -%}
+                                    Unknown Project Action
+
+                                {%- endif -%}"
+                        class="row g-3"
+                >
+                    <div class="col-12">
+                        <label for="flow_project_title">Project Title</label>
+                        <input type="text" id="flow_project_title" name="flow_project_title"
+                               class="form-control" placeholder="Title" required autofocus
+                               maxlength="{{ project.max_title }}" value="{{ project.flow_project_title }}"
+                        >
+                    </div>
+
+                    <div class="col-12">
+                        <label for="flow_project_blurb">Blurb</label>
+                        <textarea type="text" id="flow_project_blurb" name="flow_project_blurb"
+                                  class="form-control" placeholder="Blurb" required autofocus
+                                  rows="3" maxlength="{{ project.max_blurb }}"
+                        >{{ project.flow_project_blurb }}</textarea>
+                    </div>
+
+
+                    <div class="col-12">
+                        <input type="hidden" name="flow_project_readme_bb_code" id="flow_project_readme_bb_code"
+                               value="{{ project.flow_project_readme_bb_code }}">
+
+                        <label for="flow_project_readme_textarea">Read Me / Description</label>
+                        <textarea type="text" id="flow_project_readme_textarea"
+                                  class="form-control" placeholder="Read Me" required autofocus
+                                  rows="15"
+                        >{{ project.flow_project_readme_bb_code }}</textarea>
+                    </div>
+
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-success float-end">
+                            {% if project_form_action == 'create_project' %}
+                                Create Project
+                            {% elseif project_form_action == 'update_project' %}
+                                Update Project
+                            {% else %}
+                                Unknown Project Action
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ include('partials/project/read-me-editor.twig') }}

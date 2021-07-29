@@ -2,6 +2,7 @@
 
 namespace app\models\project;
 
+use app\hexlet\JsonHelper;
 use app\models\user\FlowUser;
 use DI\Container;
 use Exception;
@@ -18,6 +19,8 @@ class FlowProject {
     const MAX_SIZE_TITLE = 40;
     const MAX_SIZE_BLURB = 120;
 
+    const MAX_SIZE_READ_ME_IN_CHARACTERS = 4000000;
+
     public ?int $id;
     public ?int $created_at_ts;
     public ?string $flow_project_guid;
@@ -30,6 +33,8 @@ class FlowProject {
     public ?string $flow_project_title;
     public ?string $flow_project_blurb;
     public ?string $flow_project_readme;
+    public ?string $flow_project_readme_bb_code;
+    public ?string $flow_project_readme_html;
 
     /**
      * @var FlowProjectUser[] $project_users
@@ -48,6 +53,21 @@ class FlowProject {
         static::$container = $c;
     }
 
+    public  function max_read_me(): int
+    {
+        return static::MAX_SIZE_READ_ME_IN_CHARACTERS;
+    }
+
+    public  function max_blurb(): int
+    {
+        return static::MAX_SIZE_BLURB;
+    }
+
+    public  function max_title(): int
+    {
+        return static::MAX_SIZE_TITLE;
+    }
+
     /**
      * @return FlowUser|null
      * @throws Exception
@@ -59,6 +79,14 @@ class FlowProject {
             $this->admin_user =  FlowUser::find_one($this->admin_flow_user_id);
         }
         return $this->admin_user;
+    }
+
+    /**
+     * @return FlowProjectUser[]
+     * @throws Exception
+     */
+    public function get_flow_project_users() : array {
+        return FlowProjectUser::find_users_in_project($this->id);
     }
 
     /**
@@ -91,11 +119,15 @@ class FlowProject {
     public function __construct($object=null){
         $this->admin_user = null;
         if (empty($object)) {
+            $this->admin_flow_user_id = null;
             $this->flow_project_blurb = null;
             $this->flow_project_title = null;
             $this->flow_project_readme = null;
+            $this->flow_project_readme_bb_code = null;
+            $this->flow_project_readme_html = null;
             $this->flow_project_guid = null;
             $this->flow_project_type = null;
+            $this->created_at_ts = null;
             return;
         }
         $this->project_users = [];
@@ -156,6 +188,8 @@ class FlowProject {
                     'flow_project_title' => $this->flow_project_title,
                     'flow_project_blurb' => $this->flow_project_blurb,
                     'flow_project_readme' => $this->flow_project_readme,
+                    'flow_project_readme_html' => $this->flow_project_readme_html,
+                    'flow_project_readme_bb_code' => $this->flow_project_readme_bb_code,
                 ],[
                     'id' => $this->id
                 ]);
@@ -170,6 +204,8 @@ class FlowProject {
                     'flow_project_title' => $this->flow_project_title,
                     'flow_project_blurb' => $this->flow_project_blurb,
                     'flow_project_readme' => $this->flow_project_readme,
+                    'flow_project_readme_html' => $this->flow_project_readme_html,
+                    'flow_project_readme_bb_code' => $this->flow_project_readme_bb_code,
                 ]);
             }
 
@@ -250,7 +286,9 @@ class FlowProject {
                 p.flow_project_type,
                 p.flow_project_title,
                 p.flow_project_blurb,
-                p.flow_project_readme
+                p.flow_project_readme,
+                p.flow_project_readme_html,
+                p.flow_project_readme_bb_code
                 FROM flow_projects p 
                 INNER JOIN  flow_users u ON u.id = p.admin_flow_user_id
                 WHERE 1 AND $where_condition";
@@ -265,6 +303,12 @@ class FlowProject {
             static::get_logger()->alert("Project model cannot find_one ",['exception'=>$e]);
             throw $e;
         }
+    }
+
+    public function set_read_me(string $read_me) {
+        $this->flow_project_readme_bb_code = $read_me;
+        $this->flow_project_readme_html = JsonHelper::html_from_bb_code($read_me);
+        $this->flow_project_readme = str_replace('&nbsp;',' ',strip_tags($this->flow_project_readme_html));
     }
 
 

@@ -27,7 +27,7 @@ class AddFlowDeletedBy extends AbstractMigration
         $this->execute("ALTER TABLE `flow_deleted_by` ADD UNIQUE `udx_deleted_guid` (`deleted_guid`);");
 
         $this->execute("ALTER TABLE `flow_deleted_by` ADD CONSTRAINT `fk_flow_deleted_by_has_flow_user_id` 
-            FOREIGN KEY (`flow_user_id`) REFERENCES `flow_project_users`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
+            FOREIGN KEY (`flow_user_id`) REFERENCES `flow_users`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
 
     }
 

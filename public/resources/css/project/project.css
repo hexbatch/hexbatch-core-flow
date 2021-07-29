@@ -1,0 +1,29 @@
+
+
+div.flow-project-new-button {
+    margin-top: 1em;
+}
+
+dl.flow-project-list {
+    margin-top: 2em;
+}
+
+dl.flow-project-list dd,  dl.flow-project-list dt {
+    margin-top: 1em;
+}
+
+dl.flow-project-list dt span.flow-project-title {
+    font-weight: bold;
+}
+
+dl.flow-project-list dd span.flow-project-blurb {
+    font-style: italic;
+    background-color: rgba(0,0,0, 0.05);
+    padding: 0.2em 1em ;
+}
+
+div.flow-project-readme-display {
+    padding: 1em;
+    width: fit-content;
+    background-color: whitesmoke;
+}
