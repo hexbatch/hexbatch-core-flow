@@ -3,3 +3,8 @@
 footer {
     margin-top: 5em;
 }
+
+.flow-disabled {
+    pointer-events: none;
+    opacity: 0.4;
+}

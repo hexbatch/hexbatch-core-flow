@@ -47,6 +47,8 @@ https://github.com/paquettg/php-html-parser to help with bbcode
 
 https://github.com/ramsey/uuid for making uuid in php
 
+https://github.com/paragonie/anti-csrf
+
 todo gmp in docker image
 
 
