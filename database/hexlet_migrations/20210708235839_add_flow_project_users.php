@@ -33,6 +33,7 @@ class AddFlowProjectUsers extends AbstractMigration
                 `flow_user_id` INT  NOT NULL ,
                 `can_write` TINYINT NOT NULL DEFAULT 0 ,
                 `can_read` TINYINT NOT NULL DEFAULT 0 ,
+                `can_admin` TINYINT NOT NULL DEFAULT 0 ,
                 `created_at_ts` INT NULL DEFAULT NULL,
                 `flow_project_user_guid` BINARY(16) NOT NULL ,
                 PRIMARY KEY (`id`)
@@ -42,9 +43,10 @@ class AddFlowProjectUsers extends AbstractMigration
 
         $this->execute("ALTER TABLE `flow_project_users` ADD INDEX `idx_flow_project_id`   (`flow_project_id`);");
         $this->execute("ALTER TABLE `flow_project_users` ADD INDEX `idx_flow_user_id`   (`flow_user_id`);");
-        $this->execute("ALTER TABLE `flow_project_users` ADD INDEX `udx_flow_user_project`   (`flow_user_id`,`flow_project_id`);");
+        $this->execute("ALTER TABLE `flow_project_users` ADD UNIQUE `udx_flow_user_project`   (`flow_user_id`,`flow_project_id`);");
         $this->execute("ALTER TABLE `flow_project_users` ADD INDEX `idx_can_read`   (`can_read`);");
         $this->execute("ALTER TABLE `flow_project_users` ADD INDEX `idx_can_write`   (`can_write`);");
+        $this->execute("ALTER TABLE `flow_project_users` ADD INDEX `idx_can_admin`   (`can_admin`);");
         $this->execute("ALTER TABLE `flow_project_users` ADD UNIQUE `udx_flow_entry_guid` (`flow_project_user_guid`);");
 
 

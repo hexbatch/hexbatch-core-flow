@@ -49,6 +49,8 @@ return function (App $app) {
 
 
 
+        $group->get('/search_users', ['userPages', 'find_users_by_project'])->setName('find_users_by_project');
+
         $group->get('/{user_name:[[:alnum:]\-]+}', ['userPages', 'user_page'])->setName('user_page');
 
         $group->group('/{user_name:[[:alnum:]\-]+}', function (RouteCollectorProxy $group) {

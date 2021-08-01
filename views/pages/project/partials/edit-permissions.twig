@@ -1,0 +1,78 @@
+<div class="container p-0 m-1">
+
+    <div class="card" style="width: fit-content">
+
+        <div class="card-header">
+            Permissions For {{ project.flow_project_title }}
+        </div>
+
+        <div class="card-body">
+            <h5 class="card-title">
+                Admin
+            </h5>
+
+            {% if admin_users|length == 0 %}
+                <span>Nobody Is An Admin</span>
+            {% else %}
+                <span>
+                    Administrators
+                </span>
+                <ul>
+                    {% for user in admin_users %}
+                        <li>{{ user.flow_user_name|e }}</li>
+                    {% endfor %}
+                </ul>
+
+            {% endif %}
+        </div>
+
+        <div class="card-body">
+            <h5 class="card-title">
+                Editing
+            </h5>
+
+            {% if write_users|length == 0 %}
+                <span>Nobody Can Edit</span>
+            {% else %}
+                <span>
+                    Editors
+                </span>
+                <ul>
+                    {% for user in write_users %}
+                        <li>{{ user.flow_user_name|e }}</li>
+                    {% endfor %}
+                </ul>
+
+            {% endif %}
+        </div>
+
+        <div class="card-body">
+            <h5 class="card-title">
+                Reading
+            </h5>
+
+            {% if project.is_public %}
+                <span>
+                   Everyone Can Read
+                </span>
+            {% else %}
+                {% if read_users|length == 0 %}
+                    <span>Nobody Can Read</span>
+                {% else %}
+                    <span>
+                        The following users can read this project
+                    </span>
+
+                    <ul>
+                        {% for user in read_users %}
+                            <li>{{ user.flow_user_name|e }}</li>
+                        {% endfor %}
+                    </ul>
+
+                {% endif %}
+            {% endif %}
+
+
+        </div>
+    </div>
+</div>

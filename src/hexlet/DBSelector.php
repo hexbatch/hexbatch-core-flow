@@ -34,7 +34,7 @@ class DBSelector {
      * @throws SQLException
      *
      */
-    public static function getConnection($what = 'flow') {
+    public static function getConnection(string $what = 'flow') {
         if (isset(self::$cache[$what])) {
             $mysqli =  self::$cache[$what]->getDBHandle();
             return new MYDB($mysqli); //smart pointer, db will only go out of scope when the static class def does
@@ -58,7 +58,7 @@ class DBSelector {
                         'collation' => $db->collation
 
 	                ];
-                    $mydb = new MYDB(null,$db_stuff,true);
+                    $mydb = new MYDB(null, $db_stuff, true);
                     break;
 
                 default:

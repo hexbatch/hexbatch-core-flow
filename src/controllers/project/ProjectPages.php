@@ -3,7 +3,6 @@ namespace app\controllers\project;
 
 use app\controllers\user\UserPages;
 use app\models\project\FlowProject;
-use app\models\project\FlowProjectUser;
 use app\models\user\FlowUser;
 use Delight\Auth\Auth;
 use DI\Container;
@@ -64,7 +63,7 @@ class ProjectPages
      * @noinspection PhpUnused
      */
     public function all_projects( ResponseInterface $response) :ResponseInterface {
-        if ($this->user->id) {
+        if ($this->user->flow_user_id) {
             return $this->all_projects_overview_logged_in($response);
         } else {
             return $this->all_projects_overview_for_anon($response);
@@ -99,7 +98,7 @@ class ProjectPages
      */
     public function all_projects_overview_logged_in( ResponseInterface $response) :ResponseInterface {
         try {
-            $my_projects= FlowProject::get_all_top_projects( FlowUser::get_logged_in_user()->id);
+            $my_projects= FlowProject::get_all_top_projects( FlowUser::get_logged_in_user()->flow_user_id);
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/all_projects_overview_logged_in.twig',
                 'page_title' => 'Your Projects',
@@ -163,7 +162,7 @@ class ProjectPages
             } else {
                 $form_in_progress = new FlowProject();
             }
-            $form_in_progress->admin_flow_user_id = $this->user->id;
+            $form_in_progress->admin_flow_user_id = $this->user->flow_user_id;
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/new_project.twig',
                 'page_title' => 'Make A New Project',
@@ -194,7 +193,7 @@ class ProjectPages
             $project = new FlowProject();
             $project->flow_project_type = FlowProject::FLOW_PROJECT_TYPE_TOP;
             $project->parent_flow_project_id = null;
-            $project->admin_flow_user_id = FlowUser::get_logged_in_user()->id;
+            $project->admin_flow_user_id = FlowUser::get_logged_in_user()->flow_user_id;
 
             $args = $request->getParsedBody();
             $project->flow_project_title = $args['flow_project_title'];
@@ -239,32 +238,52 @@ class ProjectPages
      * @throws Exception
      */
     protected  function get_project_with_permissions(
-        ServerRequestInterface $request,string $user_name, string $project_name,string $permission) : ?FlowProject {
+        ServerRequestInterface $request,string $user_name, string $project_name,string $permission) : ?FlowProject
+    {
         if ($permission !== 'read' && $permission !== 'write' && $permission !== 'admin') {
             throw new InvalidArgumentException("permission has to be read or write or admin");
         }
-        if (($this->user->flow_user_name !== $user_name)) {
-
-            if ($permission === 'admin') {
-                throw new HttpForbiddenException($request,"Only the admin can edit this part of the project $project_name");
-            }
-            //if we are not checking for the project admin user, then check for other users that can edit
-            $maybe_edit_permissions = FlowProjectUser::find_users_in_project($project_name,$user_name);
-            if (empty($maybe_edit_permissions)) {
-                throw new HttpForbiddenException($request,"Cannot edit this project $project_name");
-            }
-            if ($permission === 'write') {
-                if ( ! $maybe_edit_permissions[0]->can_write) {
-                    throw new HttpForbiddenException($request,"You can view but not edit this project");
-                }
-            } elseif ($permission === 'read') {
-                if ( ! $maybe_edit_permissions[0]->can_read) {
-                    throw new HttpForbiddenException($request,"You cannot view this project");
-                }
-            }
-        } //end if the project user is not the logged in user
 
         $project = FlowProject::find_one($project_name,$user_name);
+        if ($permission === 'read') {
+            if ($project->is_public) {
+                return $project;
+            }
+        }
+
+        if (empty($this->user->flow_user_id)) {
+            if ($permission === 'read') {
+                throw new InvalidArgumentException("Project is not public to read");
+            } else {
+                throw new InvalidArgumentException("Need to be logged in");
+            }
+        }
+
+        $user_permissions = FlowUser::find_users_by_project(true,$project->flow_project_guid,true,$this->user->flow_user_guid);
+        if (empty($user_permissions)) {
+            throw new InvalidArgumentException("No permissions set for this");
+        }
+        $permissions_array  = $user_permissions[0]->get_permissions();
+        if (empty($permissions_array)) {
+            throw new InvalidArgumentException("No permissions found, although in project");
+        }
+        $project_user = $permissions_array[0];
+
+
+        if ($permission === 'admin') {
+            if ( ! $project_user->can_admin) {
+                throw new HttpForbiddenException($request,"Only the admin can edit this part of the project $project_name");
+            }
+        } else if ($permission === 'write') {
+            if ( ! $project_user->can_write) {
+                throw new HttpForbiddenException($request,"You can view but not edit this project");
+            }
+        } elseif ($permission === 'read') {
+            if ( ! $project_user->can_read) {
+                throw new HttpForbiddenException($request,"You cannot view this project");
+            }
+        }
+
         return $project;
     }
     /**
@@ -368,15 +387,21 @@ class ProjectPages
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");
             }
 
+            $admin_users = [];
             $write_users = [];
             $read_users = [];
             $users_in_project = $project->get_flow_project_users();
-            foreach ($users_in_project as $up) {
-                if ($up->can_write) {
-                    $write_users[] = $up;
-                }
-                if ($up->can_read) {
-                    $read_users[] = $up;
+            foreach ($users_in_project as $user_to_scan) {
+                foreach ( $user_to_scan->get_permissions() as $up ) {
+                    if ($up->can_write) {
+                        $write_users[] = $user_to_scan;
+                    }
+                    if ($up->can_read) {
+                        $read_users[] = $user_to_scan;
+                    }
+                    if ($up->can_admin) {
+                        $admin_users[] = $user_to_scan;
+                    }
                 }
             }
             return $this->view->render($response, 'main.twig', [
@@ -385,7 +410,8 @@ class ProjectPages
                 'page_description' => 'Sets who can update and see this',
                 'project' => $project,
                 'write_users' => $write_users,
-                'read_users' => $read_users
+                'read_users' => $read_users,
+                'admin_users' => $admin_users
             ]);
         } catch (Exception $e) {
             $this->logger->error("Could not render permissions page",['exception'=>$e]);

@@ -1,4 +1,4 @@
-<?php /** @noinspection PhpInternalEntityUsedInspection */
+<?php
 
 namespace app\models\project;
 
@@ -23,6 +23,7 @@ class FlowProject {
 
     public ?int $id;
     public ?int $created_at_ts;
+    public ?int $is_public;
     public ?string $flow_project_guid;
 
 
@@ -53,16 +54,19 @@ class FlowProject {
         static::$container = $c;
     }
 
+    /** @noinspection PhpUnused */
     public  function max_read_me(): int
     {
         return static::MAX_SIZE_READ_ME_IN_CHARACTERS;
     }
 
+    /** @noinspection PhpUnused */
     public  function max_blurb(): int
     {
         return static::MAX_SIZE_BLURB;
     }
 
+    /** @noinspection PhpUnused */
     public  function max_title(): int
     {
         return static::MAX_SIZE_TITLE;
@@ -82,11 +86,19 @@ class FlowProject {
     }
 
     /**
-     * @return FlowProjectUser[]
+     * @return FlowUser[]
      * @throws Exception
      */
     public function get_flow_project_users() : array {
-        return FlowProjectUser::find_users_in_project($this->id);
+
+        $page = 1;
+        $ret = [];
+        do {
+            $info = FlowUser::find_users_by_project(true,$this->flow_project_guid,null,null ,$page);
+            $page++;
+            $ret = array_merge($ret,$info);
+        } while(count($info));
+        return $ret;
     }
 
     /**
@@ -128,6 +140,7 @@ class FlowProject {
             $this->flow_project_guid = null;
             $this->flow_project_type = null;
             $this->created_at_ts = null;
+            $this->is_public = null;
             return;
         }
         $this->project_users = [];
@@ -183,6 +196,7 @@ class FlowProject {
             if ($this->flow_project_guid) {
                 $db->update('flow_projects',[
                     'admin_flow_user_id' => $this->admin_flow_user_id,
+                    'is_public' => $this->is_public,
                     'parent_flow_project_id' => $this->parent_flow_project_id,
                     'flow_project_type' => $this->flow_project_type,
                     'flow_project_title' => $this->flow_project_title,
@@ -199,6 +213,7 @@ class FlowProject {
             } else {
                 $db->insert('flow_projects',[
                     'admin_flow_user_id' => $this->admin_flow_user_id,
+                    'is_public' => $this->is_public,
                     'parent_flow_project_id' => $this->parent_flow_project_id,
                     'flow_project_type' => $this->flow_project_type,
                     'flow_project_title' => $this->flow_project_title,
@@ -280,6 +295,7 @@ class FlowProject {
         $sql = "SELECT 
                 p.id,
                 p.created_at_ts,
+                p.is_public,    
                 HEX(p.flow_project_guid) as flow_project_guid,
                 p.admin_flow_user_id,
                 p.parent_flow_project_id,      

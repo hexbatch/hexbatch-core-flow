@@ -93,8 +93,7 @@ class RecursiveClasses {
 
 		foreach ($files as $file) {
 			try {
-				/** @noinspection PhpIncludeInspection */
-				require_once($file);
+                require_once($file);
 				$this->def_classes[] = self::get_class_name_from_file($file);
 
 			} catch ( Exception $e) {

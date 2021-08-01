@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 use DI\Container;
 use Symfony\Component\Yaml\Yaml;
-use Monolog\Logger;
 
 return function(Container $container) {
     $container->set('settings', function () {

@@ -122,21 +122,20 @@ class MYDB
      * </p>
      * @param array|null $db_setup <p>
      *  if creating new connection ($mysqli is null above) then this must be filled out
-     *   @see MYDB::getMySqliDatabase() for details
-     *  but if passing in mysqli object above, then this will be ignored
-     *  default is null
-     *
-     * </p>
      *   @param bool $bIgnoreAardvark <p>
      *    if set to false, then an exception will be thrown if more than one database connection is kept open at one time
      *    if set to true then this behavior is turned off
      *    default is false, which means the default will be throwing exceptions if more than one db connection open
      * </p>
      * @throws SQLException  if connection cannot be made, or $bIgnoreAardvark is false and a second connection made
-
+ * </p>
+     *@see MYDB::getMySqliDatabase() for details
+     *  but if passing in mysqli object above, then this will be ignored
+     *  default is null
+     *
      * </p>
      */
-    public function __construct(?object $mysqli, array $db_setup = null, $bIgnoreAardvark = false)
+    public function __construct(?object $mysqli, array $db_setup = null, bool $bIgnoreAardvark = false)
     {
 
         if (is_null($mysqli)) {
@@ -375,7 +374,54 @@ class MYDB
     /**
      * Multipurpose statement to write prepared statements to the database
      *
-     * @example
+     * @param $sql string|object <p>
+     *   if string, then the sql statement must have at least one ? in it. if a statement does not need a ?
+     *   then add a "AND ?" to the where, for example, and then place a variable with 1 in the params
+     *
+     *   Can be object of type mysqli_stmt, if need to pass in an already compiled statement
+     * </p>
+     * @param $params array|null <p>
+     *
+     *   The rest of the array depends on if using ? notation or named  notation in the sql string and if $sql is an object or a string
+     *
+     * DANGER: Named params do not work for all use cases, would not use
+     *
+     * @param $close integer <p>
+     *   these are the following named constants
+     *   MYDB::LAST_ID        returns the primary key of an insert operation
+     *   MYDB::ROWS_AFFECTED  returns the number of rows affected during an update or delete
+     *   MYDB::RESULT_SET     used to get the results back from a select
+     *
+     *   Please note that the proper close value must be put with the type of sql statement
+     *    it will not be an error if the wrong close type is put in, but the return results may be unexpected
+     *
+     *   anything not MYDB::LAST_ID or MYDB::ROWS_AFFECTED will be MYDB::RESULT_SET
+     *   default is  MYDB::RESULT_SET
+     * </p>
+     * @param string|null $lookupKey <p>
+     *  a string to remember the compiled sql statement,
+     *  will speed up things a lot if called with same statement multiple times
+     *  it can save the step of compiling the statement for later identical calls if the the same sql is used again
+     *  when lookup key is set, it will ignore the $sql string if there is already a prepared statement under that key
+     *  but when $lookupKey is set to null, will not save the statement for later
+     *    the $lookupKey is set to the mysqli object, and not to the MYDB object. Which is important to remember if
+     *     creating this class from an existing mysqli object
+     *
+     *   If $lookupKey is null this function will close the statement if no key if sql is a string
+     *   lookup keys must have the phrase @sey@ in them or else an exception is thrown
+     *   WARNING: USE AT OWN RISK, THIS IS NOT USED IN OTHER LIBRARIES FOR A VERY GOOD REASON.
+     *      Forgetting to change the key for different statements will lead to very hard to track down bugs and will shorten your lifespan
+     *   But, since I am the only one using this, I like it, because it increases speed a lot in some situations,
+     *    like when ten thousand things need to be updated
+     * </p>
+     * @return mixed. <p>
+     *   The return is based on what the close param is
+     *     MYDB::LAST_ID        returns the primary key of an insert operation
+     *     MYDB::ROWS_AFFECTED  returns the number of rows affected during an update or delete
+     *     MYDB::RESULT_SET     an array of standard objects where each property is a key value pair of column_name:value
+     * </p>
+     * @throws SQLException if anything goes wrong, including sql errors, bad params, etc
+     *@example
      *  execSQL("SELECT * FROM table WHERE id = ?", array('i', $id), MYDB::ROWS_AFFECTED);
      *  execSQL("SELECT * FROM table");
      *  execSQL("INSERT INTO table(id, name) VALUES (?,?)", array('ss', $id, $name), MYDB::LAST_ID);
@@ -385,18 +431,6 @@ class MYDB
      *                                                                      'dogs'=>['value'=>4.5, 'flag'=>'d'],
      *                                                                      'groups'=> $brown,
      *                                                                      'mud'=> get_mud_ratio()/2 * $f]);
-     *
-     * @param $sql string|object <p>
-     *   if string, then the sql statement must have at least one ? in it. if a statement does not need a ?
-     *   then add a "AND ?" to the where, for example, and then place a variable with 1 in the params
-     *
-     *   Can be object of type mysqli_stmt, if need to pass in an already compiled statement
-     * </p>
-     * @param $params null|array <p>
-     *
-     *   The rest of the array depends on if using ? notation or named  notation in the sql string and if $sql is an object or a string
-     *
-     * DANGER: Named params do not work for all use cases, would not use
      *
      * @example for ? notation  "SELECT apple from tree_table where color = ?"
      *          each param is ?
@@ -438,43 +472,8 @@ class MYDB
      * Default is null
      *
      * </p>
-     * @param $close integer <p>
-     *   these are the following named constants
-     *   MYDB::LAST_ID        returns the primary key of an insert operation
-     *   MYDB::ROWS_AFFECTED  returns the number of rows affected during an update or delete
-     *   MYDB::RESULT_SET     used to get the results back from a select
-     *
-     *   Please note that the proper close value must be put with the type of sql statement
-     *    it will not be an error if the wrong close type is put in, but the return results may be unexpected
-     *
-     *   anything not MYDB::LAST_ID or MYDB::ROWS_AFFECTED will be MYDB::RESULT_SET
-     *   default is  MYDB::RESULT_SET
-     * </p>
-     * @param null|string $lookupKey <p>
-     *  a string to remember the compiled sql statement,
-     *  will speed up things a lot if called with same statement multiple times
-     *  it can save the step of compiling the statement for later identical calls if the the same sql is used again
-     *  when lookup key is set, it will ignore the $sql string if there is already a prepared statement under that key
-     *  but when $lookupKey is set to null, will not save the statement for later
-     *    the $lookupKey is set to the mysqli object, and not to the MYDB object. Which is important to remember if
-     *     creating this class from an existing mysqli object
-     *
-     *   If $lookupKey is null this function will close the statement if no key if sql is a string
-     *   lookup keys must have the phrase @sey@ in them or else an exception is thrown
-     *   WARNING: USE AT OWN RISK, THIS IS NOT USED IN OTHER LIBRARIES FOR A VERY GOOD REASON.
-     *      Forgetting to change the key for different statements will lead to very hard to track down bugs and will shorten your lifespan
-     *   But, since I am the only one using this, I like it, because it increases speed a lot in some situations,
-     *    like when ten thousand things need to be updated
-     * </p>
-     * @return mixed. <p>
-     *   The return is based on what the close param is
-     *     MYDB::LAST_ID        returns the primary key of an insert operation
-     *     MYDB::ROWS_AFFECTED  returns the number of rows affected during an update or delete
-     *     MYDB::RESULT_SET     an array of standard objects where each property is a key value pair of column_name:value
-     * </p>
-     * @throws SQLException if anything goes wrong, including sql errors, bad params, etc
      */
-    public function execSQL($sql, $params=null, $close=MYDB::RESULT_SET, $lookupKey = null)
+    public function execSQL($sql, array $params=null, int $close=MYDB::RESULT_SET, string $lookupKey = null)
     {
 
         if (! (is_array($params) || is_null($params) ) ) {
@@ -619,7 +618,7 @@ class MYDB
      * @return integer the number of rows updated, will be 0 or 1
      * @throws SQLException when the underlying table or field does not exist
      */
-    public function update(string $table, $id, array  $fields, $pk_name = 'id')
+    public function update(string $table, $id, array $fields, string $pk_name = 'id')
     {
 
 
@@ -796,7 +795,7 @@ class MYDB
      *
      * @throws SQLException every time
      */
-    public static function throwSQLStatement(string $msg1, $stmt, $msg2 = null)
+    public static function throwSQLStatement(string $msg1, $stmt, string $msg2 = null)
     {
         if ($msg2) {
             throw new SQLException(sprintf("error:<br>\n%s<br>\n%s<br>\n%s<br>", $msg1,  mysqli_stmt_error($stmt),$msg2));
@@ -810,14 +809,14 @@ class MYDB
      * helper function to execute a mysqli_stmt
      * @link http://php.net/manual/en/mysqli-stmt.execute.php
      *
-     * @param object|mysqli_stmt $state statement object
+     * @param ?object|mysqli_stmt $state statement object
      *
      * @return void
      * @throws SQLException if something goes wrong
      */
     public static function executeStatement($state)
     {
-        if ((!isset($state)) || (empty($state))) {
+        if ( empty($state)) {
             throw new SQLException("statement was null or empty");
         }
         $res = mysqli_stmt_execute($state);
@@ -865,7 +864,7 @@ class MYDB
      */
     public static function staticExecute(string $query, $mysqli)
     {
-        if ((!isset($query)) || (empty($query))) {
+        if ( empty($query)) {
             throw new SQLException("sql was null or empty");
         }
 
@@ -954,7 +953,7 @@ class MYDB
      * @throws SQLException if invalid mysqli param and its not null
      */
     //for prepared statements
-    public static function sanitizeString(string $s, $b_strip_tags = false, $mysqli = null): string
+    public static function sanitizeString(string $s, bool $b_strip_tags, $mysqli = null): string
     {
         if (empty($s)) {
             $s = '';

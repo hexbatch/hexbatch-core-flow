@@ -32,6 +32,7 @@ class AddFlowProjects extends AbstractMigration
                 `admin_flow_user_id` INT NOT NULL , 
                 `parent_flow_project_id` INT NULL DEFAULT NULL, 
                 `created_at_ts` INT NULL DEFAULT NULL,
+                `is_public` TINYINT NOT NULL DEFAULT 0,
                 `flow_project_guid` BINARY(16) NOT NULL ,
                 `flow_project_type` VARCHAR(10) NULL DEFAULT NULL ,
                 `flow_project_title` VARCHAR(40) NULL DEFAULT NULL ,

@@ -352,6 +352,58 @@ class UserPages {
     }
 
     /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function find_users_by_project( ServerRequestInterface $request,ResponseInterface $response) :ResponseInterface {
+
+        $args = $request->getQueryParams();
+        $term = null;
+        if (isset($args['term'])) {
+            $term = trim($args['term']);
+        }
+        $page = 1;
+        if (isset($args['page'])) {
+            $page_number = intval($args['page']);
+            if ($page_number > 0) {
+                $page = $page_number;
+            }
+        }
+        $project_guid = null;
+        if (isset($args['project_guid'])) {
+            $project_guid = trim($args['project_guid']);
+        }
+
+        $in_project = true;
+        if (isset($args['in_project']) && $project_guid) {
+            $in_project = (bool)intval(($args['in_project']));
+        }
+
+        $matches = FlowUser::find_users_by_project($in_project,$project_guid,false,$term,$page);
+        $b_more = true;
+        if (count($matches) < FlowUser::DEFAULT_USER_PAGE_SIZE) {
+            $b_more = false;
+        }
+
+        $data = [
+            "results" => $matches,
+            "pagination" => [
+                "more" => $b_more,
+                "page" => $page
+            ]
+        ];
+
+        $payload = json_encode($data);
+
+        $response->getBody()->write($payload);
+        return $response
+            ->withHeader('Content-Type', 'application/json');
+    }
+
+    /**
      * @param ResponseInterface $response
      * @param string $user_name
      * @return ResponseInterface

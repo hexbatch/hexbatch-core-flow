@@ -2,20 +2,24 @@
 
 namespace app\models\user;
 use app\models\project\FlowProject;
+use app\models\project\FlowProjectUser;
 use Delight\Auth\InvalidPasswordException;
 use Delight\Auth\TooManyRequestsException;
 use Delight\Auth\UserManager;
 use DI\Container;
 use Exception;
 use InvalidArgumentException;
+use JsonSerializable;
 use ParagonIE\EasyDB\EasyDB;
 use PDO;
 use Psr\Log\LoggerInterface;
 use Delight\Auth\Auth;
 
-class FlowUser {
-    public ?int $id;
-    public ?int $created_at_ts;
+class FlowUser implements JsonSerializable {
+    const DEFAULT_USER_PAGE_SIZE = 2;
+
+    public ?int $flow_user_id;
+    public ?int $flow_user_created_at_ts;
     public ?string $flow_user_name;
     public ?string $flow_user_email;
     public ?string $flow_user_guid;
@@ -23,6 +27,18 @@ class FlowUser {
 
     protected ?string $old_email;
     protected ?string $old_username;
+
+    /**
+     * @var FlowProjectUser[] $permissions
+     */
+    protected array $permissions = [];
+
+    /**
+     * @return array|FlowProjectUser[]
+     */
+    public function get_permissions() :array {
+        return $this->permissions;
+    }
 
     /**
      * @var Container $container
@@ -96,11 +112,13 @@ class FlowUser {
 
     public function __construct($object=null){
         if (empty($object)) {
-            $this->id = null;
+            $this->flow_user_id = null;
             $this->flow_user_name = null;
             $this->flow_user_email = null;
             $this->flow_user_guid = null;
             $this->base_user_id = null;
+            $this->flow_user_created_at_ts = null;
+            $this->permissions = [];
             return;
         }
         foreach ($object as $key => $val) {
@@ -158,7 +176,7 @@ class FlowUser {
                     'flow_user_name' => $this->flow_user_name,
                     'flow_user_email' => $this->flow_user_email
                 ],[
-                    'id' => $this->id
+                    'id' => $this->flow_user_id
                 ]);
 
                 if ($this->old_email !== $this->flow_user_email) {
@@ -213,9 +231,9 @@ class FlowUser {
 
 
         $sql = "SELECT 
-                id,
+                id as flow_user_id,
                 base_user_id,
-                created_at_ts,
+                created_at_ts as flow_user_created_at_ts,
                 HEX(flow_user_guid) as flow_user_guid,
                 flow_user_name,
                 flow_user_email
@@ -234,5 +252,164 @@ class FlowUser {
         }
     }
 
+    /**
+     * Finds users, and their permissions, that are in or out of a project
+     * @param bool $b_in_project
+     * @param string $project_guid
+     * @param ?bool $b_is_user_guid
+     * @param ?string $user_name_search_or_guid
+     * @param int $page,
+     * @param int $page_size,
+     * @return FlowUser[]
+     * @throws Exception
+     */
+    public static function find_users_by_project(
+        bool    $b_in_project ,
+        string  $project_guid,
+        ?bool   $b_is_user_guid =null,
+        ?string $user_name_search_or_guid =null,
+        int     $page = 1,
+        int     $page_size =  FlowUser::DEFAULT_USER_PAGE_SIZE
+    ): array
+    {
 
+        $db = static::get_connection();
+
+        $args = [];
+        $args[] = $project_guid;
+
+        if ($user_name_search_or_guid) {
+            if ($b_is_user_guid) {
+                $where_user = "u.flow_user_guid = UNHEX(?)";
+                $args[] = $user_name_search_or_guid;
+            } else {
+                $where_user = "u.flow_user_name LIKE ?";
+                $args[] = $user_name_search_or_guid . '%';
+            }
+        } else {
+            $where_user = 4;
+        }
+
+
+
+        $start_place = ($page - 1) * $page_size;
+
+        $columns = "
+                u.id as flow_user_id,
+                u.base_user_id,
+                u.created_at_ts as flow_user_created_at_ts,
+                HEX(u.flow_user_guid) as flow_user_guid,
+                u.flow_user_name,
+                u.flow_user_email,
+                f.id as flow_project_user_id,
+                f.created_at_ts as flow_project_user_created_at_ts,
+                HEX(f.flow_project_user_guid) as flow_project_user_guid,
+                f.flow_project_id,
+                f.flow_user_id,
+                f.can_write,
+                f.can_read,
+                f.can_admin,
+                HEX(p.flow_project_guid) as flow_project_guid,
+                p.admin_flow_user_id,
+                p.flow_project_title,
+                p.flow_project_type,
+                p.is_public
+        ";
+
+
+
+
+        if ($b_in_project) {
+
+            //find users in project
+            $sql = "
+            SELECT
+                $columns
+
+            FROM flow_users u
+                     INNER JOIN flow_project_users f on f.flow_user_id = u.id
+                     INNER JOIN flow_projects p on f.flow_project_id = p.id
+                    WHERE p.flow_project_guid = UNHEX(?) AND  $where_user
+                    ORDER BY u.id ASC
+                    LIMIT $start_place , $page_size
+            ";
+        } else {
+            //find users not in project
+            $sql = "
+            SELECT
+                $columns
+
+            FROM flow_users u
+                 INNER JOIN (
+                    SELECT
+                        DISTINCT u.id as flow_user_id
+                    FROM flow_users u
+                             LEFT JOIN flow_project_users f on f.flow_user_id = u.id
+                             LEFT JOIN flow_projects p on f.flow_project_id = p.id
+                    LEFT JOIN (
+                        SELECT
+                            DISTINCT u.id as flow_user_id
+                        FROM flow_users u
+                                 LEFT JOIN flow_project_users f on f.flow_user_id = u.id
+                                 LEFT JOIN flow_projects p on f.flow_project_id = p.id
+                        WHERE p.flow_project_guid = UNHEX(?)
+                        ) AS users_in_project ON users_in_project.flow_user_id = u.id
+                    WHERE users_in_project.flow_user_id IS NULL AND $where_user 
+                    ORDER BY flow_user_id ASC
+                    LIMIT $start_place , $page_size
+                ) as driver ON driver.flow_user_id = u.id
+        
+                 LEFT JOIN flow_project_users f on f.flow_user_id = u.id
+                 LEFT JOIN flow_projects p on f.flow_project_id = p.id
+            
+            WHERE 1
+            ORDER BY u.flow_user_name ASC;
+                
+            ";
+        }
+
+        try {
+            $res = $db->safeQuery($sql, $args, PDO::FETCH_OBJ);
+
+            $ret = [];
+
+            /**
+             * @var array<string, FlowUser> $rem_users
+             */
+            $rem_users = [];
+            foreach ($res as $row) {
+                $user_node = new FlowUser($row);
+                if (array_key_exists($user_node->flow_user_guid,$rem_users)) {
+                    $user_node = $rem_users[$user_node->flow_user_guid];
+                } else {
+                    $rem_users[$user_node->flow_user_guid] = $user_node;
+                    $ret[] = $user_node;
+                }
+
+                $permission_node = new FlowProjectUser($row);
+                if ($permission_node->flow_project_user_id) {
+                    $user_node->permissions[] = $permission_node;
+                }
+
+
+            }
+
+            return  $ret;
+        } catch (Exception $e) {
+            static::get_logger()->alert("FlowUser model cannot find_users_by_project ",['exception'=>$e]);
+            throw $e;
+        }
+    }
+
+
+    public function jsonSerialize(): array
+    {
+        return [
+             "flow_user_guid" => $this->flow_user_guid,
+             "flow_user_created_at_ts" => $this->flow_user_created_at_ts,
+             "flow_user_name" => $this->flow_user_name,
+             "flow_user_email" => $this->flow_user_email,
+             "permissions" => $this->get_permissions()
+        ];
+    }
 }

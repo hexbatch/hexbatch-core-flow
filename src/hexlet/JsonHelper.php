@@ -33,9 +33,8 @@ class JsonHelper {
      * @throws JsonException if cannot parse array to json
      * @noinspection PhpUnused
      */
-    public static function sendJSONAndDie(array $phpArray=[],$http_code=200) {
+    public static function sendJSONAndDie(array $phpArray=[], int $http_code=200) {
         if ( ! headers_sent() ) {
-            $http_code = intval($http_code);
             http_response_code($http_code);
             header('Content-Type: application/json');
         }
@@ -52,7 +51,7 @@ class JsonHelper {
      * @param int|null $status_code - - if null then is same status as http code
      * @return void , script will exit here
      */
-    public static function printStatusJSONAndDie($message=[], $http_code=200, $b_valid = true, $status_code = null) {
+    public static function printStatusJSONAndDie($message=[], int $http_code=200, bool $b_valid = true, int $status_code = null) {
 
         if (is_null($status_code)) {
             $status_code = $http_code;
@@ -93,7 +92,7 @@ class JsonHelper {
      * @noinspection PhpUnused*@uses JsonHelper::printStatusJSONAndDie()
      *
      */
-    public static function printErrorJSONAndDie( $message,$http_code=500,$status_in_json=null) {
+    public static function printErrorJSONAndDie($message, int $http_code=500, int $status_in_json=null) {
 
         self::printStatusJSONAndDie($message,$http_code, false,$status_in_json);
     }
@@ -112,7 +111,7 @@ class JsonHelper {
      * @return string
      * @throws JsonException if json error
      */
-    public static function toString( $phpArray,$options=0): string
+    public static function toString($phpArray, int $options=0): string
     {
         $out = json_encode($phpArray, $options );
         if ($out) {
@@ -137,7 +136,7 @@ class JsonHelper {
      * @return array|mixed|null
      * @throws JsonException if json error
      */
-    public static function fromString($what,$b_exception=true,$b_association=true) {
+    public static function fromString($what, bool $b_exception=true, bool $b_association=true) {
         if (is_null($what) ) { return null;}
         if (empty($what) && !is_numeric($what)) {return [];}
         $what = strval($what);
@@ -172,12 +171,12 @@ class JsonHelper {
      * @param boolean $b_cast_bools_as_int <p>
      *
      * </p>
-     * @throws JsonException
      * @return string
+     * @throws JsonException
      * @since 0.1
      * @version 0.4.0 empty arrays do not cast as null any more
      */
-    public static function toStringAgnostic($what,$b_empty_is_null=true,$b_cast_bools_as_int = true): ?string
+    public static function toStringAgnostic($what, bool $b_empty_is_null=true, bool $b_cast_bools_as_int = true): ?string
     {
         if (is_null($what)) {return null;}
         if (is_string($what)) {
@@ -315,8 +314,8 @@ class JsonHelper {
      * Casts string to data, its the opposite of @dataTo and is designed to convert data from a text field
      * to different data types , based on what the category is
      * called in the constructor
-     * @param string $data_type  a valid category name, will throw exception if not valid
-     * @param string $what  the thing to cast as a string. If this is null the return will be null regardless of the category
+     * @param ?string $data_type  a valid category name, will throw exception if not valid
+     * @param ?string $what  the thing to cast as a string. If this is null the return will be null regardless of the category
      * @return mixed <p> returns a string whose value depends on
      *  what the meta type is
      *      'boolean' must be integer or string representation. 0 is false, anything else is true
@@ -333,7 +332,7 @@ class JsonHelper {
      *@throws JsonException if not a recognized name, if json what is not an array
      * @noinspection PhpUnused
      */
-    public static function dataFromString(string $data_type, string $what) {
+    public static function dataFromString(?string $data_type, ?string $what) {
         if (is_null($what)) {return null;}
         if (is_null($data_type)) {return null;}
 
@@ -505,7 +504,7 @@ class JsonHelper {
      * @return void  it prints to the screen
      * @noinspection PhpUnused*@example print_nice($array)
      */
-    public static function print_nice($elem,$max_level=15,$print_nice_stack=array()){
+    public static function print_nice($elem, int $max_level=15, array $print_nice_stack=array()){
         //if (is_object($elem)) {$elem = object_to_array($elem);}
         if(is_array($elem) || is_object($elem)){
             if(in_array($elem,$print_nice_stack,true)){
@@ -588,7 +587,7 @@ class JsonHelper {
                 echo "<br />" . $value;
             }
             echo "</pre>";
-        } catch ( ReflectionException $r) {
+        } /** @noinspection PhpRedundantCatchClauseInspection */ catch ( ReflectionException $r) {
             throw new JsonException($r->getMessage(),0,$r);
         }
     }
@@ -855,7 +854,7 @@ class JsonHelper {
      * @return string
      * @throws JsonException  if one of the operations fail
      */
-    public static function tags_to_n(string $string, $replace_nobreak_space= false, $b_remove_existing_newlines = true): string
+    public static function tags_to_n(string $string, $replace_nobreak_space= false, bool $b_remove_existing_newlines = true): string
     {
 
         //note: if having trouble with a mangled utf8 string then use

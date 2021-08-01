@@ -53,13 +53,20 @@ todo gmp in docker image
 ## Javascript Libraries Used
 
 bootstrap https://getbootstrap.com/docs/4.1/getting-started/introduction/
+
 select2  https://select2.org/
     with select2-bootstrap4-theme
+
 bs4-toast https://github.com/Script47/Toast
+
 tingle.js https://robinparisi.github.io/tingle/
+
 jquery https://api.jquery.com/
+
 lodash https://lodash.com/docs/
+
 font-awesome-free  https://fontawesome.com/
+
 sceditor to edit bbcode https://www.sceditor.com/
 
 ### installation uses npm

@@ -13,7 +13,7 @@
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        {% if user.id %}
+                        {% if user.flow_user_id %}
                             <a class="nav-link active" aria-current="page" href="{{ url_for('user_home') }}">Home</a>
                         {% endif %}
                     </li>
@@ -33,7 +33,7 @@
                 <div class="d-flex">
 
 
-                {% if user.id %}
+                {% if user.flow_user_id %}
                         <a  class="btn btn-outline-primary border border-light" role="button" href="{{ url_for('logout') }}">
                             Logout {{ user.flow_user_name }}
                         </a>

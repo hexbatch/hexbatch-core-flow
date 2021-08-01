@@ -5,12 +5,13 @@ declare(strict_types=1);
 use Slim\App;
 use Slim\Views\Twig;
 use Slim\Views\TwigMiddleware;
-use Twig\Environment;
+use Twig\Extension\AbstractExtension;
 use Twig\Extension\DebugExtension;
+use Twig\Extension\GlobalsInterface;
 use Twig\Loader\FilesystemLoader;
 use DI\Container;
 
-class Hexlet_Twig_Extension extends \Twig\Extension\AbstractExtension implements \Twig\Extension\GlobalsInterface
+class Hexlet_Twig_Extension extends AbstractExtension implements GlobalsInterface
 {
     public function getGlobals(): array
     {
