@@ -2,7 +2,9 @@
 namespace app\controllers\project;
 
 use app\controllers\user\UserPages;
+use app\hexlet\FlowAntiCSRF;
 use app\models\project\FlowProject;
+use app\models\project\FlowProjectUser;
 use app\models\user\FlowUser;
 use Delight\Auth\Auth;
 use DI\Container;
@@ -10,7 +12,9 @@ use DI\DependencyException;
 use DI\NotFoundException;
 use Exception;
 use InvalidArgumentException;
+use LogicException;
 use Monolog\Logger;
+use ParagonIE\AntiCSRF\AntiCSRF;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Slim\Exception\HttpForbiddenException;
@@ -190,6 +194,12 @@ class ProjectPages
     {
         $project = null;
         try {
+            $csrf = new AntiCSRF;
+            if (!empty($_POST)) {
+                if (!$csrf->validateRequest()) {
+                    throw new HttpForbiddenException($request,"Bad Request") ;
+                }
+            }
             $project = new FlowProject();
             $project->flow_project_type = FlowProject::FLOW_PROJECT_TYPE_TOP;
             $project->parent_flow_project_id = null;
@@ -198,6 +208,7 @@ class ProjectPages
             $args = $request->getParsedBody();
             $project->flow_project_title = $args['flow_project_title'];
             $project->flow_project_blurb = $args['flow_project_blurb'];
+            $project->is_public = isset($args['is_public']) && intval($args['is_public']);
             $project->set_read_me($args['flow_project_readme_bb_code']);
 
             $project->save();
@@ -245,21 +256,21 @@ class ProjectPages
         }
 
         $project = FlowProject::find_one($project_name,$user_name);
-        if ($permission === 'read') {
-            if ($project->is_public) {
-                return $project;
-            }
-        }
 
+        //return if public and nobody logged in
         if (empty($this->user->flow_user_id)) {
             if ($permission === 'read') {
-                throw new InvalidArgumentException("Project is not public to read");
+                if ($project->is_public) {
+                    return $project;
+                }
             } else {
-                throw new InvalidArgumentException("Need to be logged in");
+                throw new HttpForbiddenException($request,"Project is not public to read");
             }
         }
 
-        $user_permissions = FlowUser::find_users_by_project(true,$project->flow_project_guid,true,$this->user->flow_user_guid);
+        $user_permissions = FlowUser::find_users_by_project(true,
+            $project->flow_project_guid,null,true,$this->user->flow_user_guid);
+
         if (empty($user_permissions)) {
             throw new InvalidArgumentException("No permissions set for this");
         }
@@ -269,18 +280,22 @@ class ProjectPages
         }
         $project_user = $permissions_array[0];
 
+        $project->set_current_user_permissions($project_user);
 
-        if ($permission === 'admin') {
+        if ($permission === 'read') {
+            if ($project->is_public) {
+                return $project;
+            } elseif (!$project_user->can_read) {
+                throw new HttpForbiddenException($request,"Project cannot be viewed");
+            }
+        }
+        else if ($permission === 'admin') {
             if ( ! $project_user->can_admin) {
                 throw new HttpForbiddenException($request,"Only the admin can edit this part of the project $project_name");
             }
         } else if ($permission === 'write') {
             if ( ! $project_user->can_write) {
                 throw new HttpForbiddenException($request,"You can view but not edit this project");
-            }
-        } elseif ($permission === 'read') {
-            if ( ! $project_user->can_read) {
-                throw new HttpForbiddenException($request,"You cannot view this project");
             }
         }
 
@@ -330,11 +345,18 @@ class ProjectPages
 
         $project = null;
         try {
+            $csrf = new AntiCSRF;
+            if (!empty($_POST)) {
+                if (!$csrf->validateRequest()) {
+                    throw new HttpForbiddenException($request,"Bad Request") ;
+                }
+            }
             $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
 
             $args = $request->getParsedBody();
             $project->flow_project_title = $args['flow_project_title'];
             $project->flow_project_blurb = $args['flow_project_blurb'];
+            $project->is_public = isset($args['is_public']) && intval($args['is_public']);
             $project->set_read_me($args['flow_project_readme_bb_code']);
 
             $project->save();
@@ -357,7 +379,7 @@ class ProjectPages
                 UserPages::add_flash_message('warning', "Cannot update project " . $e->getMessage());
                 $_SESSION[static::REM_NEW_PROJECT_WITH_ERROR_SESSION_KEY] = $project;
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-                $url = $routeParser->urlFor('new_project');
+                $url = $routeParser->urlFor('edit_project');
                 $response = $response->withStatus(302);
                 return $response->withHeader('Location', $url);
             } catch (Exception $e) {
@@ -429,10 +451,160 @@ class ProjectPages
      * @throws Exception
      * @noinspection PhpUnused
      */
+    public function change_project_permissions(ServerRequestInterface $request,ResponseInterface $response,
+                                   string $user_name, string $project_name) :ResponseInterface {
+
+        $token = null;
+        try {
+            $args = $request->getParsedBody();
+            if (empty($args)) {
+                throw new InvalidArgumentException("No data sent");
+            }
+            $csrf = new FlowAntiCSRF;
+            if (!$csrf->validateRequest()) {
+                throw new HttpForbiddenException($request,"Bad Request") ;
+            }
+
+            $x_header = $request->getHeader('X-Requested-With') ?? [];
+            if (empty($x_header) || $x_header[0] !== 'XMLHttpRequest') {
+                throw new InvalidArgumentException("Need the X-Requested-With header");
+            }
+
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'admin');
+
+            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+            $token_lock_to = $routeParser->urlFor('edit_permissions_ajax',[
+                'user_name' => $user_name,
+                'project_name' => $project_name
+            ]);
+
+            $token = $csrf->getTokenArray($token_lock_to);
+
+
+            $action = $args['action'] ?? '';
+            if (!$action) {throw new InvalidArgumentException("Action needs to be set");}
+
+            switch ($action) {
+                case 'permission_read_add':
+                case 'permission_read_remove':
+                case 'permission_write_add':
+                case 'permission_write_remove':
+                case 'permission_admin_add':
+                case 'permission_admin_remove': {
+
+                    $flow_user_guid = $args['user_guid'] ?? null;
+                    $flow_project_guid = $args['project_guid'] ?? null;
+                    if (!$flow_user_guid || !$flow_project_guid) {
+                        throw new InvalidArgumentException("Need both project and user guids to complete this");
+                    }
+                    $target_user_array = FlowUser::find_users_by_project(true,$flow_project_guid,null,true,$flow_user_guid);
+                    if (empty($target_user_array) || empty($target_user_array[0]->get_permissions())) {
+                        $target_user = FlowUser::find_one($flow_user_guid);
+                        if (empty($target_user)) {
+                            throw new InvalidArgumentException("Cannot find user by guid of $flow_user_guid");
+                        }
+                        $perm = new FlowProjectUser();
+                        $perm->can_write = false;
+                        $perm->can_read = false;
+                        $perm->can_admin = false;
+                        $perm->flow_user_id = $target_user->flow_user_id;
+                        $perm->flow_project_id = $project->id;
+                    } else {
+                        $perm = $target_user_array[0]->get_permissions()[0];
+                    }
+                    $inner_data = $perm;
+
+
+                    switch ($action) {
+                        case 'permission_read_add': {
+                            $perm->can_read = true;
+                            break;
+                        }
+                        case 'permission_read_remove': {
+                            if ($perm->flow_user_guid === $project->get_admin_user()->flow_user_guid) {
+                                throw new InvalidArgumentException("Cannot remove read from the project owner");
+                            }
+                            $perm->can_read = false;
+                            break;
+                        }
+                        case 'permission_write_add': {
+                            $perm->can_write = true;
+                            $perm->can_read = true;
+                            break;
+                        }
+                        case 'permission_write_remove': {
+                            if ($perm->flow_user_guid === $project->get_admin_user()->flow_user_guid) {
+                                throw new InvalidArgumentException("Cannot remove write from the project owner");
+                            }
+                            $perm->can_write = false;
+                            break;
+                        }
+                        case 'permission_admin_add': {
+                            $perm->can_admin = true;
+                            $perm->can_write = true;
+                            $perm->can_read = true;
+                            break;
+                        }
+                        case 'permission_admin_remove': {
+                            if ($perm->flow_user_guid === $project->get_admin_user()->flow_user_guid) {
+                                throw new InvalidArgumentException("Cannot remove admin from the project owner");
+                            }
+                            $perm->can_admin = false;
+                            break;
+                        }
+                        default: {throw new LogicException("Ooops mismatched switch");}
+                    }
+
+                    $perm->save();
+                    break;
+
+
+                }
+                case 'permission_public_set': {
+                    $project->is_public = isset($args['is_public']) && intval($args['is_public']);
+                    $project->save();
+                    $inner_data = $project;
+                    break;
+                }
+                default: {
+                    throw new InvalidArgumentException("Unknown Action Verb: $action");
+                }
+            }
+            $data = ['success'=>true,'message'=>'','data'=>$inner_data,'token'=> $token];
+            $payload = json_encode($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(201);
+
+
+        } catch (Exception $e) {
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $token];
+            $payload = json_encode($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(500);
+        }
+
+    }
+
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
     public function edit_project_tags( ServerRequestInterface $request,ResponseInterface $response,
                                               string $user_name, string $project_name) :ResponseInterface {
         try {
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'admin');
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'read');
 
             if (!$project) {
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");

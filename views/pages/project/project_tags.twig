@@ -27,7 +27,11 @@
     </div><!-- /.col -->
 
     <div class="col ">
-        {{ include('project/partials/edit-tags.twig') }}
+        {% if project.get_current_user_permissions().can_admin %}
+            {{ include('project/partials/edit-tags.twig') }}
+        {% else %}
+            {{ include('project/partials/view-tags.twig') }}
+        {% endif %}
     </div><!-- /.col -->
 
 </div> <!-- /.row -->

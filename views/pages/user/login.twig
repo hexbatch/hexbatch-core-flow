@@ -3,6 +3,7 @@
         <div class="col-md-4 offset-md-4">
             <div class="bg-light mt-4 p-4">
                 <form method="post" action="{{ url_for("submit_login") }}" class="row g-3">
+                    {{ form_token( url_for("submit_login")) }}
                     <h4>Welcome Back</h4>
                     <div class="col-12">
                         <label for="hexbatch_email_or_username">Username Or Email</label>

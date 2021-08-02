@@ -18,9 +18,11 @@ use DI\NotFoundException;
 use Exception;
 use InvalidArgumentException;
 use Monolog\Logger;
+use ParagonIE\AntiCSRF\AntiCSRF;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
+use Slim\Exception\HttpForbiddenException;
 use Slim\Exception\HttpInternalServerErrorException;
 use Slim\Routing\RouteContext;
 use Slim\Views\Twig;
@@ -109,6 +111,7 @@ class UserPages {
 
         try {
             $this->auth->logOut();
+            session_destroy();
             $routeParser = RouteContext::fromRequest($request)->getRouteParser();
             $url = $routeParser->urlFor('root');
             $response = $response->withStatus(302);
@@ -130,6 +133,12 @@ class UserPages {
      */
     public function register_form(ServerRequestInterface $request, ResponseInterface $response) :ResponseInterface {
         try {
+            $csrf = new AntiCSRF;
+            if (!empty($_POST)) {
+                if (!$csrf->validateRequest()) {
+                    throw new HttpForbiddenException($request,"Bad Request") ;
+                }
+            }
             return $this->view->render($response, 'main.twig',  [
                 'page_template_path' => 'user/register.twig',
                 'page_title' => 'Register',
@@ -159,7 +168,16 @@ class UserPages {
             $remember_me = $remember_me * 24 * 7;
         }
 
+
         try {
+
+            $csrf = new AntiCSRF;
+            if (!empty($_POST)) {
+                if (!$csrf->validateRequest()) {
+                    throw new HttpForbiddenException($request,"Bad Request") ;
+                }
+            }
+
             if(filter_var($email_or_username, FILTER_VALIDATE_EMAIL)) {
                 // valid address
                 $this->auth->login($email_or_username, $password, $remember_me);
@@ -250,7 +268,10 @@ class UserPages {
 
             $b_match = FlowProject::check_valid_title($user_name);
             if (!$b_match) {
-                throw new InvalidArgumentException("User Name needs to be all alpha numeric or dash only. First character cannot be a number");
+                throw new InvalidArgumentException(
+                    "User Name needs to be all alpha numeric or dash only. ".
+                    "First character cannot be a number. Name Cannot be less than 3 or greater than 40. ".
+                    " User Name cannot be a hex number greater than 25 and cannot be a decimal number");
             }
 
 
@@ -382,7 +403,12 @@ class UserPages {
             $in_project = (bool)intval(($args['in_project']));
         }
 
-        $matches = FlowUser::find_users_by_project($in_project,$project_guid,false,$term,$page);
+        $role_in_project = null;
+        if (isset($args['role_in_project']) && $project_guid) {
+            $role_in_project = trim($args['role_in_project']);
+        }
+
+        $matches = FlowUser::find_users_by_project($in_project,$project_guid,$role_in_project,false,$term,$page);
         $b_more = true;
         if (count($matches) < FlowUser::DEFAULT_USER_PAGE_SIZE) {
             $b_more = false;

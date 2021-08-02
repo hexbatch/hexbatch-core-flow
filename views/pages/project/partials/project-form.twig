@@ -16,6 +16,10 @@
                                 {%- endif -%}"
                         class="row g-3"
                 >
+                    {{ form_token(  url_for(project_form_action,{
+                        user_name: project.get_admin_user().flow_user_name ,
+                        project_name: project.flow_project_title
+                    } )) }}
                     <div class="col-12">
                         <label for="flow_project_title">Project Title</label>
                         <input type="text" id="flow_project_title" name="flow_project_title"
@@ -45,6 +49,18 @@
                     </div>
 
                     <div class="col-12">
+                        <div class="form-check form-switch d-inline-block">
+                            <input class="form-check-input"
+                                   name="is_public"
+                                   value="1"
+                                   type="checkbox" id="flexSwitchCheckDefault"
+                                    {{ project.is_public ? 'checked' : '' }}
+                            >
+                            <label class="form-check-label" for="flexSwitchCheckDefault">
+                                Project is public
+                            </label>
+                        </div>
+
                         <button type="submit" class="btn btn-success float-end">
                             {% if project_form_action == 'create_project' %}
                                 Create Project
@@ -55,10 +71,12 @@
                             {% endif %}
                         </button>
                     </div>
+
+
                 </form>
             </div>
         </div>
     </div>
 </div>
 
-{{ include('project/project/partials/read-me-editor.twig') }}
+{{ include('project/partials/read-me-editor.twig') }}

@@ -7,6 +7,7 @@ use app\models\user\FlowUser;
 use DI\Container;
 use Exception;
 use InvalidArgumentException;
+use LogicException;
 use ParagonIE\EasyDB\EasyDB;
 use PDO;
 use Psr\Log\LoggerInterface;
@@ -43,6 +44,19 @@ class FlowProject {
     public array $project_users;
 
     protected ?FlowUser $admin_user ;
+
+    protected ?FlowProjectUser $current_user_permissions;
+
+    public function set_current_user_permissions(?FlowProjectUser $v) {
+        $this->current_user_permissions = $v;
+    }
+
+    /** @noinspection PhpUnused */
+    public function get_current_user_permissions(): ?FlowProjectUser
+    {
+        if (!isset($this->current_user_permissions)) {return new FlowProjectUser();} //return no permissions
+        return $this->current_user_permissions;
+    }
 
 
     /**
@@ -94,7 +108,7 @@ class FlowProject {
         $page = 1;
         $ret = [];
         do {
-            $info = FlowUser::find_users_by_project(true,$this->flow_project_guid,null,null ,$page);
+            $info = FlowUser::find_users_by_project(true,$this->flow_project_guid,null,null,null ,$page);
             $page++;
             $ret = array_merge($ret,$info);
         } while(count($info));
@@ -154,7 +168,20 @@ class FlowProject {
     public static function check_valid_title($words) : bool  {
 
         if (empty($words)) {return false;}
+
         if (is_numeric(substr($words, 0, 1)) ) {
+            return false;
+        }
+
+        if (ctype_digit($words) ) {
+            return false;
+        }
+
+        if (ctype_xdigit($words) && (mb_strlen($words) > 25) ) {
+            return false;
+        }
+
+        if ((mb_strlen($words) < 3) || (mb_strlen($words) > 40) ) {
             return false;
         }
         $b_match = preg_match('/^[[:alnum:]\-]+$/u',$words,$matches);
@@ -188,7 +215,10 @@ class FlowProject {
 
             $b_match = static::check_valid_title($this->flow_project_title);
             if (!$b_match) {
-                throw new InvalidArgumentException("Project Title needs to be all alpha numeric or dash only. First character cannot be a number");
+                throw new InvalidArgumentException(
+                    "Project Title needs to be all alpha numeric or dash only. ".
+                    "First character cannot be a number. Title Cannot be less than 3 or greater than 40. ".
+                    " Title cannot be a hex number greater than 25 and cannot be a decimal number");
             }
 
             $db = static::get_connection();
@@ -268,28 +298,30 @@ class FlowProject {
     }
 
     /**
-     * @param ?string $project_title_or_id
-     * @param ?string $user_name_or_id
+     * get a project without a user if supply an id or guid
+     * or get a project based on any number of guid, and name combinations for project and user
+     * @param ?string $project_title_guid_or_id
+     * @param ?string $user_name_guid_or_id
      * @return FlowProject|null
      * @throws Exception
      */
-    public static function find_one(?string $project_title_or_id,?string $user_name_or_id = null): ?FlowProject
+    public static function find_one(?string $project_title_guid_or_id, ?string $user_name_guid_or_id = null): ?FlowProject
     {
         $db = static::get_connection();
 
-        if (ctype_digit($project_title_or_id)) {
-            $where_condition = " p.id = ?";
-            $args = [(int)$project_title_or_id];
-        } else {
-            if (ctype_digit($user_name_or_id)) {
-                $where_condition = " u.id = ? AND p.flow_project_title = ?";
-                $args = [(int)$user_name_or_id,$project_title_or_id];
-            } else {
-                $where_condition = " u.flow_user_name = ? AND p.flow_project_title = ?";
-                $args = [$user_name_or_id,$project_title_or_id];
-            }
 
+        if (trim($project_title_guid_or_id) && trim($user_name_guid_or_id)) {
+            $where_condition = " ( u.flow_user_name = ? OR u.flow_user_guid = UNHEX(?) ) AND ".
+                " (  p.flow_project_title = ? or p.flow_project_guid = UNHEX(?))";
+            $args = [$user_name_guid_or_id,$user_name_guid_or_id,
+                $project_title_guid_or_id,$project_title_guid_or_id];
+        } else if (trim($project_title_guid_or_id) ) {
+            $where_condition = " (p.id = ? OR  p.flow_project_guid = UNHEX(?) )";
+            $args = [(int)$project_title_guid_or_id,$project_title_guid_or_id];
+        } else{
+            throw new LogicException("Need at least one project id/name/string");
         }
+
 
 
         $sql = "SELECT 

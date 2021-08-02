@@ -27,3 +27,7 @@ div.flow-project-readme-display {
     width: fit-content;
     background-color: whitesmoke;
 }
+
+div#flow-find-user span.select2.select2-container {
+    width: 100% !important;
+}

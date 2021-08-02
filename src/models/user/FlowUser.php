@@ -16,7 +16,7 @@ use Psr\Log\LoggerInterface;
 use Delight\Auth\Auth;
 
 class FlowUser implements JsonSerializable {
-    const DEFAULT_USER_PAGE_SIZE = 2;
+    const DEFAULT_USER_PAGE_SIZE = 20;
 
     public ?int $flow_user_id;
     public ?int $flow_user_created_at_ts;
@@ -166,7 +166,10 @@ class FlowUser implements JsonSerializable {
 
         $b_match = FlowProject::check_valid_title($this->flow_user_name);
         if (!$b_match) {
-            throw new InvalidArgumentException("Project Title needs to be all alpha numeric or dash only. First character cannot be a number");
+            throw new InvalidArgumentException(
+                "User Name needs to be all alpha numeric or dash only. ".
+                "First character cannot be a number. Name Cannot be less than 3 or greater than 40. ".
+                " User Name cannot be a hex number greater than 25 and cannot be a decimal number");
         }
         try {
             $db = static::get_connection();
@@ -213,20 +216,21 @@ class FlowUser implements JsonSerializable {
     }
 
     /**
-     * @param ?string $user_name_or_base_user_id
+     * @param ?string $user_name_or_guid_or_base_user_id
      * @return FlowUser|null
      * @throws Exception
      */
-    public static function find_one(?string $user_name_or_base_user_id): ?FlowUser
+    public static function find_one(?string $user_name_or_guid_or_base_user_id): ?FlowUser
     {
         $db = static::get_connection();
 
-        if (ctype_digit($user_name_or_base_user_id)) {
+
+        if (ctype_digit($user_name_or_guid_or_base_user_id)) {
             $where_condition = " u.base_user_id = ?";
-            $arg = (int)$user_name_or_base_user_id;
+            $args = [(int)$user_name_or_guid_or_base_user_id];
         } else {
-            $where_condition = " u.flow_user_name = ?";
-            $arg = $user_name_or_base_user_id;
+            $where_condition = " ( u.flow_user_name = ? OR u.flow_user_guid = UNHEX(?) )";
+            $args = [$user_name_or_guid_or_base_user_id,$user_name_or_guid_or_base_user_id];
         }
 
 
@@ -241,7 +245,7 @@ class FlowUser implements JsonSerializable {
                 WHERE 1 AND $where_condition";
 
         try {
-            $what = $db->safeQuery($sql, [$arg], PDO::FETCH_OBJ);
+            $what = $db->safeQuery($sql, $args, PDO::FETCH_OBJ);
             if (empty($what)) {
                 return null;
             }
@@ -256,6 +260,7 @@ class FlowUser implements JsonSerializable {
      * Finds users, and their permissions, that are in or out of a project
      * @param bool $b_in_project
      * @param string $project_guid
+     * @param ?string $role_in_project
      * @param ?bool $b_is_user_guid
      * @param ?string $user_name_search_or_guid
      * @param int $page,
@@ -266,6 +271,7 @@ class FlowUser implements JsonSerializable {
     public static function find_users_by_project(
         bool    $b_in_project ,
         string  $project_guid,
+        ?string $role_in_project =null,
         ?bool   $b_is_user_guid =null,
         ?string $user_name_search_or_guid =null,
         int     $page = 1,
@@ -277,6 +283,29 @@ class FlowUser implements JsonSerializable {
 
         $args = [];
         $args[] = $project_guid;
+        if (!$b_in_project) {
+            $args[] = $project_guid; //has an extra ? for project id to limit it
+            $where_flags_set = "users_in_project.can_admin = 0 AND users_in_project.can_read = 0 AND users_in_project.can_write = 0";
+            if ($role_in_project) {
+                switch ($role_in_project) {
+                    case 'admin': {
+                        $where_flags_set = "users_in_project.can_admin = 0";
+                        break;
+                    }
+                    case 'write': {
+                        $where_flags_set = "users_in_project.can_write = 0";
+                        break;
+                    }
+                    case 'read': {
+                        $where_flags_set = "users_in_project.can_read = 0";
+                        break;
+                    }
+                    default: {
+                        throw new InvalidArgumentException("role needs to be read|write|admin");
+                    }
+                }
+            }
+        }
 
         if ($user_name_search_or_guid) {
             if ($b_is_user_guid) {
@@ -342,19 +371,24 @@ class FlowUser implements JsonSerializable {
             FROM flow_users u
                  INNER JOIN (
                     SELECT
-                        DISTINCT u.id as flow_user_id
+                        DISTINCT u.id as flow_user_id, f.can_write, f.can_admin, f.can_read
                     FROM flow_users u
                              LEFT JOIN flow_project_users f on f.flow_user_id = u.id
                              LEFT JOIN flow_projects p on f.flow_project_id = p.id
                     LEFT JOIN (
                         SELECT
-                            DISTINCT u.id as flow_user_id
+                            DISTINCT u.id as flow_user_id, f.can_write, f.can_admin, f.can_read
                         FROM flow_users u
                                  LEFT JOIN flow_project_users f on f.flow_user_id = u.id
                                  LEFT JOIN flow_projects p on f.flow_project_id = p.id
                         WHERE p.flow_project_guid = UNHEX(?)
                         ) AS users_in_project ON users_in_project.flow_user_id = u.id
-                    WHERE users_in_project.flow_user_id IS NULL AND $where_user 
+                    WHERE (
+                           users_in_project.flow_user_id IS NULL 
+                            OR (
+                                $where_flags_set
+                            )
+                        ) AND p.flow_project_guid = UNHEX(?) AND $where_user 
                     ORDER BY flow_user_id ASC
                     LIMIT $start_place , $page_size
                 ) as driver ON driver.flow_user_id = u.id
@@ -366,6 +400,7 @@ class FlowUser implements JsonSerializable {
             ORDER BY u.flow_user_name ASC;
                 
             ";
+
         }
 
         try {

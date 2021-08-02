@@ -3,7 +3,7 @@
     <div class="card" style="width: fit-content">
         <ul class="list-group flex-lg-column flex-row  ">
 
-
+            {% if project.get_current_user_permissions().can_edit %}
             <li class="list-group-item">
                 <a class="btn btn-outline-primary border border-light"
                    href="{{ url_for('edit_project',{
@@ -14,8 +14,10 @@
                     Edit Description
                 </a>
             </li>
+            {% endif %}
 
 
+            {% if project.get_current_user_permissions().can_admin %}
             <li class="list-group-item">
                 <a class="btn btn-outline-primary border border-light"
                    href="{{ url_for('project_permissions',{
@@ -25,8 +27,9 @@
                    }}">
                     Permissions
                 </a>
-
             </li>
+            {% endif %}
+
             <li class="list-group-item">
                 <a class="btn btn-outline-primary border border-light"
                    href="{{ url_for('project_tags',{

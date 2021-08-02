@@ -84,6 +84,11 @@ class FlowProjectUser implements JsonSerializable {
 
     }
 
+    /** @noinspection PhpUnused */
+    public function can_edit() : bool {
+        return $this->can_write || $this->can_admin;
+    }
+
 
     /**
      * @throws Exception
@@ -91,32 +96,18 @@ class FlowProjectUser implements JsonSerializable {
     public function save() {
         try {
             $db = static::get_connection();
-            if ($this->flow_project_user_guid) {
-                $db->update('flow_project_users',[
+            $db->insertOnDuplicateKeyUpdate('flow_project_users',
+                [
                     'flow_project_id' => $this->flow_project_id,
                     'flow_user_id' => $this->flow_user_id,
                     'can_write' => $this->can_write,
                     'can_read' => $this->can_read,
                     'can_admin' => $this->can_admin,
-                ],[
-                    'id' => $this->flow_project_user_id
-                ]);
-
-
-            } else {
-                $db->insertOnDuplicateKeyUpdate('flow_project_users',
-                    [
-                        'flow_project_id' => $this->flow_project_id,
-                        'flow_user_id' => $this->flow_user_id,
-                        'can_write' => $this->can_write,
-                        'can_read' => $this->can_read,
-                        'can_admin' => $this->can_admin,
-                    ],
-                    [
-                        'can_write', 'can_read', 'can_admin'
-                    ]
-                );
-            }
+                ],
+                [
+                    'can_write', 'can_read', 'can_admin'
+                ]
+            );
 
 
         } catch (Exception $e) {
@@ -138,6 +129,9 @@ class FlowProjectUser implements JsonSerializable {
             "flow_project_guid" => $this->flow_project_guid,
             "flow_project_title" => $this->flow_project_title,
             "flow_project_type" => $this->flow_project_type,
+            "can_write" => (bool)$this->can_write,
+            "can_read" => (bool)$this->can_read,
+            "can_admin" => (bool)$this->can_admin,
         ];
     }
 
