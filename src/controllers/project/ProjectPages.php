@@ -264,7 +264,7 @@ class ProjectPages
                     return $project;
                 }
             } else {
-                throw new HttpForbiddenException($request,"Project is not public to read");
+                throw new HttpForbiddenException($request,"Project is not public");
             }
         }
 
