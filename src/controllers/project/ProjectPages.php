@@ -26,7 +26,8 @@ use Slim\Views\Twig;
 class ProjectPages
 {
 
-    const REM_NEW_PROJECT_WITH_ERROR_SESSION_KEY = 'project_form_in_progress_has_error';
+    const REM_NEW_PROJECT_WITH_ERROR_SESSION_KEY = 'project_new_form_in_progress_has_error';
+    const REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY = 'project_edit_form_in_progress_has_error';
     protected Auth $auth;
     protected Logger $logger;
     /**
@@ -318,11 +319,26 @@ class ProjectPages
             if (!$project) {
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");
             }
+
+            if (array_key_exists(static::REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY,$_SESSION)) {
+                /**
+                 * @var ?FlowProject $form_in_progress
+                 */
+                $form_in_progress = $_SESSION[static::REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY];
+                $_SESSION[static::REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY] = null;
+                if (empty($form_in_progress)) {
+                    $form_in_progress = $project;
+                }
+            } else {
+                $form_in_progress = $project;
+            }
+
+
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/edit_project.twig',
                 'page_title' => "Edit Project $project_name",
                 'page_description' => 'Edits this project',
-                'project' => $project,
+                'project' => $form_in_progress,
                 'project_form_action' => 'update_project'
             ]);
         } catch (Exception $e) {
@@ -360,6 +376,7 @@ class ProjectPages
             $project->set_read_me($args['flow_project_readme_bb_code']);
 
             $project->save();
+            $_SESSION[static::REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY] = null;
 
             try {
                 UserPages::add_flash_message('success', "Updated Project " . $project->flow_project_title);
@@ -377,9 +394,12 @@ class ProjectPages
         } catch (Exception $e) {
             try {
                 UserPages::add_flash_message('warning', "Cannot update project " . $e->getMessage());
-                $_SESSION[static::REM_NEW_PROJECT_WITH_ERROR_SESSION_KEY] = $project;
+                $_SESSION[static::REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY] = $project;
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-                $url = $routeParser->urlFor('edit_project');
+                $url = $routeParser->urlFor('edit_project',[
+                    "user_name" => $user_name ,
+                    "project_name" => $project_name
+                ]);
                 $response = $response->withStatus(302);
                 return $response->withHeader('Location', $url);
             } catch (Exception $e) {

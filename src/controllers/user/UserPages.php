@@ -17,6 +17,7 @@ use DI\DependencyException;
 use DI\NotFoundException;
 use Exception;
 use InvalidArgumentException;
+use LogicException;
 use Monolog\Logger;
 use ParagonIE\AntiCSRF\AntiCSRF;
 use Psr\Http\Message\ServerRequestInterface;
@@ -24,12 +25,15 @@ use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
 use Slim\Exception\HttpForbiddenException;
 use Slim\Exception\HttpInternalServerErrorException;
+use Slim\Exception\HttpNotFoundException;
 use Slim\Routing\RouteContext;
 use Slim\Views\Twig;
 
 
 
 class UserPages {
+
+    const REM_USER_SETTINGS_WITH_ERROR_SESSION_KEY = 'user_settings_form_in_progress_has_error';
 
     protected  Auth $auth;
     protected  Logger $logger;
@@ -40,7 +44,7 @@ class UserPages {
 
     protected Twig $view;
 
-    protected object $user;
+    protected FlowUser $user;
 
     protected static string $flash_key_in_session;
 
@@ -361,15 +365,110 @@ class UserPages {
      */
     public function user_home( ResponseInterface $response) :ResponseInterface {
         try {
+
+            $edit_user = FlowUser::find_one($this->user->flow_user_guid);
+            if (!$edit_user) {
+                throw new LogicException("Username not found from logged in user");
+            }
+
+            if (array_key_exists(static::REM_USER_SETTINGS_WITH_ERROR_SESSION_KEY,$_SESSION)) {
+                /**
+                 * @var ?FlowUser $form_in_progress
+                 */
+                $form_in_progress = $_SESSION[static::REM_USER_SETTINGS_WITH_ERROR_SESSION_KEY];
+                $_SESSION[static::REM_USER_SETTINGS_WITH_ERROR_SESSION_KEY] = null;
+                if (empty($form_in_progress)) {
+                    $form_in_progress = $edit_user;
+                }
+            } else {
+                $form_in_progress = $edit_user;
+            }
+
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'user/user_home.twig',
                 'page_title' => 'User Home',
                 'page_description' => 'No Place Like Home',
+                'edit_user' => $form_in_progress
             ]);
         } catch (Exception $e) {
             $this->logger->error("Could not render user_home",['exception'=>$e]);
             throw $e;
         }
+    }
+
+
+    /**
+     * Change password, change email, change username
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function update_profile(ServerRequestInterface $request,ResponseInterface $response) :ResponseInterface {
+
+
+        $edit_user = FlowUser::find_one($this->user->flow_user_guid);
+        if (!$edit_user) {
+            throw new LogicException("Username not found from logged in user");
+        }
+
+
+        try {
+            $csrf = new AntiCSRF;
+            if (!empty($_POST)) {
+                if (!$csrf->validateRequest()) {
+                    throw new HttpForbiddenException($request,"Bad Request") ;
+                }
+            }
+
+            $args = $request->getParsedBody();
+            $edit_user->flow_user_name = $args['flow_user_name'] ?? '';
+            $edit_user->flow_user_email = $args['flow_user_email'] ?? '';
+            $new_password = $args['new_password'] ?? '';
+            $new_password_repeated = $args['new_password_repeated'] ?? '';
+            $old_password = $args['old_password'] ?? '';
+
+
+
+            if ($new_password ) {
+                if (!$old_password) {
+                    throw new InvalidArgumentException("Need Old Password");
+                }
+                if ($new_password !== $new_password_repeated) {
+                    throw new InvalidArgumentException("Password does not match");
+                }
+                $edit_user->set_password($old_password,$new_password);
+            }
+
+            $edit_user->save();
+            $_SESSION[static::REM_USER_SETTINGS_WITH_ERROR_SESSION_KEY] = null;
+
+            try {
+                UserPages::add_flash_message('success', "Updated Settings for " . $edit_user->flow_user_name);
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                $url = $routeParser->urlFor('user_home');
+                $response = $response->withStatus(302);
+                return $response->withHeader('Location', $url);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to home after successful settings update", ['exception' => $e]);
+                throw $e;
+            }
+        } catch (Exception $e) {
+            try {
+                UserPages::add_flash_message('warning', "Cannot update settings " . $e->getMessage());
+                $_SESSION[static::REM_USER_SETTINGS_WITH_ERROR_SESSION_KEY] = $edit_user;
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                $url = $routeParser->urlFor('user_home');
+                $response = $response->withStatus(302);
+                return $response->withHeader('Location', $url);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to edit user settings after error", ['exception' => $e]);
+                throw $e;
+            }
+        }
+
     }
 
     /**
@@ -430,36 +529,48 @@ class UserPages {
     }
 
     /**
+     * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @param string $user_name
      * @return ResponseInterface
      * @throws Exception
      * @noinspection PhpUnused
      */
-    public function user_page( ResponseInterface $response, string $user_name) :ResponseInterface {
-        if ($this->user->id) {
-            return $this->user_page_for_self( $response,$user_name);
+    public function user_page( ServerRequestInterface $request,ResponseInterface $response, string $user_name) :ResponseInterface {
+        if ($this->user->flow_user_id) {
+            return $this->user_page_for_self( $request,$response,$user_name);
         } else {
-            return $this->user_page_for_others( $response,$user_name);
+            return $this->user_page_for_others( $request,$response,$user_name);
         }
     }
 
 
 
     /**
+     * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @param string $user_name
      * @return ResponseInterface
      * @throws Exception
      * @noinspection PhpUnused
      */
-    public function user_page_for_self( ResponseInterface $response, string $user_name) :ResponseInterface {
+    public function user_page_for_self(ServerRequestInterface $request, ResponseInterface $response, string $user_name) :ResponseInterface {
         try {
+
+            //if logged is  not username throw error
+            $found_user = FlowUser::find_one($user_name);
+            if (!$found_user) {
+                throw new LogicException("Should always match the same logged in user here. Username not found from url");
+            }
+
+            if ($found_user->flow_user_name !== $this->user->flow_user_name) {
+                throw new HttpForbiddenException($request,"Cannot view the settings page for someone else");
+            }
+
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'user/user_page_for_self.twig',
                 'page_title' => 'User Page',
-                'page_description' => 'No Place Like Home',
-                'requested_user' => ['user_name'=>$user_name]
+                'page_description' => 'No Place Like Home'
             ]);
         } catch (Exception $e) {
             $this->logger->error("Could not render user_page_for_self",['exception'=>$e]);
@@ -467,21 +578,30 @@ class UserPages {
         }
     }
 
+
+
+
+
     /**
+     * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @param string $user_name
      * @return ResponseInterface
+     * @throws HttpNotFoundException
      * @throws Exception
      * @noinspection PhpUnused
      */
-    public function user_page_for_others( ResponseInterface $response, string $user_name) :ResponseInterface {
+    public function user_page_for_others( ServerRequestInterface $request,ResponseInterface $response, string $user_name) :ResponseInterface {
         try {
+            $dat_user = FlowUser::find_one($user_name);
+            if (empty($dat_user)) {
+                throw new HttpNotFoundException($request,"Cannot find this user");
+            }
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'user/user_page_for_others.twig',
                 'page_title' => 'User Page',
                 'page_description' => 'No Place Like Home',
-                'user' => $this->user,
-                'requested_user' => ['user_name'=>$user_name]
+                'dat_user' => $dat_user
             ]);
         } catch (Exception $e) {
             $this->logger->error("Could not render user_page_for_others",['exception'=>$e]);

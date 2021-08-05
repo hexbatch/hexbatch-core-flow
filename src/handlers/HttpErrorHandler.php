@@ -100,7 +100,6 @@ class HttpErrorHandler extends ErrorHandler
         // if json request, return json error, else do twig error page, if exception for twig error page, do json
 
 
-
         $response = $this->responseFactory->createResponse($statusCode);
 
 

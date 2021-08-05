@@ -34,6 +34,7 @@ return function (App $app) {
         $group->group('/user', function (RouteCollectorProxy $group) {
 
             $group->get('/home', ['userPages', 'user_home'])->setName('user_home');
+            $group->post('/update_profile', ['userPages', 'update_profile'])->setName('update_profile');
 
             $group->get('/logout', ['userPages', 'do_logout'])->setName('logout');
 

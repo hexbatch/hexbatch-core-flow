@@ -1,7 +1,21 @@
-<h1> User Page for others </h1>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{  url_for('all_projects')  }}">{{ dat_user.flow_user_name }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ dat_user.flow_user_name }}</li>
+    </ol>
+</nav>
 
 
-checking {{ requsted_user.flow_user_name }}
+<div class="row">
 
-<br>
-show the  projects of this user
+    <div class="col ">
+        {{ include('user/partials/about.twig') }}
+    </div><!-- /.col -->
+
+</div> <!-- /.row -->
+
+
+
+
+

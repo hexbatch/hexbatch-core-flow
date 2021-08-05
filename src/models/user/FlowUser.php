@@ -3,8 +3,12 @@
 namespace app\models\user;
 use app\models\project\FlowProject;
 use app\models\project\FlowProjectUser;
+use Delight\Auth\EmailNotVerifiedException;
+use Delight\Auth\InvalidEmailException;
 use Delight\Auth\InvalidPasswordException;
+use Delight\Auth\NotLoggedInException;
 use Delight\Auth\TooManyRequestsException;
+use Delight\Auth\UserAlreadyExistsException;
 use Delight\Auth\UserManager;
 use DI\Container;
 use Exception;
@@ -14,9 +18,11 @@ use ParagonIE\EasyDB\EasyDB;
 use PDO;
 use Psr\Log\LoggerInterface;
 use Delight\Auth\Auth;
+use RuntimeException;
 
 class FlowUser implements JsonSerializable {
     const DEFAULT_USER_PAGE_SIZE = 20;
+    const MAX_SIZE_NAME = 40;
 
     public ?int $flow_user_id;
     public ?int $flow_user_created_at_ts;
@@ -38,6 +44,12 @@ class FlowUser implements JsonSerializable {
      */
     public function get_permissions() :array {
         return $this->permissions;
+    }
+
+    /** @noinspection PhpUnused */
+    public  function max_name(): int
+    {
+        return static::MAX_SIZE_NAME;
     }
 
     /**
@@ -134,23 +146,22 @@ class FlowUser implements JsonSerializable {
     /**
      * @param string $old_password
      * @param string $new_password
-     * @return string
-     * @return string
+     * @return void
      * @throws Exception
 
      */
-    public function set_password(string $old_password, string $new_password) : string {
+    public function set_password(string $old_password, string $new_password) : void {
         try {
             static::get_user_auth()->changePassword($old_password,$new_password);
-            return 'Password Updated';
+            return ;
         }
         catch (InvalidPasswordException $e) {
             static::get_logger()->notice("User model cannot update password due to user error ",['exception'=>$e]);
-            return $e->getMessage();
+            throw $e;
         }
         catch (TooManyRequestsException $e) {
             static::get_logger()->notice("User model cannot update password due to timeout",['exception'=>$e]);
-            return $e->getMessage();
+            throw $e;
         }
         catch (Exception $e) {
             static::get_logger()->error("User model cannot update password ",['exception'=>$e]);
@@ -175,18 +186,26 @@ class FlowUser implements JsonSerializable {
             $db = static::get_connection();
             $db->beginTransaction();
             if ($this->flow_user_guid) {
-                $db->update('flow_users',[
-                    'flow_user_name' => $this->flow_user_name,
-                    'flow_user_email' => $this->flow_user_email
-                ],[
-                    'id' => $this->flow_user_id
-                ]);
 
-                if ($this->old_email !== $this->flow_user_email) {
-                    static::get_user_auth()->changeEmail($this->flow_user_email, function() {
-                        static::get_logger()->notice("User email changed from $this->old_email to $this->flow_user_email");
-                    });
+
+                try {
+                    if ($this->old_email !== $this->flow_user_email) {
+                        static::get_user_auth()->changeEmail($this->flow_user_email, function () {
+                            static::get_logger()->notice("User email changed from $this->old_email to $this->flow_user_email");
+                        });
+                    }
+                } catch (TooManyRequestsException $too) {
+                    throw new RuntimeException("Cannot save email, too many requests at once");
+                } catch (InvalidEmailException $too) {
+                    throw new RuntimeException("Cannot save email, it is invalid ". $too->getMessage());
+                } catch (UserAlreadyExistsException $too) {
+                    throw new RuntimeException("Cannot save email, someone is using it". $too->getMessage());
+                } catch (EmailNotVerifiedException $too) {
+                    throw new RuntimeException("Cannot save email, email not verified". $too->getMessage());
+                } catch (NotLoggedInException $too) {
+                    throw new RuntimeException("Cannot save email, not logged in with subsystem". $too->getMessage());
                 }
+
 
                 if ($this->old_username !== $this->flow_user_name) {
                     $db->update('users',[
@@ -196,6 +215,13 @@ class FlowUser implements JsonSerializable {
                     ]);
                     $_SESSION[UserManager::SESSION_FIELD_USERNAME] = $this->flow_user_name;
                 }
+
+                $db->update('flow_users',[
+                    'flow_user_name' => $this->flow_user_name,
+                    'flow_user_email' => $this->flow_user_email
+                ],[
+                    'id' => $this->flow_user_id
+                ]);
 
             } else {
                 $db->insert('flow_users',[

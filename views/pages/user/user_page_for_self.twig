@@ -1,4 +1,21 @@
-<h1> Home Page for self {{ user.flow_user_email}} </h1>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{  url_for('all_projects')  }}">{{ user.flow_user_name }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ user.flow_user_name }}</li>
+    </ol>
+</nav>
+
+
+<div class="row">
+
+    <div class="col ">
+        {{ include('user/partials/my-home.twig') }}
+    </div><!-- /.col -->
+
+</div> <!-- /.row -->
+
+
 
 
 

@@ -1,0 +1,88 @@
+<div class="container">
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-10 offset-md-1 col-lg-10 offset-lg-1 col-xl-10 offset-xl-1">
+            <div class=" bg-light mt-3 px-4">
+                <form method="post" action="{{- url_for('update_profile') -}}"
+                      class="row g-3"
+                >
+                    {{ form_token(  url_for('update_profile') ) }}
+                    <div class="card">
+
+                        <div class="card-header">
+                            <label for="flow_user_name">User Name</label>
+                        </div>
+
+                        <div class="card-body">
+                            <p class="card-title">
+                                User names can be up to 40 letters, cannot start with a number, and can only have letters, numbers and dashes
+                            </p>
+                            <input type="text" id="flow_user_name" name="flow_user_name"
+                                   class="form-control" placeholder="User Name" required autofocus
+                                   maxlength="{{ edit_user.max_name }}" value="{{ edit_user.flow_user_name }}"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="card">
+
+                        <div class="card-header">
+                            <label for="flow_user_email">Email</label>
+                        </div>
+
+                        <div class="card-body">
+
+                            <input type="email" id="flow_user_email" name="flow_user_email"
+                                   class="form-control" placeholder="Email@where.at" required autofocus
+                                   value="{{ edit_user.flow_user_email }}"
+                            >
+                        </div>
+                    </div>
+
+
+
+
+
+                    <div class="card">
+
+                        <div class="card-header">
+                            Reset Password
+                        </div>
+
+                        <div class="card-body">
+                            <h5 class="card-title">
+
+                            </h5>
+
+                            <div class="col-12">
+                                <label for="old_password">Old Password</label>
+                                <input type="password" id="old_password" name="old_password" class="form-control" placeholder="Old Password" >
+                            </div>
+
+                            <div class="col-12 mt-2">
+                                <label for="new_password">New Password</label>
+                                <input type="password" id="new_password" name="new_password" class="form-control" placeholder=" New Password" >
+                            </div>
+
+                            <div class="col-12 mt-2">
+                                <label for="new_password_repeated">Repeat New Password</label>
+                                <input type="password" id="new_password_repeated" name="new_password_repeated" class="form-control" placeholder=" Confirm New Password" >
+                            </div>
+
+                        </div>
+                    </div>
+
+
+
+                    <div class="col-12">
+
+                        <button type="submit" class="btn btn-success float-end">
+                            Update Settings
+                        </button>
+                    </div>
+
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
