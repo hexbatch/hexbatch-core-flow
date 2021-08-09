@@ -20,7 +20,10 @@ Run `sudo docker exec -it hexbatch_dev_php-fpm_1 bash` and then inside do comman
 
 ### Installation Uses Composer
 Composer is installed in the docker container of php-fpm
+
 Run `sudo docker exec -it hexbatch_dev_php-fpm_1 bash` and then inside do composer command `composer install`
+
+If this is the first time running the project on this computer, also run `composer dump-autoload` as a second command to build the autoload class map so the classes in the src folder will load
 
 ### Using Libraries 
 
@@ -95,18 +98,7 @@ The important things to add to the docker-compose.yml file for xdebug to work is
 
 # Notes
 
-"nesbot/carbon": "^2.39",
-"neitanod/forceutf8": "^2.0",
-"czproject/git-php": "^3.18",
-"monolog/monolog": "^2.1",
-"symfony/yaml": "^5.1",
-"robmorgan/phinx": "^0.12.4",
-"myclabs/deep-copy": "^1.10",
-"dragonmantank/cron-expression": "^3.0",
-"jmikola/geojson": "^1.0",
-"ramsey/uuid": "^4.1",
-"ozdemirburak/iris": "^2.1",
-"hashids/hashids": "^4.0",
+do git commands like this ` exec('cd /var/www/flow_projects/a/b && git status 2>&1',$output,$result_code);`
 
 twig helpers
 

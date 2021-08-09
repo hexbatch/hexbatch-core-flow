@@ -60,7 +60,7 @@ return function (App $app) {
             $group->post('/{project_name:[[:alnum:]\-]+}/edit', ['projectPages', 'update_project'])->setName('update_project');
             $group->post('/{project_name:[[:alnum:]\-]+}/edit_permissions_ajax', ['projectPages', 'change_project_permissions'])->setName('edit_permissions_ajax');
             $group->get('/{project_name:[[:alnum:]\-]+}/permissions', ['projectPages', 'edit_project_permissions'])->setName('project_permissions');
-            $group->get('/{project_name:[[:alnum:]\-]+}/t', ['projectPages', 'edit_project_tags'])->setName('project_tags');
+            $group->get('/{project_name:[[:alnum:]\-]+}/tags', ['projectPages', 'edit_project_tags'])->setName('project_tags');
 
         });
 
