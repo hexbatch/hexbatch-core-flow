@@ -67,7 +67,7 @@ return function (App $app) {
         if ($settings->cache) {
             $settings->cache = HEXLET_TWIG_CATCHE_PATH;
         }
-        $loader = new FilesystemLoader([HEXLET_TWIG_TEMPLATE_PATH, HEXLET_TWIG_PAGES_PATH, HEXLET_TWIG_PARTIALS_PATH],
+        $loader = new FilesystemLoader([HEXLET_TWIG_TEMPLATE_PATH, HEXLET_TWIG_PAGES_PATH],
             HEXLET_TWIG_TEMPLATE_PATH);
 
         $settings_as_array = json_decode(json_encode($settings),true);

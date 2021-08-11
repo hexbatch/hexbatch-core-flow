@@ -32,6 +32,7 @@ class AddFlowUsers extends AbstractMigration
                 `id` INT NOT NULL AUTO_INCREMENT ,
                 `base_user_id` INT UNSIGNED NOT NULL , 
                 `created_at_ts` INT NULL DEFAULT NULL,
+                `last_logged_in_page_ts` INT NULL DEFAULT NULL,
                 `flow_user_guid` BINARY(16) NOT NULL ,
                 `flow_user_name` VARCHAR(39) NULL DEFAULT NULL ,
                 `flow_user_email` varchar(100) NULL DEFAULT NULL,

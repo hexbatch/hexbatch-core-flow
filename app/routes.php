@@ -61,10 +61,14 @@ return function (App $app) {
             $group->post('/{project_name:[[:alnum:]\-]+}/edit_permissions_ajax', ['projectPages', 'change_project_permissions'])->setName('edit_permissions_ajax');
             $group->get('/{project_name:[[:alnum:]\-]+}/permissions', ['projectPages', 'edit_project_permissions'])->setName('project_permissions');
             $group->get('/{project_name:[[:alnum:]\-]+}/tags', ['projectPages', 'edit_project_tags'])->setName('project_tags');
+            $group->get('/{project_name:[[:alnum:]\-]+}/history[/page/{page:[1-9]+[0-9]*}]', ['projectPages', 'project_history'])->setName('project_history');
+            $group->post('/{project_name:[[:alnum:]\-]+}/file_change_ajax', ['projectPages', 'get_file_change'])->setName('get_file_change_ajax');
+            $group->post('/{project_name:[[:alnum:]\-]+}/revert_to_commit', ['projectPages', 'revert_to_commit'])->setName('revert_to_commit_ajax');
+            $group->post('/{project_name:[[:alnum:]\-]+}/undo_commit', ['projectPages', 'undo_commit'])->setName('undo_commit_ajax');
 
         });
 
-    })->add($container->get('twigMiddleware'));
+    })->add('pingUserMiddleware')->add($container->get('twigMiddleware'));
 
 
 

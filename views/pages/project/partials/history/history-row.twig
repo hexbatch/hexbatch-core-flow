@@ -1,0 +1,66 @@
+
+
+
+<div class="col-12 col-md-6 col-xl-4">
+
+    {%  if history.get_author().flow_user_name %}
+        <a href="{{  url_for('user_page', {user_name: history.author_guid})  }}">{{ history.get_author().flow_user_name  }}</a>
+    {%  else %}
+        {{  history.author_email }}
+    {%  endif %}
+
+    <span class="badge rounded-pill bg-secondary text-white">
+        {{ history.abbreviated_commit }}
+    </span>
+</div>
+
+<div class="col-12 col-md-6 col-xl-5">
+    <span class="flow-long-date-time" data-ts="{{ history.commit_ts }}"></span>
+</div>
+
+<div class="col-12 col-md-6 col-xl-3">
+    <div class="m-1 float-end">
+        <button class="btn btn-info flow-show-commit-diff" data-commit="{{ history.commit }}">
+            See Changes <i class="bi bi-file-diff"></i>
+        </button>
+    </div>
+</div>
+
+<div class="col-12 col-md-6">
+    {% for tag in history.tags %}
+        <span class="badge rounded-pill bg-info text-dark">{{ tag }}</span>
+    {% endfor %}
+
+    {% if (history.is_head) %}
+        <span class="badge rounded-pill bg-dark text-light">
+            <i class="fas fa-chevron-up"></i> Head
+        </span>
+    {% endif %}
+
+    {% for branch in history.branches %}
+        <span class="badge rounded-pill bg-success"><i class="fas fa-code-branch"></i> {{ branch }}</span>
+    {% endfor %}
+
+</div>
+
+
+<div class="col-12">
+    <ul class="list-group m-1 flow-history-file-list">
+    {% for git_file in history.changed_files %}
+        {% if git_file.is_public %}
+        <li class="list-group-item bg-light text-dark"
+            data-commit="{{ git_file.commit }}"
+            data-file_path="{{ git_file.file }}"
+        >
+            <span>
+                {{ git_file.short_name }}
+            </span>
+            <button class="btn  btn-sm btn-outline-info float-end flow-show-file-diff">
+                <i class="bi bi-file-diff"></i>
+            </button>
+        </li>
+        {% endif %}
+    {% endfor %}
+    </ul>
+</div>
+

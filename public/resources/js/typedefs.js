@@ -46,4 +46,14 @@
  */
 
 
+/**
+ *
+ * @typedef {Object} FlowHistoryFileDiffResponse
+ * @property {boolean} success
+ * @property {string} message
+ * @property {?string} diff
+ * @property {?FlowToken} token
+ */
+
+
 

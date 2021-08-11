@@ -23,9 +23,11 @@ use RuntimeException;
 class FlowUser implements JsonSerializable {
     const DEFAULT_USER_PAGE_SIZE = 20;
     const MAX_SIZE_NAME = 40;
+    const SESSION_USER_KEY = 'flow_user';
 
     public ?int $flow_user_id;
     public ?int $flow_user_created_at_ts;
+    public ?int $last_logged_in_page_ts;
     public ?string $flow_user_name;
     public ?string $flow_user_email;
     public ?string $flow_user_guid;
@@ -130,6 +132,7 @@ class FlowUser implements JsonSerializable {
             $this->flow_user_guid = null;
             $this->base_user_id = null;
             $this->flow_user_created_at_ts = null;
+            $this->last_logged_in_page_ts = null;
             $this->permissions = [];
             return;
         }
@@ -141,6 +144,16 @@ class FlowUser implements JsonSerializable {
 
         $this->old_email = $this->flow_user_email;
         $this->old_username = $this->flow_user_name;
+    }
+
+    public function ping() {
+        $db = static::get_connection();
+        $this->last_logged_in_page_ts = time();
+        $db->update('flow_users',[
+            'last_logged_in_page_ts' => $this->last_logged_in_page_ts
+        ],[
+            'id' => $this->flow_user_id
+        ]);
     }
 
     /**
@@ -264,6 +277,7 @@ class FlowUser implements JsonSerializable {
                 id as flow_user_id,
                 base_user_id,
                 created_at_ts as flow_user_created_at_ts,
+                last_logged_in_page_ts as last_logged_in_page_ts,
                 HEX(flow_user_guid) as flow_user_guid,
                 flow_user_name,
                 flow_user_email
@@ -278,6 +292,51 @@ class FlowUser implements JsonSerializable {
             return new FlowUser($what[0]);
         } catch (Exception $e) {
             static::get_logger()->alert("User model cannot find_one ",['exception'=>$e]);
+            throw $e;
+        }
+    }
+
+    /**
+     * @param array $guid_array
+     * @return FlowUser[]
+     * @throws Exception
+     */
+    public static function get_basic_info_by_guid_array(array $guid_array) : array {
+        $question_marks = [];
+        $args = [];
+        foreach (array_unique($guid_array) as $guid) {
+            if (empty(trim($guid))) {continue;}
+            if (!ctype_xdigit($guid)) {continue;}
+            $question_marks[] = 'UNHEX(?)';
+            $args[] = $guid;
+        }
+        if (empty($args)) {return [];}
+
+        $question_marks_delimited = implode(',',$question_marks);
+
+        $sql = "SELECT 
+                u.id as flow_user_id,
+                u.base_user_id,
+                u.created_at_ts as flow_user_created_at_ts,
+                u.last_logged_in_page_ts as last_logged_in_page_ts,
+                HEX(u.flow_user_guid) as flow_user_guid,
+                u.flow_user_name,
+                u.flow_user_email
+                FROM flow_users u
+                WHERE u.flow_user_guid IN ($question_marks_delimited)";
+
+        $db = static::get_connection();
+        try {
+            $res = $db->safeQuery($sql, $args, PDO::FETCH_OBJ);
+            $ret = [];
+
+            foreach ($res as $row) {
+                $ret[] = new FlowUser($row);
+            }
+
+            return  $ret;
+        } catch (Exception $e) {
+            static::get_logger()->alert("FlowUser model cannot find_users_by_project ",['exception'=>$e]);
             throw $e;
         }
     }
@@ -353,6 +412,7 @@ class FlowUser implements JsonSerializable {
                 u.id as flow_user_id,
                 u.base_user_id,
                 u.created_at_ts as flow_user_created_at_ts,
+                u.last_logged_in_page_ts as last_logged_in_page_ts,
                 HEX(u.flow_user_guid) as flow_user_guid,
                 u.flow_user_name,
                 u.flow_user_email,
@@ -468,6 +528,7 @@ class FlowUser implements JsonSerializable {
         return [
              "flow_user_guid" => $this->flow_user_guid,
              "flow_user_created_at_ts" => $this->flow_user_created_at_ts,
+             "last_logged_in_page_ts" => $this->last_logged_in_page_ts,
              "flow_user_name" => $this->flow_user_name,
              "flow_user_email" => $this->flow_user_email,
              "permissions" => $this->get_permissions()

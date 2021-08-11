@@ -50,6 +50,7 @@ class HomePages
      */
     public function root( ResponseInterface $response) :ResponseInterface {
         try {
+            exec('cd /var/www/flow_projects/ && cat times.txt  2>&1',$output,$result_code);
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'root.twig',
                 'page_title' => 'Root',

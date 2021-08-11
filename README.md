@@ -58,6 +58,8 @@ todo gmp in docker image
 ## Javascript Libraries Used
 
 bootstrap https://getbootstrap.com/docs/4.1/getting-started/introduction/
+    
+boostrap icons https://icons.getbootstrap.com/
 
 select2  https://select2.org/
     with select2-bootstrap4-theme
@@ -73,6 +75,8 @@ lodash https://lodash.com/docs/
 font-awesome-free  https://fontawesome.com/
 
 sceditor to edit bbcode https://www.sceditor.com/
+
+diff2html for showing diffs in a nice way , see https://diff2html.xyz/index.html
 
 ### installation uses npm
  Run `nmp i` to install js dependencies that are not saved in the repo
@@ -99,6 +103,10 @@ The important things to add to the docker-compose.yml file for xdebug to work is
 # Notes
 
 do git commands like this ` exec('cd /var/www/flow_projects/a/b && git status 2>&1',$output,$result_code);`
+
+
+
+
 
 twig helpers
 

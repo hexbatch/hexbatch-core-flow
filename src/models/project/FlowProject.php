@@ -12,6 +12,7 @@ use ParagonIE\EasyDB\EasyDB;
 use PDO;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Component\Yaml\Yaml;
 
 
 class FlowProject {
@@ -38,12 +39,21 @@ class FlowProject {
     public ?string $flow_project_readme_bb_code;
     public ?string $flow_project_readme_html;
 
+    protected ?string $old_flow_project_title;
+    protected ?string $old_flow_project_blurb;
+    protected ?string $old_flow_project_readme_bb_code;
+
     /**
      * @var FlowProjectUser[] $project_users
      */
     public array $project_users;
 
     protected ?FlowUser $admin_user ;
+
+    /**
+     * @var FlowGitHistory[] $project_history
+     */
+    protected array $project_history ;
 
     protected ?FlowProjectUser $current_user_permissions;
 
@@ -86,6 +96,7 @@ class FlowProject {
         return static::MAX_SIZE_TITLE;
     }
 
+
     /**
      * @return FlowUser|null
      * @throws Exception
@@ -97,6 +108,52 @@ class FlowProject {
             $this->admin_user =  FlowUser::find_one($this->admin_flow_user_id);
         }
         return $this->admin_user;
+    }
+
+    /** @noinspection PhpUnused */
+    /**
+     * @param int|null $start_at
+     * @param int|null $limit
+     * @param bool $b_refresh , default false
+     * @return FlowGitHistory[]
+     * @throws Exception
+     */
+    public function history(?int $start_at = null, ?int $limit = null,  bool $b_refresh= false): array
+    {
+        if ($b_refresh || empty($this->project_history)) {
+            $this->project_history = FlowGitHistory::get_history($this->get_project_directory());
+        }
+        if (is_null($start_at) && is_null($limit) ) {
+            return $this->project_history;
+        }
+
+        return array_slice($this->project_history,$start_at,min($limit,count($this->project_history)));
+
+    }
+
+    /**
+     * @param bool $b_refresh
+     * @return int
+     * @throws Exception
+     */
+    public function count_total_public_history(bool $b_refresh= false) : int {
+        $history = $this->history($b_refresh);
+        $count = 0;
+        foreach ($history as $h) {
+            if ($h->has_changed_public_files()) {$count++;}
+        }
+        return $count;
+    }
+
+    /** @noinspection PhpUnused */
+    /**
+     * @return array<string, string>
+     * @throws Exception
+     */
+    public function raw_history(): array
+    {
+        $this->history();
+        return ['log'=>FlowGitHistory::last_log_json()];
     }
 
     /**
@@ -155,6 +212,10 @@ class FlowProject {
             $this->flow_project_type = null;
             $this->created_at_ts = null;
             $this->is_public = null;
+
+            $this->old_flow_project_blurb = null;
+            $this->old_flow_project_readme_bb_code = null;
+            $this->old_flow_project_title = null;
             return;
         }
         $this->project_users = [];
@@ -163,6 +224,10 @@ class FlowProject {
                 $this->$key = $val;
             }
         }
+
+        $this->old_flow_project_blurb = $this->flow_project_blurb;
+        $this->old_flow_project_readme_bb_code = $this->flow_project_readme_bb_code;
+        $this->old_flow_project_title = $this->flow_project_title;
     }
 
     public static function check_valid_title($words) : bool  {
@@ -221,6 +286,10 @@ class FlowProject {
                     " Title cannot be a hex number greater than 25 and cannot be a decimal number");
             }
 
+            $b_did_title_change = ($this->flow_project_title !== $this->old_flow_project_title);
+            $b_did_blurb_change = ($this->flow_project_blurb !== $this->old_flow_project_blurb);
+            $b_did_readme_bb_change = ($this->flow_project_readme_bb_code !== $this->old_flow_project_readme_bb_code);
+
             $db = static::get_connection();
             $db->beginTransaction();
             if ($this->flow_project_guid) {
@@ -252,7 +321,95 @@ class FlowProject {
                     'flow_project_readme_html' => $this->flow_project_readme_html,
                     'flow_project_readme_bb_code' => $this->flow_project_readme_bb_code,
                 ]);
+                $this->id = $db->lastInsertId();
             }
+
+            if (!$this->flow_project_guid) {
+                $this->flow_project_guid = $db->cell("SELECT HEX(flow_project_guid) as flow_project_guid FROM flow_projects WHERE id = ?",$this->id);
+                if (!$this->flow_project_guid) {
+                    throw new RuntimeException("Could not get project guid using id of ". $this->id);
+                }
+            }
+
+            //update the old to have the new, for next save
+            $this->old_flow_project_readme_bb_code = $this->flow_project_readme_bb_code;
+            $this->old_flow_project_blurb = $this->flow_project_blurb;
+            $this->old_flow_project_title = $this->flow_project_title;
+
+            $dir = $this->get_project_directory();
+            $make_first_commit = false;
+            if (!is_readable($dir)) {
+                $this->create_project_repo();
+                $make_first_commit = true;
+            }
+            $read_me_path_bb = $dir . DIRECTORY_SEPARATOR . 'flow_project_readme_bb_code.bbcode';
+            $read_me_path_html = $dir . DIRECTORY_SEPARATOR . 'flow_project_readme_html.html';
+            $blurb_path = $dir . DIRECTORY_SEPARATOR . 'flow_project_blurb';
+            $title_path = $dir . DIRECTORY_SEPARATOR . 'flow_project_title';
+            $yaml_path = $dir . DIRECTORY_SEPARATOR . 'flow_project.yaml';
+
+
+
+            $yaml_array = [
+              'timestamp' => time(),
+              'flow_project_guid' => $this->flow_project_guid
+            ];
+
+            $yaml = Yaml::dump($yaml_array);
+            $b_ok = file_put_contents($yaml_path,$yaml);
+            if ($b_ok === false) {throw new RuntimeException("Could not write to $yaml_path");}
+
+            if ($make_first_commit) {
+                $commit_title = "First Commit";
+                $this->do_git_command("add .");
+                $this->do_git_command("commit  -m '$commit_title'");
+            }
+
+
+            $b_ok = file_put_contents($read_me_path_bb,$this->flow_project_readme_bb_code);
+            if ($b_ok === false) {throw new RuntimeException("Could not write to $read_me_path_bb");}
+
+            $b_ok = file_put_contents($read_me_path_html,$this->flow_project_readme_html);
+            if ($b_ok === false) {throw new RuntimeException("Could not write to $read_me_path_html");}
+
+            $b_ok = file_put_contents($blurb_path,$this->flow_project_blurb);
+            if ($b_ok === false) {throw new RuntimeException("Could not write to $blurb_path");}
+
+            $b_ok = file_put_contents($title_path,$this->flow_project_title);
+            if ($b_ok === false) {throw new RuntimeException("Could not write to $title_path");}
+
+
+            $commit_title = "Changed Project";
+            $commit_message_array = [];
+            if ($b_did_title_change) { $commit_message_array[] = "Updated Project Title";}
+            if ($b_did_blurb_change) { $commit_message_array[] = "Updated Project Blurb";}
+            if ($b_did_readme_bb_change) { $commit_message_array[] = "Updated Project Read Me";}
+            //todo save entities and tags here , they will update the title and message
+
+            $this->do_git_command("add .");
+
+            array_unshift($commit_message_array,'');
+            array_unshift($commit_message_array,$commit_title);
+            $commit_message_full = implode("\n",$commit_message_array);
+
+            //if any ` in there, then escape them
+            $commit_message_full = str_replace("'","\'",$commit_message_full);
+
+
+
+            $this->do_git_command("commit  -m '$commit_message_full'");
+
+            if (isset($_SESSION[FlowUser::SESSION_USER_KEY])) {
+                /**
+                 * @var FlowUser $logged_in_user
+                 */
+                $logged_in_user = $_SESSION[FlowUser::SESSION_USER_KEY];
+                $user_info = "$logged_in_user->flow_user_guid <$logged_in_user->flow_user_email>";
+                $this->do_git_command("commit --amend --author='$user_info' --no-edit");
+            }
+
+
+
 
             $db->commit();
 
@@ -358,6 +515,71 @@ class FlowProject {
         $this->flow_project_readme_html = JsonHelper::html_from_bb_code($read_me);
         $this->flow_project_readme = str_replace('&nbsp;',' ',strip_tags($this->flow_project_readme_html));
     }
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    protected function get_projects_base_directory() : string {
+        $check =  static::$container->get('settings')->project->parent_directory;
+        if (!is_readable($check)) {
+            throw new RuntimeException("The directory of $check is not readable");
+        }
+        return $check;
+    }
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    public function get_project_directory() : string {
+        $check =  $this->get_projects_base_directory(). DIRECTORY_SEPARATOR .
+            $this->get_admin_user()->flow_user_guid . DIRECTORY_SEPARATOR . $this->flow_project_guid;
+        return $check;
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function create_project_repo() {
+        $dir = $this->get_project_directory();
+        if (!is_readable($dir)) {
+            $check =  mkdir($dir,0777,true);
+            if (!$check) {
+                throw new RuntimeException("Could not create the directory of $dir");
+            }
+            /** @noinspection PhpConditionAlreadyCheckedInspection */
+            if (!is_readable($dir)) {
+                throw new RuntimeException("Could not make a readable directory of $dir");
+            }
+        }
+        //have a directory, now need to add the .gitignore
+        $ignore = file_get_contents(__DIR__. DIRECTORY_SEPARATOR . 'repo'. DIRECTORY_SEPARATOR . 'gitignore.txt');
+        file_put_contents($dir.DIRECTORY_SEPARATOR.'.gitignore',$ignore);
+        $this->do_git_command("init");
+    }
+
+    /**
+     * @param string $command
+     * @return string
+     * @throws Exception
+     */
+    protected function do_git_command(string $command) : string {
+        $dir = $this->get_project_directory();
+        return FlowGitHistory::do_git_command($dir,$command);
+    }
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    public function get_head_commit_hash() {
+        return $this->do_git_command('rev-parse HEAD');
+    }
+
+
+
+
 
 
 }
