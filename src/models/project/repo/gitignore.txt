@@ -1,0 +1,12 @@
+# exclude everything
+*
+
+# exception to the rule
+!*.bbcode
+!*.yaml
+!*.pdf
+!*.png
+!*.jpg
+!*.md
+!*.txt
+!*.text

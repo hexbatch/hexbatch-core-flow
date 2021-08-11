@@ -100,6 +100,10 @@ The important things to add to the docker-compose.yml file for xdebug to work is
 
 do git commands like this ` exec('cd /var/www/flow_projects/a/b && git status 2>&1',$output,$result_code);`
 
+
+
+
+
 twig helpers
 
     url_for() - returns the URL for a given route. e.g.: /hello/world

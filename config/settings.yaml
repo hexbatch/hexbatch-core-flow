@@ -13,3 +13,5 @@ twig:
     cache: false
     strict_variables: true
     debug: true
+project:
+    parent_directory: /var/www/flow_projects

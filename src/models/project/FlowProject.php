@@ -12,6 +12,7 @@ use ParagonIE\EasyDB\EasyDB;
 use PDO;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Component\Yaml\Yaml;
 
 
 class FlowProject {
@@ -252,7 +253,45 @@ class FlowProject {
                     'flow_project_readme_html' => $this->flow_project_readme_html,
                     'flow_project_readme_bb_code' => $this->flow_project_readme_bb_code,
                 ]);
+                $this->id = $db->lastInsertId();
             }
+
+            if (!$this->flow_project_guid) {
+                $this->flow_project_guid = $db->cell("SELECT HEX(flow_project_guid) as flow_project_guid FROM flow_projects WHERE id = ?",$this->id);
+                if (!$this->flow_project_guid) {
+                    throw new RuntimeException("Could not get project guid using id of ". $this->id);
+                }
+            }
+
+            $dir = $this->get_project_directory();
+            if (!is_readable($dir)) {
+                $this->create_project_repo();
+            }
+            $read_me_path_bb = $dir . DIRECTORY_SEPARATOR . 'flow_project_readme_bb_code.bbcode';
+            $read_me_path_html = $dir . DIRECTORY_SEPARATOR . 'flow_project_readme_html.html';
+            $blurb_path = $dir . DIRECTORY_SEPARATOR . 'flow_project_blurb.txt';
+            $yaml_path = $dir . DIRECTORY_SEPARATOR . 'flow_project.yaml';
+
+            $b_ok = file_put_contents($read_me_path_bb,$this->flow_project_readme_bb_code);
+            if ($b_ok === false) {throw new RuntimeException("Could not write to $read_me_path_bb");}
+
+            $b_ok = file_put_contents($read_me_path_html,$this->flow_project_readme_html);
+            if ($b_ok === false) {throw new RuntimeException("Could not write to $read_me_path_html");}
+
+            $b_ok = file_put_contents($blurb_path,$this->flow_project_blurb);
+            if ($b_ok === false) {throw new RuntimeException("Could not write to $blurb_path");}
+
+            $yaml_array = [
+              'flow_project_title' =>   $this->flow_project_title,
+              'timestamp' => time(),
+              'flow_project_guid' => $this->flow_project_guid
+            ];
+            $yaml = Yaml::dump($yaml_array);
+            $b_ok = file_put_contents($yaml_path,$yaml);
+            if ($b_ok === false) {throw new RuntimeException("Could not write to $yaml_path");}
+            $this->do_git_command("add .");
+            $commit_message = "Auto Commit";
+            $this->do_git_command("commit -m '$commit_message'");
 
             $db->commit();
 
@@ -358,6 +397,67 @@ class FlowProject {
         $this->flow_project_readme_html = JsonHelper::html_from_bb_code($read_me);
         $this->flow_project_readme = str_replace('&nbsp;',' ',strip_tags($this->flow_project_readme_html));
     }
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    protected function get_projects_base_directory() : string {
+        $check =  static::$container->get('settings')->project->parent_directory;
+        if (!is_readable($check)) {
+            throw new RuntimeException("The directory of $check is not readable");
+        }
+        return $check;
+    }
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    protected function get_project_directory() : string {
+        $check =  $this->get_projects_base_directory(). DIRECTORY_SEPARATOR .
+            $this->get_admin_user()->flow_user_guid . DIRECTORY_SEPARATOR . $this->flow_project_guid;
+        return $check;
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function create_project_repo() {
+        $dir = $this->get_project_directory();
+        if (!is_readable($dir)) {
+            $check =  mkdir($dir,0777,true);
+            if (!$check) {
+                throw new RuntimeException("Could not create the directory of $dir");
+            }
+            /** @noinspection PhpConditionAlreadyCheckedInspection */
+            if (!is_readable($dir)) {
+                throw new RuntimeException("Could not make a readable directory of $dir");
+            }
+        }
+        //have a directory, now need to add the .gitignore
+        $ignore = file_get_contents(__DIR__. DIRECTORY_SEPARATOR . 'repo'. DIRECTORY_SEPARATOR . 'gitignore.txt');
+        file_put_contents($dir.DIRECTORY_SEPARATOR.'.gitignore',$ignore);
+        $this->do_git_command("init");
+    }
+
+    /**
+     * @param string $command
+     * @return string
+     * @throws Exception
+     */
+    protected function do_git_command(string $command) : string {
+        $dir = $this->get_project_directory();
+        exec("cd $dir && git $command 2>&1",$output,$result_code);
+        if ($result_code) {
+            throw new RuntimeException("Git returned code of $result_code : " . implode("\n",$output));
+        }
+        return  implode("\n",$output);
+    }
+
+
+
+
 
 
 }
