@@ -39,6 +39,10 @@ class FlowProject {
     public ?string $flow_project_readme_bb_code;
     public ?string $flow_project_readme_html;
 
+    protected ?string $old_flow_project_title;
+    protected ?string $old_flow_project_blurb;
+    protected ?string $old_flow_project_readme_bb_code;
+
     /**
      * @var FlowProjectUser[] $project_users
      */
@@ -156,6 +160,10 @@ class FlowProject {
             $this->flow_project_type = null;
             $this->created_at_ts = null;
             $this->is_public = null;
+
+            $this->old_flow_project_blurb = null;
+            $this->old_flow_project_readme_bb_code = null;
+            $this->old_flow_project_title = null;
             return;
         }
         $this->project_users = [];
@@ -164,6 +172,10 @@ class FlowProject {
                 $this->$key = $val;
             }
         }
+
+        $this->old_flow_project_blurb = $this->flow_project_blurb;
+        $this->old_flow_project_readme_bb_code = $this->flow_project_readme_bb_code;
+        $this->old_flow_project_title = $this->flow_project_title;
     }
 
     public static function check_valid_title($words) : bool  {
@@ -222,6 +234,10 @@ class FlowProject {
                     " Title cannot be a hex number greater than 25 and cannot be a decimal number");
             }
 
+            $b_did_title_change = ($this->flow_project_title !== $this->old_flow_project_title);
+            $b_did_blurb_change = ($this->flow_project_blurb !== $this->old_flow_project_blurb);
+            $b_did_readme_bb_change = ($this->flow_project_readme_bb_code !== $this->old_flow_project_readme_bb_code);
+
             $db = static::get_connection();
             $db->beginTransaction();
             if ($this->flow_project_guid) {
@@ -263,6 +279,11 @@ class FlowProject {
                 }
             }
 
+            //update the old to have the new, for next save
+            $this->old_flow_project_readme_bb_code = $this->flow_project_readme_bb_code;
+            $this->old_flow_project_blurb = $this->flow_project_blurb;
+            $this->old_flow_project_title = $this->flow_project_title;
+
             $dir = $this->get_project_directory();
             if (!is_readable($dir)) {
                 $this->create_project_repo();
@@ -289,9 +310,38 @@ class FlowProject {
             $yaml = Yaml::dump($yaml_array);
             $b_ok = file_put_contents($yaml_path,$yaml);
             if ($b_ok === false) {throw new RuntimeException("Could not write to $yaml_path");}
+
+            $commit_title = "Changed Project";
+            $commit_message_array = [];
+            if ($b_did_title_change) { $commit_message_array[] = "Updated Project Title";}
+            if ($b_did_blurb_change) { $commit_message_array[] = "Updated Project Blurb";}
+            if ($b_did_readme_bb_change) { $commit_message_array[] = "Updated Project Read Me";}
+            //todo save entities and tags here , they will update the title and message
+
             $this->do_git_command("add .");
-            $commit_message = "Auto Commit";
-            $this->do_git_command("commit -m '$commit_message'");
+
+            array_unshift($commit_message_array,'');
+            array_unshift($commit_message_array,$commit_title);
+            $commit_message_full = implode("\n",$commit_message_array);
+
+            //if any ` in there, then escape them
+            $commit_message_full = str_replace("'","\'",$commit_message_full);
+
+
+
+            $this->do_git_command("commit  -m '$commit_message_full'");
+
+            if (isset($_SESSION[FlowUser::SESSION_USER_KEY])) {
+                /**
+                 * @var FlowUser $logged_in_user
+                 */
+                $logged_in_user = $_SESSION[FlowUser::SESSION_USER_KEY];
+                $user_info = "$logged_in_user->flow_user_guid <$logged_in_user->flow_user_email>";
+                $this->do_git_command("commit --amend --author='$user_info' --no-edit");
+            }
+
+
+
 
             $db->commit();
 

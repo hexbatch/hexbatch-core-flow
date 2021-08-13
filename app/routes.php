@@ -64,7 +64,7 @@ return function (App $app) {
 
         });
 
-    })->add($container->get('twigMiddleware'));
+    })->add('pingUserMiddleware')->add($container->get('twigMiddleware'));
 
 
 

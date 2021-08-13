@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use app\controllers\user\PingUserMiddleware;
 use app\models\user\FlowUser;
 use app\controllers\user\CheckLoggedInMiddleware;
 use Delight\Auth\Auth;
@@ -41,6 +42,13 @@ return function (Container $container) {
 
         $auth = $container->get('auth');
         return new CheckLoggedInMiddleware($auth);
+
+    });
+
+    $container->set('pingUserMiddleware', function() use ($container) {
+
+        $user = $container->get('user');
+        return new PingUserMiddleware($user);
 
     });
 

@@ -39,9 +39,9 @@
 </head>
 <body class="px-sm-1 px-xl-3 ">
 
-{{ include('partials/top-nav.twig') }}
+{{ include('main/partials/top-nav.twig') }}
 
-{{ include('partials/flash.twig') }}
+{{ include('main/partials/flash.twig') }}
 
 <main>
     <div class="container-fluid ">
@@ -51,7 +51,7 @@
     </div> <!-- /.container-fluid -->
 </main>
 
-{{ include('partials/bottom-nav.twig') }}
+{{ include('main/partials/bottom-nav.twig') }}
 
 
 <script src="{{ root_url }}/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js" ></script>
@@ -69,7 +69,7 @@
 <script src="{{ root_url }}/public/resources/js/app.js"></script>
 
 <script src="{{ root_url }}/public/resources/js/toast.js"></script>
-
+{{ dump_session() }}
 
 </body>
 </html>

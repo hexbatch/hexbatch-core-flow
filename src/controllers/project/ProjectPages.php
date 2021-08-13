@@ -135,7 +135,7 @@ class ProjectPages
             }
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/single_project_home.twig',
-                'page_title' => 'Your Projects',
+                'page_title' => 'Project ' . $project->flow_project_title,
                 'page_description' => 'Shows projects for user',
                 'project' => $project
             ]);

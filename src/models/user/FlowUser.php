@@ -23,9 +23,11 @@ use RuntimeException;
 class FlowUser implements JsonSerializable {
     const DEFAULT_USER_PAGE_SIZE = 20;
     const MAX_SIZE_NAME = 40;
+    const SESSION_USER_KEY = 'flow_user';
 
     public ?int $flow_user_id;
     public ?int $flow_user_created_at_ts;
+    public ?int $last_logged_in_page_ts;
     public ?string $flow_user_name;
     public ?string $flow_user_email;
     public ?string $flow_user_guid;
@@ -130,6 +132,7 @@ class FlowUser implements JsonSerializable {
             $this->flow_user_guid = null;
             $this->base_user_id = null;
             $this->flow_user_created_at_ts = null;
+            $this->last_logged_in_page_ts = null;
             $this->permissions = [];
             return;
         }
@@ -141,6 +144,16 @@ class FlowUser implements JsonSerializable {
 
         $this->old_email = $this->flow_user_email;
         $this->old_username = $this->flow_user_name;
+    }
+
+    public function ping() {
+        $db = static::get_connection();
+        $this->last_logged_in_page_ts = time();
+        $db->update('flow_users',[
+            'last_logged_in_page_ts' => $this->last_logged_in_page_ts
+        ],[
+            'id' => $this->flow_user_id
+        ]);
     }
 
     /**
@@ -264,6 +277,7 @@ class FlowUser implements JsonSerializable {
                 id as flow_user_id,
                 base_user_id,
                 created_at_ts as flow_user_created_at_ts,
+                last_logged_in_page_ts as last_logged_in_page_ts,
                 HEX(flow_user_guid) as flow_user_guid,
                 flow_user_name,
                 flow_user_email
@@ -353,6 +367,7 @@ class FlowUser implements JsonSerializable {
                 u.id as flow_user_id,
                 u.base_user_id,
                 u.created_at_ts as flow_user_created_at_ts,
+                u.last_logged_in_page_ts as last_logged_in_page_ts,
                 HEX(u.flow_user_guid) as flow_user_guid,
                 u.flow_user_name,
                 u.flow_user_email,
@@ -468,6 +483,7 @@ class FlowUser implements JsonSerializable {
         return [
              "flow_user_guid" => $this->flow_user_guid,
              "flow_user_created_at_ts" => $this->flow_user_created_at_ts,
+             "last_logged_in_page_ts" => $this->last_logged_in_page_ts,
              "flow_user_name" => $this->flow_user_name,
              "flow_user_email" => $this->flow_user_email,
              "permissions" => $this->get_permissions()
