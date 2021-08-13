@@ -1,0 +1,20 @@
+<div class="container p-0 m-1">
+
+    <div class="card" style="width: fit-content">
+
+        <div class="card-header">
+            History For {{ project.flow_project_title }}
+        </div>
+
+        <div class="card-body">
+            <h5 class="card-title">
+                View History
+            </h5>
+
+            <pre>
+                {{ dump(project.history) }}
+            </pre>
+        </div>
+
+    </div>
+</div>

@@ -50,6 +50,11 @@ class FlowProject {
 
     protected ?FlowUser $admin_user ;
 
+    /**
+     * @var FlowGitHistory[] $project_history
+     */
+    protected array $project_history ;
+
     protected ?FlowProjectUser $current_user_permissions;
 
     public function set_current_user_permissions(?FlowProjectUser $v) {
@@ -102,6 +107,32 @@ class FlowProject {
             $this->admin_user =  FlowUser::find_one($this->admin_flow_user_id);
         }
         return $this->admin_user;
+    }
+
+    /** @noinspection PhpUnused */
+    /**
+     * @param bool $b_refresh , default false
+     * @return FlowGitHistory[]
+     * @throws Exception
+     */
+    public function history(bool $b_refresh= false): array
+    {
+        if ($b_refresh || empty($this->project_history)) {
+            $this->project_history = FlowGitHistory::get_history($this->get_project_directory());
+        }
+
+        return $this->project_history;
+    }
+
+    /** @noinspection PhpUnused */
+    /**
+     * @return array<string, string>
+     * @throws Exception
+     */
+    public function raw_history(): array
+    {
+        $this->history();
+        return ['log'=>FlowGitHistory::last_log_json()];
     }
 
     /**
@@ -498,11 +529,7 @@ class FlowProject {
      */
     protected function do_git_command(string $command) : string {
         $dir = $this->get_project_directory();
-        exec("cd $dir && git $command 2>&1",$output,$result_code);
-        if ($result_code) {
-            throw new RuntimeException("Git returned code of $result_code : " . implode("\n",$output));
-        }
-        return  implode("\n",$output);
+        return FlowGitHistory::do_git_command($dir,$command);
     }
 
 

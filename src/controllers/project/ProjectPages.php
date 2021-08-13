@@ -642,4 +642,34 @@ class ProjectPages
     }
 
 
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function project_history( ServerRequestInterface $request,ResponseInterface $response,
+                                       string $user_name, string $project_name) :ResponseInterface {
+        try {
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+
+            if (!$project) {
+                throw new HttpNotFoundException($request,"Project $project_name Not Found");
+            }
+            return $this->view->render($response, 'main.twig', [
+                'page_template_path' => 'project/project_history.twig',
+                'page_title' => "History for Project $project_name",
+                'page_description' => 'History',
+                'project' => $project,
+            ]);
+        } catch (Exception $e) {
+            $this->logger->error("Could not render history page",['exception'=>$e]);
+            throw $e;
+        }
+    }
+
+
 }

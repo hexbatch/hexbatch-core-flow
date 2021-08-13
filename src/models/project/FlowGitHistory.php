@@ -79,6 +79,10 @@ ee9620b8189e9efc59c665afab141a0a9f245c4d tag	refs/tags/v1.4
 
  */
 
+use app\hexlet\JsonHelper;
+use Exception;
+use RuntimeException;
+
 class FlowGitHistory {
 
     public ?string $project_guid;
@@ -106,13 +110,43 @@ class FlowGitHistory {
      */
     public array $tags = [];
 
+    protected static string $last_log_json;
+    public static function last_log_json() :string { return static::$last_log_json;}
+
     /**
      * @param string $project_path
      * @return FlowGitHistory[]
+     * @throws Exception
      */
     public static function get_history(string $project_path) :array {
 
+        $log_command = <<<END
+          --no-pager log -n30000 --pretty=format:'{   ||qq|| commit ||qq|| :  ||qq|| %H ||qq|| ,   ||qq|| abbreviated_commit ||qq|| :  ||qq|| %h ||qq|| ,   ||qq|| tree ||qq|| :  ||qq|| %T ||qq|| ,   ||qq|| abbreviated_tree ||qq|| :  ||qq|| %t ||qq|| ,   ||qq|| parent ||qq|| :  ||qq|| %P ||qq|| ,   ||qq|| abbreviated_parent ||qq|| :  ||qq|| %p ||qq|| ,   ||qq|| refs ||qq|| :  ||qq|| %D ||qq|| ,   ||qq|| encoding ||qq|| :  ||qq|| %e ||qq|| ,   ||qq|| subject ||qq|| :  ||qq|| %s ||qq|| ,   ||qq|| sanitized_subject_line ||qq|| :  ||qq|| %f ||qq|| ,   ||qq|| body ||qq|| :  ||qq|| %b ||qq|| ,   ||qq|| commit_notes ||qq|| :  ||qq|| %N ||qq|| ,   ||qq|| verification_flag ||qq|| :  ||qq|| %G? ||qq|| ,   ||qq|| signer ||qq|| :  ||qq|| %GS ||qq|| ,   ||qq|| signer_key ||qq|| :  ||qq|| %GK ||qq|| ,   ||qq|| author ||qq|| : {     ||qq|| name ||qq|| :  ||qq|| %aN ||qq|| ,     ||qq|| email ||qq|| :  ||qq|| %aE ||qq|| ,     ||qq|| date ||qq|| :  ||qq|| %at ||qq||   },   ||qq|| commiter ||qq|| : {     ||qq|| name ||qq|| :  ||qq|| %cN ||qq|| ,     ||qq|| email ||qq|| :  ||qq|| %cE ||qq|| ,     ||qq|| date ||qq|| :  ||qq|| %ct ||qq||   }}||end||' |  tr '\n' '||nn||' | tr '"' '\\"'
+        END;
+        $log_command = trim($log_command);
+        $raw_log = static::do_git_command($project_path,$log_command);
+        $log_with_double_quotes = str_replace(' ||qq|| ','"',$raw_log);
+        $log_with_commas = str_replace('||end||',',',$log_with_double_quotes);
+        $fix_for_comma_bar = str_replace(',|',',',$log_with_commas);
+        $trim_trailing_comma = trim($fix_for_comma_bar,', ');
+        $json_log = '['.$trim_trailing_comma.']';
+        $what = JsonHelper::fromString($json_log);
+        static::$last_log_json = $trim_trailing_comma;
         return [];
+    }
+
+    /**
+     * @param string $directory
+     * @param string $command
+     * @return string
+     * @throws Exception
+     */
+    public static function do_git_command(string $directory, string $command) : string {
+        exec("cd $directory && git $command 2>&1",$output,$result_code);
+        if ($result_code) {
+            throw new RuntimeException("Git returned code of $result_code : " . implode("\n",$output));
+        }
+        return  implode("\n",$output);
     }
 
 }
