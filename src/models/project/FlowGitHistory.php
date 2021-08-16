@@ -44,24 +44,7 @@ namespace app\models\project;
 
  */
 
-/*
- * git --no-pager log --stat -n30000 --no-color
- */
 
-/*
-commit 205c5add57482498a915abf764cce981814f61f0 (HEAD -> master)
-Author: 11EBE1D3BC0292BFB6380242AC130005 <willwoodlief+help@gmail.com>
-Date:   Thu Aug 12 19:41:10 2021 +0000
-
-    Changed Project
-
-    Updated Project Blurb
-
- flow_project.yaml      | 2 +-
- flow_project_blurb.txt | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
-(blank line at end of commit)
- */
 
 
 /*
@@ -80,6 +63,7 @@ ee9620b8189e9efc59c665afab141a0a9f245c4d tag	refs/tags/v1.4
  */
 
 use app\hexlet\JsonHelper;
+use app\models\user\FlowUser;
 use Exception;
 use RuntimeException;
 
@@ -93,25 +77,83 @@ class FlowGitHistory {
     public ?string $parent;
     public ?string $abbreviated_parent;
     public ?string $refs;
-    public ?string $encoding;
     public ?string $subject;
     public ?string $body;
     public ?string $author_guid;
     public ?string $author_email;
+
     public ?string $commit_ts;
 
+
+    public ?FlowUser $author_object;
+
+    public function get_author() {
+        if (empty($this->author_object)) {
+            $this->author_object = new FlowUser();
+        }
+        return $this->author_object;
+    }
+
     /**
-     * @var string $file_paths
+     * @var FlowGitFile[] $changed_files
      */
-    public array $file_paths= [];
+    public array $changed_files = [];
 
     /**
      * @var string[] $tags
      */
     public array $tags = [];
 
+    /**
+     * @var string[] $tags
+     */
+    public array $branches = [];
+
+    public bool $is_head = false;
+
+
+
     protected static string $last_log_json;
     public static function last_log_json() :string { return static::$last_log_json;}
+
+    public function __construct($object=null){
+
+        if (empty($object)) {
+            foreach ($this as $key => $val) {
+                if (!is_array($this->$key) && !is_bool($this->$key)) {
+                    $this->$key = null;
+                }
+            }
+            return;
+        }
+
+        foreach ($object as $key => $val) {
+            if (property_exists($this,$key)) {
+                $this->$key = $val;
+            }
+        }
+
+        $refs_themselves = explode(',',$this->refs);
+        foreach ($refs_themselves as $a_ref) {
+            $a_ref = trim($a_ref);
+            if (strpos($a_ref,'tag') !== false) {
+                $tag_parts = explode(' ',$a_ref);
+                array_shift($tag_parts);
+                $tag = trim(join('',$tag_parts));
+                $this->tags[] = $tag;
+            } else {
+                if (strpos($a_ref,'HEAD ->') !== false) {
+                    $this->is_head = true;
+                }
+
+                $maybe_branch =  trim(str_replace('HEAD ->','',$a_ref));
+                if ($maybe_branch) {
+                    $this->branches[] = $maybe_branch;
+                }
+            }
+        }
+
+    }
 
     /**
      * @param string $project_path
@@ -120,6 +162,8 @@ class FlowGitHistory {
      */
     public static function get_history(string $project_path) :array {
 
+        $path_parts = explode(DIRECTORY_SEPARATOR,trim($project_path,DIRECTORY_SEPARATOR));
+        $project_guid = end($path_parts);
         $log_command = <<<END
           --no-pager log -n30000 --pretty=format:'{   ||qq|| commit ||qq|| :  ||qq|| %H ||qq|| ,   ||qq|| abbreviated_commit ||qq|| :  ||qq|| %h ||qq|| ,   ||qq|| tree ||qq|| :  ||qq|| %T ||qq|| ,   ||qq|| abbreviated_tree ||qq|| :  ||qq|| %t ||qq|| ,   ||qq|| parent ||qq|| :  ||qq|| %P ||qq|| ,   ||qq|| abbreviated_parent ||qq|| :  ||qq|| %p ||qq|| ,   ||qq|| refs ||qq|| :  ||qq|| %D ||qq|| ,   ||qq|| encoding ||qq|| :  ||qq|| %e ||qq|| ,   ||qq|| subject ||qq|| :  ||qq|| %s ||qq|| ,   ||qq|| sanitized_subject_line ||qq|| :  ||qq|| %f ||qq|| ,   ||qq|| body ||qq|| :  ||qq|| %b ||qq|| ,   ||qq|| commit_notes ||qq|| :  ||qq|| %N ||qq|| ,   ||qq|| verification_flag ||qq|| :  ||qq|| %G? ||qq|| ,   ||qq|| signer ||qq|| :  ||qq|| %GS ||qq|| ,   ||qq|| signer_key ||qq|| :  ||qq|| %GK ||qq|| ,   ||qq|| author ||qq|| : {     ||qq|| name ||qq|| :  ||qq|| %aN ||qq|| ,     ||qq|| email ||qq|| :  ||qq|| %aE ||qq|| ,     ||qq|| date ||qq|| :  ||qq|| %at ||qq||   },   ||qq|| commiter ||qq|| : {     ||qq|| name ||qq|| :  ||qq|| %cN ||qq|| ,     ||qq|| email ||qq|| :  ||qq|| %cE ||qq|| ,     ||qq|| date ||qq|| :  ||qq|| %ct ||qq||   }}||end||' |  tr '\n' '||nn||' | tr '"' '\\"'
         END;
@@ -130,9 +174,59 @@ class FlowGitHistory {
         $fix_for_comma_bar = str_replace(',|',',',$log_with_commas);
         $trim_trailing_comma = trim($fix_for_comma_bar,', ');
         $json_log = '['.$trim_trailing_comma.']';
+        static::$last_log_json = $json_log;
         $what = JsonHelper::fromString($json_log);
-        static::$last_log_json = $trim_trailing_comma;
-        return [];
+
+        $ret = [];
+        /**
+         * @var array<string,FlowGitHistory> $hash
+         */
+
+        $files_changed = FlowGitHistoryStat::get_stats($project_path);
+        $file_changed_hash = [];
+        foreach ($files_changed as $changed) {
+            $file_changed_hash[$changed->commit] = $changed->files;
+        }
+
+
+        /**
+         * @var array<string,FlowGitHistory> $user_guid_hash
+         */
+        $user_guid_hash = [];
+
+        foreach ($what as $when) {
+            $when['author_guid'] = isset($when['author'])? ($when['author']['name'] ?? null) : null  ;
+            $when['author_email'] = isset($when['author'])? ($when['author']['email'] ?? null) : null  ;
+            $when['commit_ts'] = isset($when['commiter'])? ($when['commiter']['date'] ?? null) : null  ;
+            $when['project_guid'] = $project_guid;
+            $node = new FlowGitHistory($when);
+            if (array_key_exists($node->commit,$file_changed_hash)) {
+                $node->changed_files = $file_changed_hash[$node->commit];
+            }
+            if (!isset($user_guid_hash[$node->author_guid])) {$user_guid_hash[$node->author_guid] = [];}
+            $user_guid_hash[$node->author_guid][] = $node;
+            $ret[] = $node;
+        }
+
+        //get user info
+        $users = FlowUser::get_basic_info_by_guid_array(array_keys($user_guid_hash));
+        foreach ($users as $user) {
+            if (isset($user_guid_hash[$user->flow_user_guid])) {
+
+                /**
+                 * @var FlowGitHistory $history
+                 */
+                foreach ($user_guid_hash[$user->flow_user_guid] as $history) {
+                    $history->author_object = $user;
+                }
+            }
+        }
+
+
+
+
+
+        return $ret;
     }
 
     /**
@@ -148,5 +242,7 @@ class FlowGitHistory {
         }
         return  implode("\n",$output);
     }
+
+
 
 }

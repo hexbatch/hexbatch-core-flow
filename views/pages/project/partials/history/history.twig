@@ -1,0 +1,30 @@
+<div class="container p-0 m-1">
+
+    <div class="card" style="width: fit-content">
+
+        <div class="card-header">
+            History For {{ project.flow_project_title }}
+        </div>
+
+        <div class="card-body">
+            <h5 class="card-title">
+                View History
+            </h5>
+
+
+            {% for history in project.history %}
+            <div class="row" data-commit="{{ history.commit }}">
+                {% if not history.changed_files is empty %}
+                    {{ include('project/partials/history/history-row.twig'  , {'history': history}) }}
+                {% endif %}
+            </div>
+            {% endfor %}
+
+
+{#            <pre>#}
+{#                {{ dump(project.history) }}#}
+{#            </pre>#}
+        </div>
+
+    </div>
+</div>

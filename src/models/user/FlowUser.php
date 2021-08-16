@@ -297,6 +297,51 @@ class FlowUser implements JsonSerializable {
     }
 
     /**
+     * @param array $guid_array
+     * @return FlowUser[]
+     * @throws Exception
+     */
+    public static function get_basic_info_by_guid_array(array $guid_array) : array {
+        $question_marks = [];
+        $args = [];
+        foreach (array_unique($guid_array) as $guid) {
+            if (empty(trim($guid))) {continue;}
+            if (!ctype_xdigit($guid)) {continue;}
+            $question_marks[] = 'UNHEX(?)';
+            $args[] = $guid;
+        }
+        if (empty($args)) {return [];}
+
+        $question_marks_delimited = implode(',',$question_marks);
+
+        $sql = "SELECT 
+                u.id as flow_user_id,
+                u.base_user_id,
+                u.created_at_ts as flow_user_created_at_ts,
+                u.last_logged_in_page_ts as last_logged_in_page_ts,
+                HEX(u.flow_user_guid) as flow_user_guid,
+                u.flow_user_name,
+                u.flow_user_email
+                FROM flow_users u
+                WHERE u.flow_user_guid IN ($question_marks_delimited)";
+
+        $db = static::get_connection();
+        try {
+            $res = $db->safeQuery($sql, $args, PDO::FETCH_OBJ);
+            $ret = [];
+
+            foreach ($res as $row) {
+                $ret[] = new FlowUser($row);
+            }
+
+            return  $ret;
+        } catch (Exception $e) {
+            static::get_logger()->alert("FlowUser model cannot find_users_by_project ",['exception'=>$e]);
+            throw $e;
+        }
+    }
+
+    /**
      * Finds users, and their permissions, that are in or out of a project
      * @param bool $b_in_project
      * @param string $project_guid

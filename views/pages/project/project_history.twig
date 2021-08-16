@@ -27,11 +27,7 @@
     </div><!-- /.col -->
 
     <div class="col ">
-        {% if project.get_current_user_permissions().can_admin %}
-            {{ include('project/partials/admin-history.twig') }}
-        {% else %}
-            {{ include('project/partials/view-history.twig') }}
-        {% endif %}
+        {{ include('project/partials/history/history.twig') }}
     </div><!-- /.col -->
 
 </div> <!-- /.row -->

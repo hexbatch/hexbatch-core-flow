@@ -322,6 +322,7 @@ class FlowProject {
             $read_me_path_bb = $dir . DIRECTORY_SEPARATOR . 'flow_project_readme_bb_code.bbcode';
             $read_me_path_html = $dir . DIRECTORY_SEPARATOR . 'flow_project_readme_html.html';
             $blurb_path = $dir . DIRECTORY_SEPARATOR . 'flow_project_blurb.txt';
+            $title_path = $dir . DIRECTORY_SEPARATOR . 'flow_project_title.txt';
             $yaml_path = $dir . DIRECTORY_SEPARATOR . 'flow_project.yaml';
 
             $b_ok = file_put_contents($read_me_path_bb,$this->flow_project_readme_bb_code);
@@ -333,11 +334,14 @@ class FlowProject {
             $b_ok = file_put_contents($blurb_path,$this->flow_project_blurb);
             if ($b_ok === false) {throw new RuntimeException("Could not write to $blurb_path");}
 
+            $b_ok = file_put_contents($title_path,$this->flow_project_title);
+            if ($b_ok === false) {throw new RuntimeException("Could not write to $title_path");}
+
             $yaml_array = [
-              'flow_project_title' =>   $this->flow_project_title,
               'timestamp' => time(),
               'flow_project_guid' => $this->flow_project_guid
             ];
+
             $yaml = Yaml::dump($yaml_array);
             $b_ok = file_put_contents($yaml_path,$yaml);
             if ($b_ok === false) {throw new RuntimeException("Could not write to $yaml_path");}
