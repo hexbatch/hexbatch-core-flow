@@ -1,3 +1,11 @@
+<script>
+    let flow_project_get_file_change_ajax_url = "{{-  url_for('get_file_change_ajax',{
+        user_name: project.get_admin_user().flow_user_name ,
+        project_name: project.flow_project_title
+    }) -}}";
+
+</script>
+
 <div class="container p-0 m-1">
 
     <div class="card" style="width: fit-content">
@@ -6,14 +14,14 @@
             History For {{ project.flow_project_title }}
         </div>
 
-        <div class="card-body">
+        <div class="card-body " id="flow-history-area">
             <h5 class="card-title">
                 View History
             </h5>
 
 
             {% for history in project.history %}
-            <div class="row" data-commit="{{ history.commit }}">
+            <div class="row mb-2 p-1 flow-grid-striped" data-commit="{{ history.commit }}">
                 {% if not history.changed_files is empty %}
                     {{ include('project/partials/history/history-row.twig'  , {'history': history}) }}
                 {% endif %}

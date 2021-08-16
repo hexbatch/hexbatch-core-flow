@@ -58,6 +58,8 @@ todo gmp in docker image
 ## Javascript Libraries Used
 
 bootstrap https://getbootstrap.com/docs/4.1/getting-started/introduction/
+    
+boostrap icons https://icons.getbootstrap.com/
 
 select2  https://select2.org/
     with select2-bootstrap4-theme

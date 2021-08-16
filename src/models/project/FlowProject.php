@@ -499,7 +499,7 @@ class FlowProject {
      * @return string
      * @throws Exception
      */
-    protected function get_project_directory() : string {
+    public function get_project_directory() : string {
         $check =  $this->get_projects_base_directory(). DIRECTORY_SEPARATOR .
             $this->get_admin_user()->flow_user_guid . DIRECTORY_SEPARATOR . $this->flow_project_guid;
         return $check;

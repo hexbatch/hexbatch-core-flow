@@ -31,3 +31,15 @@ div.flow-project-readme-display {
 div#flow-find-user span.select2.select2-container {
     width: 100% !important;
 }
+
+div#flow-history-area .flow-grid-striped.row:nth-of-type(odd) {
+    background-color: rgba(0,0,0,.05);
+}
+
+div#flow-history-area .flow-grid-striped.row:nth-of-type(even) {
+    background-color: rgba(0,0,0,.10);
+}
+
+div#flow-history-area ul.flow-history-file-list li {
+
+}
