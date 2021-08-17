@@ -700,7 +700,7 @@ class ProjectPages
                 throw new InvalidArgumentException("Need the X-Requested-With header");
             }
 
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'edit');
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
 
 
             $file_path = $args['file_path'] ?? '';
@@ -712,7 +712,7 @@ class ProjectPages
             $flow_file = new FlowGitFile($project_directory,$commit,$file_path);
             $diff = $flow_file->show_diff();
 
-            $data = ['success'=>true,'message'=>'','data'=>$diff,'token'=> null];
+            $data = ['success'=>true,'message'=>'','diff'=>$diff,'token'=> null];
             $payload = json_encode($data);
 
             $response->getBody()->write($payload);
@@ -722,7 +722,7 @@ class ProjectPages
 
 
         } catch (Exception $e) {
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> null];
+            $data = ['success'=>false,'message'=>$e->getMessage(),'diff'=>null,'token'=> null];
             $payload = json_encode($data);
 
             $response->getBody()->write($payload);

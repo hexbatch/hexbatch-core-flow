@@ -76,6 +76,8 @@ font-awesome-free  https://fontawesome.com/
 
 sceditor to edit bbcode https://www.sceditor.com/
 
+diff2html for showing diffs in a nice way , see https://diff2html.xyz/index.html
+
 ### installation uses npm
  Run `nmp i` to install js dependencies that are not saved in the repo
  

@@ -50,6 +50,7 @@ class FlowGitFile {
         $raw_array_reversed = array_reverse($raw_array);
         $output_as_array_reversed = [];
         foreach ($raw_array_reversed as $thing) {
+            if (strpos($thing,"\ No newline at end of file") !== false) {continue;}
             if (strpos($thing,"+++ b/$this->file") !== false) {break;}
             $output_as_array_reversed[] = $thing;
         }

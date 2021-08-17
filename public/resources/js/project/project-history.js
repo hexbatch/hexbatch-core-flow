@@ -21,7 +21,7 @@ jQuery(function ($){
             .always(function( data ) {
 
                 /**
-                 * @type {FlowEditPermissionResponse}
+                 * @type {FlowHistoryFileDiffResponse}
                  */
                 let ret;
 
@@ -32,6 +32,7 @@ jQuery(function ($){
                         ret = {
                             success: false,
                             message: data.statusText,
+                            diff:null,
                             token: null
                         };
                     }
@@ -43,11 +44,11 @@ jQuery(function ($){
 
                 if (ret.success) {
                     if (on_success_callback) {on_success_callback(ret);}
-                    console.log('file change data',ret.data);
+                    console.log('file change data',ret.diff);
                 } else {
                     do_toast({
                         title:'Cannot Get File Change',
-                        subtitle:'was trying to get file ' + file,
+                        subtitle:'was trying to get file ' + file_path,
                         content: ret.message,
                         delay:20000,
                         type:'error'
@@ -57,6 +58,15 @@ jQuery(function ($){
             });
 
     }
+
+    let body = $('body');
+    body.on('click', 'button.flow-show-file-diff', function () {
+        let button = $(this);
+        let file_path = button.closest('li').data('file_path')
+        let commit = button.closest('li').data('commit')
+        show_file_changes(file_path,commit);
+    });
+
 
 });
 
