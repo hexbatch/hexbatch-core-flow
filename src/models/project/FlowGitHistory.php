@@ -94,6 +94,16 @@ class FlowGitHistory {
         return $this->author_object;
     }
 
+    public function has_changed_public_files() : bool {
+        if (empty($this->changed_files)) {
+            return false;
+        }
+        foreach ($this->changed_files as $file) {
+            if ($file->is_public) {return true;}
+        }
+        return false;
+    }
+
     /**
      * @var FlowGitFile[] $changed_files
      */

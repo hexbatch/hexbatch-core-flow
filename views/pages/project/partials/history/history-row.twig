@@ -20,15 +20,9 @@
 
 <div class="col-12 col-md-6 col-xl-4">
     <div class="m-1">
-        {% if (history.is_head) %}
-            <button class="btn btn-danger">
-                Undo
-            </button>
-        {% else %}
-            <button class="btn btn-warning">
-                Revert To
-            </button>
-        {% endif %}
+        <button class="btn btn-info flow-show-commit-diff" data-commit="{{ history.commit }}">
+            See Changes <i class="bi bi-file-diff"></i>
+        </button>
     </div>
 </div>
 

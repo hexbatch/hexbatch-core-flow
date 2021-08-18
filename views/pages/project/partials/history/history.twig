@@ -21,11 +21,11 @@
 
 
             {% for history in project.history %}
-            <div class="row mb-2 p-1 flow-grid-striped" data-commit="{{ history.commit }}">
-                {% if not history.changed_files is empty %}
-                    {{ include('project/partials/history/history-row.twig'  , {'history': history}) }}
+                {% if  history.has_changed_public_files  %}
+                    <div class="row mb-2 p-1 flow-grid-striped" data-commit="{{ history.commit }}">
+                        {{ include('project/partials/history/history-row.twig'  , {'history': history}) }}
+                    </div>
                 {% endif %}
-            </div>
             {% endfor %}
 
 

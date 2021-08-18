@@ -115,6 +115,14 @@ jQuery(function ($){
         });
     });
 
+    body.on('click', 'button.flow-show-commit-diff', function () {
+        let button = $(this);
+        let commit = button.data('commit')
+        show_file_changes(null,commit,function(diff) {
+            show_diff(diff);
+        });
+    });
+
 
 });
 
