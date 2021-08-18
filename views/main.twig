@@ -36,6 +36,10 @@
 
     <script src="{{ root_url }}/node_modules/jquery/dist/jquery.min.js" ></script>
 
+    <!-- Make sure to load the highlight.js CSS file before the Diff2Html CSS file -->
+{#    <link rel="stylesheet" href="{{ root_url }}/node_modules/ajax/libs/highlight.js/10.7.1/styles/github.min.css" />#}
+    <link rel="stylesheet" href="{{ root_url }}/node_modules/diff2html/bundles/css/diff2html.min.css" />
+
     <link rel="stylesheet" href="{{ root_url }}/public/resources/css/app.css" />
     <link rel="stylesheet" href="{{ root_url }}/public/resources/css/project/project.css" />
 
@@ -72,6 +76,9 @@
 <script src="{{ root_url }}/public/resources/js/app.js"></script>
 
 <script src="{{ root_url }}/public/resources/js/toast.js"></script>
+
+<script type="text/javascript" src="{{ root_url }}/node_modules/diff2html/bundles/js/diff2html-ui.min.js"></script>
+
 {#{{ dump_session() }}#}
 
 </body>

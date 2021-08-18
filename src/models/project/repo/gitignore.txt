@@ -10,3 +10,5 @@
 !*.md
 !*.txt
 !*.text
+!flow_project_blurb
+!flow_project_title

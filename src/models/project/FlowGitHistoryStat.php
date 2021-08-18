@@ -16,7 +16,7 @@ Date:   Thu Aug 12 19:41:10 2021 +0000
     Updated Project Blurb
 
  flow_project.yaml      | 2 +-
- flow_project_blurb.txt | 2 +-
+ flow_project_blurb | 2 +-
  2 files changed, 2 insertions(+), 2 deletions(-)
 (blank line at end of commit)
  */

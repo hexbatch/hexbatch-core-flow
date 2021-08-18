@@ -704,13 +704,15 @@ class ProjectPages
 
 
             $file_path = $args['file_path'] ?? '';
-            if (!$file_path) {throw new InvalidArgumentException("File Path needs to be set");}
+            //if (!$file_path) {throw new InvalidArgumentException("File Path needs to be set");}
             $commit = $args['commit'] ?? '';
             if (!$commit) {throw new InvalidArgumentException("Commit needs to be set");}
 
+            $b_show_all = (bool)intval($args['show_all'] ?? '1');
+
             $project_directory = $project->get_project_directory();
             $flow_file = new FlowGitFile($project_directory,$commit,$file_path);
-            $diff = $flow_file->show_diff();
+            $diff = $flow_file->show_diff($b_show_all);
 
             $data = ['success'=>true,'message'=>'','diff'=>$diff,'token'=> null];
             $payload = json_encode($data);

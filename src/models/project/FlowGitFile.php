@@ -12,9 +12,9 @@ class FlowGitFile {
     public string $commit;
 
     /**
-     * @var string $file
+     * @var ?string $file
      */
-    public string $file;
+    public ?string $file;
 
     /**
      * @var string $file
@@ -33,19 +33,21 @@ class FlowGitFile {
     protected function get_short_name() : string {
         switch ($this->file) {
             case 'flow_project_readme_bb_code.bbcode': { $this->is_public = true ; return 'Project Read Me'; }
-            case 'flow_project_blurb.txt': { $this->is_public = true ; return 'Project Blurb'; }
-            case 'flow_project_title.txt': { $this->is_public = true ; return 'Project Title'; }
+            case 'flow_project_blurb': { $this->is_public = true ; return 'Project Blurb'; }
+            case 'flow_project_title': { $this->is_public = true ; return 'Project Title'; }
             default: {$this->is_public = false; return '';}
         }
     }
 
     /**
+     * @param bool $b_show_all, default true if false will show trimmed
      * @return string
      * @throws Exception
      */
-    public function show_diff() : string {
-        $file_diff_command = "diff $this->commit $this->file";
+    public function show_diff(bool $b_show_all = true) : string {
+        $file_diff_command = "diff $this->commit^! $this->file";
         $raw_diff = FlowGitHistory::do_git_command($this->project_path,$file_diff_command);
+        if ($b_show_all) {return $raw_diff;}
         $raw_array = explode("\n",$raw_diff);
         $raw_array_reversed = array_reverse($raw_array);
         $output_as_array_reversed = [];

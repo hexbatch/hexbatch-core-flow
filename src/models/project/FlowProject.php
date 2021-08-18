@@ -316,14 +316,34 @@ class FlowProject {
             $this->old_flow_project_title = $this->flow_project_title;
 
             $dir = $this->get_project_directory();
+            $make_first_commit = false;
             if (!is_readable($dir)) {
                 $this->create_project_repo();
+                $make_first_commit = true;
             }
             $read_me_path_bb = $dir . DIRECTORY_SEPARATOR . 'flow_project_readme_bb_code.bbcode';
             $read_me_path_html = $dir . DIRECTORY_SEPARATOR . 'flow_project_readme_html.html';
-            $blurb_path = $dir . DIRECTORY_SEPARATOR . 'flow_project_blurb.txt';
-            $title_path = $dir . DIRECTORY_SEPARATOR . 'flow_project_title.txt';
+            $blurb_path = $dir . DIRECTORY_SEPARATOR . 'flow_project_blurb';
+            $title_path = $dir . DIRECTORY_SEPARATOR . 'flow_project_title';
             $yaml_path = $dir . DIRECTORY_SEPARATOR . 'flow_project.yaml';
+
+
+
+            $yaml_array = [
+              'timestamp' => time(),
+              'flow_project_guid' => $this->flow_project_guid
+            ];
+
+            $yaml = Yaml::dump($yaml_array);
+            $b_ok = file_put_contents($yaml_path,$yaml);
+            if ($b_ok === false) {throw new RuntimeException("Could not write to $yaml_path");}
+
+            if ($make_first_commit) {
+                $commit_title = "First Commit";
+                $this->do_git_command("add .");
+                $this->do_git_command("commit  -m '$commit_title'");
+            }
+
 
             $b_ok = file_put_contents($read_me_path_bb,$this->flow_project_readme_bb_code);
             if ($b_ok === false) {throw new RuntimeException("Could not write to $read_me_path_bb");}
@@ -337,14 +357,6 @@ class FlowProject {
             $b_ok = file_put_contents($title_path,$this->flow_project_title);
             if ($b_ok === false) {throw new RuntimeException("Could not write to $title_path");}
 
-            $yaml_array = [
-              'timestamp' => time(),
-              'flow_project_guid' => $this->flow_project_guid
-            ];
-
-            $yaml = Yaml::dump($yaml_array);
-            $b_ok = file_put_contents($yaml_path,$yaml);
-            if ($b_ok === false) {throw new RuntimeException("Could not write to $yaml_path");}
 
             $commit_title = "Changed Project";
             $commit_message_array = [];
