@@ -20,6 +20,9 @@
                         user_name: project.get_admin_user().flow_user_name ,
                         project_name: project.flow_project_title
                     } )) }}
+
+                    <input type="hidden" name="flow_project_git_hash" value="{{ project.get_head_commit_hash() }}">
+
                     <div class="col-12">
                         <label for="flow_project_title">Project Title</label>
                         <input type="text" id="flow_project_title" name="flow_project_title"

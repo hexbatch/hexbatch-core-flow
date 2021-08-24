@@ -364,18 +364,31 @@ class ProjectPages
         $project = null;
         try {
             $csrf = new AntiCSRF;
+
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+
+            $args = $request->getParsedBody();
+
+
+            $project->flow_project_title = $args['flow_project_title'];
+            $project->flow_project_blurb = $args['flow_project_blurb'];
+            $project->is_public = isset($args['is_public']) && intval($args['is_public']);
+            $project->set_read_me($args['flow_project_readme_bb_code']);
+
             if (!empty($_POST)) {
                 if (!$csrf->validateRequest()) {
                     throw new HttpForbiddenException($request,"Bad Request") ;
                 }
             }
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
 
-            $args = $request->getParsedBody();
-            $project->flow_project_title = $args['flow_project_title'];
-            $project->flow_project_blurb = $args['flow_project_blurb'];
-            $project->is_public = isset($args['is_public']) && intval($args['is_public']);
-            $project->set_read_me($args['flow_project_readme_bb_code']);
+            if (empty($args['flow_project_git_hash'])) {
+                throw new InvalidArgumentException("Missing flow_project_git_hash");
+            }
+
+            $old_git_hash = $args['flow_project_git_hash'];
+            if ($project->get_head_commit_hash() !== $old_git_hash) {
+                throw new InvalidArgumentException("Git hash is too old, project was saved since this page loaded");
+            }
 
             $project->save();
             $_SESSION[static::REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY] = null;
@@ -651,24 +664,30 @@ class ProjectPages
      * @param ResponseInterface $response
      * @param string $user_name
      * @param string $project_name
+     * @param ?int  $page
      * @return ResponseInterface
      * @throws Exception
      * @noinspection PhpUnused
      */
     public function project_history( ServerRequestInterface $request,ResponseInterface $response,
-                                       string $user_name, string $project_name) :ResponseInterface {
+                                       string $user_name, string $project_name,?int $page) :ResponseInterface {
         try {
             $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
 
             if (!$project) {
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");
             }
+
+            if (intval($page) < 1) {$page = 1;}
+
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/project_history.twig',
                 'page_title' => "History for Project $project_name",
                 'page_description' => 'History',
+                'history_page_number' => $page,
                 'project' => $project,
             ]);
+
         } catch (Exception $e) {
             $this->logger->error("Could not render history page",['exception'=>$e]);
             throw $e;

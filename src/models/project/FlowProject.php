@@ -21,6 +21,8 @@ class FlowProject {
     const MAX_SIZE_TITLE = 40;
     const MAX_SIZE_BLURB = 120;
 
+    const DEFAULT_HISTORY_PAGE_SIZE = 2;
+
     const MAX_SIZE_READ_ME_IN_CHARACTERS = 4000000;
 
     public ?int $id;
@@ -96,6 +98,12 @@ class FlowProject {
         return static::MAX_SIZE_TITLE;
     }
 
+    /** @noinspection PhpUnused */
+    public  function history_page_size(): int
+    {
+        return static::DEFAULT_HISTORY_PAGE_SIZE;
+    }
+
     /**
      * @return FlowUser|null
      * @throws Exception
@@ -111,17 +119,39 @@ class FlowProject {
 
     /** @noinspection PhpUnused */
     /**
+     * @param int|null $start_at
+     * @param int|null $limit
      * @param bool $b_refresh , default false
      * @return FlowGitHistory[]
      * @throws Exception
      */
-    public function history(bool $b_refresh= false): array
+    public function history(?int $start_at = null, ?int $limit = null,  bool $b_refresh= false): array
     {
         if ($b_refresh || empty($this->project_history)) {
             $this->project_history = FlowGitHistory::get_history($this->get_project_directory());
         }
+        if (is_null($start_at) && is_null($limit) ) {
+            return $this->project_history;
+        } elseif (is_null($limit)) {
+            $limit = static::DEFAULT_HISTORY_PAGE_SIZE;
+        }
 
-        return $this->project_history;
+        return array_slice($this->project_history,$start_at,$limit);
+
+    }
+
+    /**
+     * @param bool $b_refresh
+     * @return int
+     * @throws Exception
+     */
+    public function count_total_public_history(bool $b_refresh= false) : int {
+        $history = $this->history($b_refresh);
+        $count = 0;
+        foreach ($history as $h) {
+            if ($h->has_changed_public_files()) {$count++;}
+        }
+        return $count;
     }
 
     /** @noinspection PhpUnused */
@@ -546,6 +576,14 @@ class FlowProject {
     protected function do_git_command(string $command) : string {
         $dir = $this->get_project_directory();
         return FlowGitHistory::do_git_command($dir,$command);
+    }
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    public function get_head_commit_hash() {
+        return $this->do_git_command('rev-parse HEAD');
     }
 
 

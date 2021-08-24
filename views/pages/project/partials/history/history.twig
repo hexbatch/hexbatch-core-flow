@@ -20,7 +20,7 @@
             </h5>
 
 
-            {% for history in project.history %}
+            {% for history in project.history( history_page_number * project.history_page_size() , project.history_page_size()) %}
                 {% if  history.has_changed_public_files  %}
                     <div class="row mb-2 p-1 flow-grid-striped" data-commit="{{ history.commit }}">
                         {{ include('project/partials/history/history-row.twig'  , {'history': history}) }}
