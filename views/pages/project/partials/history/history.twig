@@ -18,15 +18,16 @@
             <h5 class="card-title">
                 View History
             </h5>
-
-
-            {% for history in project.history( history_page_number * project.history_page_size() , project.history_page_size()) %}
-                {% if  history.has_changed_public_files  %}
-                    <div class="row mb-2 p-1 flow-grid-striped" data-commit="{{ history.commit }}">
-                        {{ include('project/partials/history/history-row.twig'  , {'history': history}) }}
-                    </div>
-                {% endif %}
-            {% endfor %}
+            {% set total_pages = ( project.count_total_public_history()  / history_page_size) | round(0, 'ceil') %}
+            {% if (history_page_number >= 1) and (history_page_number <= total_pages)  %}
+                {% for history in project.history( (history_page_number-1) * history_page_size , history_page_size) %}
+                    {% if  history.has_changed_public_files  %}
+                        <div class="row mb-2 p-1 flow-grid-striped" data-commit="{{ history.commit }}">
+                            {{ include('project/partials/history/history-row.twig'  , {'history': history}) }}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
 
 
 {#            <pre>#}
@@ -34,5 +35,20 @@
 {#            </pre>#}
         </div>
 
+
+        {{ include('main/partials/paginition.twig'  , {
+            'link_template': url_for('project_history',{
+                                        user_name: project.get_admin_user().flow_user_name ,
+                                        project_name: project.flow_project_title}) ~ '/page/%page%',
+
+            'page_number' : history_page_number,
+            'total_pages' : total_pages
+
+            })
+
+        }}
+
     </div>
+
+
 </div>

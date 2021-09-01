@@ -21,8 +21,6 @@ class FlowProject {
     const MAX_SIZE_TITLE = 40;
     const MAX_SIZE_BLURB = 120;
 
-    const DEFAULT_HISTORY_PAGE_SIZE = 2;
-
     const MAX_SIZE_READ_ME_IN_CHARACTERS = 4000000;
 
     public ?int $id;
@@ -98,11 +96,6 @@ class FlowProject {
         return static::MAX_SIZE_TITLE;
     }
 
-    /** @noinspection PhpUnused */
-    public  function history_page_size(): int
-    {
-        return static::DEFAULT_HISTORY_PAGE_SIZE;
-    }
 
     /**
      * @return FlowUser|null
@@ -132,11 +125,9 @@ class FlowProject {
         }
         if (is_null($start_at) && is_null($limit) ) {
             return $this->project_history;
-        } elseif (is_null($limit)) {
-            $limit = static::DEFAULT_HISTORY_PAGE_SIZE;
         }
 
-        return array_slice($this->project_history,$start_at,$limit);
+        return array_slice($this->project_history,$start_at,min($limit,count($this->project_history)));
 
     }
 

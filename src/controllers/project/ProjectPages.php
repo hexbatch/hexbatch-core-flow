@@ -685,6 +685,7 @@ class ProjectPages
                 'page_title' => "History for Project $project_name",
                 'page_description' => 'History',
                 'history_page_number' => $page,
+                'history_page_size' => 10,
                 'project' => $project,
             ]);
 

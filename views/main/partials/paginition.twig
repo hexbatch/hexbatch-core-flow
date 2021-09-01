@@ -1,0 +1,76 @@
+{% if (total_pages >= 1) and (page_number <= total_pages) %}
+    {% set look_behind = max(page_number -5, 1) %}
+    {% set look_ahead = min(total_pages, 5+page_number) %}
+
+    <nav aria-label="Page navigation for commits">
+        <ul class="pagination pagination-lg justify-content-center">
+
+            {# show the jump to first page button   #}
+            {% if page_number == 1 %}
+                <li class="page-item disabled">
+                    <span class="page-link" tabindex="-1" aria-disabled="true" aria-label="Previous">&laquo;</span>
+                </li>
+            {% else %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="{{ link_template |replace({'%page%': 1}) }}"
+                       aria-label="Previous"
+                    >
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+
+
+            {# show up to 5 pages behind, and the current            #}
+            {% for i in look_behind..page_number %}
+                {% if (i <= total_pages) and (i >= 1) %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="{{ link_template |replace({'%page%': i}) }}"
+                        >
+                            {{ i }}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+
+
+            {# show future pages, up to 5 more    #}
+            {% for i in (page_number+1)..look_ahead %}
+                {% if (i <= total_pages) and (i > page_number) %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="{{ link_template |replace({'%page%': i}) }}"
+                        >
+                            {{ i }}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {#  show very last page button           #}
+
+            {% if page_number >= total_pages %}
+                <li class="page-item disabled">
+                    <span class="page-link" tabindex="-1" aria-disabled="true" aria-label="Next">&raquo;</span>
+                </li>
+            {% else %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="{{ link_template |replace({'%page%': total_pages}) }}"
+                       aria-label="Next"
+                    >
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+
+        </ul>
+    </nav>
+{% else %}
+    <div class="alert alert-warning" role="alert">
+        Needs Page number between 1 and {{ total_pages }}
+    </div>
+{% endif %}
