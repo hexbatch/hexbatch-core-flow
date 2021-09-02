@@ -27,7 +27,8 @@
         "jbbcode/jbbcode": "^1.4",
         "paquettg/php-html-parser": "^3.1",
         "ramsey/uuid": "^4.1",
-        "paragonie/anti-csrf": "^2.3"
+        "paragonie/anti-csrf": "^2.3",
+        "scrivo/highlight.php": "v9.18.1.7"
 
     },
     "autoload": {

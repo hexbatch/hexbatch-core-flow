@@ -2,6 +2,8 @@
 
 namespace app\hexlet;
 
+use Exception;
+use Highlight\Highlighter;
 use PHPHtmlParser\Dom;
 use app\hexlet\hexlet_exceptions\JsonException;
 use ForceUTF8\Encoding;
@@ -9,12 +11,15 @@ use JBBCode\CodeDefinition;
 use JBBCode\CodeDefinitionBuilder;
 use JBBCode\DefaultCodeDefinitionSet;
 use JBBCode\Parser;
+use PHPHtmlParser\Dom\Node\HtmlNode;
 use PHPHtmlParser\Exceptions\ChildNotFoundException;
 use PHPHtmlParser\Exceptions\CircularException;
 use PHPHtmlParser\Exceptions\ContentLengthException;
 use PHPHtmlParser\Exceptions\LogicalException;
 use PHPHtmlParser\Exceptions\NotLoadedException;
 use PHPHtmlParser\Exceptions\StrictException;
+use PHPHtmlParser\Exceptions\UnknownChildTypeException;
+use PHPHtmlParser\Options;
 use ReflectionClass;
 use ReflectionException;
 
@@ -89,8 +94,10 @@ class JsonHelper {
      * @param $message mixed
      * @param int $http_code
      * @param int|null $status_in_json - if null then is same status as http code
-     * @noinspection PhpUnused*@uses JsonHelper::printStatusJSONAndDie()
+     * @uses JsonHelper::printStatusJSONAndDie()
      *
+     *
+     * @noinspection PhpUnused
      */
     public static function printErrorJSONAndDie($message, int $http_code=500, int $status_in_json=null) {
 
@@ -502,7 +509,10 @@ class JsonHelper {
      * @param int $max_level
      * @param array $print_nice_stack
      * @return void  it prints to the screen
-     * @noinspection PhpUnused*@example print_nice($array)
+     * @example print_nice($array)
+     *
+     *
+     * @noinspection PhpUnused
      */
     public static function print_nice($elem, int $max_level=15, array $print_nice_stack=array()){
         //if (is_object($elem)) {$elem = object_to_array($elem);}
@@ -756,6 +766,12 @@ class JsonHelper {
         ));
 
 
+        $parser->addCodeDefinition( CodeDefinition::construct("code",
+            '<pre class="flow-code-highlight">{param}</pre>',
+            false
+        ));
+
+
         //strikethrough
         $parser->addCodeDefinition( CodeDefinition::construct("img",
             /** @lang text */ '<img src="{param}" alt="bb image">',
@@ -792,7 +808,7 @@ class JsonHelper {
         $post = str_replace('Courier-New','Courier New',$post);
         $post = str_replace('Times-New-Roman','Times New Roman',$post);
 
-        //remove br from ul and ol, and table tr and td
+        //remove br from ul and ol, and table tr and td and code
         try {
             $dom = new Dom;
             $dom->loadStr( $post );
@@ -809,7 +825,63 @@ class JsonHelper {
                 unset( $br );
             }
 
-            // the only way to preserve whitespace using this algorithm and deal with how the bbcode editor is making tables,
+
+            $highlight_these = $dom->find( 'pre.flow-code-highlight' );
+
+            foreach ($highlight_these as $highlight_this ) {
+                /**
+                 * @var HtmlNode $highlight_this
+                 */
+                $inner_html = $highlight_this->innerHtml();
+                $my_text = str_replace('<br />',"\n",$inner_html);
+
+                $hl = new Highlighter();
+                $preg_ret = preg_match_all('/#lang#(?P<language>.+)#lang#/', $my_text, $output_array);
+                if ($preg_ret === false) {
+                    $preg_error = array_flip(get_defined_constants(true)['pcre'])[preg_last_error()];
+                    throw new JsonException("[html_from_bb_code] error finding language for code block".$preg_error);
+                }
+                if (array_key_exists('language',$output_array) && count($output_array['language'])) {
+                    $lang = $output_array['language'][0];
+                    $my_text = preg_replace('/#lang#(.+)#lang#/', '', $my_text);
+                    if ($my_text === null) {
+                        $preg_error = array_flip(get_defined_constants(true)['pcre'])[preg_last_error()];
+                        throw new JsonException("[html_from_bb_code] error removing language from code block".$preg_error);
+                    }
+                    $my_text = trim($my_text);
+                    try {
+                        $highlighted = $hl->highlight($lang, $my_text);
+                    } catch (Exception $e) {
+                        throw new JsonException("[html_from_bb_code] error highlighting language". $e->getMessage(),$e->getCode(),$e);
+                    }
+
+                } else {
+                    $hl->setAutodetectLanguages(['php', 'c++', 'html', 'css','python','sh','json','js']);
+                    $my_text = trim($my_text);
+                    try {
+                        $highlighted = $hl->highlightAuto($my_text);
+                    } catch (Exception $e) {
+                        throw new JsonException("[html_from_bb_code] error auto highlighting language". $e->getMessage(),$e->getCode(),$e);
+                    }
+
+                }
+
+                $code_string = "<code class=\"hljs $highlighted->language\">".$highlighted->value."</code>";
+
+                foreach ($highlight_this->getChildren() as $children) {
+                    $children->delete();
+                }
+
+                $my_dom = new Dom;
+                $options = new Options();
+                $options->setPreserveLineBreaks(true);
+                $my_dom->loadStr($code_string,$options);
+                $new_tag = $my_dom->find('code')[0];
+
+                $highlight_this->addChild($new_tag);
+            }
+
+            // the only way to preserve whitespace using this algorithm and deal with how the bbcode editor makes tables,
             // is to literally go through and remove the br after I converted them from newlines above
             // otherwise most browsers will dump the br above the table making whitespace layout around tables bad
 
@@ -817,7 +889,8 @@ class JsonHelper {
             $fixed_up_string = preg_replace('#</td>\s*<br />#','</td>',$return_before_td_fix);
             $fixed_up_string = preg_replace('#</tr>\s*<br />#','</tr>',$fixed_up_string);
             $return = $fixed_up_string;
-        } catch (ChildNotFoundException|CircularException|StrictException|NotLoadedException|ContentLengthException|LogicalException $e) {
+        } catch (ChildNotFoundException|CircularException|StrictException|NotLoadedException|ContentLengthException|LogicalException|
+                    UnknownChildTypeException $e) {
             throw new JsonException($e->getMessage(),$e->getCode(),$e);
         }
 
