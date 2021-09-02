@@ -1,0 +1,84 @@
+<div class="container">
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-10 offset-md-1 col-lg-10 offset-lg-1 col-xl-10 offset-xl-1">
+            <div class=" bg-light mt-3 px-4">
+                <form method="post" action="{{-  url_for('update_project_export',{
+                    user_name: project.get_admin_user().flow_user_name ,
+                    project_name: project.flow_project_title
+                } ) -}}"
+                      class="row g-3"
+                >
+                    {{ form_token(  url_for('update_project_export',{
+                        user_name: project.get_admin_user().flow_user_name ,
+                        project_name: project.flow_project_title
+                    } )) }}
+
+
+                    <div class="d-inline-block float-start">
+                        <button type="submit" class="btn btn-primary" name="export-push-now" value="1">
+                            Push Now
+                        </button>
+                    </div>
+
+                    <input type="hidden" name="flow_project_git_hash" value="{{ project.get_head_commit_hash() }}">
+
+                    <div class="col-12">
+                        <label for="export_repo_url">
+                            Repository Url
+                            <small class="p-2">
+                                Github only for right now
+                            </small>
+                        </label>
+                        <input type="text" id="export_repo_url" name="export_repo_url"
+                               class="form-control" placeholder="Export Repo Url"  autofocus
+                               value="{{ project.export_repo_url }}"
+                        >
+                    </div>
+
+
+                    <div class="col-12">
+                        <label for="export_repo_branch">Repository Branch</label>
+                        <input type="text" id="export_repo_branch" name="export_repo_branch"
+                               class="form-control" placeholder="Export Repo Branch"  autofocus
+                               value="{{ project.export_repo_branch }}"
+                        >
+                    </div>
+
+
+
+                    <div class="col-12">
+                        <label for="export_repo_key">Private Repo Key (no passphrase)</label>
+                        <textarea type="text" id="export_repo_key" name="export_repo_key"
+                                  class="form-control" placeholder="Private Repo Key"  autofocus
+                                  rows="15"
+                        >{{ project.export_repo_key }}</textarea>
+                    </div>
+
+                    <div class="col-12 text-center">
+                        <div class="form-check form-switch d-inline-block float-start">
+                            <input class="form-check-input"
+                                   name="export_repo_do_auto_push"
+                                   value="1"
+                                   type="checkbox" id="export_repo_do_auto_push"
+                                    {{ project.export_repo_do_auto_push ? 'checked' : '' }}
+                            >
+                            <label class="form-check-label" for="export_repo_do_auto_push">
+                                Auto Push Each Save
+                            </label>
+                        </div>
+
+
+
+
+
+                        <button type="submit" class="btn btn-success float-end mt-2 mt-md-0">
+                            Update Export Settings
+                        </button>
+                    </div>
+
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -3,8 +3,8 @@ namespace app\controllers\project;
 
 use app\controllers\user\UserPages;
 use app\hexlet\FlowAntiCSRF;
+use app\hexlet\GoodZipArchive;
 use app\models\project\FlowGitFile;
-use app\models\project\FlowGitHistory;
 use app\models\project\FlowProject;
 use app\models\project\FlowProjectUser;
 use app\models\user\FlowUser;
@@ -19,8 +19,12 @@ use Monolog\Logger;
 use ParagonIE\AntiCSRF\AntiCSRF;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UploadedFileInterface;
+use Slim\Exception\HttpBadRequestException;
 use Slim\Exception\HttpForbiddenException;
+use Slim\Exception\HttpInternalServerErrorException;
 use Slim\Exception\HttpNotFoundException;
+use Slim\Psr7\Stream;
 use Slim\Routing\RouteContext;
 use Slim\Views\Twig;
 
@@ -30,6 +34,9 @@ class ProjectPages
 
     const REM_NEW_PROJECT_WITH_ERROR_SESSION_KEY = 'project_new_form_in_progress_has_error';
     const REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY = 'project_edit_form_in_progress_has_error';
+    const REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY = 'project_export_form_in_progress_has_error';
+    const REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY = 'project_import_git_form_in_progress_has_error';
+
     protected Auth $auth;
     protected Logger $logger;
     /**
@@ -247,7 +254,7 @@ class ProjectPages
      * @param ServerRequestInterface $request
      * @param string $user_name
      * @param string $project_name
-     * @param string $permission read|write
+     * @param string $permission read|write|admin
      * @return FlowProject|null
      * @throws Exception
      */
@@ -382,7 +389,9 @@ class ProjectPages
             }
 
             if (empty($args['flow_project_git_hash'])) {
-                throw new InvalidArgumentException("Missing flow_project_git_hash");
+                if ($project->get_head_commit_hash()) {
+                    throw new InvalidArgumentException("Missing flow_project_git_hash");
+                }
             }
 
             $old_git_hash = $args['flow_project_git_hash'];
@@ -390,11 +399,11 @@ class ProjectPages
                 throw new InvalidArgumentException("Git hash is too old, project was saved since this page loaded");
             }
 
-            $project->save();
+            $save_words = $project->save();
             $_SESSION[static::REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY] = null;
 
             try {
-                UserPages::add_flash_message('success', "Updated Project " . $project->flow_project_title);
+                UserPages::add_flash_message('success', "Updated Project  " . $project->flow_project_title. " <br> $save_words");
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
                 $url = $routeParser->urlFor('single_project_home',[
                     "user_name" => $project->get_admin_user()->flow_user_name,
@@ -756,6 +765,7 @@ class ProjectPages
     }
 
 
+
     /**
      * @param ServerRequestInterface $request
      * @param ResponseInterface $response
@@ -765,142 +775,114 @@ class ProjectPages
      * @throws Exception
      * @noinspection PhpUnused
      */
-    public function revert_to_commit(ServerRequestInterface $request,ResponseInterface $response,
-                                    string $user_name, string $project_name) :ResponseInterface {
-
-        $token = null;
+    public function export_view( ServerRequestInterface $request,ResponseInterface $response,
+                                     string $user_name, string $project_name) :ResponseInterface {
         try {
-            $args = $request->getParsedBody();
-            if (empty($args)) {
-                throw new InvalidArgumentException("No data sent");
-            }
-            $csrf = new FlowAntiCSRF;
-            if (!$csrf->validateRequest()) {
-                throw new HttpForbiddenException($request,"Bad Request") ;
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+
+            if (!$project) {
+                throw new HttpNotFoundException($request,"Project $project_name Not Found for export settings");
             }
 
-            $x_header = $request->getHeader('X-Requested-With') ?? [];
-            if (empty($x_header) || $x_header[0] !== 'XMLHttpRequest') {
-                throw new InvalidArgumentException("Need the X-Requested-With header");
+
+            if (array_key_exists(static::REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY,$_SESSION)) {
+                /**
+                 * @var ?FlowProject $form_in_progress
+                 */
+                $form_in_progress = $_SESSION[static::REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY];
+                $_SESSION[static::REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY] = null;
+                if (empty($form_in_progress)) {
+                    $form_in_progress = $project;
+                }
+            } else {
+                $form_in_progress = $project;
             }
 
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'admin');
 
-            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-            $token_lock_to = $routeParser->urlFor('edit_permissions_ajax',[
-                'user_name' => $user_name,
-                'project_name' => $project_name
+            return $this->view->render($response, 'main.twig', [
+                'page_template_path' => 'project/project_export.twig',
+                'page_title' => "Export Project $project_name",
+                'page_description' => 'Export',
+                'project' => $form_in_progress,
             ]);
 
-            $token = $csrf->getTokenArray($token_lock_to);
+        } catch (Exception $e) {
+            $this->logger->error("Could not render history page",['exception'=>$e]);
+            throw $e;
+        }
+    }
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function update_export(ServerRequestInterface $request,ResponseInterface $response,
+                                   string $user_name, string $project_name) :ResponseInterface {
+
+        $project = null;
+        try {
+            $csrf = new AntiCSRF;
+
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+
+            $args = $request->getParsedBody();
 
 
-            $action = $args['action'] ?? '';
-            if (!$action) {throw new InvalidArgumentException("Action needs to be set");}
 
-            switch ($action) {
-                case 'permission_read_add':
-                case 'permission_read_remove':
-                case 'permission_write_add':
-                case 'permission_write_remove':
-                case 'permission_admin_add':
-                case 'permission_admin_remove': {
+            $project->export_repo_url = $args['export_repo_url'];
+            $project->export_repo_key = $args['export_repo_key'];
+            $project->export_repo_branch = $args['export_repo_branch'];
+            $project->export_repo_do_auto_push = isset($args['export_repo_do_auto_push']) && intval($args['export_repo_do_auto_push']);
 
-                    $flow_user_guid = $args['user_guid'] ?? null;
-                    $flow_project_guid = $args['project_guid'] ?? null;
-                    if (!$flow_user_guid || !$flow_project_guid) {
-                        throw new InvalidArgumentException("Need both project and user guids to complete this");
-                    }
-                    $target_user_array = FlowUser::find_users_by_project(true,$flow_project_guid,null,true,$flow_user_guid);
-                    if (empty($target_user_array) || empty($target_user_array[0]->get_permissions())) {
-                        $target_user = FlowUser::find_one($flow_user_guid);
-                        if (empty($target_user)) {
-                            throw new InvalidArgumentException("Cannot find user by guid of $flow_user_guid");
-                        }
-                        $perm = new FlowProjectUser();
-                        $perm->can_write = false;
-                        $perm->can_read = false;
-                        $perm->can_admin = false;
-                        $perm->flow_user_id = $target_user->flow_user_id;
-                        $perm->flow_project_id = $project->id;
-                    } else {
-                        $perm = $target_user_array[0]->get_permissions()[0];
-                    }
-                    $inner_data = $perm;
-
-
-                    switch ($action) {
-                        case 'permission_read_add': {
-                            $perm->can_read = true;
-                            break;
-                        }
-                        case 'permission_read_remove': {
-                            if ($perm->flow_user_guid === $project->get_admin_user()->flow_user_guid) {
-                                throw new InvalidArgumentException("Cannot remove read from the project owner");
-                            }
-                            $perm->can_read = false;
-                            break;
-                        }
-                        case 'permission_write_add': {
-                            $perm->can_write = true;
-                            $perm->can_read = true;
-                            break;
-                        }
-                        case 'permission_write_remove': {
-                            if ($perm->flow_user_guid === $project->get_admin_user()->flow_user_guid) {
-                                throw new InvalidArgumentException("Cannot remove write from the project owner");
-                            }
-                            $perm->can_write = false;
-                            break;
-                        }
-                        case 'permission_admin_add': {
-                            $perm->can_admin = true;
-                            $perm->can_write = true;
-                            $perm->can_read = true;
-                            break;
-                        }
-                        case 'permission_admin_remove': {
-                            if ($perm->flow_user_guid === $project->get_admin_user()->flow_user_guid) {
-                                throw new InvalidArgumentException("Cannot remove admin from the project owner");
-                            }
-                            $perm->can_admin = false;
-                            break;
-                        }
-                        default: {throw new LogicException("Ooops mismatched switch");}
-                    }
-
-                    $perm->save();
-                    break;
-
-
-                }
-                case 'permission_public_set': {
-                    $project->is_public = isset($args['is_public']) && intval($args['is_public']);
-                    $project->save();
-                    $inner_data = $project;
-                    break;
-                }
-                default: {
-                    throw new InvalidArgumentException("Unknown Action Verb: $action");
+            if (!empty($_POST)) {
+                if (!$csrf->validateRequest()) {
+                    throw new HttpForbiddenException($request,"Bad Request") ;
                 }
             }
-            $data = ['success'=>true,'message'=>'','data'=>$inner_data,'token'=> $token];
-            $payload = json_encode($data);
-
-            $response->getBody()->write($payload);
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(201);
 
 
+            $project->save_export_settings();
+            $success_message = "Updated Project Export Settings "  . $project->flow_project_title;
+            if (array_key_exists('export-push-now',$args)) {
+                //do push now
+                $push_status = $project->push_repo();
+                $success_message = "Pushing to $project->export_repo_url "  . $project->flow_project_title . "<br>$push_status";
+            }
+            $_SESSION[static::REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY] = null;
+
+            try {
+                UserPages::add_flash_message('success',$success_message );
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                $url = $routeParser->urlFor('project_history',[
+                    "user_name" => $project->get_admin_user()->flow_user_name,
+                    "project_name" => $project->flow_project_title
+                ]);
+                $response = $response->withStatus(302);
+                return $response->withHeader('Location', $url);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to all projects after successful update", ['exception' => $e]);
+                throw $e;
+            }
         } catch (Exception $e) {
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $token];
-            $payload = json_encode($data);
-
-            $response->getBody()->write($payload);
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(500);
+            try {
+                UserPages::add_flash_message('warning', "Cannot update project export settings: <b>" . $e->getMessage().'</b>');
+                $_SESSION[static::REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY] = $project;
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                $url = $routeParser->urlFor('project_export',[
+                    "user_name" => $user_name ,
+                    "project_name" => $project_name
+                ]);
+                $response = $response->withStatus(302);
+                return $response->withHeader('Location', $url);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to project export settings after error", ['exception' => $e]);
+                throw $e;
+            }
         }
 
     }
@@ -915,145 +897,267 @@ class ProjectPages
      * @throws Exception
      * @noinspection PhpUnused
      */
-    public function undo_commit(ServerRequestInterface $request,ResponseInterface $response,
-                                    string $user_name, string $project_name) :ResponseInterface {
+    public function download_export(ServerRequestInterface $request,ResponseInterface $response,
+                                   string $user_name, string $project_name) :ResponseInterface {
 
-        $token = null;
         try {
-            $args = $request->getParsedBody();
-            if (empty($args)) {
-                throw new InvalidArgumentException("No data sent");
-            }
-            $csrf = new FlowAntiCSRF;
-            if (!$csrf->validateRequest()) {
-                throw new HttpForbiddenException($request,"Bad Request") ;
-            }
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
 
-            $x_header = $request->getHeader('X-Requested-With') ?? [];
-            if (empty($x_header) || $x_header[0] !== 'XMLHttpRequest') {
-                throw new InvalidArgumentException("Need the X-Requested-With header");
+            if (!$project) {
+                throw new HttpNotFoundException($request,"Project $project_name Not Found");
+            }
+            $temp_file_path = tempnam(sys_get_temp_dir(), 'git-zip-');
+            $b_rename_ok = rename($temp_file_path, $temp_file_path .= '.zip');
+            if (!$b_rename_ok) {
+                throw new HttpInternalServerErrorException($request,"Cannot rename temp folder");
             }
 
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'admin');
-
-            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-            $token_lock_to = $routeParser->urlFor('edit_permissions_ajax',[
-                'user_name' => $user_name,
-                'project_name' => $project_name
-            ]);
-
-            $token = $csrf->getTokenArray($token_lock_to);
-
-
-            $action = $args['action'] ?? '';
-            if (!$action) {throw new InvalidArgumentException("Action needs to be set");}
-
-            switch ($action) {
-                case 'permission_read_add':
-                case 'permission_read_remove':
-                case 'permission_write_add':
-                case 'permission_write_remove':
-                case 'permission_admin_add':
-                case 'permission_admin_remove': {
-
-                    $flow_user_guid = $args['user_guid'] ?? null;
-                    $flow_project_guid = $args['project_guid'] ?? null;
-                    if (!$flow_user_guid || !$flow_project_guid) {
-                        throw new InvalidArgumentException("Need both project and user guids to complete this");
-                    }
-                    $target_user_array = FlowUser::find_users_by_project(true,$flow_project_guid,null,true,$flow_user_guid);
-                    if (empty($target_user_array) || empty($target_user_array[0]->get_permissions())) {
-                        $target_user = FlowUser::find_one($flow_user_guid);
-                        if (empty($target_user)) {
-                            throw new InvalidArgumentException("Cannot find user by guid of $flow_user_guid");
-                        }
-                        $perm = new FlowProjectUser();
-                        $perm->can_write = false;
-                        $perm->can_read = false;
-                        $perm->can_admin = false;
-                        $perm->flow_user_id = $target_user->flow_user_id;
-                        $perm->flow_project_id = $project->id;
-                    } else {
-                        $perm = $target_user_array[0]->get_permissions()[0];
-                    }
-                    $inner_data = $perm;
-
-
-                    switch ($action) {
-                        case 'permission_read_add': {
-                            $perm->can_read = true;
-                            break;
-                        }
-                        case 'permission_read_remove': {
-                            if ($perm->flow_user_guid === $project->get_admin_user()->flow_user_guid) {
-                                throw new InvalidArgumentException("Cannot remove read from the project owner");
-                            }
-                            $perm->can_read = false;
-                            break;
-                        }
-                        case 'permission_write_add': {
-                            $perm->can_write = true;
-                            $perm->can_read = true;
-                            break;
-                        }
-                        case 'permission_write_remove': {
-                            if ($perm->flow_user_guid === $project->get_admin_user()->flow_user_guid) {
-                                throw new InvalidArgumentException("Cannot remove write from the project owner");
-                            }
-                            $perm->can_write = false;
-                            break;
-                        }
-                        case 'permission_admin_add': {
-                            $perm->can_admin = true;
-                            $perm->can_write = true;
-                            $perm->can_read = true;
-                            break;
-                        }
-                        case 'permission_admin_remove': {
-                            if ($perm->flow_user_guid === $project->get_admin_user()->flow_user_guid) {
-                                throw new InvalidArgumentException("Cannot remove admin from the project owner");
-                            }
-                            $perm->can_admin = false;
-                            break;
-                        }
-                        default: {throw new LogicException("Ooops mismatched switch");}
-                    }
-
-                    $perm->save();
-                    break;
-
-
-                }
-                case 'permission_public_set': {
-                    $project->is_public = isset($args['is_public']) && intval($args['is_public']);
-                    $project->save();
-                    $inner_data = $project;
-                    break;
-                }
-                default: {
-                    throw new InvalidArgumentException("Unknown Action Verb: $action");
-                }
+            $project_directory_path = $project->get_project_directory();
+            new GoodZipArchive($project_directory_path,    $temp_file_path,$project->flow_project_title) ;
+            $file_size = filesize($temp_file_path);
+            if (!$file_size) {
+                throw new HttpInternalServerErrorException($request,"Cannot create zip folder for download");
             }
-            $data = ['success'=>true,'message'=>'','data'=>$inner_data,'token'=> $token];
-            $payload = json_encode($data);
 
-            $response->getBody()->write($payload);
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(201);
+            $response = $response
+                ->withHeader('Content-Type', 'application/zip')
+                ->withHeader('Content-Length', 'application/zip')
+                ->withHeader('Content-Disposition', "attachment; filename=$project->flow_project_title.zip")
+                ->withAddedHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                ->withHeader('Cache-Control', 'post-check=0, pre-check=0')
+                ->withHeader('Pragma', 'no-cache')
+                ->withBody((new Stream(fopen($temp_file_path, 'rb'))));
 
+            return $response;
 
         } catch (Exception $e) {
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $token];
-            $payload = json_encode($data);
+            $this->logger->error("Could not download project zip",['exception'=>$e]);
+            throw $e;
+        }
 
-            $response->getBody()->write($payload);
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(500);
+
+    }
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function import_view( ServerRequestInterface $request,ResponseInterface $response,
+                                 string $user_name, string $project_name) :ResponseInterface {
+
+
+        try {
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'admin');
+
+            if (!$project) {
+                throw new HttpNotFoundException($request,"Project $project_name Not Found for export settings");
+            }
+
+
+            if (array_key_exists(static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY,$_SESSION)) {
+                /**
+                 * @var ?FlowProject $form_in_progress
+                 */
+                $form_in_progress = $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY];
+                $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY] = null;
+                if (empty($form_in_progress)) {
+                    $form_in_progress = $project;
+                }
+            } else {
+                $form_in_progress = $project;
+            }
+
+
+            return $this->view->render($response, 'main.twig', [
+                'page_template_path' => 'project/project_import.twig',
+                'page_title' => "Import for Project $project_name",
+                'page_description' => 'Import for Project',
+                'project' => $form_in_progress,
+            ]);
+
+        } catch (Exception $e) {
+            $this->logger->error("Could not render history page",['exception'=>$e]);
+            throw $e;
         }
 
     }
+
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function import_from_git(ServerRequestInterface $request,ResponseInterface $response,
+                                  string $user_name, string $project_name) :ResponseInterface {
+
+        $project = null;
+        try {
+            $csrf = new AntiCSRF;
+
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+
+            $args = $request->getParsedBody();
+
+
+
+            $project->import_repo_url = $args['import_repo_url'];
+            $project->import_repo_key = $args['import_repo_key'];
+            $project->import_repo_branch = $args['import_repo_branch'];
+
+            if (!empty($_POST)) {
+                if (!$csrf->validateRequest()) {
+                    throw new HttpForbiddenException($request,"Bad Request") ;
+                }
+            }
+
+
+            $project->save_import_settings();
+            $success_message = "Updated Project Import Settings "  . $project->flow_project_title;
+            if (array_key_exists('import-now',$args)) {
+                //do push now
+                $push_status = $project->import_pull_repo_from_git();
+                $success_message = "Pulling from $project->import_repo_url "  . $project->flow_project_title . "<br>$push_status";
+            }
+            $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY] = null;
+
+            try {
+                UserPages::add_flash_message('success',$success_message );
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                $url = $routeParser->urlFor('project_history',[
+                    "user_name" => $project->get_admin_user()->flow_user_name,
+                    "project_name" => $project->flow_project_title
+                ]);
+                $response = $response->withStatus(302);
+                return $response->withHeader('Location', $url);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to all projects after successful import from git", ['exception' => $e]);
+                throw $e;
+            }
+        } catch (Exception $e) {
+            try {
+                UserPages::add_flash_message('warning', "Cannot update project import settings: <b>" . $e->getMessage().'</b>');
+                $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY] = $project;
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                $url = $routeParser->urlFor('project_import',[
+                    "user_name" => $user_name ,
+                    "project_name" => $project_name
+                ]);
+                $response = $response->withStatus(302);
+                return $response->withHeader('Location', $url);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to project import settings after error", ['exception' => $e]);
+                throw $e;
+            }
+        }
+
+    }
+
+
+
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function import_from_file(ServerRequestInterface $request,ResponseInterface $response,
+                                    string $user_name, string $project_name) :ResponseInterface {
+
+        $project = null;
+        try {
+            $csrf = new AntiCSRF;
+
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+
+            if (!empty($_POST)) {
+                if (!$csrf->validateRequest()) {
+                    throw new HttpForbiddenException($request,"Bad Request") ;
+                }
+            }
+
+
+            $uploadedFiles = $request->getUploadedFiles();
+            if (!array_key_exists('repo_or_patch_file',$uploadedFiles)) {
+                throw new HttpBadRequestException($request,"Need the file named repo_or_patch_file");
+            }
+            // handle single input with single file upload
+            /**
+             * @var UploadedFileInterface $uploadedFile
+             */
+            $uploadedFile = $uploadedFiles['repo_or_patch_file'];
+            $file_name = $uploadedFile->getClientFilename();
+            if ($uploadedFile->getError() !== UPLOAD_ERR_OK) {
+                $phpFileUploadErrors = array(
+                    0 => 'There is no error, the file uploaded with success',
+                    1 => 'The uploaded file exceeds the upload_max_filesize directive in php.ini',
+                    2 => 'The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form',
+                    3 => 'The uploaded file was only partially uploaded',
+                    4 => 'No file was uploaded',
+                    6 => 'Missing a temporary folder',
+                    7 => 'Failed to write file to disk.',
+                    8 => 'A PHP extension stopped the file upload.',
+                );
+                throw new HttpBadRequestException($request,"File Error $file_name : ". $phpFileUploadErrors[$uploadedFile->getError()] );
+            }
+
+
+            $success_message = "Nothing Done "  . $project->flow_project_title;
+            $args = $request->getParsedBody();
+            if (array_key_exists('import-now',$args)) {
+                //do push now
+                $push_status = $project->update_repo_from_file();
+                $success_message = "Merging from file $file_name to "  . $project->flow_project_title . "<br>$push_status";
+            }
+            $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY] = null;
+
+            try {
+                UserPages::add_flash_message('success',$success_message );
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                $url = $routeParser->urlFor('project_history',[
+                    "user_name" => $project->get_admin_user()->flow_user_name,
+                    "project_name" => $project->flow_project_title
+                ]);
+                $response = $response->withStatus(302);
+                return $response->withHeader('Location', $url);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to all projects after successful merge from file", ['exception' => $e]);
+                throw $e;
+            }
+        } catch (Exception $e) {
+            try {
+                UserPages::add_flash_message('warning', "Cannot merge project from file: <b>" . $e->getMessage().'</b>');
+                $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY] = $project;
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                $url = $routeParser->urlFor('project_import',[
+                    "user_name" => $user_name ,
+                    "project_name" => $project_name
+                ]);
+                $response = $response->withStatus(302);
+                return $response->withHeader('Location', $url);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to project import settings after error", ['exception' => $e]);
+                throw $e;
+            }
+        }
+
+    }
+
+
+
 
 
 }

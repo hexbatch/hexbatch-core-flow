@@ -63,8 +63,12 @@ return function (App $app) {
             $group->get('/{project_name:[[:alnum:]\-]+}/tags', ['projectPages', 'edit_project_tags'])->setName('project_tags');
             $group->get('/{project_name:[[:alnum:]\-]+}/history[/page/{page:[1-9]+[0-9]*}]', ['projectPages', 'project_history'])->setName('project_history');
             $group->post('/{project_name:[[:alnum:]\-]+}/file_change_ajax', ['projectPages', 'get_file_change'])->setName('get_file_change_ajax');
-            $group->post('/{project_name:[[:alnum:]\-]+}/revert_to_commit', ['projectPages', 'revert_to_commit'])->setName('revert_to_commit_ajax');
-            $group->post('/{project_name:[[:alnum:]\-]+}/undo_commit', ['projectPages', 'undo_commit'])->setName('undo_commit_ajax');
+            $group->get('/{project_name:[[:alnum:]\-]+}/export', ['projectPages', 'export_view'])->setName('project_export');
+            $group->post('/{project_name:[[:alnum:]\-]+}/export', ['projectPages', 'update_export'])->setName('update_project_export');
+            $group->get('/{project_name:[[:alnum:]\-]+}/download_export', ['projectPages', 'download_export'])->setName('download_project_export');
+            $group->get('/{project_name:[[:alnum:]\-]+}/import', ['projectPages', 'import_view'])->setName('project_import');
+            $group->post('/{project_name:[[:alnum:]\-]+}/import', ['projectPages', 'import_from_git'])->setName('project_import_from_git');
+            $group->post('/{project_name:[[:alnum:]\-]+}/import_from_file', ['projectPages', 'import_from_file'])->setName('project_import_from_file');
 
         });
 

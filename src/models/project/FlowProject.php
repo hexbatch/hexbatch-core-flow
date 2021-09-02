@@ -3,6 +3,7 @@
 namespace app\models\project;
 
 use app\hexlet\JsonHelper;
+use app\hexlet\WillFunctions;
 use app\models\user\FlowUser;
 use DI\Container;
 use Exception;
@@ -20,6 +21,7 @@ class FlowProject {
     const FLOW_PROJECT_TYPE_TOP = 'top';
     const MAX_SIZE_TITLE = 40;
     const MAX_SIZE_BLURB = 120;
+    const MAX_SIZE_EXPORT_URL = 200;
 
     const MAX_SIZE_READ_ME_IN_CHARACTERS = 4000000;
 
@@ -42,6 +44,17 @@ class FlowProject {
     protected ?string $old_flow_project_title;
     protected ?string $old_flow_project_blurb;
     protected ?string $old_flow_project_readme_bb_code;
+
+
+    public ?string $export_repo_url;
+    public ?string $export_repo_key;
+    public ?string $export_repo_branch;
+    public ?int $export_repo_do_auto_push;
+
+
+    public ?string $import_repo_url;
+    public ?string $import_repo_key;
+    public ?string $import_repo_branch;
 
     /**
      * @var FlowProjectUser[] $project_users
@@ -115,22 +128,34 @@ class FlowProject {
      * @param int|null $start_at
      * @param int|null $limit
      * @param bool $b_refresh , default false
+     * @param bool $b_public , default false
      * @return FlowGitHistory[]
      * @throws Exception
      */
-    public function history(?int $start_at = null, ?int $limit = null,  bool $b_refresh= false): array
+    public function history(?int $start_at = null, ?int $limit = null,  bool $b_refresh= false, bool $b_public = false): array
     {
         if ($b_refresh || empty($this->project_history)) {
             $this->project_history = FlowGitHistory::get_history($this->get_project_directory());
         }
+        $history_to_scan = $this->project_history;
+        if ($b_public) {
+            $public_history = [];
+            foreach ($history_to_scan as $history) {
+                if ($history->has_changed_public_files()) {
+                    $public_history[] = $history;
+                }
+            }
+            $history_to_scan = $public_history;
+        }
         if (is_null($start_at) && is_null($limit) ) {
-            return $this->project_history;
+            return $history_to_scan;
         }
 
-        return array_slice($this->project_history,$start_at,min($limit,count($this->project_history)));
+        return array_slice($history_to_scan,$start_at,min($limit,count($this->project_history)));
 
     }
 
+    /** @noinspection PhpUnused */
     /**
      * @param bool $b_refresh
      * @return int
@@ -216,6 +241,14 @@ class FlowProject {
             $this->old_flow_project_blurb = null;
             $this->old_flow_project_readme_bb_code = null;
             $this->old_flow_project_title = null;
+
+            $this->export_repo_do_auto_push = null;
+            $this->export_repo_key = null;
+            $this->export_repo_url = null;
+            $this->export_repo_branch = null;
+            $this->import_repo_key = null;
+            $this->import_repo_url = null;
+            $this->import_repo_branch = null;
             return;
         }
         $this->project_users = [];
@@ -264,7 +297,138 @@ class FlowProject {
     /**
      * @throws Exception
      */
-    public function save() {
+    public function save_export_settings() {
+        try {
+            if (empty($this->export_repo_do_auto_push)) {
+                $this->export_repo_do_auto_push = 0;
+            }
+
+            if (empty($this->export_repo_key)) {
+                $this->export_repo_key =null;
+                $this->export_repo_do_auto_push = 0;
+            }
+
+            if (empty($this->export_repo_url)) {
+                $this->export_repo_url =null;
+                $this->export_repo_do_auto_push = 0;
+            }
+
+            if (empty($this->export_repo_branch)) {
+                $this->export_repo_branch =null;
+                $this->export_repo_do_auto_push = 0;
+            }
+
+
+
+            if ($this->export_repo_url && (mb_strlen($this->export_repo_url) > static::MAX_SIZE_EXPORT_URL)) {
+                throw new InvalidArgumentException("Project Export Repo cannot be more than " . static::MAX_SIZE_EXPORT_URL . " characters");
+            }
+
+
+
+            $db = static::get_connection();
+            $db->update('flow_projects', [
+                'export_repo_do_auto_push' => $this->export_repo_do_auto_push,
+                'export_repo_url' => $this->export_repo_url,
+                'export_repo_branch' => $this->export_repo_branch,
+                'export_repo_key' => $this->export_repo_key
+            ], [
+                'id' => $this->id
+            ]);
+
+            //see if we are changing the remote
+
+            try {
+                $remote_url = $this->do_git_command("config --get remote.origin.url");
+            } catch (Exception $e) {
+                $remote_url = '';
+            }
+
+            if ( $this->export_repo_url && ($remote_url !== $this->export_repo_url)) {
+                if ($remote_url) {
+                    //change the origin
+                    $this->do_git_command("remote set-url origin $this->export_repo_url");
+                } else {
+                    //set the origin to the url
+                    $this->do_git_command("remote add origin $this->export_repo_url");
+                }
+            }
+
+
+
+        } catch (Exception $e) {
+            static::get_logger()->alert("Project export settings cannot save ",['exception'=>$e]);
+            throw $e;
+        }
+    }
+
+
+
+    /**
+     * @throws Exception
+     */
+    public function save_import_settings() {
+        try {
+
+
+            if (empty($this->import_repo_key)) {
+                $this->import_repo_key =null;
+            }
+
+            if (empty($this->import_repo_url)) {
+                $this->import_repo_url =null;
+            }
+
+            if (empty($this->import_repo_branch)) {
+                $this->export_repo_branch =null;
+            }
+
+            if ($this->import_repo_url && (mb_strlen($this->import_repo_url) > static::MAX_SIZE_EXPORT_URL)) {
+                throw new InvalidArgumentException("Project Import Repo cannot be more than " . static::MAX_SIZE_EXPORT_URL . " characters");
+            }
+
+
+
+            $db = static::get_connection();
+            $db->update('flow_projects', [
+                'import_repo_url' => $this->import_repo_url,
+                'import_repo_branch' => $this->import_repo_branch,
+                'import_repo_key' => $this->import_repo_key
+            ], [
+                'id' => $this->id
+            ]);
+
+            //see if we are changing the remote
+
+            try {
+                $remote_url = $this->do_git_command("config --get remote.import.url");
+            } catch (Exception $e) {
+                $remote_url = '';
+            }
+
+            if ( $this->import_repo_url && ($remote_url !== $this->import_repo_url)) {
+                if ($remote_url) {
+                    //change the import
+                    $this->do_git_command("remote set-url import $this->import_repo_url");
+                } else {
+                    //set the origin to the url
+                    $this->do_git_command("remote add import $this->import_repo_url");
+                }
+            }
+
+
+
+        } catch (Exception $e) {
+            static::get_logger()->alert("Project import settings cannot save ",['exception'=>$e]);
+            throw $e;
+        }
+    }
+
+
+    /**
+     * @throws Exception
+     */
+    public function save() :string {
         $db = null;
         try {
             if (empty($this->flow_project_title)) {
@@ -275,7 +439,7 @@ class FlowProject {
             }
 
             if (mb_strlen($this->flow_project_blurb) > static::MAX_SIZE_BLURB) {
-                throw new InvalidArgumentException("Project Title cannot be more than ".static::MAX_SIZE_BLURB." characters");
+                throw new InvalidArgumentException("Project Blurb cannot be more than ".static::MAX_SIZE_BLURB." characters");
             }
 
             $b_match = static::check_valid_title($this->flow_project_title);
@@ -409,8 +573,6 @@ class FlowProject {
             }
 
 
-
-
             $db->commit();
 
 
@@ -419,6 +581,12 @@ class FlowProject {
             static::get_logger()->alert("Project model cannot save ",['exception'=>$e]);
             throw $e;
         }
+
+        if ($this->export_repo_do_auto_push) {
+            $push_info = $this->push_repo();
+            return "Saved and pushed to $this->export_repo_url<br>$push_info";
+        }
+        return "Saved";
     }
 
     /**
@@ -493,7 +661,17 @@ class FlowProject {
                 p.flow_project_blurb,
                 p.flow_project_readme,
                 p.flow_project_readme_html,
-                p.flow_project_readme_bb_code
+                p.flow_project_readme_bb_code,
+       
+                p.export_repo_do_auto_push,
+                p.export_repo_url,
+                p.export_repo_branch,
+                p.export_repo_key,
+       
+                p.import_repo_url,
+                p.import_repo_branch,
+                p.import_repo_key
+
                 FROM flow_projects p 
                 INNER JOIN  flow_users u ON u.id = p.admin_flow_user_id
                 WHERE 1 AND $where_condition";
@@ -561,20 +739,210 @@ class FlowProject {
 
     /**
      * @param string $command
+     * @param string|null $pre_command
+     * @param  bool $b_include_git_word  default true
      * @return string
      * @throws Exception
      */
-    protected function do_git_command(string $command) : string {
+    protected function do_git_command(string $command,bool $b_include_git_word = true,?string $pre_command = null) : string {
         $dir = $this->get_project_directory();
-        return FlowGitHistory::do_git_command($dir,$command);
+        return FlowGitHistory::do_git_command($dir,$command,$b_include_git_word,$pre_command);
     }
 
     /**
      * @return string
      * @throws Exception
      */
-    public function get_head_commit_hash() {
-        return $this->do_git_command('rev-parse HEAD');
+    public function get_head_commit_hash() : string {
+        try {
+            return $this->do_git_command('rev-parse HEAD');
+        } catch (Exception $e) {
+            return '';
+        }
+    }
+
+    /**
+     * Saves the private key to a file, and deletes it after, and might take care of ssh local host issues
+     * @param string $private_key
+     * @param string $to_ssh_url
+     * @param string $git_command
+     * @return string
+     * @throws
+     */
+    protected function do_key_command_with_private_key(string $private_key,string $to_ssh_url,string $git_command) : string {
+
+        WillFunctions::will_do_nothing($to_ssh_url); //reserved for future use
+        $temp_file_path = null;
+        try {
+            //save private key as temp file, and set permissions to owner only
+            $temp_file_path = tempnam(sys_get_temp_dir(), 'git-key-');
+            file_put_contents($temp_file_path,$private_key);
+            $directory = $this->get_project_directory();
+            $command = "ssh-agent bash -c ' ".
+                "cd $directory; ".
+                "ssh-add $temp_file_path; ".
+                "git $git_command'".
+                " 2>&1";
+
+            /*
+             * The way the current linux setup; need to have the base url of the remote in the known hosts first
+             * this is done at the dockerfile with
+             * (host=github.com; ssh-keyscan -H $host; for ip in $(dig @8.8.8.8 github.com +short); do ssh-keyscan -H $host,$ip; ssh-keyscan -H $ip; done) 2> /dev/null >> /home/www-data/.ssh/known_hosts
+             * but should be able to add others as needed by using regex to get the host base url, and running this
+             *
+             */
+
+            exec($command,$output,$result_code);
+            if ($result_code) {
+                throw new RuntimeException("Cannot do $git_command,  returned code of $result_code : " . implode("<br>\n",$output));
+            }
+            return implode("<br>\n",$output);
+
+        } finally {
+            if ($temp_file_path) {
+                unlink($temp_file_path);
+            }
+        }
+    }
+
+    /**
+     * @param $command
+     * @return string
+     * @throws Exception
+     */
+    protected function do_project_directory_command($command) :string  {
+        $directory = $this->get_project_directory();
+        $full_command = "cd $directory && $command";
+        exec($full_command,$output,$result_code);
+        if ($result_code) {
+            throw new RuntimeException("Cannot do $command,  returned code of $result_code : " . implode("\n",$output));
+        }
+        return implode("\n",$output);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function push_repo() : string  {
+        if (!$this->export_repo_url) {
+            throw new RuntimeException("Export Repo Url not set");
+        }
+        if (!$this->export_repo_key) {
+            throw new RuntimeException("Export Repo Key not set");
+        }
+
+        if (!$this->export_repo_branch) {
+            throw new RuntimeException("Export Repo Branch not set");
+        }
+
+        $command = "push -u origin $this->export_repo_branch";
+        return $this->do_key_command_with_private_key($this->export_repo_key,$this->export_repo_url,$command);
+    }
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    function import_pull_repo_from_git() :string {
+        if (!$this->import_repo_url) {
+            throw new RuntimeException("Import Repo Url not set");
+        }
+        if (!$this->import_repo_key) {
+            throw new RuntimeException("Import Repo Key not set");
+        }
+
+        if (!$this->import_repo_branch) {
+            throw new RuntimeException("Import Repo Branch not set");
+        }
+
+        $old_head = $this->get_head_commit_hash();
+        $command = "pull import $this->import_repo_branch";
+        try {
+            $git_ret =  $this->do_key_command_with_private_key($this->export_repo_key,$this->export_repo_url,$command);
+        } catch (Exception $e) {
+            $maybe_changes = $this->do_git_command('diff');
+            $message = $e->getMessage();
+            if (!empty(trim($maybe_changes))) {
+                $this->do_git_command('merge --abort');
+                $message.="<br>Aborted Merge\n";
+            }
+            throw new RuntimeException($message);
+        }
+
+        $new_head = $this->get_head_commit_hash();
+        try {
+            $this->check_integrity();
+            $this->set_db_from_file_state();
+        } catch (Exception $e) {
+            //do not use commit just imported
+            if ($old_head !== $new_head) {
+                $this->do_git_command("reset $old_head");
+            }
+        }
+
+        return $git_ret;
+    }
+
+    function update_repo_from_file() :string {
+        return 'stub updated repo from file';
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function check_integrity()  {
+        $this->do_project_directory_command('stat flow_project_blurb');
+        $this->do_project_directory_command('stat flow_project_title');
+        $this->do_project_directory_command('stat flow_project_readme_bb_code.bbcode');
+        $title = $this->do_project_directory_command('cat flow_project_title');
+        $this->check_valid_title($title);
+        $blurb = $this->do_project_directory_command('cat flow_project_blurb');
+        if (mb_strlen($blurb) > static::MAX_SIZE_BLURB) {
+            throw new InvalidArgumentException("Project Blurb cannot be more than ".static::MAX_SIZE_BLURB." characters");
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function set_db_from_file_state()  {
+        $this->flow_project_blurb = $this->do_project_directory_command('cat flow_project_blurb');
+        $this->flow_project_title = $this->do_project_directory_command('cat flow_project_title');
+        $this->flow_project_readme_bb_code = $this->do_project_directory_command('cat flow_project_readme_bb_code.bbcode');
+        $this->set_read_me($this->flow_project_readme_bb_code);
+
+        $dir = $this->get_project_directory();
+        $read_me_path_html = $dir . DIRECTORY_SEPARATOR . 'flow_project_readme_html.html';
+
+        $b_ok = file_put_contents($read_me_path_html,$this->flow_project_readme_html);
+        if ($b_ok === false) {throw new RuntimeException("[set_db_from_file_state] Could not write to $read_me_path_html");}
+
+        $db = null;
+        try {
+            $db = static::get_connection();
+            $db->beginTransaction();
+
+            $db->update('flow_projects',[
+                'flow_project_type' => $this->flow_project_type,
+                'flow_project_title' => $this->flow_project_title,
+                'flow_project_blurb' => $this->flow_project_blurb,
+                'flow_project_readme' => $this->flow_project_readme,
+                'flow_project_readme_html' => $this->flow_project_readme_html,
+                'flow_project_readme_bb_code' => $this->flow_project_readme_bb_code,
+            ],[
+                'id' => $this->id
+            ]);
+
+            //do children here
+            $db->commit();
+
+
+        } catch (Exception $e) {
+            $db AND $db->rollBack();
+            static::get_logger()->alert("Project model cannot update from file stete ",['exception'=>$e]);
+            throw $e;
+        }
+
     }
 
 

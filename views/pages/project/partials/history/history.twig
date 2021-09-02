@@ -20,7 +20,7 @@
             </h5>
             {% set total_pages = ( project.count_total_public_history()  / history_page_size) | round(0, 'ceil') %}
             {% if (history_page_number >= 1) and (history_page_number <= total_pages)  %}
-                {% for history in project.history( (history_page_number-1) * history_page_size , history_page_size) %}
+                {% for history in project.history( (history_page_number-1) * history_page_size , history_page_size,false,true) %}
                     {% if  history.has_changed_public_files  %}
                         <div class="row mb-2 p-1 flow-grid-striped" data-commit="{{ history.commit }}">
                             {{ include('project/partials/history/history-row.twig'  , {'history': history}) }}

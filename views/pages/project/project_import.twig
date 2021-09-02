@@ -1,0 +1,52 @@
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+
+        <li class="breadcrumb-item">
+            <a href="{{  url_for('all_projects')  }}">{{ project.get_admin_user().flow_user_name }}</a>
+        </li>
+
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('single_project_home',{
+                user_name: project.get_admin_user().flow_user_name ,
+                project_name: project.flow_project_title
+            } )
+            }}">
+                <span class="flow-project-title">
+                   Editing {{ project.flow_project_title }}
+                </span>
+            </a>
+        </li>
+
+        <li class="breadcrumb-item">Importing Chages To  {{ project.flow_project_title }}</li>
+
+    </ol>
+</nav>
+
+
+
+<div class="row">
+    <div class="col-12 col-lg-auto ">
+        {{ include('project/partials/edit-side-menu.twig') }}
+    </div><!-- /.col -->
+
+    <div class="col ">
+        <div class="row">
+            {% if project.get_current_user_permissions().can_admin %}
+                <div class="col-12 col-xl-8">
+                    {{ include('project/partials/import/import-from-git.twig') }}
+                </div><!-- /.col -->
+            {% endif %}
+
+
+{#            {% if project.get_current_user_permissions().can_admin %}#}
+{#                <div class="col-12 col-xl-4 ">#}
+{#                    {{ include('project/partials/import/import-from-file.twig') }}#}
+{#                </div><!-- /.col -->#}
+{#            {% endif %}#}
+        </div> <!-- /.row -->
+    </div><!-- /.col -->
+
+</div> <!-- /.row -->
+
+
+
