@@ -115,19 +115,30 @@ class FlowProject {
      * @param int|null $start_at
      * @param int|null $limit
      * @param bool $b_refresh , default false
+     * @param bool $b_public , default false
      * @return FlowGitHistory[]
      * @throws Exception
      */
-    public function history(?int $start_at = null, ?int $limit = null,  bool $b_refresh= false): array
+    public function history(?int $start_at = null, ?int $limit = null,  bool $b_refresh= false, bool $b_public = false): array
     {
         if ($b_refresh || empty($this->project_history)) {
             $this->project_history = FlowGitHistory::get_history($this->get_project_directory());
         }
+        $history_to_scan = $this->project_history;
+        if ($b_public) {
+            $public_history = [];
+            foreach ($history_to_scan as $history) {
+                if ($history->has_changed_public_files()) {
+                    $public_history[] = $history;
+                }
+            }
+            $history_to_scan = $public_history;
+        }
         if (is_null($start_at) && is_null($limit) ) {
-            return $this->project_history;
+            return $history_to_scan;
         }
 
-        return array_slice($this->project_history,$start_at,min($limit,count($this->project_history)));
+        return array_slice($history_to_scan,$start_at,min($limit,count($this->project_history)));
 
     }
 
