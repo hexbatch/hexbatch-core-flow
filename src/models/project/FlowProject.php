@@ -142,6 +142,7 @@ class FlowProject {
 
     }
 
+    /** @noinspection PhpUnused */
     /**
      * @param bool $b_refresh
      * @return int
@@ -584,7 +585,7 @@ class FlowProject {
      * @return string
      * @throws Exception
      */
-    public function get_head_commit_hash() {
+    public function get_head_commit_hash() : string {
         return $this->do_git_command('rev-parse HEAD');
     }
 
