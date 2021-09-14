@@ -19,6 +19,7 @@ use Monolog\Logger;
 use ParagonIE\AntiCSRF\AntiCSRF;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UploadedFileInterface;
 use Slim\Exception\HttpBadRequestException;
 use Slim\Exception\HttpForbiddenException;
 use Slim\Exception\HttpInternalServerErrorException;
@@ -34,6 +35,7 @@ class ProjectPages
     const REM_NEW_PROJECT_WITH_ERROR_SESSION_KEY = 'project_new_form_in_progress_has_error';
     const REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY = 'project_edit_form_in_progress_has_error';
     const REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY = 'project_export_form_in_progress_has_error';
+    const REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY = 'project_import_git_form_in_progress_has_error';
 
     protected Auth $auth;
     protected Logger $logger;
@@ -763,39 +765,6 @@ class ProjectPages
     }
 
 
-    /**
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param string $user_name
-     * @param string $project_name
-     * @return ResponseInterface
-     * @throws Exception
-     * @noinspection PhpUnused
-     */
-    public function import_view( ServerRequestInterface $request,ResponseInterface $response,
-                                     string $user_name, string $project_name) :ResponseInterface {
-        try {
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'admin');
-
-            if (!$project) {
-                throw new HttpNotFoundException($request,"Project $project_name Not Found");
-            }
-
-
-
-            return $this->view->render($response, 'main.twig', [
-                'page_template_path' => 'project/project_import.twig',
-                'page_title' => "Import for Project $project_name",
-                'page_description' => 'Import for Project',
-                'project' => $project,
-            ]);
-
-        } catch (Exception $e) {
-            $this->logger->error("Could not render project import page",['exception'=>$e]);
-            throw $e;
-        }
-    }
-
 
     /**
      * @param ServerRequestInterface $request
@@ -904,7 +873,7 @@ class ProjectPages
                 UserPages::add_flash_message('warning', "Cannot update project export settings: <b>" . $e->getMessage().'</b>');
                 $_SESSION[static::REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY] = $project;
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-                $url = $routeParser->urlFor('update_project_export',[
+                $url = $routeParser->urlFor('project_export',[
                     "user_name" => $user_name ,
                     "project_name" => $project_name
                 ]);
@@ -969,7 +938,223 @@ class ProjectPages
 
     }
 
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function import_view( ServerRequestInterface $request,ResponseInterface $response,
+                                 string $user_name, string $project_name) :ResponseInterface {
 
+
+        try {
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'admin');
+
+            if (!$project) {
+                throw new HttpNotFoundException($request,"Project $project_name Not Found for export settings");
+            }
+
+
+            if (array_key_exists(static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY,$_SESSION)) {
+                /**
+                 * @var ?FlowProject $form_in_progress
+                 */
+                $form_in_progress = $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY];
+                $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY] = null;
+                if (empty($form_in_progress)) {
+                    $form_in_progress = $project;
+                }
+            } else {
+                $form_in_progress = $project;
+            }
+
+
+            return $this->view->render($response, 'main.twig', [
+                'page_template_path' => 'project/project_import.twig',
+                'page_title' => "Import for Project $project_name",
+                'page_description' => 'Import for Project',
+                'project' => $form_in_progress,
+            ]);
+
+        } catch (Exception $e) {
+            $this->logger->error("Could not render history page",['exception'=>$e]);
+            throw $e;
+        }
+
+    }
+
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function import_from_git(ServerRequestInterface $request,ResponseInterface $response,
+                                  string $user_name, string $project_name) :ResponseInterface {
+
+        $project = null;
+        try {
+            $csrf = new AntiCSRF;
+
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+
+            $args = $request->getParsedBody();
+
+
+
+            $project->import_repo_url = $args['import_repo_url'];
+            $project->import_repo_key = $args['import_repo_key'];
+            $project->import_repo_branch = $args['import_repo_branch'];
+
+            if (!empty($_POST)) {
+                if (!$csrf->validateRequest()) {
+                    throw new HttpForbiddenException($request,"Bad Request") ;
+                }
+            }
+
+
+            $project->save_import_settings();
+            $success_message = "Updated Project Import Settings "  . $project->flow_project_title;
+            if (array_key_exists('import-now',$args)) {
+                //do push now
+                $push_status = $project->import_pull_repo_from_git();
+                $success_message = "Pulling from $project->import_repo_url "  . $project->flow_project_title . "<br>$push_status";
+            }
+            $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY] = null;
+
+            try {
+                UserPages::add_flash_message('success',$success_message );
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                $url = $routeParser->urlFor('single_project_home',[
+                    "user_name" => $project->get_admin_user()->flow_user_name,
+                    "project_name" => $project->flow_project_title
+                ]);
+                $response = $response->withStatus(302);
+                return $response->withHeader('Location', $url);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to all projects after successful import from git", ['exception' => $e]);
+                throw $e;
+            }
+        } catch (Exception $e) {
+            try {
+                UserPages::add_flash_message('warning', "Cannot update project import settings: <b>" . $e->getMessage().'</b>');
+                $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY] = $project;
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                $url = $routeParser->urlFor('project_import',[
+                    "user_name" => $user_name ,
+                    "project_name" => $project_name
+                ]);
+                $response = $response->withStatus(302);
+                return $response->withHeader('Location', $url);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to project import settings after error", ['exception' => $e]);
+                throw $e;
+            }
+        }
+
+    }
+
+
+
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function import_from_file(ServerRequestInterface $request,ResponseInterface $response,
+                                    string $user_name, string $project_name) :ResponseInterface {
+
+        $project = null;
+        try {
+            $csrf = new AntiCSRF;
+
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+
+            if (!empty($_POST)) {
+                if (!$csrf->validateRequest()) {
+                    throw new HttpForbiddenException($request,"Bad Request") ;
+                }
+            }
+
+
+            $uploadedFiles = $request->getUploadedFiles();
+            if (!array_key_exists('repo_or_patch_file',$uploadedFiles)) {
+                throw new HttpBadRequestException($request,"Need the file named repo_or_patch_file");
+            }
+            // handle single input with single file upload
+            /**
+             * @var UploadedFileInterface $uploadedFile
+             */
+            $uploadedFile = $uploadedFiles['repo_or_patch_file'];
+            $file_name = $uploadedFile->getClientFilename();
+            if ($uploadedFile->getError() !== UPLOAD_ERR_OK) {
+                $phpFileUploadErrors = array(
+                    0 => 'There is no error, the file uploaded with success',
+                    1 => 'The uploaded file exceeds the upload_max_filesize directive in php.ini',
+                    2 => 'The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form',
+                    3 => 'The uploaded file was only partially uploaded',
+                    4 => 'No file was uploaded',
+                    6 => 'Missing a temporary folder',
+                    7 => 'Failed to write file to disk.',
+                    8 => 'A PHP extension stopped the file upload.',
+                );
+                throw new HttpBadRequestException($request,"File Error $file_name : ". $phpFileUploadErrors[$uploadedFile->getError()] );
+            }
+
+
+            $success_message = "Nothing Done "  . $project->flow_project_title;
+            $args = $request->getParsedBody();
+            if (array_key_exists('import-now',$args)) {
+                //do push now
+                $push_status = $project->update_repo_from_file();
+                $success_message = "Merging from file $file_name to "  . $project->flow_project_title . "<br>$push_status";
+            }
+            $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY] = null;
+
+            try {
+                UserPages::add_flash_message('success',$success_message );
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                $url = $routeParser->urlFor('single_project_home',[
+                    "user_name" => $project->get_admin_user()->flow_user_name,
+                    "project_name" => $project->flow_project_title
+                ]);
+                $response = $response->withStatus(302);
+                return $response->withHeader('Location', $url);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to all projects after successful merge from file", ['exception' => $e]);
+                throw $e;
+            }
+        } catch (Exception $e) {
+            try {
+                UserPages::add_flash_message('warning', "Cannot merge project from file: <b>" . $e->getMessage().'</b>');
+                $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY] = $project;
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                $url = $routeParser->urlFor('project_import',[
+                    "user_name" => $user_name ,
+                    "project_name" => $project_name
+                ]);
+                $response = $response->withStatus(302);
+                return $response->withHeader('Location', $url);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to project import settings after error", ['exception' => $e]);
+                throw $e;
+            }
+        }
+
+    }
 
 
 

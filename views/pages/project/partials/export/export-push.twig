@@ -16,7 +16,12 @@
                     <input type="hidden" name="flow_project_git_hash" value="{{ project.get_head_commit_hash() }}">
 
                     <div class="col-12">
-                        <label for="export_repo_url">Repository Url <small>Github only for right now</small></label>
+                        <label for="export_repo_url">
+                            Repository Url
+                            <small class="p-2">
+                                Github only for right now
+                            </small>
+                        </label>
                         <input type="text" id="export_repo_url" name="export_repo_url"
                                class="form-control" placeholder="Export Repo Url"  autofocus
                                value="{{ project.export_repo_url }}"

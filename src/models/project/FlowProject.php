@@ -50,6 +50,11 @@ class FlowProject {
     public ?string $export_repo_branch;
     public ?int $export_repo_do_auto_push;
 
+
+    public ?string $import_repo_url;
+    public ?string $import_repo_key;
+    public ?string $import_repo_branch;
+
     /**
      * @var FlowProjectUser[] $project_users
      */
@@ -240,6 +245,9 @@ class FlowProject {
             $this->export_repo_key = null;
             $this->export_repo_url = null;
             $this->export_repo_branch = null;
+            $this->import_repo_key = null;
+            $this->import_repo_url = null;
+            $this->import_repo_branch = null;
             return;
         }
         $this->project_users = [];
@@ -315,10 +323,6 @@ class FlowProject {
                 throw new InvalidArgumentException("Project Export Repo cannot be more than " . static::MAX_SIZE_EXPORT_URL . " characters");
             }
 
-            if (mb_strlen($this->flow_project_blurb) > static::MAX_SIZE_BLURB) {
-                throw new InvalidArgumentException("Project Title cannot be more than " . static::MAX_SIZE_BLURB . " characters");
-            }
-
 
 
             $db = static::get_connection();
@@ -353,6 +357,68 @@ class FlowProject {
 
         } catch (Exception $e) {
             static::get_logger()->alert("Project export settings cannot save ",['exception'=>$e]);
+            throw $e;
+        }
+    }
+
+
+
+    /**
+     * @throws Exception
+     */
+    public function save_import_settings() {
+        try {
+
+
+            if (empty($this->import_repo_key)) {
+                $this->import_repo_key =null;
+            }
+
+            if (empty($this->import_repo_url)) {
+                $this->import_repo_url =null;
+            }
+
+            if (empty($this->import_repo_branch)) {
+                $this->export_repo_branch =null;
+            }
+
+            if ($this->import_repo_url && (mb_strlen($this->import_repo_url) > static::MAX_SIZE_EXPORT_URL)) {
+                throw new InvalidArgumentException("Project Import Repo cannot be more than " . static::MAX_SIZE_EXPORT_URL . " characters");
+            }
+
+
+
+            $db = static::get_connection();
+            $db->update('flow_projects', [
+                'import_repo_url' => $this->import_repo_url,
+                'import_repo_branch' => $this->import_repo_branch,
+                'import_repo_key' => $this->import_repo_key
+            ], [
+                'id' => $this->id
+            ]);
+
+            //see if we are changing the remote
+
+            try {
+                $remote_url = $this->do_git_command("config --get remote.import.url");
+            } catch (Exception $e) {
+                $remote_url = '';
+            }
+
+            if ( $this->import_repo_url && ($remote_url !== $this->import_repo_url)) {
+                if ($remote_url) {
+                    //change the import
+                    $this->do_git_command("remote set-url import $this->import_repo_url");
+                } else {
+                    //set the origin to the url
+                    $this->do_git_command("remote add import $this->import_repo_url");
+                }
+            }
+
+
+
+        } catch (Exception $e) {
+            static::get_logger()->alert("Project import settings cannot save ",['exception'=>$e]);
             throw $e;
         }
     }
@@ -599,7 +665,11 @@ class FlowProject {
                 p.export_repo_do_auto_push,
                 p.export_repo_url,
                 p.export_repo_branch,
-                p.export_repo_key
+                p.export_repo_key,
+       
+                p.import_repo_url,
+                p.import_repo_branch,
+                p.import_repo_key
 
                 FROM flow_projects p 
                 INNER JOIN  flow_users u ON u.id = p.admin_flow_user_id
@@ -711,8 +781,19 @@ class FlowProject {
             $temp_file_path = tempnam(sys_get_temp_dir(), 'git-key-');
             file_put_contents($temp_file_path,$this->export_repo_key);
             $directory = $this->get_project_directory();
-            $command = "ssh-agent bash -c 'GIT_SSH_COMMAND=\"ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no\"; ".
-                "cd $directory; ssh-add $temp_file_path; git push -u origin $this->export_repo_branch' 2>&1";
+            $command = "ssh-agent bash -c ' ".
+                "cd $directory; ".
+                "ssh-add $temp_file_path; ".
+                "git push -u origin $this->export_repo_branch'".
+                " 2>&1";
+
+            /*
+             * The way the current linux setup; need to have the base url of the remote in the known hosts first
+             * this is done at the dockerfile with
+             * (host=github.com; ssh-keyscan -H $host; for ip in $(dig @8.8.8.8 github.com +short); do ssh-keyscan -H $host,$ip; ssh-keyscan -H $ip; done) 2> /dev/null >> /home/www-data/.ssh/known_hosts
+             * but should be able to add others as needed by using regex to get the host base url, and running this
+             *
+             */
 
             exec($command,$output,$result_code);
             if ($result_code) {
@@ -725,6 +806,14 @@ class FlowProject {
                 unlink($temp_file_path);
             }
         }
+    }
+
+    function import_pull_repo_from_git() :string {
+        return 'stub pulled from git ';
+    }
+
+    function update_repo_from_file() :string {
+        return 'stub updated repo from file';
     }
 
 

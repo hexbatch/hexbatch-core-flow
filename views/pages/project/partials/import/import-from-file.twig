@@ -1,0 +1,49 @@
+<div class="container">
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-10 offset-md-1 col-lg-10 offset-lg-1 col-xl-10 offset-xl-1">
+            <div class=" bg-light mt-3 px-4">
+                <form method="post" action="{{-  url_for('project_import_from_file',{
+                    user_name: project.get_admin_user().flow_user_name ,
+                    project_name: project.flow_project_title
+                } ) -}}"
+                      class="row g-3"
+                      enctype="multipart/form-data"
+                >
+                    {{ form_token(  url_for('project_import_from_file',{
+                        user_name: project.get_admin_user().flow_user_name ,
+                        project_name: project.flow_project_title
+                    } )) }}
+
+                    <input type="hidden" name="flow_project_git_hash" value="{{ project.get_head_commit_hash() }}">
+
+                    <div class="col-12">
+                        <label for="repo_or_patch_file">
+                            Repo or Patch
+                            <small class="p-2">
+                                Zipped or Tarred formats
+                            </small>
+                        </label>
+                        <input type="file" id="repo_or_patch_file" name="repo_or_patch_file"
+                               class="form-control" placeholder="Upload patch or repo"  autofocus
+                        >
+                    </div>
+
+
+                    <div class="col-12 text-center">
+
+                        <div class="d-inline-block">
+                            <button type="submit" class="btn btn-primary" name="import-now" value="1">
+                                Update Now
+                                <br>
+                                (file must have history of current)
+                            </button>
+                        </div>
+
+                    </div>
+
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

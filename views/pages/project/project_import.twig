@@ -17,7 +17,8 @@
             </a>
         </li>
 
-        <li class="breadcrumb-item active" aria-current="page">Importing  {{ project.flow_project_title }}</li>
+        <li class="breadcrumb-item">Exporting  {{ project.flow_project_title }}</li>
+
     </ol>
 </nav>
 
@@ -29,7 +30,23 @@
     </div><!-- /.col -->
 
     <div class="col ">
-        {{ include('project/partials/import/import.twig') }}
+        <div class="row">
+            {% if project.get_current_user_permissions().can_admin %}
+                <div class="col-12 col-xl-8">
+                    {{ include('project/partials/import/import-from-git.twig') }}
+                </div><!-- /.col -->
+            {% endif %}
+
+
+            {% if project.get_current_user_permissions().can_admin %}
+                <div class="col-12 col-xl-4 ">
+                    {{ include('project/partials/import/import-from-file.twig') }}
+                </div><!-- /.col -->
+            {% endif %}
+        </div> <!-- /.row -->
     </div><!-- /.col -->
 
 </div> <!-- /.row -->
+
+
+
