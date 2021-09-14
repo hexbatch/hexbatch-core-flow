@@ -65,6 +65,7 @@ return function (App $app) {
             $group->post('/{project_name:[[:alnum:]\-]+}/file_change_ajax', ['projectPages', 'get_file_change'])->setName('get_file_change_ajax');
             $group->get('/{project_name:[[:alnum:]\-]+}/export', ['projectPages', 'export_view'])->setName('project_export');
             $group->post('/{project_name:[[:alnum:]\-]+}/export', ['projectPages', 'update_export'])->setName('update_project_export');
+            $group->get('/{project_name:[[:alnum:]\-]+}/download_export', ['projectPages', 'download_export'])->setName('download_project_export');
             $group->get('/{project_name:[[:alnum:]\-]+}/import', ['projectPages', 'import_view'])->setName('project_import');
 
         });

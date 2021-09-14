@@ -3,6 +3,7 @@ namespace app\controllers\project;
 
 use app\controllers\user\UserPages;
 use app\hexlet\FlowAntiCSRF;
+use app\hexlet\GoodZipArchive;
 use app\models\project\FlowGitFile;
 use app\models\project\FlowProject;
 use app\models\project\FlowProjectUser;
@@ -18,8 +19,11 @@ use Monolog\Logger;
 use ParagonIE\AntiCSRF\AntiCSRF;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Slim\Exception\HttpBadRequestException;
 use Slim\Exception\HttpForbiddenException;
+use Slim\Exception\HttpInternalServerErrorException;
 use Slim\Exception\HttpNotFoundException;
+use Slim\Psr7\Stream;
 use Slim\Routing\RouteContext;
 use Slim\Views\Twig;
 
@@ -909,6 +913,57 @@ class ProjectPages
                 throw $e;
             }
         }
+
+    }
+
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function download_export(ServerRequestInterface $request,ResponseInterface $response,
+                                   string $user_name, string $project_name) :ResponseInterface {
+
+        try {
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+
+            if (!$project) {
+                throw new HttpNotFoundException($request,"Project $project_name Not Found");
+            }
+            $temp_file_path = tempnam(sys_get_temp_dir(), 'git-zip-');
+            $b_rename_ok = rename($temp_file_path, $temp_file_path .= '.zip');
+            if (!$b_rename_ok) {
+                throw new HttpInternalServerErrorException($request,"Cannot rename temp folder");
+            }
+
+            $project_directory_path = $project->get_project_directory();
+            new GoodZipArchive($project_directory_path,    $temp_file_path,$project->flow_project_title) ;
+            $file_size = filesize($temp_file_path);
+            if (!$file_size) {
+                throw new HttpInternalServerErrorException($request,"Cannot create zip folder for download");
+            }
+
+            $response = $response
+                ->withHeader('Content-Type', 'application/zip')
+                ->withHeader('Content-Length', 'application/zip')
+                ->withHeader('Content-Disposition', "attachment; filename=$project->flow_project_title.zip")
+                ->withAddedHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                ->withHeader('Cache-Control', 'post-check=0, pre-check=0')
+                ->withHeader('Pragma', 'no-cache')
+                ->withBody((new Stream(fopen($temp_file_path, 'rb'))));
+
+            return $response;
+
+        } catch (Exception $e) {
+            $this->logger->error("Could not download project zip",['exception'=>$e]);
+            throw $e;
+        }
+
 
     }
 
