@@ -20,6 +20,7 @@ class FlowProject {
     const FLOW_PROJECT_TYPE_TOP = 'top';
     const MAX_SIZE_TITLE = 40;
     const MAX_SIZE_BLURB = 120;
+    const MAX_SIZE_EXPORT_URL = 200;
 
     const MAX_SIZE_READ_ME_IN_CHARACTERS = 4000000;
 
@@ -42,6 +43,12 @@ class FlowProject {
     protected ?string $old_flow_project_title;
     protected ?string $old_flow_project_blurb;
     protected ?string $old_flow_project_readme_bb_code;
+
+
+    public ?string $export_repo_url;
+    public ?string $export_repo_key;
+    public ?string $export_repo_branch;
+    public ?int $export_repo_do_auto_push;
 
     /**
      * @var FlowProjectUser[] $project_users
@@ -228,6 +235,11 @@ class FlowProject {
             $this->old_flow_project_blurb = null;
             $this->old_flow_project_readme_bb_code = null;
             $this->old_flow_project_title = null;
+
+            $this->export_repo_do_auto_push = null;
+            $this->export_repo_key = null;
+            $this->export_repo_url = null;
+            $this->export_repo_branch = null;
             return;
         }
         $this->project_users = [];
@@ -276,7 +288,80 @@ class FlowProject {
     /**
      * @throws Exception
      */
-    public function save() {
+    public function save_export_settings() {
+        try {
+            if (empty($this->export_repo_do_auto_push)) {
+                $this->export_repo_do_auto_push = 0;
+            }
+
+            if (empty($this->export_repo_key)) {
+                $this->export_repo_key =null;
+                $this->export_repo_do_auto_push = 0;
+            }
+
+            if (empty($this->export_repo_url)) {
+                $this->export_repo_url =null;
+                $this->export_repo_do_auto_push = 0;
+            }
+
+            if (empty($this->export_repo_branch)) {
+                $this->export_repo_branch =null;
+                $this->export_repo_do_auto_push = 0;
+            }
+
+
+
+            if ($this->export_repo_url && (mb_strlen($this->export_repo_url) > static::MAX_SIZE_EXPORT_URL)) {
+                throw new InvalidArgumentException("Project Export Repo cannot be more than " . static::MAX_SIZE_EXPORT_URL . " characters");
+            }
+
+            if (mb_strlen($this->flow_project_blurb) > static::MAX_SIZE_BLURB) {
+                throw new InvalidArgumentException("Project Title cannot be more than " . static::MAX_SIZE_BLURB . " characters");
+            }
+
+
+
+            $db = static::get_connection();
+            $db->update('flow_projects', [
+                'export_repo_do_auto_push' => $this->export_repo_do_auto_push,
+                'export_repo_url' => $this->export_repo_url,
+                'export_repo_branch' => $this->export_repo_branch,
+                'export_repo_key' => $this->export_repo_key
+            ], [
+                'id' => $this->id
+            ]);
+
+            //see if we are changing the remote
+
+            try {
+                $remote_url = $this->do_git_command("config --get remote.origin.url");
+            } catch (Exception $e) {
+                $remote_url = '';
+            }
+
+            if ( $this->export_repo_url && ($remote_url !== $this->export_repo_url)) {
+                if ($remote_url) {
+                    //change the origin
+                    $this->do_git_command("remote set-url origin $this->export_repo_url");
+                } else {
+                    //set the origin to the url
+                    $this->do_git_command("remote add origin $this->export_repo_url");
+                }
+            }
+
+
+
+        } catch (Exception $e) {
+            static::get_logger()->alert("Project export settings cannot save ",['exception'=>$e]);
+            throw $e;
+        }
+    }
+
+
+    /**
+     * @throws Exception
+     */
+    public function save() :string {
         $db = null;
         try {
             if (empty($this->flow_project_title)) {
@@ -421,8 +506,6 @@ class FlowProject {
             }
 
 
-
-
             $db->commit();
 
 
@@ -431,6 +514,12 @@ class FlowProject {
             static::get_logger()->alert("Project model cannot save ",['exception'=>$e]);
             throw $e;
         }
+
+        if ($this->export_repo_do_auto_push) {
+            $push_info = $this->push_repo();
+            return "Saved and pushed to $this->export_repo_url<br>$push_info";
+        }
+        return "Saved";
     }
 
     /**
@@ -505,7 +594,13 @@ class FlowProject {
                 p.flow_project_blurb,
                 p.flow_project_readme,
                 p.flow_project_readme_html,
-                p.flow_project_readme_bb_code
+                p.flow_project_readme_bb_code,
+       
+                p.export_repo_do_auto_push,
+                p.export_repo_url,
+                p.export_repo_branch,
+                p.export_repo_key
+
                 FROM flow_projects p 
                 INNER JOIN  flow_users u ON u.id = p.admin_flow_user_id
                 WHERE 1 AND $where_condition";
@@ -573,12 +668,14 @@ class FlowProject {
 
     /**
      * @param string $command
+     * @param string|null $pre_command
+     * @param  bool $b_include_git_word  default true
      * @return string
      * @throws Exception
      */
-    protected function do_git_command(string $command) : string {
+    protected function do_git_command(string $command,bool $b_include_git_word = true,?string $pre_command = null) : string {
         $dir = $this->get_project_directory();
-        return FlowGitHistory::do_git_command($dir,$command);
+        return FlowGitHistory::do_git_command($dir,$command,$b_include_git_word,$pre_command);
     }
 
     /**
@@ -586,7 +683,48 @@ class FlowProject {
      * @throws Exception
      */
     public function get_head_commit_hash() : string {
-        return $this->do_git_command('rev-parse HEAD');
+        try {
+            return $this->do_git_command('rev-parse HEAD');
+        } catch (Exception $e) {
+            return '';
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function push_repo() : string  {
+        if (!$this->export_repo_url) {
+            throw new RuntimeException("Export Repo Url not set");
+        }
+        if (!$this->export_repo_key) {
+            throw new RuntimeException("Export Repo Key not set");
+        }
+
+        if (!$this->export_repo_branch) {
+            throw new RuntimeException("Export Repo Branch not set");
+        }
+
+        $temp_file_path = null;
+        try {
+            //save private key as temp file, and set permissions to owner only
+            $temp_file_path = tempnam(sys_get_temp_dir(), 'git-key-');
+            file_put_contents($temp_file_path,$this->export_repo_key);
+            $directory = $this->get_project_directory();
+            $command = "ssh-agent bash -c 'GIT_SSH_COMMAND=\"ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no\"; ".
+                "cd $directory; ssh-add $temp_file_path; git push -u origin $this->export_repo_branch' 2>&1";
+
+            exec($command,$output,$result_code);
+            if ($result_code) {
+                throw new RuntimeException("Cannot push,  returned code of $result_code : " . implode("\n",$output));
+            }
+            return implode("\n",$output);
+
+        } finally {
+            if ($temp_file_path) {
+                unlink($temp_file_path);
+            }
+        }
     }
 
 

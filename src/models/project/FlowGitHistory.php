@@ -242,11 +242,17 @@ class FlowGitHistory {
     /**
      * @param string $directory
      * @param string $command
+     * @param bool $b_include_git_word, default true
+     * @param string|null $pre_command
      * @return string
-     * @throws Exception
      */
-    public static function do_git_command(string $directory, string $command) : string {
-        exec("cd $directory && git $command 2>&1",$output,$result_code);
+    public static function do_git_command(string $directory, string $command,bool $b_include_git_word = true, ?string $pre_command = null) : string {
+        if (empty($pre_command)) {$pre_command = '';}
+        $git_word = '';
+        if ($b_include_git_word) {
+            $git_word = 'git';
+        }
+        exec("$pre_command cd $directory && $git_word $command 2>&1",$output,$result_code);
         if ($result_code) {
             throw new RuntimeException("Git returned code of $result_code : " . implode("\n",$output));
         }

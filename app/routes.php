@@ -64,6 +64,7 @@ return function (App $app) {
             $group->get('/{project_name:[[:alnum:]\-]+}/history[/page/{page:[1-9]+[0-9]*}]', ['projectPages', 'project_history'])->setName('project_history');
             $group->post('/{project_name:[[:alnum:]\-]+}/file_change_ajax', ['projectPages', 'get_file_change'])->setName('get_file_change_ajax');
             $group->get('/{project_name:[[:alnum:]\-]+}/export', ['projectPages', 'export_view'])->setName('project_export');
+            $group->post('/{project_name:[[:alnum:]\-]+}/export', ['projectPages', 'update_export'])->setName('update_project_export');
             $group->get('/{project_name:[[:alnum:]\-]+}/import', ['projectPages', 'import_view'])->setName('project_import');
 
         });

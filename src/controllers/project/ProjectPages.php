@@ -29,6 +29,8 @@ class ProjectPages
 
     const REM_NEW_PROJECT_WITH_ERROR_SESSION_KEY = 'project_new_form_in_progress_has_error';
     const REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY = 'project_edit_form_in_progress_has_error';
+    const REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY = 'project_export_form_in_progress_has_error';
+
     protected Auth $auth;
     protected Logger $logger;
     /**
@@ -389,11 +391,11 @@ class ProjectPages
                 throw new InvalidArgumentException("Git hash is too old, project was saved since this page loaded");
             }
 
-            $project->save();
+            $save_words = $project->save();
             $_SESSION[static::REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY] = null;
 
             try {
-                UserPages::add_flash_message('success', "Updated Project " . $project->flow_project_title);
+                UserPages::add_flash_message('success', "Updated Project  " . $project->flow_project_title. " <br> $save_words");
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
                 $url = $routeParser->urlFor('single_project_home',[
                     "user_name" => $project->get_admin_user()->flow_user_name,
@@ -804,7 +806,21 @@ class ProjectPages
             $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
 
             if (!$project) {
-                throw new HttpNotFoundException($request,"Project $project_name Not Found");
+                throw new HttpNotFoundException($request,"Project $project_name Not Found for export settings");
+            }
+
+
+            if (array_key_exists(static::REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY,$_SESSION)) {
+                /**
+                 * @var ?FlowProject $form_in_progress
+                 */
+                $form_in_progress = $_SESSION[static::REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY];
+                $_SESSION[static::REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY] = null;
+                if (empty($form_in_progress)) {
+                    $form_in_progress = $project;
+                }
+            } else {
+                $form_in_progress = $project;
             }
 
 
@@ -812,13 +828,88 @@ class ProjectPages
                 'page_template_path' => 'project/project_export.twig',
                 'page_title' => "Export Project $project_name",
                 'page_description' => 'Export',
-                'project' => $project,
+                'project' => $form_in_progress,
             ]);
 
         } catch (Exception $e) {
             $this->logger->error("Could not render history page",['exception'=>$e]);
             throw $e;
         }
+    }
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function update_export(ServerRequestInterface $request,ResponseInterface $response,
+                                   string $user_name, string $project_name) :ResponseInterface {
+
+        $project = null;
+        try {
+            $csrf = new AntiCSRF;
+
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+
+            $args = $request->getParsedBody();
+
+
+
+            $project->export_repo_url = $args['export_repo_url'];
+            $project->export_repo_key = $args['export_repo_key'];
+            $project->export_repo_branch = $args['export_repo_branch'];
+            $project->export_repo_do_auto_push = isset($args['export_repo_do_auto_push']) && intval($args['export_repo_do_auto_push']);
+
+            if (!empty($_POST)) {
+                if (!$csrf->validateRequest()) {
+                    throw new HttpForbiddenException($request,"Bad Request") ;
+                }
+            }
+
+
+            $project->save_export_settings();
+            $success_message = "Updated Project Export Settings "  . $project->flow_project_title;
+            if (array_key_exists('export-push-now',$args)) {
+                //do push now
+                $push_status = $project->push_repo();
+                $success_message = "Pushing to $project->export_repo_url "  . $project->flow_project_title . "<br>$push_status";
+            }
+            $_SESSION[static::REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY] = null;
+
+            try {
+                UserPages::add_flash_message('success',$success_message );
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                $url = $routeParser->urlFor('single_project_home',[
+                    "user_name" => $project->get_admin_user()->flow_user_name,
+                    "project_name" => $project->flow_project_title
+                ]);
+                $response = $response->withStatus(302);
+                return $response->withHeader('Location', $url);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to all projects after successful update", ['exception' => $e]);
+                throw $e;
+            }
+        } catch (Exception $e) {
+            try {
+                UserPages::add_flash_message('warning', "Cannot update project export settings: <b>" . $e->getMessage().'</b>');
+                $_SESSION[static::REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY] = $project;
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                $url = $routeParser->urlFor('update_project_export',[
+                    "user_name" => $user_name ,
+                    "project_name" => $project_name
+                ]);
+                $response = $response->withStatus(302);
+                return $response->withHeader('Location', $url);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to project export settings after error", ['exception' => $e]);
+                throw $e;
+            }
+        }
+
     }
 
 
