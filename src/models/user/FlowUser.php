@@ -369,7 +369,6 @@ class FlowUser implements JsonSerializable {
         $args = [];
         $args[] = $project_guid;
         if (!$b_in_project) {
-            $args[] = $project_guid; //has an extra ? for project id to limit it
             $where_flags_set = "users_in_project.can_admin = 0 AND users_in_project.can_read = 0 AND users_in_project.can_write = 0";
             if ($role_in_project) {
                 switch ($role_in_project) {
@@ -474,7 +473,8 @@ class FlowUser implements JsonSerializable {
                             OR (
                                 $where_flags_set
                             )
-                        ) AND p.flow_project_guid = UNHEX(?) AND $where_user 
+                        ) 
+                      AND $where_user 
                     ORDER BY flow_user_id ASC
                     LIMIT $start_place , $page_size
                 ) as driver ON driver.flow_user_id = u.id

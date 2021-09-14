@@ -387,7 +387,9 @@ class ProjectPages
             }
 
             if (empty($args['flow_project_git_hash'])) {
-                throw new InvalidArgumentException("Missing flow_project_git_hash");
+                if ($project->get_head_commit_hash()) {
+                    throw new InvalidArgumentException("Missing flow_project_git_hash");
+                }
             }
 
             $old_git_hash = $args['flow_project_git_hash'];
