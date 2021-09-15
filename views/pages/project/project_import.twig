@@ -17,7 +17,7 @@
             </a>
         </li>
 
-        <li class="breadcrumb-item">Exporting  {{ project.flow_project_title }}</li>
+        <li class="breadcrumb-item">Importing Chages To  {{ project.flow_project_title }}</li>
 
     </ol>
 </nav>
@@ -38,11 +38,11 @@
             {% endif %}
 
 
-            {% if project.get_current_user_permissions().can_admin %}
-                <div class="col-12 col-xl-4 ">
-                    {{ include('project/partials/import/import-from-file.twig') }}
-                </div><!-- /.col -->
-            {% endif %}
+{#            {% if project.get_current_user_permissions().can_admin %}#}
+{#                <div class="col-12 col-xl-4 ">#}
+{#                    {{ include('project/partials/import/import-from-file.twig') }}#}
+{#                </div><!-- /.col -->#}
+{#            {% endif %}#}
         </div> <!-- /.row -->
     </div><!-- /.col -->
 

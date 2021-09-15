@@ -15,6 +15,13 @@
 
                     <input type="hidden" name="flow_project_git_hash" value="{{ project.get_head_commit_hash() }}">
 
+
+                    <div class="d-inline-block float-start">
+                        <button type="submit" class="btn btn-success" name="import-now" value="1">
+                            Pull Now (remote must have history of current)
+                        </button>
+                    </div>
+
                     <div class="col-12">
                         <label for="import_repo_url">
                             Repository Url
@@ -45,16 +52,6 @@
                                   class="form-control" placeholder="Private Repo Key"  autofocus
                                   rows="15"
                         >{{ project.import_repo_key }}</textarea>
-                    </div>
-
-                    <div class="col-12 text-center">
-
-                        <div class="d-inline-block">
-                            <button type="submit" class="btn btn-primary" name="import-now" value="1">
-                                Pull Now (remote must have history of current)
-                            </button>
-                        </div>
-
                     </div>
 
 

@@ -858,7 +858,7 @@ class ProjectPages
             try {
                 UserPages::add_flash_message('success',$success_message );
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-                $url = $routeParser->urlFor('single_project_home',[
+                $url = $routeParser->urlFor('project_history',[
                     "user_name" => $project->get_admin_user()->flow_user_name,
                     "project_name" => $project->flow_project_title
                 ]);
@@ -1033,7 +1033,7 @@ class ProjectPages
             try {
                 UserPages::add_flash_message('success',$success_message );
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-                $url = $routeParser->urlFor('single_project_home',[
+                $url = $routeParser->urlFor('project_history',[
                     "user_name" => $project->get_admin_user()->flow_user_name,
                     "project_name" => $project->flow_project_title
                 ]);
@@ -1127,7 +1127,7 @@ class ProjectPages
             try {
                 UserPages::add_flash_message('success',$success_message );
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-                $url = $routeParser->urlFor('single_project_home',[
+                $url = $routeParser->urlFor('project_history',[
                     "user_name" => $project->get_admin_user()->flow_user_name,
                     "project_name" => $project->flow_project_title
                 ]);

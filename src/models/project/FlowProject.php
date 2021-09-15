@@ -3,6 +3,7 @@
 namespace app\models\project;
 
 use app\hexlet\JsonHelper;
+use app\hexlet\WillFunctions;
 use app\models\user\FlowUser;
 use DI\Container;
 use Exception;
@@ -438,7 +439,7 @@ class FlowProject {
             }
 
             if (mb_strlen($this->flow_project_blurb) > static::MAX_SIZE_BLURB) {
-                throw new InvalidArgumentException("Project Title cannot be more than ".static::MAX_SIZE_BLURB." characters");
+                throw new InvalidArgumentException("Project Blurb cannot be more than ".static::MAX_SIZE_BLURB." characters");
             }
 
             $b_match = static::check_valid_title($this->flow_project_title);
@@ -761,6 +762,65 @@ class FlowProject {
     }
 
     /**
+     * Saves the private key to a file, and deletes it after, and might take care of ssh local host issues
+     * @param string $private_key
+     * @param string $to_ssh_url
+     * @param string $git_command
+     * @return string
+     * @throws
+     */
+    protected function do_key_command_with_private_key(string $private_key,string $to_ssh_url,string $git_command) : string {
+
+        WillFunctions::will_do_nothing($to_ssh_url); //reserved for future use
+        $temp_file_path = null;
+        try {
+            //save private key as temp file, and set permissions to owner only
+            $temp_file_path = tempnam(sys_get_temp_dir(), 'git-key-');
+            file_put_contents($temp_file_path,$private_key);
+            $directory = $this->get_project_directory();
+            $command = "ssh-agent bash -c ' ".
+                "cd $directory; ".
+                "ssh-add $temp_file_path; ".
+                "git $git_command'".
+                " 2>&1";
+
+            /*
+             * The way the current linux setup; need to have the base url of the remote in the known hosts first
+             * this is done at the dockerfile with
+             * (host=github.com; ssh-keyscan -H $host; for ip in $(dig @8.8.8.8 github.com +short); do ssh-keyscan -H $host,$ip; ssh-keyscan -H $ip; done) 2> /dev/null >> /home/www-data/.ssh/known_hosts
+             * but should be able to add others as needed by using regex to get the host base url, and running this
+             *
+             */
+
+            exec($command,$output,$result_code);
+            if ($result_code) {
+                throw new RuntimeException("Cannot do $git_command,  returned code of $result_code : " . implode("<br>\n",$output));
+            }
+            return implode("<br>\n",$output);
+
+        } finally {
+            if ($temp_file_path) {
+                unlink($temp_file_path);
+            }
+        }
+    }
+
+    /**
+     * @param $command
+     * @return string
+     * @throws Exception
+     */
+    protected function do_project_directory_command($command) :string  {
+        $directory = $this->get_project_directory();
+        $full_command = "cd $directory && $command";
+        exec($full_command,$output,$result_code);
+        if ($result_code) {
+            throw new RuntimeException("Cannot do $command,  returned code of $result_code : " . implode("\n",$output));
+        }
+        return implode("\n",$output);
+    }
+
+    /**
      * @throws Exception
      */
     public function push_repo() : string  {
@@ -775,45 +835,114 @@ class FlowProject {
             throw new RuntimeException("Export Repo Branch not set");
         }
 
-        $temp_file_path = null;
-        try {
-            //save private key as temp file, and set permissions to owner only
-            $temp_file_path = tempnam(sys_get_temp_dir(), 'git-key-');
-            file_put_contents($temp_file_path,$this->export_repo_key);
-            $directory = $this->get_project_directory();
-            $command = "ssh-agent bash -c ' ".
-                "cd $directory; ".
-                "ssh-add $temp_file_path; ".
-                "git push -u origin $this->export_repo_branch'".
-                " 2>&1";
-
-            /*
-             * The way the current linux setup; need to have the base url of the remote in the known hosts first
-             * this is done at the dockerfile with
-             * (host=github.com; ssh-keyscan -H $host; for ip in $(dig @8.8.8.8 github.com +short); do ssh-keyscan -H $host,$ip; ssh-keyscan -H $ip; done) 2> /dev/null >> /home/www-data/.ssh/known_hosts
-             * but should be able to add others as needed by using regex to get the host base url, and running this
-             *
-             */
-
-            exec($command,$output,$result_code);
-            if ($result_code) {
-                throw new RuntimeException("Cannot push,  returned code of $result_code : " . implode("\n",$output));
-            }
-            return implode("\n",$output);
-
-        } finally {
-            if ($temp_file_path) {
-                unlink($temp_file_path);
-            }
-        }
+        $command = "push -u origin $this->export_repo_branch";
+        return $this->do_key_command_with_private_key($this->export_repo_key,$this->export_repo_url,$command);
     }
 
+    /**
+     * @return string
+     * @throws Exception
+     */
     function import_pull_repo_from_git() :string {
-        return 'stub pulled from git ';
+        if (!$this->import_repo_url) {
+            throw new RuntimeException("Import Repo Url not set");
+        }
+        if (!$this->import_repo_key) {
+            throw new RuntimeException("Import Repo Key not set");
+        }
+
+        if (!$this->import_repo_branch) {
+            throw new RuntimeException("Import Repo Branch not set");
+        }
+
+        $old_head = $this->get_head_commit_hash();
+        $command = "pull import $this->import_repo_branch";
+        try {
+            $git_ret =  $this->do_key_command_with_private_key($this->export_repo_key,$this->export_repo_url,$command);
+        } catch (Exception $e) {
+            $maybe_changes = $this->do_git_command('diff');
+            $message = $e->getMessage();
+            if (!empty(trim($maybe_changes))) {
+                $this->do_git_command('merge --abort');
+                $message.="<br>Aborted Merge\n";
+            }
+            throw new RuntimeException($message);
+        }
+
+        $new_head = $this->get_head_commit_hash();
+        try {
+            $this->check_integrity();
+            $this->set_db_from_file_state();
+        } catch (Exception $e) {
+            //do not use commit just imported
+            if ($old_head !== $new_head) {
+                $this->do_git_command("reset $old_head");
+            }
+        }
+
+        return $git_ret;
     }
 
     function update_repo_from_file() :string {
         return 'stub updated repo from file';
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function check_integrity()  {
+        $this->do_project_directory_command('stat flow_project_blurb');
+        $this->do_project_directory_command('stat flow_project_title');
+        $this->do_project_directory_command('stat flow_project_readme_bb_code.bbcode');
+        $title = $this->do_project_directory_command('cat flow_project_title');
+        $this->check_valid_title($title);
+        $blurb = $this->do_project_directory_command('cat flow_project_blurb');
+        if (mb_strlen($blurb) > static::MAX_SIZE_BLURB) {
+            throw new InvalidArgumentException("Project Blurb cannot be more than ".static::MAX_SIZE_BLURB." characters");
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function set_db_from_file_state()  {
+        $this->flow_project_blurb = $this->do_project_directory_command('cat flow_project_blurb');
+        $this->flow_project_title = $this->do_project_directory_command('cat flow_project_title');
+        $this->flow_project_readme_bb_code = $this->do_project_directory_command('cat flow_project_readme_bb_code.bbcode');
+        $this->set_read_me($this->flow_project_readme_bb_code);
+
+        $dir = $this->get_project_directory();
+        $read_me_path_html = $dir . DIRECTORY_SEPARATOR . 'flow_project_readme_html.html';
+
+        $b_ok = file_put_contents($read_me_path_html,$this->flow_project_readme_html);
+        if ($b_ok === false) {throw new RuntimeException("[set_db_from_file_state] Could not write to $read_me_path_html");}
+
+        $db = null;
+        try {
+            $db = static::get_connection();
+            $db->beginTransaction();
+
+            $db->update('flow_projects',[
+                'flow_project_type' => $this->flow_project_type,
+                'flow_project_title' => $this->flow_project_title,
+                'flow_project_blurb' => $this->flow_project_blurb,
+                'flow_project_readme' => $this->flow_project_readme,
+                'flow_project_readme_html' => $this->flow_project_readme_html,
+                'flow_project_readme_bb_code' => $this->flow_project_readme_bb_code,
+            ],[
+                'id' => $this->id
+            ]);
+
+            //do children here
+            $db->commit();
+
+
+        } catch (Exception $e) {
+            $db AND $db->rollBack();
+            static::get_logger()->alert("Project model cannot update from file stete ",['exception'=>$e]);
+            throw $e;
+        }
+
     }
 
 

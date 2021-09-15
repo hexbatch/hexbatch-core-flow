@@ -13,6 +13,13 @@
                         project_name: project.flow_project_title
                     } )) }}
 
+
+                    <div class="d-inline-block float-start">
+                        <button type="submit" class="btn btn-primary" name="export-push-now" value="1">
+                            Push Now
+                        </button>
+                    </div>
+
                     <input type="hidden" name="flow_project_git_hash" value="{{ project.get_head_commit_hash() }}">
 
                     <div class="col-12">
@@ -60,11 +67,7 @@
                             </label>
                         </div>
 
-                        <div class="d-inline-block">
-                            <button type="submit" class="btn btn-primary" name="export-push-now" value="1">
-                                Push Now
-                            </button>
-                        </div>
+
 
 
 
