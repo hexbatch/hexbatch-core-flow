@@ -70,6 +70,8 @@ return function (App $app) {
             $group->post('/{project_name:[[:alnum:]\-]+}/import', ['projectPages', 'import_from_git'])->setName('project_import_from_git');
             $group->post('/{project_name:[[:alnum:]\-]+}/import_from_file', ['projectPages', 'import_from_file'])->setName('project_import_from_file');
 
+            $group->get('/{project_name:[[:alnum:]\-]+}/resources/{resource}', ['projectPages', 'get_resource_file'])->setName('project_resource');
+
         });
 
     })->add('pingUserMiddleware')->add($container->get('twigMiddleware'));

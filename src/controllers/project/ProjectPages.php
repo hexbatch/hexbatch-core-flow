@@ -13,6 +13,7 @@ use DI\Container;
 use DI\DependencyException;
 use DI\NotFoundException;
 use Exception;
+use finfo;
 use InvalidArgumentException;
 use LogicException;
 use Monolog\Logger;
@@ -921,7 +922,7 @@ class ProjectPages
 
             $response = $response
                 ->withHeader('Content-Type', 'application/zip')
-                ->withHeader('Content-Length', 'application/zip')
+                ->withHeader('Content-Length', $file_size)
                 ->withHeader('Content-Disposition', "attachment; filename=$project->flow_project_title.zip")
                 ->withAddedHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
                 ->withHeader('Cache-Control', 'post-check=0, pre-check=0')
@@ -1153,6 +1154,56 @@ class ProjectPages
                 throw $e;
             }
         }
+
+    }
+
+    /**
+    * @param ServerRequestInterface $request
+    * @param ResponseInterface $response
+    * @param string $user_name
+    * @param string $project_name
+    * @param string $resource
+    * @return ResponseInterface
+    * @throws Exception
+    * @noinspection PhpUnused
+    */
+    public function get_resource_file(ServerRequestInterface $request,ResponseInterface $response,
+                                      string $user_name, string $project_name,string $resource) :ResponseInterface {
+
+        try {
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'read');
+
+            if (!$project) {
+                throw new HttpNotFoundException($request,"Project $project_name Not Found");
+            }
+
+
+            $resource_path = $project->get_project_directory(). DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . $resource ;
+            if (!is_readable($resource_path)) {
+                throw new HttpNotFoundException($request,"Resource $resource NOT found in the resources directory of $project_name");
+            }
+
+            $file_size = filesize($resource_path);
+            $fi = new finfo(FILEINFO_MIME_TYPE);
+            $mime_type = $fi->file($resource_path);
+
+
+            $response = $response
+                ->withHeader('Content-Type', $mime_type)
+                ->withHeader('Content-Length', $file_size)
+                ->withHeader('Content-Disposition', "attachment; filename=$resource_path")
+                ->withAddedHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                ->withHeader('Cache-Control', 'post-check=0, pre-check=0')
+                ->withHeader('Pragma', 'no-cache')
+                ->withBody((new Stream(fopen($resource_path, 'rb'))));
+
+            return $response;
+
+        } catch (Exception $e) {
+            $this->logger->error("Could not download project zip",['exception'=>$e]);
+            throw $e;
+        }
+
 
     }
 
