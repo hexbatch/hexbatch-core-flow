@@ -4,19 +4,23 @@ namespace app\models\project;
 
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
+use app\models\base\FlowBase;
+use app\models\multi\GeneralSearch;
+use app\models\tag\brief\BriefCheckValidYaml;
+use app\models\tag\brief\BriefDiffFromYaml;
+use app\models\tag\brief\BriefUpdateFromYaml;
+use app\models\tag\FlowTagSearchParams;
 use app\models\user\FlowUser;
-use DI\Container;
+use app\models\tag\FlowTag;
 use Exception;
 use InvalidArgumentException;
 use LogicException;
-use ParagonIE\EasyDB\EasyDB;
 use PDO;
-use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
 
-class FlowProject {
+class FlowProject extends FlowBase {
 
     const FLOW_PROJECT_TYPE_TOP = 'top';
     const MAX_SIZE_TITLE = 40;
@@ -81,15 +85,65 @@ class FlowProject {
         return $this->current_user_permissions;
     }
 
+    /**
+     * @var FlowTag[]|null $owned_tags
+     */
+    protected ?array $owned_tags = null;
+
+    protected bool $b_did_applied_for_owned_tags = false;
+
 
     /**
-     * @var Container $container
+     * @param bool $b_get_applied  if true will also get the applied in the set of tags found
+     * @param bool $b_refresh  if true will not use previous value if set
+     * @return FlowTag[]
+     * @throws Exception
      */
-    protected static Container $container;
+    function get_all_owned_tags_in_project(bool $b_get_applied = false,bool $b_refresh = false) : array {
+        if (!$b_refresh && is_array($this->owned_tags)) {
+            //refresh cache if first time getting applied
+            if ($b_get_applied && $this->b_did_applied_for_owned_tags) {
+                return $this->owned_tags;
+            }
+        }
+        $search_params = new FlowTagSearchParams();
+        $search_params->flag_get_applied = $b_get_applied;
+        $search_params->owning_project_guid = $this->flow_project_guid;
+        $unsorted_array = FlowTag::get_tags($search_params,1,GeneralSearch::UNLIMITED_RESULTS_PER_PAGE);
 
-    public static function set_container($c) {
-        static::$container = $c;
+        $this->owned_tags = FlowTag::sort_tag_array_by_parent($unsorted_array);
+
+        if ($b_get_applied) {
+            $this->b_did_applied_for_owned_tags = true;
+        }
+
+        return $this->owned_tags;
     }
+
+    /**
+     * @var FlowTag[]|null $tags_applied_to_this
+     */
+    protected ?array $tags_applied_to_this = null;
+
+    /** @noinspection PhpUnused */
+    /**
+     * @param bool $b_refresh  if true will not use previous value if set
+     * @return FlowTag[]
+     * @throws Exception
+     */
+    function get_applied_tags(bool $b_refresh = false) : array {
+        if (!$b_refresh && is_array($this->tags_applied_to_this)) {
+            //refresh cache if first time getting applied
+            return $this->tags_applied_to_this;
+        }
+        $search_params = new FlowTagSearchParams();
+        $search_params->flag_get_applied = true;
+        $search_params->owning_project_guid = $this->flow_project_guid;
+        $search_params->only_applied_to_guids[] = $this->flow_project_guid;
+        $this->tags_applied_to_this = FlowTag::get_tags($search_params,1,GeneralSearch::UNLIMITED_RESULTS_PER_PAGE);
+        return $this->tags_applied_to_this;
+    }
+
 
     /** @noinspection PhpUnused */
     public  function max_read_me(): int
@@ -197,35 +251,12 @@ class FlowProject {
         return $ret;
     }
 
-    /**
-     * @return EasyDB
-     */
-    protected static function get_connection() : EasyDB {
-        try {
-            return  static::$container->get('connection');
-        } catch (Exception $e) {
-            static::get_logger()->alert("User model cannot connect to the database",['exception'=>$e]);
-            die( static::class . " Cannot get connetion");
-        }
-    }
 
 
-
-
-
-    /**
-     * @return LoggerInterface
-     */
-    protected static function get_logger() : LoggerInterface {
-        try {
-            return  static::$container->get(LoggerInterface::class);
-        } catch (Exception $e) {
-            die( static::class . " Cannot get logger");
-        }
-    }
 
     public function __construct($object=null){
         $this->admin_user = null;
+        $this->b_did_applied_for_owned_tags = false;
         if (empty($object)) {
             $this->admin_flow_user_id = null;
             $this->flow_project_blurb = null;
@@ -265,23 +296,8 @@ class FlowProject {
 
     public static function check_valid_title($words) : bool  {
 
-        if (empty($words)) {return false;}
+        if (!static::minimum_check_valid_name($words,static::MAX_SIZE_TITLE)) {return false;}
 
-        if (is_numeric(substr($words, 0, 1)) ) {
-            return false;
-        }
-
-        if (ctype_digit($words) ) {
-            return false;
-        }
-
-        if (ctype_xdigit($words) && (mb_strlen($words) > 25) ) {
-            return false;
-        }
-
-        if ((mb_strlen($words) < 3) || (mb_strlen($words) > 40) ) {
-            return false;
-        }
         $b_match = preg_match('/^[[:alnum:]\-]+$/u',$words,$matches);
         if ($b_match === false) {
             $error_preg = array_flip(array_filter(get_defined_constants(true)['pcre'], function ($value) {
@@ -426,9 +442,110 @@ class FlowProject {
 
 
     /**
+     * @return string
      * @throws Exception
      */
-    public function save() :string {
+    public function get_tag_yaml_path() : string {
+        $dir = $this->get_project_directory();
+        if (!is_readable($dir)) {
+            throw new LogicException("Project directory of $dir not created before saving tags");
+        }
+
+        $tag_yaml_path = $dir . DIRECTORY_SEPARATOR . 'tags.yaml';
+        return $tag_yaml_path;
+    }
+
+    /**
+     * writes a yaml file [tags.yaml] of all the tags, attributes and applied to the project repo base folder
+     * will overwrite if already existing
+     * does not refresh tags, so make sure is current
+     * @throws Exception
+     */
+    public function save_tags_to_yaml_in_project_directory()  {
+        $tags = $this->get_all_owned_tags_in_project(true);
+
+        foreach ($tags as $tag) {
+            $tag->set_brief_json(true);
+        }
+
+        $pigs_in_space = JsonHelper::toString($tags);
+        $tags_serialized = JsonHelper::fromString($pigs_in_space);
+
+        foreach ($tags as $tag) {
+            $tag->set_brief_json(false);
+        }
+
+        $tag_yaml = Yaml::dump($tags_serialized);
+
+        $tag_yaml_path = $this->get_tag_yaml_path();
+        $b_ok = file_put_contents($tag_yaml_path,$tag_yaml);
+        if ($b_ok === false) {throw new RuntimeException("Could not write to $tag_yaml_path");}
+    }
+
+    /**
+     * returns true if changes and commit made
+     * @param bool $b_commit , default true, will only commit if true. If false will write commit message to log
+     * @param bool $b_log_message , default false, if true will write commit message to log
+     * @throws Exception
+     * @return false|string  returns false if no changes, else returns the commit message (regardless if committed)
+     */
+    public function save_tag_yaml_and_commit(bool $b_commit = true,bool $b_log_message = false)  {
+        $brief_changes = new BriefDiffFromYaml($this); //compare current changes to older saved in yaml
+
+        $this->save_tags_to_yaml_in_project_directory();
+
+        $number_tag_changes = $brief_changes->count_changes();
+        $commit_message = null;
+        if ($number_tag_changes) {
+            $this->do_git_command("add .");
+
+            $tag_summary = $brief_changes->get_changed_tag_summary_line();
+            $attribute_summary = $brief_changes->get_changed_attribute_summary_line();
+            $applied_summary = $brief_changes->get_changed_applied_summary_line();
+            if ($number_tag_changes === 1) {
+                $commit_message = $tag_summary .  $attribute_summary . $applied_summary;
+            } else {
+                $commit_message = "Did $number_tag_changes tag operations";
+                if ($tag_summary) {$commit_message .= "\n$tag_summary";}
+                if ($attribute_summary) {$commit_message .= "\n$attribute_summary";}
+                if ($applied_summary) {$commit_message .= "\n$applied_summary";}
+            }
+
+            if ($b_log_message) {
+                static::get_logger()->debug("Tag Commit message",['message'=>$commit_message]);
+            }
+            if ($b_commit) {
+                $this->do_git_command("commit  -m '$commit_message'");
+                if (isset($_SESSION[FlowUser::SESSION_USER_KEY])) {
+                    /**
+                     * @var FlowUser $logged_in_user
+                     */
+                    $logged_in_user = $_SESSION[FlowUser::SESSION_USER_KEY];
+                    $user_info = "$logged_in_user->flow_user_guid <$logged_in_user->flow_user_email>";
+                    $this->do_git_command("commit --amend --author='$user_info' --no-edit");
+                }
+                if ($this->export_repo_do_auto_push) {
+                    $this->push_repo();
+                }
+            }
+        }
+
+        return $commit_message?? false;
+
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function do_tag_save() {
+        $this->save_tag_yaml_and_commit();
+    }
+
+    /**
+     * @throws Exception
+     * @return bool true if committed, false if nothing to commit
+     */
+    public function save() :bool {
         $db = null;
         try {
             if (empty($this->flow_project_title)) {
@@ -543,18 +660,28 @@ class FlowProject {
             if ($b_ok === false) {throw new RuntimeException("Could not write to $title_path");}
 
 
-            $commit_title = "Changed Project";
+            $commit_title_array = [];
             $commit_message_array = [];
-            if ($b_did_title_change) { $commit_message_array[] = "Updated Project Title";}
-            if ($b_did_blurb_change) { $commit_message_array[] = "Updated Project Blurb";}
-            if ($b_did_readme_bb_change) { $commit_message_array[] = "Updated Project Read Me";}
-            //todo save entities and tags here , they will update the title and message
+            if ($b_did_title_change) {
+                $commit_message_array[] = "Updated Project Title"; $commit_title_array[] = "Project Title";}
+            if ($b_did_blurb_change) { $commit_message_array[] = "Updated Project Blurb"; $commit_title_array[] = "Project Blurb";}
+            if ($b_did_readme_bb_change) { $commit_message_array[] = "Updated Project Read Me"; $commit_title_array[] = "Project Description";}
 
+            $tag_changes_message_or_false = $this->save_tag_yaml_and_commit(false);
+            if ($tag_changes_message_or_false) {
+                $commit_message_array[] = $tag_changes_message_or_false;
+                $commit_title_array[] = "Tags";
+            }
+
+            if (empty($commit_title_array) && empty($commit_message_array)) {
+                return ''; //nothing to commit
+            }
             $this->do_git_command("add .");
 
-            array_unshift($commit_message_array,'');
-            array_unshift($commit_message_array,$commit_title);
-            $commit_message_full = implode("\n",$commit_message_array);
+            $commit_title = implode('; ',$commit_title_array);
+            $commit_body = implode('\n',$commit_message_array);
+
+            $commit_message_full =  "$commit_title\n\n$commit_body";
 
             //if any ` in there, then escape them
             $commit_message_full = str_replace("'","\'",$commit_message_full);
@@ -856,6 +983,15 @@ class FlowProject {
         }
 
         $old_head = $this->get_head_commit_hash();
+        $command = "reset --hard"; //clear up any earlier bugs or crashes
+        try {
+            $this->do_key_command_with_private_key($this->export_repo_key,$this->export_repo_url,$command);
+        } catch (Exception $e) {
+            $message = "Could not do a hard reset";
+            $message.="<br>{$e->getMessage()}\n";
+            throw new RuntimeException($message);
+        }
+
         $command = "pull import $this->import_repo_branch";
         try {
             $git_ret =  $this->do_key_command_with_private_key($this->export_repo_key,$this->export_repo_url,$command);
@@ -863,8 +999,13 @@ class FlowProject {
             $maybe_changes = $this->do_git_command('diff');
             $message = $e->getMessage();
             if (!empty(trim($maybe_changes))) {
-                $this->do_git_command('merge --abort');
-                $message.="<br>Aborted Merge\n";
+                try {
+                    $this->do_git_command('merge --abort');
+                    $message.="<br>Aborted Merge\n";
+                } catch (Exception $oh_no) {
+                    $message.="<br>{$oh_no->getMessage()}\n";
+                }
+
             }
             throw new RuntimeException($message);
         }
@@ -874,10 +1015,11 @@ class FlowProject {
             $this->check_integrity();
             $this->set_db_from_file_state();
         } catch (Exception $e) {
-            //do not use commit just imported
+            //do not use commit just imported, and remove any changes to files
             if ($old_head !== $new_head) {
-                $this->do_git_command("reset $old_head");
+                $this->do_git_command("reset --hard $old_head");
             }
+            throw $e;
         }
 
         return $git_ret;
@@ -899,6 +1041,11 @@ class FlowProject {
         $blurb = $this->do_project_directory_command('cat flow_project_blurb');
         if (mb_strlen($blurb) > static::MAX_SIZE_BLURB) {
             throw new InvalidArgumentException("Project Blurb cannot be more than ".static::MAX_SIZE_BLURB." characters");
+        }
+        $valid_tags = new BriefCheckValidYaml($this);
+        if (!$valid_tags->is_valid()) {
+            throw new InvalidArgumentException("tags.yaml does not have minimal information for each thing in it: \n<br>".
+                implode("\n<br>",$valid_tags->issues));
         }
     }
 
@@ -934,6 +1081,10 @@ class FlowProject {
             ]);
 
             //do children here
+
+            $tags = new BriefUpdateFromYaml($this);
+            WillFunctions::will_do_nothing($tags); //for debugging
+
             $db->commit();
 
 
@@ -944,8 +1095,6 @@ class FlowProject {
         }
 
     }
-
-
 
 
 

@@ -51,6 +51,7 @@ return function (App $app) {
 
 
         $group->get('/search_users', ['userPages', 'find_users_by_project'])->setName('find_users_by_project');
+        $group->get('/general_search', ['homePages', 'general_search'])->setName('general_search');
 
         $group->get('/{user_name:[[:alnum:]\-]+}', ['userPages', 'user_page'])->setName('user_page');
 
@@ -71,6 +72,38 @@ return function (App $app) {
             $group->post('/{project_name:[[:alnum:]\-]+}/import_from_file', ['projectPages', 'import_from_file'])->setName('project_import_from_file');
 
             $group->get('/{project_name:[[:alnum:]\-]+}/resources/{resource}', ['projectPages', 'get_resource_file'])->setName('project_resource');
+
+            //tags in project , no matter how they are used or attached to
+            $group->get('/{project_name:[[:alnum:]\-]+}/get_tags_ajax', ['tagPages', 'get_tags'])->setName('get_tags_ajax');
+
+
+            //tag in project
+            $group->post('/{project_name:[[:alnum:]\-]+}/tag/create', ['tagPages', 'create_tag'])->setName('create_tag_ajax');
+
+            $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/edit',
+                ['tagPages', 'edit_tag'])->setName('edit_tag_ajax');
+
+            $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/delete',
+                ['tagPages', 'delete_tag'])->setName('delete_tag_ajax');
+
+            //attributes in project
+            $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/attribute/create',
+                ['tagPages', 'create_attribute'])->setName('create_tag_attribute_ajax');
+
+            $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/attribute/{attribute_name:[[:alnum:]\-]+}/edit',
+                ['tagPages', 'edit_attribute'])->setName('edit_tag_attribute_ajax');
+
+            $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/attribute/{attribute_name:[[:alnum:]\-]+}/delete',
+                ['tagPages', 'delete_attribute'])->setName('delete_tag_attribute_ajax');
+
+            //applied in project
+            $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/applied/create',
+                ['tagPages', 'create_applied'])->setName('create_applied_ajax');
+
+
+            $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/applied/delete',
+                ['tagPages', 'delete_applied'])->setName('delete_applied_ajax');
+
 
         });
 

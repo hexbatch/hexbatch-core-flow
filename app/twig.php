@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use app\hexlet\FlowAntiCSRF;
+use Ramsey\Uuid\Uuid;
 use Slim\App;
 use Slim\Views\Twig;
 use Slim\Views\TwigMiddleware;
@@ -20,6 +21,7 @@ class Hexlet_Twig_Extension extends AbstractExtension implements GlobalsInterfac
         $root = (!empty($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] ;
         return [
             'root_url' => $root,
+            'csrf_token_set_to_root' => FlowAntiCSRF::SET_LOCK_TO_ANY_PAGE
         ];
     }
 
@@ -28,8 +30,11 @@ class Hexlet_Twig_Extension extends AbstractExtension implements GlobalsInterfac
         $csrf = new TwigFunction(
             'form_token',
             function($lock_to = null) {
-                static $csrf;
-                if ($csrf === null) {
+
+                if ($lock_to === FlowAntiCSRF::SET_LOCK_TO_ANY_PAGE) {
+                    $lock_to = '';
+                    $csrf = new FlowAntiCSRF($_POST,$_SESSION,FlowAntiCSRF::$fake_server);
+                } else {
                     $csrf = new FlowAntiCSRF;
                 }
                 return $csrf->insertToken($lock_to, false);
@@ -51,7 +56,16 @@ class Hexlet_Twig_Extension extends AbstractExtension implements GlobalsInterfac
             ['is_safe' => ['html']]
         );
 
-        return [$csrf,$session_dump];
+        $generate_uuid = new TwigFunction(
+            'uuid',
+            function() {
+                $uuid = Uuid::uuid4();
+                return $uuid->toString();
+            },
+            ['is_safe' => ['html']]
+        );
+
+        return [$csrf,$session_dump,$generate_uuid];
     }
 
 }

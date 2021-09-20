@@ -1,0 +1,8 @@
+{% if applied.tagged_flow_project_guid %}
+    {{-  url_for('single_project_home',{
+        user_name: applied.tagged_flow_project_owner_user_name ,
+        project_name: applied.tagged_title
+    } ) -}}
+{% elseif applied.tagged_flow_user_guid %}
+    {{-  url_for('user_page', {user_name: applied.tagged_title})  -}}
+{% endif %}

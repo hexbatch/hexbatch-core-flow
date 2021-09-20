@@ -1,0 +1,20 @@
+{% if applied.tagged_flow_project_guid %}
+    {% if project.flow_project_guid == applied.tagged_flow_project_guid %}
+        <i class="bi bi-box flow-tag-applied-of-this " ></i>
+        {{ applied.tagged_title }}
+    {% else %}
+        <i class="bi bi-box"></i>
+        {{ applied.tagged_title }}
+    {% endif %}
+
+{% elseif applied.tagged_flow_user_guid %}
+
+    {% if user.flow_user_guid == applied.tagged_flow_user_guid %}
+        <i class="bi-person-circle flow-tag-applied-of-this " ></i>
+        {{ applied.tagged_title }}
+    {% else %}
+        <i class="bi-person-circle"></i>
+        {{ applied.tagged_title }}
+    {% endif %}
+
+{% endif %}

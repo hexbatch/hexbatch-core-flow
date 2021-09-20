@@ -56,4 +56,159 @@
  */
 
 
+/**
+ * @typedef {Object} FlowTagApplied
+ * @property {?string} flow_applied_tag_guid
+ * @property {?string} flow_tag_guid
+ * @property {string} tagged_flow_entry_guid
+ * @property {string} tagged_flow_user_guid
+ * @property {string} tagged_flow_project_guid
+ * @property {?string} tagged_url
+ * @property {string} [tagged_title]
+ * @property {number} [created_at_ts]
+ */
+
+
+
+
+/**
+ *
+ * @typedef {Object} FlowTagAttribute
+ * @property {number} [id]
+ * @property {string} [text]
+ * @property {?string} flow_tag_attribute_guid
+ * @property {?string} flow_tag_guid
+ * @property {?string} flow_applied_tag_guid
+ * @property {?string} points_to_flow_entry_guid
+ * @property {?string} points_to_flow_user_guid
+ * @property {?string} points_to_flow_project_guid
+ * @property {?string} tag_attribute_name
+ * @property {?number} tag_attribute_long
+ * @property {?string} tag_attribute_text
+ * @property {?number} created_at_ts
+ * @property {?number} updated_at_ts
+ * @property {?boolean} is_standard_attribute
+ * @property {?boolean} is_inherited
+ * @property {?string} points_to_title
+ * @property {?string} points_to_admin_guid
+ * @property {?string} points_to_admin_name
+ * @property {?string} points_to_url
+ */
+
+
+/**
+ *
+ * @typedef {Object} FlowTagStandardAttributes
+ * @property {string?} color
+ * @property {string?} background_color
+
+ */
+
+
+/**
+ *
+ * @typedef {Object} FlowTag
+ * @property {number} [id]
+ * @property {string} [text]
+ * @property {string} flow_tag_guid
+ * @property {string} parent_tag_guid
+ * @property {string} flow_project_guid
+ * @property {string} flow_tag_name
+ * @property {number} created_at_ts
+ * @property {number} updated_at_ts
+ * @property {Object.<string, FlowTagAttribute>} attributes
+ * @property {Object.<string, FlowTagStandardAttributes>} standard_attributes
+ * @property {?FlowTag} flow_tag_parent
+ * @property {FlowTagApplied[]} applied
+ */
+
+
+
+
+
+
+/**
+ *
+ * @typedef {Object} FlowBasicResponse
+ * @property {boolean} success
+ * @property {string} message
+ * @property {?FlowToken} token
+ */
+
+/**
+ *
+ * @typedef {FlowBasicResponse} FlowTagResponse
+ * @property {?FlowTag} tag
+ */
+
+/**
+ *
+ * @typedef {FlowTagResponse} FlowAttributeResponse
+ * @property {?FlowTagAttribute} [attribute]
+ */
+
+/**
+ *
+ * @typedef {FlowAttributeResponse} FlowAppliedResponse
+ * @property {FlowTagApplied} [applied]
+ */
+
+/**
+ *
+ * @callback FlowTagActionCallback
+ * @param {FlowTagResponse|FlowAttributeResponse|FlowAppliedResponse} data
+ */
+
+
+/**
+ *
+ * @callback FlowTagAttributeEditCallback
+ * @param {FlowTagAttribute} data
+ */
+
+/**
+ *
+ * @callback FlowTagEditCallback
+ * @param {FlowTag} data
+ */
+
+
+
+
+
+
+/**
+ *
+ * @typedef {Object} FlowPagination
+ * @property {boolean} more
+ * @property {number} page
+ */
+
+/**
+ *
+ * @typedef {Object} FlowTagSearchResponse
+ * @property {pagination} FlowPagination
+ * @property {FlowTag[]} results
+ */
+
+/**
+ *
+ * @callback FlowTagSearchCallback
+ * @param {FlowTag} tag
+ */
+
+
+/**
+ * @typedef {Object} GeneralSearchResult
+ * @property {string} guid
+ * @property {number} created_at_ts
+ * @property {string} title
+ * @property {string} type
+ * @property {number} [id]
+ * @property {string} [text]
+ */
+
+
+
+
 

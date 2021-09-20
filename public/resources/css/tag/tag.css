@@ -1,0 +1,79 @@
+p.flow-flub textarea.select2-search__field {
+    line-height: 18px;
+}
+
+/*project-tags-summary-list.twig*/
+.flow-tag-list-name {
+    white-space: nowrap;
+    font-weight: bold;
+}
+
+.flow-tag-applied-target-title {
+
+}
+
+/*applied-title.twig*/
+.flow-tag-applied-of-this {
+    background-color: yellowgreen;
+}
+
+
+
+
+
+/*new tag dialog */
+div#flow-new-tag-dialog  {
+    width: fit-content;
+    max-width: 36em;
+    margin: auto;
+}
+
+div.flow-edit-container {
+    margin: auto;
+    width: 100%;
+}
+
+div.flow-edit-container div.flow-edit-tag-inputs {
+    /*max-width: 36em;*/
+    /*margin: auto;*/
+}
+
+.flow-tag-new-parent-list {
+
+}
+
+div.flow-tag-new-tingle  div.tingle-modal-box {
+
+}
+
+
+/* tag edit */
+div#flow-new-tag-dialog .flow-tag-new-parent-list ,
+div.flow-edit-container .flow-edit-tag-parent-list
+{
+    padding: 0;
+}
+
+div.flow-tag-edit-tingle div.tingle-modal-box__content {
+    padding: 0.5em;
+}
+
+div.flow-tag-edit-tingle div.tingle-modal-box {
+    width: 80%;
+}
+
+div.flow-tag-edit-tingle div.card-body.flow-edit-tag-input-fields {
+    padding: 0.5em;
+}
+
+span.flow-attribute-text-value-preview {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+}
+
+
+/*Displaying the tag */
+span.flow-tag-display {
+    padding: 0.125em;
+}

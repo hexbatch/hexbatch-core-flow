@@ -33,6 +33,10 @@
     <link rel="stylesheet" href="{{ root_url }}/node_modules/sceditor/minified/themes/default.min.css" />
     <link rel="stylesheet" href="{{ root_url }}/public/resources/css/highlight/googlecode.css" />
 
+    <!-- Sweat Alert  -->
+    <link rel="stylesheet" href="{{ root_url }}/node_modules/sweetalert2/dist/sweetalert2.min.css" />
+
+
     <title>{{ page_title }}</title>
 
     <script src="{{ root_url }}/node_modules/jquery/dist/jquery.min.js" ></script>
@@ -43,6 +47,7 @@
 
     <link rel="stylesheet" href="{{ root_url }}/public/resources/css/app.css" />
     <link rel="stylesheet" href="{{ root_url }}/public/resources/css/project/project.css" />
+    <link rel="stylesheet" href="{{ root_url }}/public/resources/css/tag/tag.css" />
 
 </head>
 <body class="px-sm-1 px-xl-3 ">
@@ -50,6 +55,14 @@
 {{ include('main/partials/top-nav.twig') }}
 
 {{ include('main/partials/flash.twig') }}
+
+<div id="flow-ajax-token">
+    {{ form_token(  csrf_token_set_to_root ) }}
+</div>
+
+<script>
+    let general_search_url = "{{-  url_for('general_search') -}}";
+</script>
 
 <main>
     <div class="container-fluid ">
@@ -59,6 +72,8 @@
     </div> <!-- /.container-fluid -->
 </main>
 
+
+
 {{ include('main/partials/bottom-nav.twig') }}
 
 
@@ -66,7 +81,7 @@
 <script src="{{ root_url }}/node_modules/bs4-toast/dist/toast.min.js"></script>
 <script src="{{ root_url }}/node_modules/lodash/lodash.min.js"></script>
 <script src="{{ root_url }}/node_modules/select2/dist/js/select2.min.js"></script>
-<script src="{{ root_url }}/node_modules/tingle.js/dist/tingle.min.js"></script>
+<script src="{{ root_url }}/node_modules/tingle.js/dist/tingle.js"></script>
 
 <!-- SCEditor Include the editors JS -->
 <script src="{{ root_url }}/node_modules/sceditor/minified/sceditor.min.js"></script>
@@ -75,10 +90,14 @@
 <script src="{{ root_url }}/node_modules/sceditor/minified/formats/bbcode.js"></script>
 
 <script src="{{ root_url }}/public/resources/js/app.js"></script>
+<script src="{{ root_url }}/public/resources/js/tags/create_select_2_for_general_search.js"></script>
 
 <script src="{{ root_url }}/public/resources/js/toast.js"></script>
 
 <script type="text/javascript" src="{{ root_url }}/node_modules/diff2html/bundles/js/diff2html-ui.min.js"></script>
+<script type="text/javascript" src="{{ root_url }}/node_modules/sweetalert2/dist/sweetalert2.all.js"></script>
+<script type="text/javascript" src="{{ root_url }}/node_modules/uuid/dist/umd/uuid.min.js"></script>
+<script type="text/javascript" src="{{ root_url }}/node_modules/clipboard/dist/clipboard.min.js"></script>
 
 {#{{ dump_session() }}#}
 

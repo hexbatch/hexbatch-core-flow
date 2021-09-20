@@ -1,13 +1,13 @@
 <?php
 
 namespace app\models\project;
-use DI\Container;
+use app\models\base\FlowBase;
+
 use Exception;
 use JsonSerializable;
-use ParagonIE\EasyDB\EasyDB;
-use Psr\Log\LoggerInterface;
 
-class FlowProjectUser implements JsonSerializable {
+
+class FlowProjectUser extends FlowBase implements JsonSerializable {
     public ?int $flow_project_user_id;
     public ?int $flow_project_user_created_at_ts;
     public ?string $flow_project_user_guid;
@@ -25,39 +25,11 @@ class FlowProjectUser implements JsonSerializable {
     public ?string $flow_project_title;
     public ?string $flow_project_type;
 
-    /**
-     * @var Container $container
-     */
-    protected static Container $container;
-
-    public static function set_container($c) {
-        static::$container = $c;
-    }
-
-    /**
-     * @return EasyDB
-     */
-    protected static function get_connection() : EasyDB {
-        try {
-            return  static::$container->get('connection');
-        } catch (Exception $e) {
-            static::get_logger()->alert("User model cannot connect to the database",['exception'=>$e]);
-            die( static::class . " Cannot get connetion");
-        }
-    }
 
 
 
-    /**
-     * @return LoggerInterface
-     */
-    protected static function get_logger() : LoggerInterface {
-        try {
-            return  static::$container->get(LoggerInterface::class);
-        } catch (Exception $e) {
-            die( static::class . " Cannot get logger");
-        }
-    }
+
+
 
     public function __construct($object=null){
         if (empty($object)) {

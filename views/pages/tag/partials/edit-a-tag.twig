@@ -1,0 +1,205 @@
+<div style="display: none" id="flow-edit-tag-template-holder">
+
+    <div
+         data-tag_guid=""
+         class="container flow-edit-container"
+    >
+        <div class="card col-12" >
+
+            <div class="card-header">
+
+                <span class="flow-edit-tag-name-in-title flow-tag-display fw-bold" data-tag_guid=""></span>
+
+                <button class="btn btn-success btn-sm float-end flow-edit-tag-delete-action">
+                    <i class="bi bi-bookmark-x bg-danger text-warning"></i>
+                    <i class="fas fa-spinner fa-pulse flow-spinner"  style="display: none"></i>
+                    Delete
+                </button>
+            </div>
+
+            <div class="card-body flow-edit-tag-input-fields">
+
+                <div class="card-text ">
+                    <div class="row m-0">
+
+                        <div class="col-12 col-xl-6">
+
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                        Name
+                                </span>
+
+                                <input type="text" class="form-control flow-edit-tag-name"
+                                       maxlength="40"
+                                       title="Tag Name" placeholder="Tag Name">
+
+                                <span class="input-group-text">
+                                    <button class="btn btn-sm btn-success flow-edit-tag-title-save" type="button">
+                                        <i class="fas fa-save flow-action"></i>
+                                        <i class="fas fa-spinner fa-pulse flow-spinner"  style="display: none"></i>
+                                    </button>
+                                </span>
+                            </div>
+
+                        </div> <!-- /.col -->
+
+                        <div class="col-12 col-xl-6 mt-2 mt-xl-0">
+
+
+                            <label class="input-group-text">
+                                <span class="me-2">
+                                    Change Parent
+                                </span>
+
+                                <span class="me-1">
+
+                                     <button class="btn btn-sm btn-success flow-edit-tag-parent-goto ms-1" >
+                                        <i class="bi bi-arrow-bar-up"></i>
+                                    </button>
+
+                                </span>
+
+                                <select
+                                        title="Parents"
+                                        class="form-control flow-edit-tag-parent-list">
+
+                                </select>
+
+                                <span class="float-end ms-2">
+                                   <button class="btn btn-sm btn-success flow-edit-tag-parent-save">
+                                        <i class="fas fa-save flow-action"></i>
+                                       <i class="fas fa-spinner fa-pulse  flow-spinner" style="display: none"></i>
+                                    </button>
+                                </span>
+
+                            </label>
+
+
+                            <div class="ms-2 flow-edit-tag-parent-display">
+                                <nav aria-label="breadcrumb">
+                                    <ol class="breadcrumb">
+
+                                    </ol>
+                                </nav>
+                            </div>
+
+                        </div> <!-- /.col -->
+                    </div><!-- /.row -->
+                    <div class="row m-0 mt-2">
+                        <div class="col-4">
+                            <div class="small">
+                                <code class="flow-edit-tag-guid"></code>
+                            </div>
+                        </div>
+
+                        <div class="col-4">
+                            <div class="small">
+                                <span>Created</span>
+                                <span
+                                      data-ts=""
+                                      class="flow-edit-tag-created-at flow-long-date-time"
+                                ></span>
+                            </div>
+                        </div>
+
+                        <div class="col-4">
+                            <div class="small">
+                                <span>Updated</span>
+                                <span
+                                      data-ts=""
+                                      class="flow-edit-tag-modified-at flow-long-date-time"
+                                ></span>
+                            </div>
+                        </div>
+
+                    </div><!-- /.row -->
+                </div> <!-- /.card-text -->
+            </div> <!-- /.card-body -->
+
+            <div class="card-body">
+                <ul class="nav nav-tabs flow-edit-tag-tabs"  role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link flow-edit-tag-attribute-tab active"
+                                data-bs-toggle="tab"  type="button" role="tab" aria-controls="attributes" aria-selected="true"
+                        >
+                            Attributes
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link flow-edit-tag-applied-tab"
+                                data-bs-toggle="tab"  type="button" role="tab" aria-controls="applied" aria-selected="false"
+                        >
+                            Applied
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content">
+
+                    <div class="tab-pane fade show active flow-edit-tag-attribute-content"  role="tabpanel" aria-labelledby="attributes-tab">
+                        <div class="text-center w-100 mt-2">
+                            <button class="btn btn-sm btn-success flow-create-attribute-action">
+                                New Attribute
+                                <i class="fas fa-plus-circle"></i>
+                            </button>
+                        </div>
+                        <ul class="list-group list-group-flush mt-1"></ul>
+                    </div>
+
+                    <div class="tab-pane fade flow-edit-tag-applied-content"  role="tabpanel" aria-labelledby="applied-tab">
+                        <ul class="list-group list-group-flush"></ul>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- /.card -->
+    </div> <!-- /#flow-edit-tag -->
+
+
+    <!-- template for line -->
+    <ul id="flow-attribute-one-line-template-holder">
+    {% include 'tag/partials/attribute/attribute-one-line-summary.twig' %}
+    </ul>
+
+    <!-- template for line -->
+    <ul id="flow-applied-one-line-template-holder">
+    {% include 'tag/partials/applied/applied-one-line-summary.twig' %}
+    </ul>
+
+    {% include 'tag/partials/attribute/edit-attribute.twig' %}}
+
+</div> <!-- / anon div to hide modal screens -->
+
+
+
+{# the form values will be set by javascript,
+so the names just have to be the values in the editable typedef parts (or read only
+
+Editable tag info:
+    flow_tag_name
+    parent_tag : dropdown with all the tags except this one, that are not descended from this tag
+
+readable tag info:
+        flow_tag_guid
+        created_at_ts
+        updated_at_ts
+        applied info
+
+
+
+ Attributes: (can add or remove rows)
+
+ Editable attribute Info:
+    tag_attribute_name
+    tag_attribute_long (if inherited value will show that different)
+    tag_attribute_text (if inherited value will show that different)
+    points to: dropdown with all the user, project names, guids, what type it is, and applied tags (add entry later)
+
+ Readable attribute Info:
+    flow_tag_attribute_guid
+    created_at_ts
+    updated_at_ts
+    is_standard_attribute (check icon)
+
+ Also read only list of attributes, same format, that are inherited
+
+
+ #}

@@ -1,0 +1,51 @@
+
+{#/**
+/**
+ * @typedef {Object} FlowTagApplied
+ * @property {?string} flow_applied_tag_guid
+ * @property {?string} flow_tag_guid
+ * @property {string} tagged_flow_entry_guid
+ * @property {string} tagged_flow_user_guid
+ * @property {string} tagged_flow_project_guid
+ * @property {?string} tagged_url
+ * @property {string} [tagged_title]
+ * @property {number} [created_at_ts]
+ */
+*/#}
+
+
+<li class="list-group-item flow-applied-summary-line">
+    <div class="row">
+        <div class="col-4 col-xl-1">
+            <span class="flow-applied-type-icon-holder me-1">
+                <i class="bi-person-circle flow-applied-icon-user" style="display: none"></i>
+                <i class="bi bi-box flow-applied-icon-project" style="display: none"></i>
+            </span>
+
+            <span class="flow-applied-type"></span>
+        </div>
+        <div class="col-8 col-xl-6 ">
+            <a class="flow-applied-link">
+                <span class="flow-tag-applied-target-title"></span>
+            </a>
+        </div>
+
+        <div class="col-4 col-xl-3">
+            <div class="">
+                <span
+                        data-ts=""
+                        class="small flow-applied-created-at flow-long-date-time "
+                ></span>
+            </div>
+        </div>
+
+        <div class="col-2 col-xl-1">
+            <button class="btn btn-danger btn-sm  flow-action flow-applied-delete-action">
+                <i class="bi bi-trash  "></i>
+                <i class="fas fa-spinner fa-pulse flow-spinner"  style="display: none"></i>
+                Delete
+            </button>
+        </div>
+
+    </div>
+</li>

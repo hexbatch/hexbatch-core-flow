@@ -1,6 +1,8 @@
 <?php
 namespace app\controllers\home;
 
+use app\models\multi\GeneralSearch;
+use app\models\multi\GeneralSearchParams;
 use Delight\Auth\Auth;
 use DI\Container;
 use DI\DependencyException;
@@ -8,6 +10,7 @@ use DI\NotFoundException;
 use Exception;
 use Monolog\Logger;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Slim\Views\Twig;
 
 
@@ -73,5 +76,95 @@ class HomePages
         $info = ob_get_clean();
         $response->getBody()->write($info);
         return $response;
+    }
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function general_search( ServerRequestInterface $request,ResponseInterface $response) :ResponseInterface {
+
+        $args = $request->getQueryParams();
+
+
+        $search = new GeneralSearchParams();
+
+        $root = $args;
+        if (isset($args['search'])) { $root = $args['search'];}
+
+        if (isset($root['term'])) {
+            $search->title = trim($root['term']);
+        }
+
+        if (isset($root['guid'])) {
+            $search->guids[] = trim($root['guid']);
+        }
+
+        if (isset($root['title'])) {
+            $search->title = trim($root['title']);
+        }
+
+        if (isset($root['created_at_ts']) && intval($root['created_at_ts'])) {
+            $search->created_at_ts = (int)($root['created_at_ts']);
+        }
+
+        if (isset($root['types'])) {
+            if (is_array($root['types']))
+            {
+                foreach ($root['types'] as $a_type)
+                {
+                    $search->types[] = $a_type;
+                }
+            }
+            else
+            {
+                if ($root['types'] === GeneralSearch::ALL_TYPES_KEYWORD )
+                {
+                    $search->types = GeneralSearch::ALL_TYPES;
+                }
+                elseif ($root['types'] === GeneralSearch::ALL_TYPES_BUT_TAGS_KEYWORD)
+                {
+                    $search->types = GeneralSearch::ALL_TYPES_BUT_TAGS;
+                }
+                else
+                {
+                    $search->types[] = $root['types'];
+                }
+            }
+        }
+
+
+
+        $page = 1;
+        if (isset($args['page'])) {
+            $page_number = intval($args['page']);
+            if ($page_number > 0) {
+                $page = $page_number;
+            }
+        }
+
+
+        $matches = GeneralSearch::general_search($search,$page);
+        $b_more = true;
+        if (count($matches) < GeneralSearch::DEFAULT_PAGE_SIZE) {
+            $b_more = false;
+        }
+
+        $data = [
+            "results" => $matches,
+            "pagination" => [
+                "more" => $b_more,
+                "page" => $page
+            ]
+        ];
+
+        $payload = json_encode($data);
+
+        $response->getBody()->write($payload);
+        return $response
+            ->withHeader('Content-Type', 'application/json');
     }
 }

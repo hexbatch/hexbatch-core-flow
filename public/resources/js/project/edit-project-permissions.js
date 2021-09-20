@@ -134,18 +134,7 @@ jQuery(function ($){
             // Destroy Select2
 
             selected_user = null;
-
-            $('#mySelect2').val(null).trigger('change');
-
-            bare_select_control.select2('destroy');
-
-            // Unbind the event
-            bare_select_control.off('select2:select');
-
-            //clear the options
-            $('select#flow-find-user-list').empty();
-
-
+            utterly_destroy_select2(bare_select_control);
 
         },
         beforeClose: function() {

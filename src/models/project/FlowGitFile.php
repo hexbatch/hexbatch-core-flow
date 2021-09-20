@@ -35,6 +35,7 @@ class FlowGitFile {
             case 'flow_project_readme_bb_code.bbcode': { $this->is_public = true ; return 'Project Read Me'; }
             case 'flow_project_blurb': { $this->is_public = true ; return 'Project Blurb'; }
             case 'flow_project_title': { $this->is_public = true ; return 'Project Title'; }
+            case 'tags.yaml': { $this->is_public = true ; return 'Tags'; }
             default: {$this->is_public = false; return '';}
         }
     }

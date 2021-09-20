@@ -6,8 +6,13 @@ BEGIN
     DECLARE number_fields INT DEFAULT 0;
     DECLARE msg VARCHAR(255);
 
-    SET NEW.flow_applied_tag_guid = UUID_TO_BIN(UUID(),1); -- swap out the quicker time parts for faster indexing with the 1
-    SET NEW.created_at_ts = UNIX_TIMESTAMP(NOW());
+    IF  NEW.flow_applied_tag_guid IS NULL THEN
+        SET NEW.flow_applied_tag_guid = UUID_TO_BIN(UUID(),1); -- swap out the quicker time parts for faster indexing with the 1
+    END IF;
+
+    IF  NEW.created_at_ts IS NULL THEN
+        SET NEW.created_at_ts = UNIX_TIMESTAMP(NOW());
+    END IF;
 
     IF NEW.tagged_flow_entry_id THEN
         SET number_fields = number_fields + 1;

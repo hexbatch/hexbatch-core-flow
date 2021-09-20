@@ -1,9 +1,9 @@
 <?php
 namespace app\controllers\user;
 
+use app\controllers\base\BasePages;
 use app\models\project\FlowProject;
 use app\models\user\FlowUser;
-use Delight\Auth\Auth;
 use Delight\Auth\AuthError;
 use Delight\Auth\EmailNotVerifiedException;
 use Delight\Auth\InvalidEmailException;
@@ -12,13 +12,9 @@ use Delight\Auth\InvalidSelectorTokenPairException;
 use Delight\Auth\TokenExpiredException;
 use Delight\Auth\TooManyRequestsException;
 use Delight\Auth\UserAlreadyExistsException;
-use DI\Container;
-use DI\DependencyException;
-use DI\NotFoundException;
 use Exception;
 use InvalidArgumentException;
 use LogicException;
-use Monolog\Logger;
 use ParagonIE\AntiCSRF\AntiCSRF;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -27,24 +23,13 @@ use Slim\Exception\HttpForbiddenException;
 use Slim\Exception\HttpInternalServerErrorException;
 use Slim\Exception\HttpNotFoundException;
 use Slim\Routing\RouteContext;
-use Slim\Views\Twig;
 
 
 
-class UserPages {
+class UserPages extends BasePages {
 
     const REM_USER_SETTINGS_WITH_ERROR_SESSION_KEY = 'user_settings_form_in_progress_has_error';
 
-    protected  Auth $auth;
-    protected  Logger $logger;
-    /**
-     * @var Container $container
-     */
-    protected  Container $container;
-
-    protected Twig $view;
-
-    protected FlowUser $user;
 
     protected static string $flash_key_in_session;
 
@@ -65,21 +50,6 @@ class UserPages {
         $_SESSION[$flash_key][] = $node;
     }
 
-    /**
-     * UserLogInPages constructor.
-     * @param Auth $auth
-     * @param Logger $logger
-     * @param Container $container
-     * @throws NotFoundException
-     * @throws DependencyException
-     */
-    public function __construct (Auth $auth,Logger $logger, Container $container) {
-        $this->auth = $auth;
-        $this->logger = $logger;
-        $this->container = $container;
-        $this->view = $this->container->get('view');
-        $this->user = $this->container->get('user');
-    }
 
 
 
@@ -140,7 +110,7 @@ class UserPages {
             $csrf = new AntiCSRF;
             if (!empty($_POST)) {
                 if (!$csrf->validateRequest()) {
-                    throw new HttpForbiddenException($request,"Bad Request") ;
+                    throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
                 }
             }
             return $this->view->render($response, 'main.twig',  [
@@ -178,7 +148,7 @@ class UserPages {
             $csrf = new AntiCSRF;
             if (!empty($_POST)) {
                 if (!$csrf->validateRequest()) {
-                    throw new HttpForbiddenException($request,"Bad Request") ;
+                    throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
                 }
             }
 
@@ -419,7 +389,7 @@ class UserPages {
             $csrf = new AntiCSRF;
             if (!empty($_POST)) {
                 if (!$csrf->validateRequest()) {
-                    throw new HttpForbiddenException($request,"Bad Request") ;
+                    throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
                 }
             }
 
@@ -537,11 +507,17 @@ class UserPages {
      * @noinspection PhpUnused
      */
     public function user_page( ServerRequestInterface $request,ResponseInterface $response, string $user_name) :ResponseInterface {
-        if ($this->user->flow_user_id) {
-            return $this->user_page_for_self( $request,$response,$user_name);
-        } else {
-            return $this->user_page_for_others( $request,$response,$user_name);
+
+        $for_user = FlowUser::find_one($user_name);
+        if ($for_user) {
+            if ($this->user->flow_user_id === $for_user->flow_user_id) {
+                return $this->user_page_for_self( $request,$response,$user_name);
+            } else {
+                return $this->user_page_for_others( $request,$response,$user_name);
+            }
         }
+        throw new HttpNotFoundException($request,"Could not find user $user_name");
+
     }
 
 

@@ -40,6 +40,8 @@ div#flow-history-area .flow-grid-striped.row:nth-of-type(even) {
     background-color: rgba(0,0,0,.10);
 }
 
-div#flow-history-area ul.flow-history-file-list li {
-
+div#flow-history-area ul.flow-history-file-list li span.flow-commit-body {
+    white-space: pre;
+    display: block;
 }
+

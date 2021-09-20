@@ -1,17 +1,54 @@
+
+
+<script src="{{ root_url }}/public/resources/js/project/edit-project-tags.js"></script>
+
+
+
 <div class="container p-0 m-1">
 
-    <div class="card" style="width: fit-content">
+    <div class="card col-12 col-lg-9">
 
         <div class="card-header">
             Tags For {{ project.flow_project_title }}
+            <span class="small ms-2 ">Click name to edit</span>
+            <button class="btn btn-success btn-sm float-end flow-new-tag-show-dialog">
+                <i class="bi bi-bookmark-plus"></i>
+                New Tag
+            </button>
+        </div>
+
+        <div class="card-body">
+            {{ include('tag/partials/project-tags-summary-list.twig') }}
         </div>
 
         <div class="card-body">
             <h5 class="card-title">
-                WIP
+                Search
             </h5>
+
+            <div>
+                <button class="btn btn-dark" id="flow-tag-save">Edit Selected</button>
+                <div class="mt-2">
+                    <span id="flow-tag-name"></span>
+                    <br>
+                    <code id="flow-tag-guid"></code>
+                </div>
+
+            </div>
+
+            <p class="flow-flub">
+                <label for="flow-select-tags">Search existing tags or type in a new tag name, then click on it in the box</label>
+                <select id="flow-select-tags"
+                        class="w-100"
+                        tabindex="-1"
+                        aria-hidden="true"
+                >
+                </select>
+            </p>
 
         </div>
 
     </div>
 </div>
+
+

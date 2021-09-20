@@ -41,4 +41,9 @@ BEGIN
         END IF;
     END IF;
 
+    IF NEW.flow_tag_name <> OLD.flow_tag_name OR
+       OLD.flow_tag_name IS NULL AND NEW.flow_tag_name IS NOT NULL THEN
+        UPDATE flow_things f SET f.thing_title = NEW.flow_tag_name WHERE f.thing_guid = NEW.flow_tag_guid;
+    END IF;
+
 END

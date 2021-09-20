@@ -7,8 +7,14 @@ BEGIN
     DECLARE bad_pointer INT DEFAULT NULL;
     DECLARE msg VARCHAR(255);
 
-    SET NEW.flow_tag_guid = UUID_TO_BIN(UUID(),1); -- swap out the quicker time parts for faster indexing with the 1
-    SET NEW.created_at_ts = UNIX_TIMESTAMP(NOW());
+    IF  NEW.flow_tag_guid IS NULL THEN
+        SET NEW.flow_tag_guid = UUID_TO_BIN(UUID(),1); -- swap out the quicker time parts for faster indexing with the 1
+    END IF;
+
+    IF NOT NEW.created_at_ts OR NEW.created_at_ts IS NULL THEN
+        SET NEW.created_at_ts = UNIX_TIMESTAMP(NOW());
+    END IF;
+
 
     -- don't allow new parent to be something that points to this (no recursive ancestor chains)
     -- no chains where we have the ancestry of this including something that points back

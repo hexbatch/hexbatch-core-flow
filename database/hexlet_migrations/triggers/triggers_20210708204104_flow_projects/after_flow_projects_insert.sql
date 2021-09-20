@@ -11,4 +11,7 @@ BEGIN
                             can_write = values(can_write),
                             can_admin = values(can_admin)
                             ;
+
+    INSERT INTO flow_things(thing_id,  thing_type, thing_guid, thing_title)
+    VALUES (NEW.id,'project',NEW.flow_project_guid,NEW.flow_project_title);
 END

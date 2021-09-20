@@ -1,0 +1,58 @@
+{# requires tags_of_applied, and applied_target_guid and applied_target_type already set#}
+
+{% set applied_control_id = 'applied-control-' ~ uuid() %}
+
+<!-- parent can set width , if any -->
+<div class="container flow-add-applied-container"
+     id="{{ applied_control_id }}"
+     data-applied_target_guid="{{ applied_target_guid }}"
+     data-applied_target_type="{{ applied_target_type }}"
+>
+    <div class="card col-12" >
+        <h5 class="card-header">
+            Tags Applied
+        </h5>
+
+        <div class="card-body">
+
+            <div class="card-text ">
+                <ul class="list-group  list-group-horizontal-xl flow-tags-of-applied-list">
+
+                </ul>
+            </div> <!-- /.card-text -->
+        </div>  <!-- /.card-body -->
+
+        <div class="card-body">
+
+            <div class="card-text ">
+                <div class="row">
+                    <div class="col-12 col-xl-6">
+                        <select
+                                title="Add Tags"
+                                class="form-control flow-add-applied-tag-list p-0">
+
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-xl-2">
+                        <button type="button" class="btn btn-success btn-sm flow-add-applied-tag-action mt-2 ms-xl-2 mt-xl-0" >
+                            Apply <i class="fas fa-tag"></i>
+                        </button>
+                    </div>
+                </div>
+
+
+
+            </div> <!-- /.card-text -->
+        </div>  <!-- /.card-body -->
+
+
+    </div> <!-- /.card -->
+</div> <!-- /.container -->
+
+<script>
+    jQuery(function() {
+        let applied_array =  ({{ tags_of_applied|json_encode()|raw }}) || []  ;
+        applied_control("{{ applied_control_id }}",applied_array)
+    });
+</script>
