@@ -37,11 +37,6 @@ class AddFlowAppliedTags extends AbstractMigration
                 `editing_flow_user_id` INT NULL DEFAULT NULL ,
                 `created_at_ts` INT NULL DEFAULT NULL,
                 `flow_applied_tag_guid` BINARY(16) NOT NULL ,
-                `points_to_flow_entry_id` INT NULL DEFAULT NULL,
-                `points_to_user_id` INT NULL DEFAULT NULL ,
-                `points_to_project_id` INT  NULL DEFAULT NULL , 
-                `tagging_associated_long` BIGINT NULL DEFAULT NULL,
-                `tagging_associated_text` TEXT NULL DEFAULT NULL,
                 PRIMARY KEY (`id`)
            ) ENGINE = InnoDB COMMENT = 'connects the tags with what they tag, and extra information held';
 
@@ -58,16 +53,12 @@ class AddFlowAppliedTags extends AbstractMigration
         $this->execute("ALTER TABLE `flow_applied_tags` ADD UNIQUE `udx_tagged_flow_project_id`   (`flow_tag_id`,`tagged_flow_project_id`);");
 
 
-        $this->execute("ALTER TABLE `flow_applied_tags` ADD INDEX `idx_points_to_flow_entry_id`   (`points_to_flow_entry_id`);");
-        $this->execute("ALTER TABLE `flow_applied_tags` ADD INDEX `idx_points_to_user_id`   (`points_to_user_id`);");
-        $this->execute("ALTER TABLE `flow_applied_tags` ADD INDEX `idx_points_to_project_id`   (`points_to_project_id`);");
 
 
         $this->execute("ALTER TABLE `flow_applied_tags` ADD INDEX `idx_editing_flow_user_id`  (`editing_flow_user_id`);");
 
         $this->execute("ALTER TABLE `flow_applied_tags` ADD UNIQUE `udx_flow_applied_tag_guid` (`flow_applied_tag_guid`);");
 
-        $this->execute("ALTER TABLE `flow_applied_tags` ADD FULLTEXT `ft_tagging_associated_text` (`tagging_associated_text`);");
 
 
         $this->execute("ALTER TABLE `flow_applied_tags` ADD CONSTRAINT `fk_flow_applied_tags_has_tag_id` 
@@ -88,14 +79,7 @@ class AddFlowAppliedTags extends AbstractMigration
             FOREIGN KEY (`tagged_flow_user_id`) REFERENCES `flow_users`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
 
 
-        $this->execute("ALTER TABLE `flow_applied_tags` ADD CONSTRAINT `fk_flow_applied_tags_has_pointee_entry_id` 
-            FOREIGN KEY (`points_to_flow_entry_id`) REFERENCES `flow_entries`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
 
-        $this->execute("ALTER TABLE `flow_applied_tags` ADD CONSTRAINT `fk_flow_applied_tags_has_pointee_project_id` 
-            FOREIGN KEY (`points_to_project_id`) REFERENCES `flow_projects`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
-
-        $this->execute("ALTER TABLE `flow_applied_tags` ADD CONSTRAINT `fk_flow_applied_tags_has_pointee_flow_user_id` 
-            FOREIGN KEY (`points_to_user_id`) REFERENCES `flow_users`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
 
         //NOW UPDATE THE TRIGGERS !
         $files = MYDB::recursive_search_sql_files(static::TRIGGER_DIR);
@@ -115,10 +99,6 @@ class AddFlowAppliedTags extends AbstractMigration
         if (RecursiveClasses::constant_value($this,'NAME_PART')) {
             $mydb->dropTriggersLike( static::NAME_PART );
         }
-
-        $this->execute("ALTER TABLE `flow_applied_tags` DROP FOREIGN KEY `fk_flow_applied_tags_has_pointee_flow_user_id`");
-        $this->execute("ALTER TABLE `flow_applied_tags` DROP FOREIGN KEY `fk_flow_applied_tags_has_pointee_project_id`");
-        $this->execute("ALTER TABLE `flow_applied_tags` DROP FOREIGN KEY `fk_flow_applied_tags_has_pointee_entry_id`");
 
         $this->execute("ALTER TABLE `flow_applied_tags` DROP FOREIGN KEY `fk_flow_applied_tags_has_tagged_flow_user_id`");
         $this->execute("ALTER TABLE `flow_applied_tags` DROP FOREIGN KEY `fk_flow_applied_tags_has_tagged_project_id`");

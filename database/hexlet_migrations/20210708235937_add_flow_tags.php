@@ -32,8 +32,6 @@ class AddFlowTags extends AbstractMigration
                 `flow_project_id` INT NOT NULL , 
                 `parent_tag_id` INT NULL DEFAULT NULL,
                 `editing_flow_user_id` INT NULL DEFAULT NULL ,
-                `tag_foreground_color` INT UNSIGNED NULL DEFAULT NULL ,
-                `tag_background_color` INT UNSIGNED DEFAULT NULL ,
                 `created_at_ts` INT NULL DEFAULT NULL,
                 `flow_tag_guid` BINARY(16) NOT NULL ,
                 `tag_effect` VARCHAR(15) NULL DEFAULT NULL ,
