@@ -57,3 +57,47 @@
 
 
 
+/**
+ *
+ * @typedef {Object} FlowTagAttribute
+ * @property {number} [id]
+ * @property {string} [text]
+ * @property {string} flow_tag_attribute_guid
+ * @property {string} flow_tag_guid
+ * @property {string} flow_applied_tag_guid
+ * @property {string} points_to_flow_entry_guid
+ * @property {string} points_to_flow_user_guid
+ * @property {string} points_to_flow_project_guid
+ * @property {string} tag_attribute_name
+ * @property {number} tag_attribute_long
+ * @property {string} tag_attribute_text
+ * @property {number} created_at_ts
+ * @property {boolean} is_standard_attribute
+
+ */
+
+/**
+ *
+ * @typedef {Object} FlowTagStandardAttributes
+ * @property {string?} color
+ * @property {string?} background_color
+
+ */
+
+
+/**
+ *
+ * @typedef {Object} FlowTag
+ * @property {number} [id]
+ * @property {string} [text]
+ * @property {string} flow_tag_guid
+ * @property {string} parent_tag_guid
+ * @property {string} flow_project_guid
+ * @property {string} flow_tag_name
+ * @property {number} created_at_ts
+ * @property {FlowTagAttribute[]} attributes
+ * @property {FlowTagStandardAttributes} standard_attributes
+ */
+
+
+

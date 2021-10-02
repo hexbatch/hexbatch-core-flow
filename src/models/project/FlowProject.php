@@ -4,19 +4,17 @@ namespace app\models\project;
 
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
+use app\models\base\FlowBase;
 use app\models\user\FlowUser;
-use DI\Container;
 use Exception;
 use InvalidArgumentException;
 use LogicException;
-use ParagonIE\EasyDB\EasyDB;
 use PDO;
-use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
 
-class FlowProject {
+class FlowProject extends FlowBase {
 
     const FLOW_PROJECT_TYPE_TOP = 'top';
     const MAX_SIZE_TITLE = 40;
@@ -82,14 +80,7 @@ class FlowProject {
     }
 
 
-    /**
-     * @var Container $container
-     */
-    protected static Container $container;
 
-    public static function set_container($c) {
-        static::$container = $c;
-    }
 
     /** @noinspection PhpUnused */
     public  function max_read_me(): int
@@ -197,32 +188,8 @@ class FlowProject {
         return $ret;
     }
 
-    /**
-     * @return EasyDB
-     */
-    protected static function get_connection() : EasyDB {
-        try {
-            return  static::$container->get('connection');
-        } catch (Exception $e) {
-            static::get_logger()->alert("User model cannot connect to the database",['exception'=>$e]);
-            die( static::class . " Cannot get connetion");
-        }
-    }
 
 
-
-
-
-    /**
-     * @return LoggerInterface
-     */
-    protected static function get_logger() : LoggerInterface {
-        try {
-            return  static::$container->get(LoggerInterface::class);
-        } catch (Exception $e) {
-            die( static::class . " Cannot get logger");
-        }
-    }
 
     public function __construct($object=null){
         $this->admin_user = null;
@@ -265,23 +232,8 @@ class FlowProject {
 
     public static function check_valid_title($words) : bool  {
 
-        if (empty($words)) {return false;}
+        if (!static::minimum_check_valid_name($words,static::MAX_SIZE_TITLE)) {return false;}
 
-        if (is_numeric(substr($words, 0, 1)) ) {
-            return false;
-        }
-
-        if (ctype_digit($words) ) {
-            return false;
-        }
-
-        if (ctype_xdigit($words) && (mb_strlen($words) > 25) ) {
-            return false;
-        }
-
-        if ((mb_strlen($words) < 3) || (mb_strlen($words) > 40) ) {
-            return false;
-        }
         $b_match = preg_match('/^[[:alnum:]\-]+$/u',$words,$matches);
         if ($b_match === false) {
             $error_preg = array_flip(array_filter(get_defined_constants(true)['pcre'], function ($value) {

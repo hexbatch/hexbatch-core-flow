@@ -25,7 +25,7 @@ BEGIN
     END IF;
 
 
-    IF NEW.points_to_flow_entry_id THEN
+    IF NEW.points_to_entry_id THEN
         SET number_pointees = number_pointees + 1;
     END IF;
 

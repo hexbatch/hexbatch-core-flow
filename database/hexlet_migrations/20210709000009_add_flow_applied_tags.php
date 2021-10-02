@@ -34,7 +34,6 @@ class AddFlowAppliedTags extends AbstractMigration
                 `tagged_flow_entry_id` INT NULL DEFAULT NULL,
                 `tagged_flow_user_id` INT NULL DEFAULT NULL ,
                 `tagged_flow_project_id` INT NULL DEFAULT NULL ,
-                `editing_flow_user_id` INT NULL DEFAULT NULL ,
                 `created_at_ts` INT NULL DEFAULT NULL,
                 `flow_applied_tag_guid` BINARY(16) NOT NULL ,
                 PRIMARY KEY (`id`)
@@ -53,20 +52,12 @@ class AddFlowAppliedTags extends AbstractMigration
         $this->execute("ALTER TABLE `flow_applied_tags` ADD UNIQUE `udx_tagged_flow_project_id`   (`flow_tag_id`,`tagged_flow_project_id`);");
 
 
-
-
-        $this->execute("ALTER TABLE `flow_applied_tags` ADD INDEX `idx_editing_flow_user_id`  (`editing_flow_user_id`);");
-
         $this->execute("ALTER TABLE `flow_applied_tags` ADD UNIQUE `udx_flow_applied_tag_guid` (`flow_applied_tag_guid`);");
 
 
 
         $this->execute("ALTER TABLE `flow_applied_tags` ADD CONSTRAINT `fk_flow_applied_tags_has_tag_id` 
             FOREIGN KEY (`flow_tag_id`) REFERENCES `flow_tags`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
-
-
-        $this->execute("ALTER TABLE `flow_applied_tags` ADD CONSTRAINT `fk_flow_applied_tags_has_editing_flow_user_id` 
-            FOREIGN KEY (`editing_flow_user_id`) REFERENCES `flow_users`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
 
 
         $this->execute("ALTER TABLE `flow_applied_tags` ADD CONSTRAINT `fk_flow_applied_tags_has_tagged_entry_id` 
@@ -103,9 +94,6 @@ class AddFlowAppliedTags extends AbstractMigration
         $this->execute("ALTER TABLE `flow_applied_tags` DROP FOREIGN KEY `fk_flow_applied_tags_has_tagged_flow_user_id`");
         $this->execute("ALTER TABLE `flow_applied_tags` DROP FOREIGN KEY `fk_flow_applied_tags_has_tagged_project_id`");
         $this->execute("ALTER TABLE `flow_applied_tags` DROP FOREIGN KEY `fk_flow_applied_tags_has_tagged_entry_id`");
-
-        $this->execute("ALTER TABLE `flow_applied_tags` DROP FOREIGN KEY `fk_flow_applied_tags_has_editing_flow_user_id`");
-
         $this->execute("ALTER TABLE `flow_applied_tags` DROP FOREIGN KEY `fk_flow_applied_tags_has_tag_id`");
         $this->table('flow_applied_tags')->drop();
     }

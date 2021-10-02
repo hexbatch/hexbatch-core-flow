@@ -33,7 +33,7 @@ class FlowTagAttributes extends AbstractMigration
                 `flow_tag_id` INT NULL DEFAULT NULL ,
                 `flow_applied_tag_id` INT NULL DEFAULT NULL ,
                 `created_at_ts` INT NULL DEFAULT NULL,
-                `points_to_flow_entry_id` INT NULL DEFAULT NULL,
+                `points_to_entry_id` INT NULL DEFAULT NULL,
                 `points_to_user_id` INT NULL DEFAULT NULL ,
                 `points_to_project_id` INT  NULL DEFAULT NULL , 
                 `flow_tag_attribute_guid` BINARY(16) NOT NULL ,
@@ -48,14 +48,14 @@ class FlowTagAttributes extends AbstractMigration
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD INDEX `idx_flow_tag_id`  (`flow_tag_id`);");
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD UNIQUE `udx_flow_tag_guid` (`flow_tag_attribute_guid`);");
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD FULLTEXT `ft_flow_tag_name` (`tag_attribute_name`);");
-        $this->execute("ALTER TABLE `flow_tag_attributes` ADD INDEX `idx_points_to_flow_entry_id`   (`points_to_flow_entry_id`);");
+        $this->execute("ALTER TABLE `flow_tag_attributes` ADD INDEX `idx_points_to_flow_entry_id`   (points_to_entry_id);");
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD INDEX `idx_points_to_user_id`   (`points_to_user_id`);");
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD INDEX `idx_points_to_project_id`   (`points_to_project_id`);");
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD FULLTEXT `ft_tag_attribute_text` (`tag_attribute_text`);");
 
 
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD CONSTRAINT `fk_flow_tag_attributes_has_pointee_entry_id` 
-            FOREIGN KEY (`points_to_flow_entry_id`) REFERENCES `flow_entries`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
+            FOREIGN KEY (points_to_entry_id) REFERENCES `flow_entries`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
 
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD CONSTRAINT `fk_flow_tag_attributes_has_pointee_project_id` 
             FOREIGN KEY (`points_to_project_id`) REFERENCES `flow_projects`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");

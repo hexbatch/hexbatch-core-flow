@@ -72,6 +72,9 @@ return function (App $app) {
 
             $group->get('/{project_name:[[:alnum:]\-]+}/resources/{resource}', ['projectPages', 'get_resource_file'])->setName('project_resource');
 
+            //tags in project
+            $group->get('/{project_name:[[:alnum:]\-]+}/get_tags_ajax', ['tagPages', 'get_tags'])->setName('get_tags_ajax');
+
         });
 
     })->add('pingUserMiddleware')->add($container->get('twigMiddleware'));

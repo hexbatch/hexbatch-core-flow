@@ -1,6 +1,7 @@
 <?php /** @noinspection PhpInternalEntityUsedInspection */
 
 namespace app\models\user;
+use app\models\base\FlowBase;
 use app\models\project\FlowProject;
 use app\models\project\FlowProjectUser;
 use Delight\Auth\EmailNotVerifiedException;
@@ -10,17 +11,14 @@ use Delight\Auth\NotLoggedInException;
 use Delight\Auth\TooManyRequestsException;
 use Delight\Auth\UserAlreadyExistsException;
 use Delight\Auth\UserManager;
-use DI\Container;
 use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
-use ParagonIE\EasyDB\EasyDB;
 use PDO;
-use Psr\Log\LoggerInterface;
 use Delight\Auth\Auth;
 use RuntimeException;
 
-class FlowUser implements JsonSerializable {
+class FlowUser extends FlowBase implements JsonSerializable {
     const DEFAULT_USER_PAGE_SIZE = 20;
     const MAX_SIZE_NAME = 40;
     const SESSION_USER_KEY = 'flow_user';
@@ -54,26 +52,7 @@ class FlowUser implements JsonSerializable {
         return static::MAX_SIZE_NAME;
     }
 
-    /**
-     * @var Container $container
-     */
-    protected static Container $container;
 
-    public static function set_container($c) {
-        static::$container = $c;
-    }
-
-    /**
-     * @return EasyDB
-     */
-    protected static function get_connection() : EasyDB {
-        try {
-            return  static::$container->get('connection');
-        } catch (Exception $e) {
-            static::get_logger()->alert("User model cannot connect to the database",['exception'=>$e]);
-            die( static::class . " Cannot get connetion");
-        }
-    }
 
 
     /**
@@ -100,16 +79,7 @@ class FlowUser implements JsonSerializable {
         }
     }
 
-    /**
-     * @return LoggerInterface
-     */
-    protected static function get_logger() : LoggerInterface {
-        try {
-            return  static::$container->get(LoggerInterface::class);
-        } catch (Exception $e) {
-            die( static::class . " Cannot get logger");
-        }
-    }
+
 
     public static function get_base_details($base_user_id,&$base_email, &$base_username) :?int{
         $db = static::get_connection();

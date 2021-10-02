@@ -1,3 +1,12 @@
+<script>
+    let get_tags_ajax_url = "{{-  url_for('get_tags_ajax',{
+        user_name: project.get_admin_user().flow_user_name ,
+        project_name: project.flow_project_title
+    }) -}}";
+
+</script>
+<script src="{{ root_url }}/public/resources/js/project/edit-project-tags.js"></script>
+
 <div class="container p-0 m-1">
 
     <div class="card" style="width: fit-content">
@@ -11,7 +20,19 @@
                 WIP
             </h5>
 
+            <p>
+                <label for="flow-select-tags">FUB</label>
+                <select id="flow-select-tags"
+                        class="form-control "
+                        tabindex="-1"
+                        aria-hidden="true"
+                >
+                </select>
+            </p>
+
         </div>
 
     </div>
 </div>
+
+

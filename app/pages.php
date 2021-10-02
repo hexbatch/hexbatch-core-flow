@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use app\controllers\home\HomePages;
 use app\controllers\project\ProjectPages;
+use app\controllers\tag\TagPages;
 use app\controllers\user\UserPages;
 use Psr\Log\LoggerInterface;
 use Slim\App;
@@ -25,6 +26,10 @@ return function (App $app) {
 
     $container->set('projectPages', function() use ($app, $container) {
         return new ProjectPages($container->get('auth'),$container->get(LoggerInterface::class),$container);
+    });
+
+    $container->set('tagPages', function() use ($app, $container) {
+        return new TagPages($container->get('auth'),$container->get(LoggerInterface::class),$container);
     });
 
 };

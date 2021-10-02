@@ -32,7 +32,6 @@ class AddFlowEntries extends AbstractMigration
                 `id` INT NOT NULL AUTO_INCREMENT ,
                 `flow_project_id` INT  NOT NULL , 
                 `parent_flow_entry_id` INT NULL DEFAULT NULL ,
-                `editing_flow_user_id` INT NULL DEFAULT NULL ,
                 `created_at_ts` INT NULL DEFAULT NULL,
                 `flow_entry_guid` BINARY(16) NOT NULL ,
                 `flow_entry_type` VARCHAR(10) NULL DEFAULT NULL ,
@@ -46,7 +45,6 @@ class AddFlowEntries extends AbstractMigration
 
         $this->execute("ALTER TABLE `flow_entries` ADD INDEX `idx_flow_project_id`   (`flow_project_id`);");
         $this->execute("ALTER TABLE `flow_entries` ADD INDEX `idx_parent_flow_entry_id`   (`parent_flow_entry_id`);");
-        $this->execute("ALTER TABLE `flow_entries` ADD INDEX `idx_editing_flow_user_id`   (`editing_flow_user_id`);");
         $this->execute("ALTER TABLE `flow_entries` ADD UNIQUE `udx_flow_entry_guid` (`flow_entry_guid`);");
         $this->execute("ALTER TABLE `flow_entries` ADD FULLTEXT `ft_flow_entry_title` (`flow_entry_title`);");
         $this->execute("ALTER TABLE `flow_entries` ADD FULLTEXT `ft_flow_entry_blurb` (`flow_entry_blurb`);");
@@ -57,9 +55,6 @@ class AddFlowEntries extends AbstractMigration
 
         $this->execute("ALTER TABLE `flow_entries` ADD CONSTRAINT `fk_flow_entries_has_flow_entry_id` 
             FOREIGN KEY (`parent_flow_entry_id`) REFERENCES `flow_entries`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
-
-        $this->execute("ALTER TABLE `flow_entries` ADD CONSTRAINT `fk_flow_entries_has_editing_flow_user_id` 
-            FOREIGN KEY (`editing_flow_user_id`) REFERENCES `flow_users`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
 
         //NOW UPDATE THE TRIGGERS !
         $files = MYDB::recursive_search_sql_files(static::TRIGGER_DIR);
@@ -80,7 +75,6 @@ class AddFlowEntries extends AbstractMigration
             $mydb->dropTriggersLike( static::NAME_PART );
         }
 
-        $this->execute("ALTER TABLE `flow_entries` DROP FOREIGN KEY `fk_flow_entries_has_editing_flow_user_id`");
         $this->execute("ALTER TABLE `flow_entries` DROP FOREIGN KEY `fk_flow_entries_has_flow_entry_id`");
         $this->execute("ALTER TABLE `flow_entries` DROP FOREIGN KEY `fk_flow_entries_has_flow_project_id`");
         $this->table('flow_entries')->drop();
