@@ -1,11 +1,17 @@
 //for tags
+
 /**
  * @type {?FlowTag}
  */
-let selected_tag = null;
+let working_tag = null;
 
 
 jQuery(function ($){
+
+    /**
+     * @type {?FlowTag}
+     */
+    let selected_tag = null;
 
     let b_open = true;
 
@@ -196,7 +202,91 @@ jQuery(function ($){
      */
     function send_selected_to_editor(tag) {
         console.log('editing',tag);
+        working_tag = tag;
+        if (working_tag.flow_tag_name) {
+            $('span#flow-tag-name').text(working_tag.flow_tag_name)
+        } else {
+            $('span#flow-tag-name').text("no name")
+        }
+
+        if (working_tag.flow_tag_guid) {
+            $('code#flow-tag-guid').text(working_tag.flow_tag_guid)
+        } else {
+            $('code#flow-tag-guid').text("no guid")
+        }
     }
 
+    $("button#flow-tag-save").click(function() {
+        if (working_tag) {
+            set_tag_action(working_tag,function(saved_tag) {
+               console.log("Updated tag",saved_tag)
+            });
+        }
+    });
+
 });
+
+function set_tag_action(data,on_success_callback) {
+    let token_div = $('#flow-set-tags-ajax-tokens');
+    let token_csrf_index_input = token_div.find ('input[name="_CSRF_INDEX"]');
+    let token_csrf_token_input = token_div.find('input[name="_CSRF_TOKEN"]');
+
+    data._CSRF_INDEX = token_csrf_index_input.val();
+    data._CSRF_TOKEN = token_csrf_token_input.val();
+
+    $.ajax({
+        url: set_tags_ajax_url,
+        method: "POST",
+        dataType: 'json',
+        data : data
+    })
+        .always(function( data ) {
+
+            /**
+             * @type {FlowSetTagResponse}
+             */
+            let ret;
+
+            if (flow_check_if_promise(data)) {
+                console.debug('promise passed in for edit permissions',data);
+                if (data.hasOwnProperty('responseJSON')) {
+                    ret = data.responseJSON;
+                } else {
+                    ret = {
+                        success: false,
+                        message: data.statusText,
+                        tag: null,
+                        token: null
+                    };
+                }
+
+
+            } else {
+                ret = data;
+            }
+
+            if (ret.success) {
+                if (on_success_callback) {on_success_callback(ret.tag);}
+                do_toast({
+                    title:'Saved Tag',
+                    delay:5000,
+                    type:'success'
+                });
+            } else {
+                do_toast({
+                    title:'Cannot Save Tag',
+                    subtitle:'There was an issue with the ajax',
+                    content: ret.message,
+                    delay:20000,
+                    type:'error'
+                });
+            }
+
+            if (ret && ret.token) {
+                token_csrf_index_input.val(ret.token._CSRF_INDEX);
+                token_csrf_token_input.val(ret.token._CSRF_TOKEN);
+            }
+        });
+
+}
 

@@ -4,7 +4,18 @@
         project_name: project.flow_project_title
     }) -}}";
 
+    let set_tags_ajax_url = "{{-  url_for('set_tags_ajax',{
+        user_name: project.get_admin_user().flow_user_name ,
+        project_name: project.flow_project_title
+    }) -}}";
+
 </script>
+<div id="flow-set-tags-ajax-tokens">
+    {{ form_token(  url_for('set_tags_ajax',{
+        user_name: project.get_admin_user().flow_user_name ,
+        project_name: project.flow_project_title
+    } )) }}
+</div>
 <script src="{{ root_url }}/public/resources/js/project/edit-project-tags.js"></script>
 
 <div class="container p-0 m-1">
@@ -19,6 +30,14 @@
             <h5 class="card-title">
                 WIP
             </h5>
+
+            <p>
+                <button class="btn btn-dark" id="flow-tag-save">Da Save Test</button>
+                <br>
+                <span id="flow-tag-name"></span>
+                <br>
+                <code id="flow-tag-guid"></code>
+            </p>
 
             <p>
                 <label for="flow-select-tags">FUB</label>

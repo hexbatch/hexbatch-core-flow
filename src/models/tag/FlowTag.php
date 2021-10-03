@@ -3,6 +3,7 @@
 namespace app\models\tag;
 
 
+use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use Exception;
 use InvalidArgumentException;
@@ -82,6 +83,128 @@ class FlowTag extends FlowBase implements JsonSerializable {
             }
         }
 
+        if (is_object($object) && property_exists($object,'attributes') && is_array($object->attributes)) {
+            $attributes_to_copy = $object->attributes;
+        } elseif (is_array($object) && array_key_exists('attributes',$object) && is_array($object['attributes'])) {
+            $attributes_to_copy  = $object['attributes'];
+        } else {
+            $attributes_to_copy = [];
+        }
+
+        if (count($attributes_to_copy)) {
+            foreach ($attributes_to_copy as $att) {
+                $this->attributes[] = new FlowTagAttribute($att);
+            }
+        }
+
+    }
+
+    /**
+     * @return $this
+     * @throws Exception
+     */
+    public function clone_refresh() : FlowTag {
+        if (empty($this->flow_tag_id) && empty($this->flow_tag_guid)) {
+            $me = new FlowTag($this); //new to db
+            return $me;
+        }
+        $search = new FlowTagSearchParams();
+        $search->tag_guid = $this->flow_tag_guid;
+        $search->tag_id = $this->flow_tag_id;
+        $me_array = static::get_tags($search);
+        if (empty($me_array)) {
+            throw new InvalidArgumentException("Tag is not found from guid of $this->flow_tag_guid or id of $this->flow_tag_id");
+        }
+        $me = $me_array[0];
+        return $me;
+    }
+
+    /**
+     * @return FlowTag
+     * @throws Exception
+     */
+    public function clone_with_missing_data() : FlowTag {
+
+        $me = $this->clone_refresh();
+        if (empty($me->flow_tag_id) && empty($me->flow_tag_guid)) {
+            return $me;
+        }
+        //clear out the settable ids in the $me, if not set in this
+        //set new data for this, overwriting the old
+        if ($me->parent_tag_id && !$this->parent_tag_guid) {
+            $me->parent_tag_id = null;
+            $me->parent_tag_guid = null;
+        }
+
+        if ($me->parent_tag_id && !$this->parent_tag_guid) {
+            $me->parent_tag_id = null;
+            $me->parent_tag_guid = null;
+        }
+
+        $me->flow_tag_name = $this->flow_tag_name;
+
+        /**
+         * @var array<string, FlowTagAttribute> $this_attribute_map
+         */
+        $this_attribute_map = [];
+
+        foreach ($this->attributes as $attribute) {
+            if ($attribute->flow_tag_attribute_guid) {
+                $this_attribute_map[$attribute->flow_tag_attribute_guid] = $attribute;
+            }
+        }
+
+        $me_attributes_filtered = [];
+        //for each attribute in the $me, that is not in the $this, delete it
+        foreach ($me->attributes as  $me_attribute) {
+            if (array_key_exists($me_attribute->flow_tag_attribute_guid,$this_attribute_map)) {
+                //clear out the settable ids in the $me::attribute, if not set in this::attribute
+                //set new data for $me::attribute, overwriting the old
+
+                /**
+                 * @var FlowTagAttribute $this_attribute
+                 */
+                $this_attribute = $this_attribute_map[$me_attribute->flow_tag_attribute_guid];
+
+                if ($me_attribute->points_to_entry_id && !$this_attribute->points_to_flow_entry_guid) {
+                    $me_attribute->points_to_entry_id = null;
+                    $me_attribute->points_to_flow_entry_guid = null;
+                }
+
+                if ($me_attribute->points_to_user_id && !$this_attribute->points_to_flow_user_guid) {
+                    $me_attribute->points_to_user_id = null;
+                    $me_attribute->points_to_flow_user_guid = null;
+                }
+
+                if ($me_attribute->points_to_project_id && !$this_attribute->points_to_flow_project_guid) {
+                    $me_attribute->points_to_project_id = null;
+                    $me_attribute->points_to_flow_project_guid = null;
+                }
+
+                $me_attribute->tag_attribute_name = $this_attribute->tag_attribute_name;
+                $me_attribute->tag_attribute_long = $this_attribute->tag_attribute_long;
+                $me_attribute->tag_attribute_text = $this_attribute->tag_attribute_text;
+
+                $me_attributes_filtered[] = $me_attribute;
+                unset($this_attribute_map[$me_attribute->flow_tag_attribute_guid]);
+            }
+        }
+
+        //add remaining new attributes that have guids
+        foreach ($this_attribute_map as $this_attribute_guid => $this_attribute) {
+            WillFunctions::will_do_nothing($this_attribute_guid);
+            $me_attributes_filtered[] = $this_attribute;
+        }
+
+        //add in new attributes with no guid
+        foreach ($this->attributes as $attribute) {
+            if (!$attribute->flow_tag_attribute_guid) {
+                $me_attributes_filtered[] = $attribute;
+            }
+        }
+
+        $me->attributes = $me_attributes_filtered;
+        return $me;
     }
 
     /**
@@ -104,6 +227,9 @@ class FlowTag extends FlowBase implements JsonSerializable {
         if ($search->tag_guid) {
             $where_tag = "driver_tag.flow_tag_guid = UNHEX(?)";
             $args[] = $search->tag_guid;
+        } elseif ($search->tag_id) {
+            $where_tag = "driver_tag.id = ?";
+            $args[] = $search->tag_id;
         }
 
         $start_place = ($page - 1) * $page_size;

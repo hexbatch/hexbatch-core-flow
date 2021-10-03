@@ -72,8 +72,9 @@ return function (App $app) {
 
             $group->get('/{project_name:[[:alnum:]\-]+}/resources/{resource}', ['projectPages', 'get_resource_file'])->setName('project_resource');
 
-            //tags in project
+            //tags in project , no matter how they are used or attached to
             $group->get('/{project_name:[[:alnum:]\-]+}/get_tags_ajax', ['tagPages', 'get_tags'])->setName('get_tags_ajax');
+            $group->post('/{project_name:[[:alnum:]\-]+}/set_tags_ajax', ['tagPages', 'set_tags'])->setName('set_tags_ajax');
 
         });
 

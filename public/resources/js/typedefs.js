@@ -57,6 +57,9 @@
 
 
 
+
+
+
 /**
  *
  * @typedef {Object} FlowTagAttribute
@@ -97,6 +100,16 @@
  * @property {number} created_at_ts
  * @property {FlowTagAttribute[]} attributes
  * @property {FlowTagStandardAttributes} standard_attributes
+ */
+
+
+/**
+ *
+ * @typedef {Object} FlowSetTagResponse
+ * @property {boolean} success
+ * @property {string} message
+ * @property {?FlowTag} tag
+ * @property {?FlowToken} token
  */
 
 
