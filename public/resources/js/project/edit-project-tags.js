@@ -227,18 +227,20 @@ jQuery(function ($){
 });
 
 function set_tag_action(data,on_success_callback) {
+    let tag = JSON.parse(JSON.stringify(data));
     let token_div = $('#flow-set-tags-ajax-tokens');
     let token_csrf_index_input = token_div.find ('input[name="_CSRF_INDEX"]');
     let token_csrf_token_input = token_div.find('input[name="_CSRF_TOKEN"]');
 
-    data._CSRF_INDEX = token_csrf_index_input.val();
-    data._CSRF_TOKEN = token_csrf_token_input.val();
+    tag._CSRF_INDEX = token_csrf_index_input.val();
+    tag._CSRF_TOKEN = token_csrf_token_input.val();
+
 
     $.ajax({
         url: set_tags_ajax_url,
         method: "POST",
         dataType: 'json',
-        data : data
+        data : tag
     })
         .always(function( data ) {
 

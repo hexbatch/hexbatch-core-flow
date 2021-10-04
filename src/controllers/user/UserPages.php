@@ -110,7 +110,7 @@ class UserPages extends BasePages {
             $csrf = new AntiCSRF;
             if (!empty($_POST)) {
                 if (!$csrf->validateRequest()) {
-                    throw new HttpForbiddenException($request,"Bad Request") ;
+                    throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
                 }
             }
             return $this->view->render($response, 'main.twig',  [
@@ -148,7 +148,7 @@ class UserPages extends BasePages {
             $csrf = new AntiCSRF;
             if (!empty($_POST)) {
                 if (!$csrf->validateRequest()) {
-                    throw new HttpForbiddenException($request,"Bad Request") ;
+                    throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
                 }
             }
 
@@ -389,7 +389,7 @@ class UserPages extends BasePages {
             $csrf = new AntiCSRF;
             if (!empty($_POST)) {
                 if (!$csrf->validateRequest()) {
-                    throw new HttpForbiddenException($request,"Bad Request") ;
+                    throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
                 }
             }
 

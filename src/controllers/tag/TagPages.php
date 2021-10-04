@@ -47,7 +47,7 @@ class TagPages extends BasePages
         if (isset($args['search'])) {
 
             if (isset($args['search']['tag_guid'])) {
-                $search_params->tag_guid = trim($args['search']['tag_guid']);
+                $search_params->tag_guids[] = trim($args['search']['tag_guid']);
             }
         }
 
@@ -99,7 +99,7 @@ class TagPages extends BasePages
             }
             $csrf = new FlowAntiCSRF;
             if (!$csrf->validateRequest()) {
-                throw new HttpForbiddenException($request,"Bad Request") ;
+                throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
             }
 
             $x_header = $request->getHeader('X-Requested-With') ?? [];

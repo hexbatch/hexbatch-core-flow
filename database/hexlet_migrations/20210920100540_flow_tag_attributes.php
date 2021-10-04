@@ -48,7 +48,7 @@ class FlowTagAttributes extends AbstractMigration
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD INDEX `idx_flow_tag_id`  (`flow_tag_id`);");
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD UNIQUE `udx_flow_tag_guid` (`flow_tag_attribute_guid`);");
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD FULLTEXT `ft_flow_tag_name` (`tag_attribute_name`);");
-        $this->execute("ALTER TABLE `flow_tag_attributes` ADD INDEX `idx_points_to_flow_entry_id`   (points_to_entry_id);");
+        $this->execute("ALTER TABLE `flow_tag_attributes` ADD INDEX `idx_points_to_entry_id`   (points_to_entry_id);");
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD INDEX `idx_points_to_user_id`   (`points_to_user_id`);");
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD INDEX `idx_points_to_project_id`   (`points_to_project_id`);");
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD FULLTEXT `ft_tag_attribute_text` (`tag_attribute_text`);");

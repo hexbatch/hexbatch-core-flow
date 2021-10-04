@@ -176,7 +176,7 @@ class ProjectPages extends BasePages
             $csrf = new AntiCSRF;
             if (!empty($_POST)) {
                 if (!$csrf->validateRequest()) {
-                    throw new HttpForbiddenException($request,"Bad Request") ;
+                    throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
                 }
             }
             $project = new FlowProject();
@@ -241,9 +241,11 @@ class ProjectPages extends BasePages
             if ($permission === 'read') {
                 if ($project->is_public) {
                     return $project;
+                }else {
+                    throw new HttpForbiddenException($request,"Project is not public");
                 }
             } else {
-                throw new HttpForbiddenException($request,"Project is not public");
+                throw new HttpForbiddenException($request,"Need to be logged in to edit this project");
             }
         }
 
@@ -353,7 +355,7 @@ class ProjectPages extends BasePages
 
             if (!empty($_POST)) {
                 if (!$csrf->validateRequest()) {
-                    throw new HttpForbiddenException($request,"Bad Request") ;
+                    throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
                 }
             }
 
@@ -475,7 +477,7 @@ class ProjectPages extends BasePages
             }
             $csrf = new FlowAntiCSRF;
             if (!$csrf->validateRequest()) {
-                throw new HttpForbiddenException($request,"Bad Request") ;
+                throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
             }
 
             $x_header = $request->getHeader('X-Requested-With') ?? [];
@@ -810,7 +812,7 @@ class ProjectPages extends BasePages
 
             if (!empty($_POST)) {
                 if (!$csrf->validateRequest()) {
-                    throw new HttpForbiddenException($request,"Bad Request") ;
+                    throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
                 }
             }
 
@@ -985,7 +987,7 @@ class ProjectPages extends BasePages
 
             if (!empty($_POST)) {
                 if (!$csrf->validateRequest()) {
-                    throw new HttpForbiddenException($request,"Bad Request") ;
+                    throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
                 }
             }
 
@@ -1054,7 +1056,7 @@ class ProjectPages extends BasePages
 
             if (!empty($_POST)) {
                 if (!$csrf->validateRequest()) {
-                    throw new HttpForbiddenException($request,"Bad Request") ;
+                    throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
                 }
             }
 
