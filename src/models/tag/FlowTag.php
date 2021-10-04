@@ -8,6 +8,7 @@ use app\models\base\FlowBase;
 use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
+use LogicException;
 use PDO;
 use RuntimeException;
 
@@ -34,6 +35,13 @@ class FlowTag extends FlowBase implements JsonSerializable {
      */
     public array $attributes;
 
+    /**
+     * @var FlowTag|null $flow_tag_parent
+     */
+    public ?FlowTag $flow_tag_parent;
+
+    public ?int $child_tag_id;
+
 
     public function jsonSerialize(): array
     {
@@ -49,6 +57,10 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 $standard[$std] = null;
             }
         }
+        $parent_serializied = null;
+        if ($this->flow_tag_parent) {
+            $parent_serializied = $this->flow_tag_parent->jsonSerialize();
+        }
         return [
             "flow_tag_guid" => $this->flow_tag_guid,
             "parent_tag_guid" => $this->parent_tag_guid,
@@ -57,7 +69,8 @@ class FlowTag extends FlowBase implements JsonSerializable {
             "created_at_ts" => $this->tag_created_at_ts,
             "flow_tag_name" => $this->flow_tag_name,
             "attributes" => $this->attributes,
-            "standard_attributes" => $standard
+            "standard_attributes" => $standard,
+            "flow_tag_parent" => $parent_serializied
         ];
     }
 
@@ -73,6 +86,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
         $this->flow_project_guid = null ;
         $this->parent_tag_guid = null ;
         $this->flow_user_guid = null ;
+        $this->flow_tag_parent = null;
 
         if (empty($object)) {
             return;
@@ -96,6 +110,19 @@ class FlowTag extends FlowBase implements JsonSerializable {
             foreach ($attributes_to_copy as $att) {
                 $this->attributes[] = new FlowTagAttribute($att);
             }
+        }
+
+
+        if (is_object($object) && property_exists($object,'flow_tag_parent') && !empty($object->flow_tag_parent)) {
+            $parent_to_copy = $object->flow_tag_parent;
+        } elseif (is_array($object) && array_key_exists('flow_tag_parent',$object) && !empty($object['flow_tag_parent'])) {
+            $parent_to_copy  = $object['flow_tag_parent'];
+        } else {
+            $parent_to_copy = null;
+        }
+        $this->flow_tag_parent = null;
+        if ($parent_to_copy) {
+            $this->flow_tag_parent = new FlowTag($parent_to_copy);
         }
 
     }
@@ -259,6 +286,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
                     t.id                                    as flow_tag_id,
                     t.flow_project_id,
                     t.parent_tag_id,
+                    driver.child_tag_id,                  
                     t.created_at_ts                         as tag_created_at_ts,
                     t.flow_tag_name,
                     HEX(t.flow_tag_guid)                    as flow_tag_guid,
@@ -286,15 +314,31 @@ class FlowTag extends FlowBase implements JsonSerializable {
        
                 FROM flow_tags t
                 INNER JOIN  (
-                    SELECT driver_tag.id 
-                    FROM flow_tags driver_tag
-                    INNER JOIN flow_projects driver_project ON driver_project.id = driver_tag.flow_project_id
-                    WHERE 1 
-                    AND $where_project  
-                    AND $where_tag_guid  
-                    AND $where_tag_id  
-                    LIMIT $start_place , $page_size
-                )  as driver ON driver.id = t.id  
+                    
+                    
+                    WITH RECURSIVE cte AS (
+                        (
+                            SELECT driver_tag.id as flow_tag_id , driver_tag.parent_tag_id, cast(null as SIGNED ) as child_tag_id
+                            FROM flow_tags driver_tag
+                            INNER JOIN flow_projects driver_project ON driver_project.id = driver_tag.flow_project_id
+                            WHERE 1 
+                                AND $where_project  
+                                AND $where_tag_guid  
+                                AND $where_tag_id  
+                                LIMIT $start_place , $page_size
+                        )
+                        UNION
+                        DISTINCT
+                        (
+                            SELECT parent_tag.id as flow_tag_id, parent_tag.parent_tag_id, c.flow_tag_id as child_tag_id
+                            FROM cte c
+                            INNER JOIN flow_tags parent_tag ON parent_tag.id = c.parent_tag_id
+                        )
+                    )
+                    SELECT cte.flow_tag_id, cte.parent_tag_id, cte.child_tag_id FROM cte
+                    
+                    
+                )  as driver ON driver.flow_tag_id = t.id  
                 LEFT JOIN flow_tags parent_t ON parent_t.id = t.parent_tag_id 
                 INNER JOIN flow_projects project ON project.id = t.flow_project_id 
                 INNER JOIN flow_users admin_user ON admin_user.id = project.admin_flow_user_id 
@@ -304,14 +348,22 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 LEFT JOIN flow_users point_user on attribute.points_to_user_id = point_user.id 
                 LEFT JOIN flow_projects point_project on attribute.points_to_project_id = point_project.id 
                 WHERE 1 
+                ORDER BY child_tag_id,flow_tag_id,flow_tag_attribute_id ASC
                 ";
 
         try {
 
             $res = $db->safeQuery($sql, $args, PDO::FETCH_OBJ);
 
+            /**
+             * @var FlowTag[] $ret
+             */
             $ret = [];
-
+            /**
+             * @var array<string,FlowTag> $map_all_tags_by_id
+             */
+            $map_all_tags_by_id = [];
+            $map_prefix = "tag-";
             /**
              * @var array<string, FlowTag> $rem_tags
              */
@@ -322,7 +374,11 @@ class FlowTag extends FlowBase implements JsonSerializable {
                     $tag_node = $rem_tags[$tag_node->flow_tag_guid];
                 } else {
                     $rem_tags[$tag_node->flow_tag_guid] = $tag_node;
-                    $ret[] = $tag_node;
+                    if (empty($tag_node->child_tag_id)) {
+                        $ret[] = $tag_node; //top level only
+                    }
+
+                    $map_all_tags_by_id[$map_prefix.$tag_node->flow_tag_id] = $tag_node;
                 }
 
                 $attribute_node = new FlowTagAttribute($row);
@@ -331,6 +387,20 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 }
 
 
+            }
+
+            //put parents in
+            foreach ($map_all_tags_by_id as $prefix_id => $dat_tag_you_do ) {
+                WillFunctions::will_do_nothing($prefix_id);
+                if ($dat_tag_you_do->parent_tag_id) {
+                    $what_prefix = $map_prefix. $dat_tag_you_do->parent_tag_id;
+                    if (!array_key_exists($what_prefix,$map_all_tags_by_id)) {
+                        throw new LogicException(sprintf("Could not find parent %s for %s ",$dat_tag_you_do->parent_tag_id,$dat_tag_you_do->flow_tag_id));
+                    }
+                    $proud_parent = $map_all_tags_by_id[$what_prefix];
+                    if (empty($proud_parent)) {throw new LogicException("Parent is empty at index of $what_prefix");}
+                    $dat_tag_you_do->flow_tag_parent = $proud_parent;
+                }
             }
 
             return  $ret;
