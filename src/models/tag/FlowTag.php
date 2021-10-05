@@ -40,7 +40,12 @@ class FlowTag extends FlowBase implements JsonSerializable {
      */
     public ?FlowTag $flow_tag_parent;
 
-    public ?int $child_tag_id;
+    /**
+     * @var int[]
+     */
+    public array $children_list;
+
+    protected ?string $children_list_as_string;
 
 
     public function jsonSerialize(): array
@@ -77,6 +82,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
     public function __construct($object=null){
         $this->attributes = [];
+        $this->children_list = [];
         $this->flow_tag_id = null ;
         $this->flow_project_id = null ;
         $this->parent_tag_id = null ;
@@ -123,6 +129,10 @@ class FlowTag extends FlowBase implements JsonSerializable {
         $this->flow_tag_parent = null;
         if ($parent_to_copy) {
             $this->flow_tag_parent = new FlowTag($parent_to_copy);
+        }
+
+        if ($this->children_list_as_string) {
+            $this->children_list = explode(',',$this->children_list_as_string);
         }
 
     }
@@ -286,7 +296,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
                     t.id                                    as flow_tag_id,
                     t.flow_project_id,
                     t.parent_tag_id,
-                    driver.child_tag_id,                  
+                    driver.children_list                    as children_list_as_string,                  
                     t.created_at_ts                         as tag_created_at_ts,
                     t.flow_tag_name,
                     HEX(t.flow_tag_guid)                    as flow_tag_guid,
@@ -335,7 +345,9 @@ class FlowTag extends FlowBase implements JsonSerializable {
                             INNER JOIN flow_tags parent_tag ON parent_tag.id = c.parent_tag_id
                         )
                     )
-                    SELECT cte.flow_tag_id, cte.parent_tag_id, cte.child_tag_id FROM cte
+                    SELECT cte.flow_tag_id, cte.parent_tag_id, group_concat(cte.child_tag_id) as children_list
+                    FROM cte
+                    GROUP BY cte.flow_tag_id, cte.parent_tag_id
                     
                     
                 )  as driver ON driver.flow_tag_id = t.id  
@@ -348,7 +360,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 LEFT JOIN flow_users point_user on attribute.points_to_user_id = point_user.id 
                 LEFT JOIN flow_projects point_project on attribute.points_to_project_id = point_project.id 
                 WHERE 1 
-                ORDER BY child_tag_id,flow_tag_id,flow_tag_attribute_id ASC
+                ORDER BY flow_tag_id,flow_tag_attribute_id DESC ;
                 ";
 
         try {
@@ -374,9 +386,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
                     $tag_node = $rem_tags[$tag_node->flow_tag_guid];
                 } else {
                     $rem_tags[$tag_node->flow_tag_guid] = $tag_node;
-                    if (empty($tag_node->child_tag_id)) {
-                        $ret[] = $tag_node; //top level only
-                    }
+                    $ret[] = $tag_node;
 
                     $map_all_tags_by_id[$map_prefix.$tag_node->flow_tag_id] = $tag_node;
                 }
