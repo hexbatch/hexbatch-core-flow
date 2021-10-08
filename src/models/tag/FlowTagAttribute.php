@@ -11,13 +11,7 @@ use RuntimeException;
 class FlowTagAttribute extends FlowBase implements JsonSerializable {
 
     const LENGTH_ATTRIBUTE_NAME = 40;
-    const STD_ATTR_COLOR = 'color';
-    const STD_ATTR_BACKGROUND_COLOR = 'background_color';
 
-    const STANDARD_ATTRIBUTES = [
-      self::STD_ATTR_BACKGROUND_COLOR,
-      self::STD_ATTR_COLOR,
-    ];
 
     public ?int $flow_tag_attribute_id;
     public ?int $flow_tag_id;
@@ -69,10 +63,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
             }
         }
 
-        if (in_array($this->tag_attribute_name,static::STANDARD_ATTRIBUTES)) {
-            $this->is_standard_attribute = true;
-        }
-
+        $this->is_standard_attribute = FlowTagStandardAttribute::is_standard_attribute($this);
     }
 
 
@@ -173,7 +164,27 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         }
     }
 
+    public static function merge_attribute(FlowTagAttribute $top, ?FlowTagAttribute $parent ) : FlowTagAttribute {
+        if (empty($parent)) {
+            return new FlowTagAttribute($top);
+        }
 
+
+        $ret = new FlowTagAttribute();
+
+        foreach ($parent as $key => $val) {
+            if (!empty($val)) {
+                $ret->$key = $val;
+            }
+        }
+
+        foreach ($top as $key => $val) {
+            if (!empty($val)) {
+                $ret->$key = $val;
+            }
+        }
+        return $ret;
+    }
     
     public function jsonSerialize(): array
     {

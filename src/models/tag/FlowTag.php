@@ -27,7 +27,6 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
 
     public ?string $flow_project_guid;
-    public ?string $flow_user_guid;
     public ?string $parent_tag_guid;
 
     /**
@@ -50,19 +49,12 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
     public function jsonSerialize(): array
     {
-        $standard = [];
-        foreach ($this->attributes as $attribute) {
-            if ($attribute->is_standard_attribute) {
-                $standard[$attribute->tag_attribute_name] = $attribute->tag_attribute_text;
-            }
-        }
+        $standard = FlowTagStandardAttribute::find_standard_attributes($this);
 
-        foreach (FlowTagAttribute::STANDARD_ATTRIBUTES as $std) {
-            if (!array_key_exists($std,$standard)) {
-                $standard[$std] = null;
-            }
-        }
+        $attributes = static::get_attribute_map($this);
+
         $parent_serializied = null;
+
         if ($this->flow_tag_parent) {
             $parent_serializied = $this->flow_tag_parent->jsonSerialize();
         }
@@ -70,14 +62,40 @@ class FlowTag extends FlowBase implements JsonSerializable {
             "flow_tag_guid" => $this->flow_tag_guid,
             "parent_tag_guid" => $this->parent_tag_guid,
             "flow_project_guid" => $this->flow_project_guid,
-            "flow_user_guid" => $this->flow_user_guid,
             "created_at_ts" => $this->tag_created_at_ts,
             "flow_tag_name" => $this->flow_tag_name,
-            "attributes" => $this->attributes,
+            "attributes" => $attributes,
             "standard_attributes" => $standard,
             "flow_tag_parent" => $parent_serializied
         ];
     }
+
+
+
+    /**
+     * Gets the attribute list merged with the parent's attribute, which may be altered by its parent
+     * @param FlowTag|null $tag
+     * @return FlowTag[]
+     */
+    public static function get_attribute_map(?FlowTag $tag) :array {
+        $ret = [];
+        if (empty($tag)) {return $ret;}
+
+        $ret = static::get_attribute_map($tag->flow_tag_parent);
+
+
+        foreach ($tag->attributes as $attribute) {
+            if (array_key_exists($attribute->tag_attribute_name,$ret)) {
+                $ret[$attribute->tag_attribute_name] =
+                    FlowTagAttribute::merge_attribute($attribute,$ret[$attribute->tag_attribute_name]);
+            } else {
+                $ret[$attribute->tag_attribute_name] = $attribute;
+            }
+        }
+
+        return $ret;
+    }
+
 
 
     public function __construct($object=null){
@@ -91,7 +109,6 @@ class FlowTag extends FlowBase implements JsonSerializable {
         $this->flow_tag_name = null ;
         $this->flow_project_guid = null ;
         $this->parent_tag_guid = null ;
-        $this->flow_user_guid = null ;
         $this->flow_tag_parent = null;
 
         if (empty($object)) {

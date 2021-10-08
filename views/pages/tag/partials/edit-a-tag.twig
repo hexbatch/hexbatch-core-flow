@@ -1,14 +1,27 @@
 
 {#
 Need the following to edit:
+Tag
+    "flow_tag_guid" (read only)
+    parent tag name
+    "parent_tag_guid" => $this->parent_tag_guid,
+    "flow_project_guid" => $this->flow_project_guid,
+    "created_at_ts" => $this->tag_created_at_ts,
+    "flow_tag_name" => $this->flow_tag_name,
+    "attributes" => Attribute[],
+    "standard_attributes" => Attribute[],
+    "flow_tag_parent" => $this[]
 
-"flow_tag_guid" (read only)
-parent tag name
-            "parent_tag_guid" => $this->parent_tag_guid,
-            "flow_project_guid" => $this->flow_project_guid,
-            "flow_user_guid" => $this->flow_user_guid,
-            "created_at_ts" => $this->tag_created_at_ts,
-            "flow_tag_name" => $this->flow_tag_name,
-            "attributes" => $this->attributes,
-            "standard_attributes" => $standard
+ Attribute
+ "flow_tag_attribute_guid" => $this->flow_tag_attribute_guid,
+"flow_tag_guid" => $this->flow_tag_guid,
+"flow_applied_tag_guid" => $this->flow_applied_tag_guid,
+"points_to_flow_entry_guid" => $this->points_to_flow_entry_guid,
+"points_to_flow_user_guid" => $this->points_to_flow_user_guid,
+"points_to_flow_project_guid" => $this->points_to_flow_project_guid,
+"tag_attribute_name" => $this->tag_attribute_name,
+"tag_attribute_long" => $this->tag_attribute_long,
+"tag_attribute_text" => $this->tag_attribute_text,
+"created_at_ts" => $this->applied_created_at_ts,
+"is_standard_attribute" => $this->is_standard_attribute
 #}
