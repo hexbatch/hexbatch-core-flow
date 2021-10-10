@@ -75,6 +75,7 @@
  * @property {number} tag_attribute_long
  * @property {string} tag_attribute_text
  * @property {number} created_at_ts
+ * @property {number} updated_at_ts
  * @property {boolean} is_standard_attribute
  */
 
@@ -98,6 +99,7 @@
  * @property {string} flow_project_guid
  * @property {string} flow_tag_name
  * @property {number} created_at_ts
+ * @property {number} updated_at_ts
  * @property {Object.<string, FlowTagAttribute>} attributes
  * @property {Object.<string, FlowTagStandardAttributes>} standard_attributes
  * @property {?FlowTag} flow_tag_parent

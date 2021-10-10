@@ -109,9 +109,10 @@ jQuery(function ($){
      */
     function prepare_query_for_dropdown(params) {
         let query = {
-            search: {},
+            search: {term: params.term || null},
             page: params.page || 1
         }
+        console.log("params",params);
 
         // Query parameters will be ?search=[term]&page=[page]
         return query;
@@ -124,6 +125,7 @@ jQuery(function ($){
             data: prepare_query_for_dropdown,
             processResults: process_results_for_dropdown,
         },
+        minimumInputLength: 1,
         templateResult: format_tag_in_dropdown,
         templateSelection: format_selected_tag,
 

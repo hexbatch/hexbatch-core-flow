@@ -5,6 +5,7 @@ use app\controllers\base\BasePages;
 use app\controllers\project\ProjectPages;
 use app\hexlet\FlowAntiCSRF;
 use app\hexlet\JsonHelper;
+use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
 use app\models\tag\FlowTagSearchParams;
 use app\models\user\FlowUser;
@@ -49,6 +50,10 @@ class TagPages extends BasePages
             if (isset($args['search']['tag_guid'])) {
                 $search_params->tag_guids[] = trim($args['search']['tag_guid']);
             }
+
+            if (isset($args['search']['term'])) {
+                $search_params->tag_name_term = trim(JsonHelper::to_utf8($args['search']['term']));
+            }
         }
 
         $page = 1;
@@ -60,6 +65,27 @@ class TagPages extends BasePages
         }
 
         $matches = FlowTag::get_tags($search_params,$page);
+
+        //add attached tags
+        $tag_id_array = [];
+
+        /**
+         * @var array<string,FlowTag> $match_map
+         */
+        $match_map = [];
+        foreach ($matches as $tag_rehydrated) {
+            $tag_id_array[] = $tag_rehydrated->flow_tag_id;
+            $match_map[$tag_rehydrated->flow_tag_guid] = $tag_rehydrated;
+        }
+
+        $attached_map = FlowAppliedTag::get_applied_tags($tag_id_array);
+
+        foreach ($attached_map as $tag_guid => $applied_array) {
+            if (array_key_exists($tag_guid,$match_map)) {
+                $match_map[$tag_guid]->applied = $applied_array;
+            }
+        }
+
         $b_more = true;
         if (count($matches) < FlowUser::DEFAULT_USER_PAGE_SIZE) {
             $b_more = false;

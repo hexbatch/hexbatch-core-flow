@@ -20,6 +20,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     public ?int $points_to_user_id;
     public ?int $points_to_project_id;
     public ?int $applied_created_at_ts;
+    public ?int $applied_updated_at_ts;
     public ?string $flow_tag_attribute_guid;
     public ?string $tag_attribute_name;
     public ?string$tag_attribute_long;
@@ -44,6 +45,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
             $this->points_to_user_id = null ;
             $this->points_to_project_id = null ;
             $this->applied_created_at_ts = null ;
+            $this->applied_updated_at_ts = null ;
             $this->flow_tag_attribute_guid = null ;
             $this->tag_attribute_name = null ;
             $this->tag_attribute_long = null ;
@@ -199,6 +201,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
             "tag_attribute_long" => $this->tag_attribute_long,
             "tag_attribute_text" => $this->tag_attribute_text,
             "created_at_ts" => $this->applied_created_at_ts,
+            "updated_at_ts" => $this->applied_updated_at_ts,
             "is_standard_attribute" => $this->is_standard_attribute
 
         ];

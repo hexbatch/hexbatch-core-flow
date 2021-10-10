@@ -37,7 +37,7 @@ class AddFlowAppliedTags extends AbstractMigration
                 `created_at_ts` INT NULL DEFAULT NULL,
                 `flow_applied_tag_guid` BINARY(16) NOT NULL ,
                 PRIMARY KEY (`id`)
-           ) ENGINE = InnoDB COMMENT = 'connects the tags with what they tag, and extra information held';
+           ) ENGINE = InnoDB COMMENT = 'allows applying the tag to something, can only be one thing a row';
 
        ");
 

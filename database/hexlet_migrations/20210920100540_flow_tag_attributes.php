@@ -33,6 +33,7 @@ class FlowTagAttributes extends AbstractMigration
                 `flow_tag_id` INT NULL DEFAULT NULL ,
                 `flow_applied_tag_id` INT NULL DEFAULT NULL ,
                 `created_at_ts` INT NULL DEFAULT NULL,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 `points_to_entry_id` INT NULL DEFAULT NULL,
                 `points_to_user_id` INT NULL DEFAULT NULL ,
                 `points_to_project_id` INT  NULL DEFAULT NULL , 
@@ -41,7 +42,7 @@ class FlowTagAttributes extends AbstractMigration
                 `tag_attribute_long` BIGINT NULL DEFAULT NULL,
                 `tag_attribute_text` LONGTEXT NULL DEFAULT NULL,
                 PRIMARY KEY (`id`)
-           ) ENGINE = InnoDB COMMENT = 'Defines the tags used everywhere';
+           ) ENGINE = InnoDB COMMENT = 'Defines the attributes of tags and when they are applied';
 
        ");
 

@@ -32,6 +32,7 @@ class AddFlowTags extends AbstractMigration
                 `flow_project_id` INT NOT NULL , 
                 `parent_tag_id` INT NULL DEFAULT NULL,
                 `created_at_ts` INT NULL DEFAULT NULL,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 `flow_tag_guid` BINARY(16) NOT NULL ,
                 `tag_effect` VARCHAR(15) NULL DEFAULT NULL ,
                 `flow_tag_name` VARCHAR(40) NULL DEFAULT NULL ,

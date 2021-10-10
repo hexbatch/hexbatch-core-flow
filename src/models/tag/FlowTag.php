@@ -22,6 +22,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
     public ?int $flow_project_id;
     public ?int $parent_tag_id;
     public ?int $tag_created_at_ts;
+    public ?int $tag_updated_at_ts;
     public ?string $flow_tag_guid;
     public ?string $flow_tag_name;
 
@@ -46,6 +47,11 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
     protected ?string $children_list_as_string;
 
+    /**
+     * @var FlowAppliedTag[] $applied
+     */
+    public array $applied = [];
+
 
     public function jsonSerialize(): array
     {
@@ -53,20 +59,18 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
         $attributes = static::get_attribute_map($this);
 
-        $parent_serializied = null;
 
-        if ($this->flow_tag_parent) {
-            $parent_serializied = $this->flow_tag_parent->jsonSerialize();
-        }
         return [
             "flow_tag_guid" => $this->flow_tag_guid,
             "parent_tag_guid" => $this->parent_tag_guid,
             "flow_project_guid" => $this->flow_project_guid,
             "created_at_ts" => $this->tag_created_at_ts,
+            "updated_at_ts" => $this->tag_updated_at_ts,
             "flow_tag_name" => $this->flow_tag_name,
             "attributes" => $attributes,
             "standard_attributes" => $standard,
-            "flow_tag_parent" => $parent_serializied
+            "flow_tag_parent" => $this->flow_tag_parent,
+            "applied" => $this->applied
         ];
     }
 
@@ -100,11 +104,13 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
     public function __construct($object=null){
         $this->attributes = [];
+        $this->applied = [];
         $this->children_list = [];
         $this->flow_tag_id = null ;
         $this->flow_project_id = null ;
         $this->parent_tag_id = null ;
         $this->tag_created_at_ts = null ;
+        $this->tag_updated_at_ts = null ;
         $this->flow_tag_guid = null ;
         $this->flow_tag_name = null ;
         $this->flow_project_guid = null ;
@@ -283,11 +289,18 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
         $args = [];
         $where_project = 2;
-        $where_tag_guid = 4;
-        $where_tag_id = 8;
+        $where_name = 4;
+        $where_tag_guid = 8;
+        $where_tag_id = 16;
+
         if ($search->project_guid) {
             $where_project = "driver_project.flow_project_guid = UNHEX(?)";
             $args[] = $search->project_guid;
+        }
+
+        if ($search->tag_name_term) {
+            $where_name = "driver_tag.flow_tag_name  LIKE ?";
+            $args[] = '%'.$search->tag_name_term.'%';
         }
 
         if (count($search->tag_guids)) {
@@ -315,6 +328,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
                     t.parent_tag_id,
                     driver.children_list                    as children_list_as_string,                  
                     t.created_at_ts                         as tag_created_at_ts,
+                    UNIX_TIMESTAMP(t.updated_at)            as tag_updated_at_ts,
                     t.flow_tag_name,
                     HEX(t.flow_tag_guid)                    as flow_tag_guid,
                     HEX(parent_t.flow_tag_guid)             as parent_tag_guid,
@@ -323,21 +337,20 @@ class FlowTag extends FlowBase implements JsonSerializable {
        
                     attribute.id                            as flow_tag_attribute_id,
                     attribute.flow_applied_tag_id,
+                    applied.flow_applied_tag_guid,
                     attribute.points_to_entry_id,
                     attribute.points_to_user_id,
                     attribute.points_to_project_id,
                     attribute.created_at_ts                 as applied_created_at_ts,
+                    UNIX_TIMESTAMP(attribute.updated_at)    as applied_updated_at_ts,
                     HEX(attribute.flow_tag_attribute_guid)  as flow_tag_attribute_guid,
                     attribute.tag_attribute_name,
                     attribute.tag_attribute_long,
                     attribute.tag_attribute_text,
 
-                    HEX(applied.flow_applied_tag_guid)      as flow_applied_tag_guid,
                     HEX(point_entry.flow_entry_guid)        as points_to_flow_entry_guid,
                     HEX(point_user.flow_user_guid)          as points_to_flow_user_guid,
                     HEX(point_project.flow_project_guid)    as points_to_flow_project_guid
-    
-    
        
                 FROM flow_tags t
                 INNER JOIN  (
@@ -350,6 +363,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
                             INNER JOIN flow_projects driver_project ON driver_project.id = driver_tag.flow_project_id
                             WHERE 1 
                                 AND $where_project  
+                                AND $where_name
                                 AND $where_tag_guid  
                                 AND $where_tag_id  
                                 LIMIT $start_place , $page_size
@@ -372,7 +386,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 INNER JOIN flow_projects project ON project.id = t.flow_project_id 
                 INNER JOIN flow_users admin_user ON admin_user.id = project.admin_flow_user_id 
                 LEFT JOIN flow_tag_attributes attribute on attribute.flow_tag_id = t.id
-                LEFT JOIN flow_applied_tags applied on applied.id = attribute.flow_applied_tag_id
+                LEFT JOIN flow_applied_tags applied on attribute.flow_applied_tag_id = applied.id
                 LEFT JOIN flow_entries point_entry on attribute.points_to_entry_id = point_entry.id
                 LEFT JOIN flow_users point_user on attribute.points_to_user_id = point_user.id 
                 LEFT JOIN flow_projects point_project on attribute.points_to_project_id = point_project.id 
@@ -430,7 +444,39 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 }
             }
 
-            return  $ret;
+            /**
+             * @var FlowTag[] $ret
+             */
+            $filtered = [];
+            //filter out the ones that  are not top level searches, the rest will be in the parent list
+            foreach ($ret as $item) {
+                if ($search->project_guid) {
+                    if ($item->flow_project_guid !== $search->project_guid ) {continue;}
+                }
+
+                if ($search->tag_name_term) {
+                    if (false === stripos($item->flow_tag_name, $search->tag_name_term) ) {continue;}
+                }
+
+                if (count($search->tag_guids)) {
+                    $found_guid = false;
+                    for($i = 0; $i < count($search->tag_guids); $i++) {
+                        if ($item->flow_tag_guid === $search->tag_guids[$i]) {$found_guid = true; break;}
+                    }
+                    if (!$found_guid) {continue;}
+                }
+
+                if (count($search->tag_ids)) {
+                    $found_id = false;
+                    for($i = 0; $i < count($search->tag_ids); $i++) {
+                        if ($item->flow_tag_id === $search->tag_ids[$i]) {$found_id = true; break;}
+                    }
+                    if (!$found_id) {continue;}
+                }
+                $filtered[] = $item;
+            }
+
+            return  $filtered;
         } catch (Exception $e) {
             static::get_logger()->alert("FlowTag model cannot get_tags ",['exception'=>$e]);
             throw $e;
