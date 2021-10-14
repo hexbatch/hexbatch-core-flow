@@ -51,6 +51,10 @@
 
 {{ include('main/partials/flash.twig') }}
 
+<div id="flow-ajax-token">
+    {{ form_token(  csrf_token_set_to_root ) }}
+</div>
+
 <main>
     <div class="container-fluid ">
 

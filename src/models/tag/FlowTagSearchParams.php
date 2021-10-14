@@ -4,7 +4,7 @@ namespace app\models\tag;
 
 class FlowTagSearchParams {
 
-    public ?string $project_guid;
+    public ?string $owning_project_guid;
     public ?string $tag_name_term;
 
     /**
@@ -18,7 +18,7 @@ class FlowTagSearchParams {
     public array $tag_ids = [];
 
     function __construct(){
-        $this->project_guid = null;
+        $this->owning_project_guid = null;
         $this->tag_name_term = null;
         $this->tag_guids = [];
         $this->tag_ids = [];

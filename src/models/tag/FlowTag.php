@@ -293,9 +293,9 @@ class FlowTag extends FlowBase implements JsonSerializable {
         $where_tag_guid = 8;
         $where_tag_id = 16;
 
-        if ($search->project_guid) {
+        if ($search->owning_project_guid) {
             $where_project = "driver_project.flow_project_guid = UNHEX(?)";
-            $args[] = $search->project_guid;
+            $args[] = $search->owning_project_guid;
         }
 
         if ($search->tag_name_term) {
@@ -450,8 +450,8 @@ class FlowTag extends FlowBase implements JsonSerializable {
             $filtered = [];
             //filter out the ones that  are not top level searches, the rest will be in the parent list
             foreach ($ret as $item) {
-                if ($search->project_guid) {
-                    if ($item->flow_project_guid !== $search->project_guid ) {continue;}
+                if ($search->owning_project_guid) {
+                    if ($item->flow_project_guid !== $search->owning_project_guid ) {continue;}
                 }
 
                 if ($search->tag_name_term) {

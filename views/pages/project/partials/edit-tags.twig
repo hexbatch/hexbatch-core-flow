@@ -4,14 +4,15 @@
         project_name: project.flow_project_title
     }) -}}";
 
-    let set_tags_ajax_url = "{{-  url_for('set_tags_ajax',{
+    let set_tag_ajax_url = "{{-  url_for('set_tag_ajax',{
         user_name: project.get_admin_user().flow_user_name ,
         project_name: project.flow_project_title
     }) -}}";
 
 </script>
 <div id="flow-set-tags-ajax-tokens">
-    {{ form_token(  url_for('set_tags_ajax',{
+{#    todo change to root #}
+    {{ form_token(  url_for('set_tag_ajax',{
         user_name: project.get_admin_user().flow_user_name ,
         project_name: project.flow_project_title
     } )) }}

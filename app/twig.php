@@ -20,6 +20,7 @@ class Hexlet_Twig_Extension extends AbstractExtension implements GlobalsInterfac
         $root = (!empty($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] ;
         return [
             'root_url' => $root,
+            'csrf_token_set_to_root' => FlowAntiCSRF::SET_LOCK_TO_ANY_PAGE
         ];
     }
 
@@ -28,8 +29,11 @@ class Hexlet_Twig_Extension extends AbstractExtension implements GlobalsInterfac
         $csrf = new TwigFunction(
             'form_token',
             function($lock_to = null) {
-                static $csrf;
-                if ($csrf === null) {
+
+                if ($lock_to === FlowAntiCSRF::SET_LOCK_TO_ANY_PAGE) {
+                    $lock_to = '';
+                    $csrf = new FlowAntiCSRF($_POST,$_SESSION,FlowAntiCSRF::$fake_server);
+                } else {
                     $csrf = new FlowAntiCSRF;
                 }
                 return $csrf->insertToken($lock_to, false);

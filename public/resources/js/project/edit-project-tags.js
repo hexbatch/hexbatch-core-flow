@@ -239,7 +239,7 @@ function set_tag_action(data,on_success_callback) {
 
 
     $.ajax({
-        url: set_tags_ajax_url,
+        url: set_tag_ajax_url,
         method: "POST",
         dataType: 'json',
         data : tag
@@ -287,6 +287,7 @@ function set_tag_action(data,on_success_callback) {
             }
 
             if (ret && ret.token) {
+                //todo set to root
                 token_csrf_index_input.val(ret.token._CSRF_INDEX);
                 token_csrf_token_input.val(ret.token._CSRF_TOKEN);
             }

@@ -56,6 +56,15 @@
  */
 
 
+/**
+ * @typedef {Object} FlowTagApplied
+ * @property {string} flow_applied_tag_guid
+ * @property {string} tagged_flow_entry_guid
+ * @property {string} tagged_flow_user_guid
+ * @property {string} tagged_flow_project_guid
+ * @property {string} tagged_title
+ * @property {number} created_at_ts
+ */
 
 
 
@@ -103,6 +112,7 @@
  * @property {Object.<string, FlowTagAttribute>} attributes
  * @property {Object.<string, FlowTagStandardAttributes>} standard_attributes
  * @property {?FlowTag} flow_tag_parent
+ * @property {FlowTagApplied[]} applied
  */
 
 
