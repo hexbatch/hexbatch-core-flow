@@ -230,13 +230,8 @@ jQuery(function ($){
 
 function set_tag_action(data,on_success_callback) {
     let tag = JSON.parse(JSON.stringify(data));
-    let token_div = $('#flow-set-tags-ajax-tokens');
-    let token_csrf_index_input = token_div.find ('input[name="_CSRF_INDEX"]');
-    let token_csrf_token_input = token_div.find('input[name="_CSRF_TOKEN"]');
 
-    tag._CSRF_INDEX = token_csrf_index_input.val();
-    tag._CSRF_TOKEN = token_csrf_token_input.val();
-
+    set_object_with_flow_ajax_token_data(tag);
 
     $.ajax({
         url: set_tag_ajax_url,
@@ -287,9 +282,7 @@ function set_tag_action(data,on_success_callback) {
             }
 
             if (ret && ret.token) {
-                //todo set to root
-                token_csrf_index_input.val(ret.token._CSRF_INDEX);
-                token_csrf_token_input.val(ret.token._CSRF_TOKEN);
+                update_root_flow_ajax_token(ret.token);
             }
         });
 

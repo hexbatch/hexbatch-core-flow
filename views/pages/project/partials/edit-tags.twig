@@ -10,13 +10,7 @@
     }) -}}";
 
 </script>
-<div id="flow-set-tags-ajax-tokens">
-{#    todo change to root #}
-    {{ form_token(  url_for('set_tag_ajax',{
-        user_name: project.get_admin_user().flow_user_name ,
-        project_name: project.flow_project_title
-    } )) }}
-</div>
+
 <script src="{{ root_url }}/public/resources/js/project/edit-project-tags.js"></script>
 
 <div class="container p-0 m-1">

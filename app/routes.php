@@ -51,6 +51,7 @@ return function (App $app) {
 
 
         $group->get('/search_users', ['userPages', 'find_users_by_project'])->setName('find_users_by_project');
+        $group->get('/general_search_ajax', ['homePages', 'general_search_ajax'])->setName('general_search_ajax');
 
         $group->get('/{user_name:[[:alnum:]\-]+}', ['userPages', 'user_page'])->setName('user_page');
 

@@ -489,6 +489,34 @@ class FlowTag extends FlowBase implements JsonSerializable {
     }
 
     /**
+     * @param string|null $attribute_name
+     * @param \app\models\tag\FlowTagAttribute|null $attribute
+     * @return $this|\app\models\tag\FlowTag
+     * @throws \Exception
+     */
+    public  function save_tag_return_clones(?string $attribute_name, FlowTagAttribute &$attribute = null): FlowTag
+    {
+        $this->save(true);
+        $altered_tag = $this->clone_refresh();
+
+        if ($attribute_name) {
+            $attribute = null;
+            foreach ($altered_tag->attributes as $look_at) {
+                if ($look_at->tag_attribute_name === $attribute_name) {
+                    $attribute = $look_at;
+                    break;
+                }
+            }
+
+            if (!$attribute) {
+                throw new LogicException("Cannot find the attribute $attribute_name after saving it");
+            }
+        }
+
+        return $altered_tag;
+    }
+
+    /**
      * @throws Exception
      */
     public function save(bool $b_do_transaction = false) :void {

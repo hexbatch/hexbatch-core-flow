@@ -1,6 +1,8 @@
 <?php
 namespace app\controllers\home;
 
+use app\models\multi\GeneralSearch;
+use app\models\multi\GeneralSearchParams;
 use Delight\Auth\Auth;
 use DI\Container;
 use DI\DependencyException;
@@ -8,6 +10,7 @@ use DI\NotFoundException;
 use Exception;
 use Monolog\Logger;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Slim\Views\Twig;
 
 
@@ -73,5 +76,67 @@ class HomePages
         $info = ob_get_clean();
         $response->getBody()->write($info);
         return $response;
+    }
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function general_search_ajax( ServerRequestInterface $request,ResponseInterface $response) :ResponseInterface {
+
+        $args = $request->getQueryParams();
+
+
+        $search = new GeneralSearchParams();
+
+        if (isset($args['term'])) {
+            $search->title = trim($args['term']);
+        }
+
+        if (isset($args['guid'])) {
+            $search->guid = trim($args['guid']);
+        }
+
+        if (isset($args['title'])) {
+            $search->title = trim($args['title']);
+        }
+
+        if (isset($args['created_at_ts']) && intval($args['created_at_ts'])) {
+            $search->created_at_ts = (int)($args['created_at_ts']);
+        }
+
+
+
+        $page = 1;
+        if (isset($args['page'])) {
+            $page_number = intval($args['page']);
+            if ($page_number > 0) {
+                $page = $page_number;
+            }
+        }
+
+
+        $matches = GeneralSearch::general_search($search,$page);
+        $b_more = true;
+        if (count($matches) < GeneralSearch::DEFAULT_PAGE_SIZE) {
+            $b_more = false;
+        }
+
+        $data = [
+            "results" => $matches,
+            "pagination" => [
+                "more" => $b_more,
+                "page" => $page
+            ]
+        ];
+
+        $payload = json_encode($data);
+
+        $response->getBody()->write($payload);
+        return $response
+            ->withHeader('Content-Type', 'application/json');
     }
 }

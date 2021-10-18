@@ -125,6 +125,16 @@
  * @property {?FlowToken} token
  */
 
+/**
+ *
+ * @typedef {Object} FlowAttributeResponse
+ * @property {boolean} success
+ * @property {string} message
+ * @property {?FlowTag} tag
+ * @property {?FlowTagAttribute} attribute
+ * @property {?FlowToken} token
+ */
+
 
 
 

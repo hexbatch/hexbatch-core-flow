@@ -7,6 +7,7 @@ use app\hexlet\FlowAntiCSRF;
 use app\hexlet\JsonHelper;
 use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
+use app\models\tag\FlowTagAttribute;
 use app\models\tag\FlowTagCallData;
 use app\models\tag\FlowTagSearchParams;
 use app\models\user\FlowUser;
@@ -238,8 +239,6 @@ class TagPages extends BasePages
 
         if ($tag_name) {
 
-
-
             foreach ($tags as $look_tag) {
                 if ($look_tag->flow_tag_guid === $tag_name) { $ret->tag = $look_tag; break;}
                 if ($look_tag->flow_tag_name === $tag_name) { $ret->tag = $look_tag; break;}
@@ -250,7 +249,7 @@ class TagPages extends BasePages
             }
 
             if ($attribute_name) {
-                foreach ($ret->tag->attributes as $look_at) { //clever!!
+                foreach ($ret->tag->attributes as $look_at) { //clever name!!
                     if ($look_at->flow_tag_attribute_guid === $attribute_name) { $ret->attribute = $look_at; break;}
                     if ($look_at->tag_attribute_name === $attribute_name) { $ret->attribute = $look_at; break;}
                 }
@@ -284,9 +283,21 @@ class TagPages extends BasePages
             $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'create_attribute';
             $call = $this->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
+            $attribute_data = $call->args->attribute ?? null;
+            $attribute_to_add = new FlowTagAttribute($attribute_data);
+            $attribute_to_add->flow_tag_id = $call->tag->flow_tag_id;
+            if (!$attribute_to_add->has_enough_data_set()) {
+                throw new InvalidArgumentException("Need mo' data for attribute");
+            }
+            foreach ($call->tag->attributes as $look_at) {
+                if ($look_at->tag_attribute_name === $attribute_to_add->tag_attribute_name) {
+                    throw new InvalidArgumentException("The attribute name of $look_at->tag_attribute_name is already used in the tag");
+                }
+            }
+            $call->tag->attributes[] = $attribute_to_add;
+            $altered_tag = $call->tag->save_tag_return_clones($call->attribute->tag_attribute_name,$new_attribute);
 
-
-            $data = ['success'=>true,'message'=>'','token'=> $call->new_token];
+            $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$new_attribute,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -327,9 +338,19 @@ class TagPages extends BasePages
             $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'edit_attribute';
             $call = $this->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name,$attribute_name);
+            $attribute_data = $call->args->attribute ?? null;
+            $attribute_to_edit = new FlowTagAttribute($attribute_data);
+            $attribute_to_edit->flow_tag_id = $call->tag->flow_tag_id;
+            if (!$attribute_to_edit->has_enough_data_set()) {
+                throw new InvalidArgumentException("Edited attribute does not have enough data set");
+            }
+
+            $call->attribute->update_fields_with_public_data($attribute_to_edit);
+            $altered_tag = $call->tag->save_tag_return_clones($call->attribute->tag_attribute_name,$new_attribute);
+
+            $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$new_attribute,'token'=> $call->new_token];
 
 
-            $data = ['success'=>true,'message'=>'','token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -371,8 +392,11 @@ class TagPages extends BasePages
             $option->note = 'delete_attribute';
             $call = $this->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name,$attribute_name);
 
+            $call->attribute->delete_attribute();
 
-            $data = ['success'=>true,'message'=>'','token'=> $call->new_token];
+            $altered_tag = $call->tag->save_tag_return_clones($call->attribute->tag_attribute_name,$new_attribute);
+
+            $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$call->attribute,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);

@@ -3,6 +3,7 @@
 namespace app\models\tag;
 
 use app\models\base\FlowBase;
+use app\models\multi\GeneralSearchResult;
 use JsonSerializable;
 use PDO;
 use RuntimeException;
@@ -75,6 +76,8 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
         $comma_delimited_tag_ids = implode(",",$tag_id_array);
         $db = static::get_connection();
 
+        $I = function($v) { return $v; };
+
         $sql = "
             SELECT
                GROUP_CONCAT( HEX(retag.flow_tag_guid) order by app.id) as tag_guid_list,
@@ -84,7 +87,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                app.tagged_flow_project_id as taggee_id,
                HEX(fp.flow_project_guid) as taggee_guid,
                fp.flow_project_title as tagged_title,
-               'project' as taggie_type
+               '{$I(GeneralSearchResult::TYPE_PROJECT)}' as taggie_type
             FROM flow_applied_tags app
                 INNER JOIN flow_tags retag ON retag.id = app.flow_tag_id
                 INNER JOIN flow_projects fp on app.tagged_flow_project_id = fp.id
@@ -99,7 +102,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                 app.tagged_flow_user_id as taggee_id,
                 HEX(fu.flow_user_guid) as taggee_guid,
                 fu.flow_user_name as tagged_title,
-                'user' as taggie_type
+                '{$I(GeneralSearchResult::TYPE_USER)}' as taggie_type
             FROM flow_applied_tags app
                      INNER JOIN flow_tags retag ON retag.id = app.flow_tag_id
                      INNER JOIN flow_users fu on app.tagged_flow_user_id = fu.id
@@ -114,7 +117,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                 app.tagged_flow_entry_id as taggee_id,
                 HEX(fe.flow_entry_guid) as taggee_guid,
                 fe.flow_entry_title as tagged_title,   
-                'entry' as taggie_type
+                '{$I(GeneralSearchResult::TYPE_ENTRY)}' as taggie_type
             FROM flow_applied_tags app
                      INNER JOIN flow_tags retag ON retag.id = app.flow_tag_id
                      INNER JOIN flow_entries fe on app.tagged_flow_entry_id = fe.id
@@ -144,17 +147,17 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                 $node->flow_applied_tag_guid = $applied_guid_array[$i];
                 $node->tagged_title = $row->tagged_title;
                 switch ($row->taggie_type) {
-                    case 'entry': {
+                    case GeneralSearchResult::TYPE_ENTRY: {
                         $node->tagged_flow_entry_guid = $row->taggee_guid;
                         $node->tagged_flow_entry_id = $row->taggee_id;
                         break;
                     }
-                    case 'user': {
+                    case GeneralSearchResult::TYPE_USER: {
                         $node->tagged_flow_user_guid = $row->taggee_guid;
                         $node->tagged_flow_user_id = $row->taggee_id;
                         break;
                     }
-                    case 'project':  {
+                    case GeneralSearchResult::TYPE_PROJECT:  {
                         $node->tagged_flow_project_guid = $row->taggee_guid;
                         $node->tagged_flow_project_id = $row->taggee_id;
                         break;

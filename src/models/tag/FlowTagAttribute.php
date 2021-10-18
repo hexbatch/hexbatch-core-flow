@@ -34,6 +34,23 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
 
     public bool $is_standard_attribute;
 
+    public function has_enough_data_set() :bool {
+        if (!$this->flow_tag_id) {return false;}
+        if (!$this->tag_attribute_name) {return false;}
+        return true;
+    }
+
+    public function update_fields_with_public_data(FlowTagAttribute $attribute) {
+        $this->tag_attribute_name = $attribute->tag_attribute_name ;
+
+        $this->tag_attribute_long = $attribute->tag_attribute_long ;
+        $this->tag_attribute_text = $attribute->tag_attribute_text ;
+
+        $this->points_to_flow_entry_guid = $attribute->points_to_flow_entry_guid ;
+        $this->points_to_flow_user_guid = $attribute->points_to_flow_user_guid ;
+        $this->points_to_flow_project_guid = $attribute->points_to_flow_project_guid ;
+    }
+
 
     public function __construct($object=null){
         $this->is_standard_attribute = false;
@@ -205,5 +222,10 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
             "is_standard_attribute" => $this->is_standard_attribute
 
         ];
+    }
+
+    public function delete_attribute() {
+        $db = static::get_connection();
+        $db->delete('flow_tag_attributes',['id'=>$this->flow_tag_attribute_id]);
     }
 }
