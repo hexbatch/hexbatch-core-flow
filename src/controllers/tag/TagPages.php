@@ -109,6 +109,7 @@ class TagPages extends BasePages
     }
 
     /**
+     * creates or edits tag
      * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
@@ -152,6 +153,47 @@ class TagPages extends BasePages
         }
 
     }//end set tags
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     * @param string $user_name
+     * @param string $project_name
+     * @param string $tag_name
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function delete_tag( ServerRequestInterface $request,ResponseInterface $response,
+                                      string $user_name, string $project_name,string $tag_name) :ResponseInterface
+    {
+        $token = null;
+        try {
+            $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
+            $option->note = 'delete_tag';
+            $call = $this->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
+            $call->tag->delete_tag();
+            $data = ['success'=>true,'message'=>'ok','tag'=>$call->tag,'attribute'=>null,'token'=> $call->new_token];
+            $payload = JsonHelper::toString($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(201);
+
+
+        } catch (Exception $e) {
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $token];
+            $payload = JsonHelper::toString($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(500);
+        }
+    } //end function
+
+
 
     /**
      * Used in Ajax Calls
@@ -259,6 +301,10 @@ class TagPages extends BasePages
                 }
             }//end if attribute name
         } //end if tag name
+
+        if (property_exists($args_as_object,'applied')) {
+            $ret->applied = FlowAppliedTag::reconstitute($args_as_object->applied,$ret->tag);
+        }
 
        return $ret;
 
@@ -415,6 +461,49 @@ class TagPages extends BasePages
                 ->withStatus(500);
         }
     } //end function
+
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     * @param string $user_name
+     * @param string $project_name
+     * @param string $tag_name
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function create_applied( ServerRequestInterface $request,ResponseInterface $response,
+                                string $user_name, string $project_name,string $tag_name) :ResponseInterface
+    {
+        $token = null;
+        try {
+            $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
+            $option->note = 'create_applied';
+            $call = $this->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
+            //todo get the applied and save it, make sure its set to tag
+
+            $data = ['success'=>true,'message'=>'ok','tag'=>$call->tag,'attribute'=>null,'token'=> $call->new_token];
+            $payload = JsonHelper::toString($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(201);
+
+
+        } catch (Exception $e) {
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $token];
+            $payload = JsonHelper::toString($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(500);
+        }
+    } //end function
+
+    //todo make applied delete function
 
 
 } //end class

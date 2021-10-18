@@ -77,6 +77,10 @@ return function (App $app) {
             $group->get('/{project_name:[[:alnum:]\-]+}/get_tags_ajax', ['tagPages', 'get_tags'])->setName('get_tags_ajax');
             $group->post('/{project_name:[[:alnum:]\-]+}/set_tag_ajax', ['tagPages', 'set_tags'])->setName('set_tag_ajax');
 
+            //tag in project
+            $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/delete',
+                ['tagPages', 'delete_tag'])->setName('delete_tag_ajax');
+
             //attributes in project
             $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/attribute/create',
                 ['tagPages', 'create_attribute'])->setName('create_tag_attribute_ajax');

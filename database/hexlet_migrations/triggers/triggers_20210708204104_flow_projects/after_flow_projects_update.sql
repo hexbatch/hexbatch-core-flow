@@ -13,4 +13,9 @@ BEGIN
                             can_admin = values(can_admin)
                             ;
     END IF;
+
+    IF NEW.flow_project_title <> OLD.flow_project_title OR
+       OLD.flow_project_title IS NULL AND NEW.flow_project_title IS NOT NULL THEN
+        UPDATE flow_things f SET f.thing_title = NEW.flow_project_title WHERE f.thing_guid = NEW.flow_project_guid;
+    END IF;
 END

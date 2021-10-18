@@ -37,11 +37,20 @@ class FlowTagCallData {
      */
     public ?FlowTagAttribute $attribute = null;
 
+    /**
+     * @var FlowAppliedTag|null $applied
+     */
+    public ?FlowAppliedTag $applied = null;
+
 
     function __construct(array $options = [], ?stdClass $args = null ,?FlowProject $project = null ,?array $new_token = null ){
         $this->args = $args;
         $this->project = $project;
         $this->new_token = $new_token;
+
+        $this->tag = null;
+        $this->attribute = null;
+        $this->applied = null;
 
         $this->options = [];
         $this->note = null;

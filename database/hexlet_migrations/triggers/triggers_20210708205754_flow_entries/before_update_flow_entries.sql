@@ -41,4 +41,9 @@ BEGIN
                 SET MESSAGE_TEXT = msg;
         END IF;
     END IF;
+
+    IF NEW.flow_entry_title <> OLD.flow_entry_title OR
+       OLD.flow_entry_title IS NULL AND NEW.flow_entry_title IS NOT NULL THEN
+        UPDATE flow_things f SET f.thing_title = NEW.flow_entry_title WHERE f.thing_guid = NEW.flow_entry_guid;
+    END IF;
 END

@@ -160,7 +160,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                 ]);
 
             } else {
-                $db->insert('flow_tags',$saving_info);
+                $db->insert('flow_tag_attributes',$saving_info);
                 $this->flow_tag_attribute_id = $db->lastInsertId();
             }
 

@@ -605,4 +605,9 @@ class FlowTag extends FlowBase implements JsonSerializable {
         }
     }
 
+    public function delete_tag() {
+        $db = static::get_connection();
+        $db->delete('flow_tags',['id'=>$this->flow_tag_id]);
+    }
+
 }

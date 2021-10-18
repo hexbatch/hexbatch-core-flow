@@ -4,6 +4,8 @@ namespace app\models\tag;
 
 use app\models\base\FlowBase;
 use app\models\multi\GeneralSearchResult;
+use Exception;
+use InvalidArgumentException;
 use JsonSerializable;
 use PDO;
 use RuntimeException;
@@ -68,15 +70,32 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
 
     /**
      * @param int[] $tag_id_array
+     * @param string|null $match_only_applied_guid , if given, will only return the applied that fits the tag_id and matches guid
      * @return array<string,FlowAppliedTag[]>
      */
-    public static function get_applied_tags(array $tag_id_array) : array {
+    public static function get_applied_tags(array $tag_id_array,?string $match_only_applied_guid=null) : array {
 
         if (empty($tag_id_array)) { return [];}
-        $comma_delimited_tag_ids = implode(",",$tag_id_array);
+        $tag_id_ints = [];
+        foreach ($tag_id_array as $raw_int) {
+            $maybe_int = (int)$raw_int;
+            if ($maybe_int) {$tag_id_ints[] = $maybe_int;}
+        }
+
+        if (empty($tag_id_ints)) {
+            throw new InvalidArgumentException("Need at last one integer in the tag id array to get applied tags");
+        }
+        $comma_delimited_tag_ids = implode(",",$tag_id_ints);
         $db = static::get_connection();
 
         $I = function($v) { return $v; };
+
+        $args = [];
+        $where_match_guid = 16;
+        if ($match_only_applied_guid) {
+            $where_match_guid = " app.flow_applied_tag_guid = UNHEX(?) ";
+            $args[] = $match_only_applied_guid;
+        }
 
         $sql = "
             SELECT
@@ -91,7 +110,10 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
             FROM flow_applied_tags app
                 INNER JOIN flow_tags retag ON retag.id = app.flow_tag_id
                 INNER JOIN flow_projects fp on app.tagged_flow_project_id = fp.id
-            WHERE app.flow_tag_id in ($comma_delimited_tag_ids) AND app.tagged_flow_project_id IS NOT NULL
+            WHERE app.flow_tag_id in ($comma_delimited_tag_ids) AND 
+                  app.tagged_flow_project_id IS NOT NULL AND
+                  $where_match_guid
+            
             GROUP BY app.tagged_flow_project_id
         UNION
             SELECT
@@ -125,7 +147,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
             GROUP BY tagged_flow_entry_id
         ";
 
-        $res = $db->safeQuery($sql, [], PDO::FETCH_OBJ);
+        $res = $db->safeQuery($sql, $args, PDO::FETCH_OBJ);
         $ret = [];
         foreach ($res as $row) {
             $tag_guid_array = explode(",",$row->tag_guid_list);
@@ -177,4 +199,99 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
 
         return $ret;
     }
+
+    /**
+     * @throws Exception
+     */
+    public function save() :void {
+        $db = static::get_connection();
+
+        if(  !$this->flow_tag_id) {
+            throw new InvalidArgumentException("When saving an applied, need a tag_id");
+        }
+
+
+        if (!$this->tagged_flow_entry_id && $this->tagged_flow_entry_guid) {
+            $this->tagged_flow_entry_id = $db->cell(
+                "SELECT id  FROM flow_entries WHERE flow_entry_guid = UNHEX(?)",
+                $this->tagged_flow_entry_guid);
+        }
+
+        if (!$this->tagged_flow_project_id && $this->tagged_flow_project_guid) {
+            $this->tagged_flow_project_id = $db->cell(
+                "SELECT id  FROM flow_projects WHERE flow_project_guid = UNHEX(?)",
+                $this->tagged_flow_project_guid);
+        }
+
+        if (!$this->tagged_flow_user_id && $this->tagged_flow_user_guid) {
+            $this->tagged_flow_user_id = $db->cell(
+                "SELECT id  FROM flow_users WHERE flow_user_guid = UNHEX(?)",
+                $this->tagged_flow_user_guid);
+        }
+
+        if (!($this->tagged_flow_user_id || $this->tagged_flow_project_id || $this->tagged_flow_entry_id)) {
+            throw new InvalidArgumentException("When saving an applied, it needs to be tagging something" );
+        }
+
+        $saving_info = [
+            'flow_tag_id' => $this->flow_tag_id ,
+            'tagged_flow_entry_id' => $this->tagged_flow_entry_id ,
+            'tagged_flow_project_id' => $this->tagged_flow_project_id ,
+            'tagged_flow_user_id' => $this->tagged_flow_user_id
+        ];
+
+        if ($this->id) {
+
+            $db->update('flow_applied_tags',$saving_info,[
+                'id' => $this->id
+            ]);
+
+        } else {
+            $db->insert('flow_applied_tags',$saving_info);
+            $this->id = $db->lastInsertId();
+        }
+    }//end function save
+
+
+    public function delete_applied() {
+        $db = static::get_connection();
+        $db->delete('flow_applied_tags',['id'=>$this->id]);
+    } //end function delete
+
+    public static function reconstitute($args,FlowTag $parent_tag) : FlowAppliedTag {
+
+        if (is_string($args)) {
+            $ret_array = static::get_applied_tags([$parent_tag->flow_tag_id],$args);
+            if (empty($ret_array) || empty($ret_array[$parent_tag->flow_tag_guid])) {
+                throw new InvalidArgumentException("cannot find applied using the guid of $args");
+            }
+            $ret = $ret_array[0]; //only one
+        } elseif (is_array($args) || is_object($args)) {
+            $node = new FlowAppliedTag($args);
+            if ($node->flow_applied_tag_guid) {
+                $ret_array = static::get_applied_tags([$parent_tag->flow_tag_id],$node->flow_applied_tag_guid);
+                if (empty($ret_array) || empty($ret_array[$parent_tag->flow_tag_guid])) {
+                    throw new InvalidArgumentException("cannot find applied using the guid of $node->flow_applied_tag_guid");
+                }
+                $ret = $ret_array[$parent_tag->flow_tag_guid][0];
+                $ret->tagged_flow_entry_id = $node->tagged_flow_entry_id;
+                $ret->tagged_flow_entry_guid = $node->tagged_flow_entry_guid;
+
+                $ret->tagged_flow_project_id = $node->tagged_flow_project_id;
+                $ret->tagged_flow_project_guid = $node->tagged_flow_project_guid;
+
+                $ret->tagged_flow_user_id = $node->tagged_flow_user_id;
+                $ret->tagged_flow_user_guid = $node->tagged_flow_user_guid;
+            } else {
+                $ret = $node;
+            }
+
+        } else {
+            throw new InvalidArgumentException("Could not figure out Applied from the data of $args");
+        }
+
+        return $ret;
+    }
+
+
 }
