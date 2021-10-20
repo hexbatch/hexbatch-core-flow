@@ -65,7 +65,7 @@ jQuery(function ($){
         return format_tag(tag);
     }
 
-    function  create_tag (params) {
+    function  select2_create_tag (params) {
         let term = $.trim(params.term);
 
         if (term === '') {
@@ -133,7 +133,7 @@ jQuery(function ($){
         allowClear: true,
         multiple: true,
         tags: true,
-        createTag: create_tag
+        createTag: select2_create_tag
     });
 
 
@@ -220,71 +220,19 @@ jQuery(function ($){
 
     $("button#flow-tag-save").click(function() {
         if (working_tag) {
-            set_tag_action(working_tag,function(saved_tag) {
-               console.log("Updated tag",saved_tag)
-            });
+            if (working_tag.flow_tag_guid) {
+                edit_tag(working_tag,function(response) {
+                    console.log("Updated tag",response)
+                });
+            } else {
+                create_tag(working_tag,function(response) {
+                    console.log("created tag",response)
+                });
+            }
+
         }
     });
 
 });
 
-function set_tag_action(data,on_success_callback) {
-    let tag = JSON.parse(JSON.stringify(data));
-
-    set_object_with_flow_ajax_token_data(tag);
-
-    $.ajax({
-        url: set_tag_ajax_url,
-        method: "POST",
-        dataType: 'json',
-        data : tag
-    })
-        .always(function( data ) {
-
-            /**
-             * @type {FlowSetTagResponse}
-             */
-            let ret;
-
-            if (flow_check_if_promise(data)) {
-                console.debug('promise passed in for edit permissions',data);
-                if (data.hasOwnProperty('responseJSON')) {
-                    ret = data.responseJSON;
-                } else {
-                    ret = {
-                        success: false,
-                        message: data.statusText,
-                        tag: null,
-                        token: null
-                    };
-                }
-
-
-            } else {
-                ret = data;
-            }
-
-            if (ret.success) {
-                if (on_success_callback) {on_success_callback(ret.tag);}
-                do_toast({
-                    title:'Saved Tag',
-                    delay:5000,
-                    type:'success'
-                });
-            } else {
-                do_toast({
-                    title:'Cannot Save Tag',
-                    subtitle:'There was an issue with the ajax',
-                    content: ret.message,
-                    delay:20000,
-                    type:'error'
-                });
-            }
-
-            if (ret && ret.token) {
-                update_root_flow_ajax_token(ret.token);
-            }
-        });
-
-}
 

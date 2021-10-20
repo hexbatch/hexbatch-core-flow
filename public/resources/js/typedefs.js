@@ -58,12 +58,13 @@
 
 /**
  * @typedef {Object} FlowTagApplied
- * @property {string} flow_applied_tag_guid
+ * @property {?string} flow_applied_tag_guid
+ * @property {?string} flow_tag_guid
  * @property {string} tagged_flow_entry_guid
  * @property {string} tagged_flow_user_guid
  * @property {string} tagged_flow_project_guid
- * @property {string} tagged_title
- * @property {number} created_at_ts
+ * @property {string} [tagged_title]
+ * @property {number} [created_at_ts]
  */
 
 
@@ -133,6 +134,12 @@
  * @property {?FlowTag} tag
  * @property {?FlowTagAttribute} attribute
  * @property {?FlowToken} token
+ */
+
+/**
+ *
+ * @typedef {FlowAttributeResponse} FlowAppliedResponse
+ * @property {FlowTagApplied} applied
  */
 
 

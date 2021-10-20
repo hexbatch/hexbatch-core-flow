@@ -60,6 +60,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
     {
         return [
             "flow_applied_tag_guid" => $this->flow_applied_tag_guid,
+            "flow_tag_guid" => $this->flow_tag_guid,
             "tagged_flow_entry_guid" => $this->tagged_flow_entry_guid,
             "tagged_flow_user_guid" => $this->tagged_flow_user_guid,
             "tagged_flow_project_guid" => $this->tagged_flow_project_guid,
@@ -71,14 +72,16 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
     /**
      * @param int[] $tag_id_array
      * @param string|null $match_only_applied_guid , if given, will only return the applied that fits the tag_id and matches guid
+     * @param int|null $match_only_applied_id , if given, will only return the applied that fits the tag_id and matches the id
      * @return array<string,FlowAppliedTag[]>
      */
-    public static function get_applied_tags(array $tag_id_array,?string $match_only_applied_guid=null) : array {
+    public static function get_applied_tags(array $tag_id_array,?string $match_only_applied_guid=null,
+                                            ?int $match_only_applied_id=null) : array {
 
         if (empty($tag_id_array)) { return [];}
         $tag_id_ints = [];
         foreach ($tag_id_array as $raw_int) {
-            $maybe_int = (int)$raw_int;
+            $maybe_int = intval($raw_int);
             if ($maybe_int) {$tag_id_ints[] = $maybe_int;}
         }
 
@@ -97,6 +100,12 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
             $args[] = $match_only_applied_guid;
         }
 
+        $where_match_id = 32;
+        if (intval($match_only_applied_id)) {
+            $where_match_id = " app.id = ? ";
+            $args[] = $match_only_applied_id;
+        }
+
         $sql = "
             SELECT
                GROUP_CONCAT( HEX(retag.flow_tag_guid) order by app.id) as tag_guid_list,
@@ -112,7 +121,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                 INNER JOIN flow_projects fp on app.tagged_flow_project_id = fp.id
             WHERE app.flow_tag_id in ($comma_delimited_tag_ids) AND 
                   app.tagged_flow_project_id IS NOT NULL AND
-                  $where_match_guid
+                  $where_match_guid AND $where_match_id
             
             GROUP BY app.tagged_flow_project_id
         UNION
@@ -258,9 +267,16 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
         $db->delete('flow_applied_tags',['id'=>$this->id]);
     } //end function delete
 
+
     public static function reconstitute($args,FlowTag $parent_tag) : FlowAppliedTag {
 
-        if (is_string($args)) {
+        if (is_numeric($args)) { //expected to be applied id
+            $ret_array = static::get_applied_tags([$parent_tag->flow_tag_id],null,$args);
+            if (empty($ret_array) || empty($ret_array[$parent_tag->flow_tag_guid])) {
+                throw new InvalidArgumentException("cannot find applied using the id of $args");
+            }
+            $ret = $ret_array[0]; //only one
+        } elseif (is_string($args)) { //args expected to be applied guid
             $ret_array = static::get_applied_tags([$parent_tag->flow_tag_id],$args);
             if (empty($ret_array) || empty($ret_array[$parent_tag->flow_tag_guid])) {
                 throw new InvalidArgumentException("cannot find applied using the guid of $args");

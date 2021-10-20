@@ -75,9 +75,14 @@ return function (App $app) {
 
             //tags in project , no matter how they are used or attached to
             $group->get('/{project_name:[[:alnum:]\-]+}/get_tags_ajax', ['tagPages', 'get_tags'])->setName('get_tags_ajax');
-            $group->post('/{project_name:[[:alnum:]\-]+}/set_tag_ajax', ['tagPages', 'set_tags'])->setName('set_tag_ajax');
+
 
             //tag in project
+            $group->post('/{project_name:[[:alnum:]\-]+}/tag/create', ['tagPages', 'create_tag'])->setName('create_tag_ajax');
+
+            $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/edit',
+                ['tagPages', 'edit_tag'])->setName('edit_tag_ajax');
+
             $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/delete',
                 ['tagPages', 'delete_tag'])->setName('delete_tag_ajax');
 
@@ -90,6 +95,14 @@ return function (App $app) {
 
             $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/attribute/{attribute_name:[[:alnum:]\-]+}/delete',
                 ['tagPages', 'delete_attribute'])->setName('delete_tag_attribute_ajax');
+
+            //applied in project
+            $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/applied/create',
+                ['tagPages', 'create_applied'])->setName('create_applied_ajax');
+
+
+            $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/applied/delete',
+                ['tagPages', 'delete_applied'])->setName('delete_applied_ajax');
 
 
         });

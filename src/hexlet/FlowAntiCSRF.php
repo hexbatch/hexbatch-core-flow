@@ -4,7 +4,6 @@ namespace app\hexlet;
 use ParagonIE\AntiCSRF\AntiCSRF;
 
 class FlowAntiCSRF extends AntiCSRF {
-    //todo try this out on ajax
     const SET_LOCK_TO_ANY_PAGE = -1;
 
     const UNUSED_TOKEN_LIFE = 60*60; //1 hour
