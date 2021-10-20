@@ -11,10 +11,10 @@ class GeneralSearch extends FlowBase{
     const DEFAULT_PAGE_SIZE = 20;
 
     /**
-     * @param \app\models\multi\GeneralSearchParams $search
+     * @param GeneralSearchParams $search
      * @param int $page
      * @param int $page_size
-     * @return \app\models\multi\GeneralSearchResult[]
+     * @return GeneralSearchResult[]
      */
     public static function general_search(GeneralSearchParams $search,
                                           int     $page = 1,
@@ -68,7 +68,7 @@ class GeneralSearch extends FlowBase{
         $db = static::get_connection();
         $res = $db->safeQuery($sql_final, $args, PDO::FETCH_OBJ);
         /**
-         * @var \app\models\multi\GeneralSearchResult[] $ret
+         * @var GeneralSearchResult[] $ret
          */
         $ret = [];
         foreach ($res as $row) {

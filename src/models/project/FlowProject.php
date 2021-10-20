@@ -7,7 +7,7 @@ use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\tag\FlowTagSearchParams;
 use app\models\user\FlowUser;
-use \app\models\tag\FlowTag;
+use app\models\tag\FlowTag;
 use Exception;
 use InvalidArgumentException;
 use LogicException;
@@ -88,13 +88,13 @@ class FlowProject extends FlowBase {
 
     /**
      * @param bool $b_refresh  if true will not use previous value if set
-     * @return \app\models\tag\FlowTag[]
-     * @throws \Exception
+     * @return FlowTag[]
+     * @throws Exception
      */
     function get_all_owned_tags_in_project(bool $b_refresh = false) : array {
         if (!$b_refresh && is_array($this->owned_tags)) { return $this->owned_tags;}
         $search_params = new FlowTagSearchParams();
-        $search_params->owning_project_guid = $this->id;
+        $search_params->owning_project_guid = $this->flow_project_guid;
         $this->owned_tags = FlowTag::get_tags($search_params,1,100000);
         return $this->owned_tags;
     }

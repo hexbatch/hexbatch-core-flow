@@ -49,30 +49,43 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         $this->points_to_flow_entry_guid = $attribute->points_to_flow_entry_guid ;
         $this->points_to_flow_user_guid = $attribute->points_to_flow_user_guid ;
         $this->points_to_flow_project_guid = $attribute->points_to_flow_project_guid ;
+
+        //remove ids if no guid
+        if (empty($this->points_to_flow_entry_guid) && $this->points_to_entry_id) {
+            $this->points_to_entry_id = null;
+        }
+
+        if (empty($this->points_to_flow_project_guid) && $this->points_to_project_id) {
+            $this->points_to_project_id = null;
+        }
+
+        if (empty($this->points_to_flow_user_guid) && $this->points_to_user_id) {
+            $this->points_to_user_id = null;
+        }
     }
 
 
     public function __construct($object=null){
         $this->is_standard_attribute = false;
-        if (empty($object)) {
-            $this->flow_tag_attribute_id = null ;
-            $this->flow_tag_id = null ;
-            $this->flow_applied_tag_id = null ;
-            $this->points_to_entry_id = null ;
-            $this->points_to_user_id = null ;
-            $this->points_to_project_id = null ;
-            $this->applied_created_at_ts = null ;
-            $this->applied_updated_at_ts = null ;
-            $this->flow_tag_attribute_guid = null ;
-            $this->tag_attribute_name = null ;
-            $this->tag_attribute_long = null ;
-            $this->tag_attribute_text = null ;
+        $this->flow_tag_attribute_id = null ;
+        $this->flow_tag_id = null ;
+        $this->flow_applied_tag_id = null ;
+        $this->points_to_entry_id = null ;
+        $this->points_to_user_id = null ;
+        $this->points_to_project_id = null ;
+        $this->applied_created_at_ts = null ;
+        $this->applied_updated_at_ts = null ;
+        $this->flow_tag_attribute_guid = null ;
+        $this->tag_attribute_name = null ;
+        $this->tag_attribute_long = null ;
+        $this->tag_attribute_text = null ;
 
-            $this->flow_tag_guid = null ;
-            $this->flow_applied_tag_guid = null;
-            $this->points_to_flow_entry_guid = null ;
-            $this->points_to_flow_user_guid = null ;
-            $this->points_to_flow_project_guid = null ;
+        $this->flow_tag_guid = null ;
+        $this->flow_applied_tag_guid = null;
+        $this->points_to_flow_entry_guid = null ;
+        $this->points_to_flow_user_guid = null ;
+        $this->points_to_flow_project_guid = null ;
+        if (empty($object)) {
             return;
         }
 

@@ -2,7 +2,6 @@
 
 namespace app\models\multi;
 
-use JsonSerializable;
 
 class GeneralSearchParams   {
 

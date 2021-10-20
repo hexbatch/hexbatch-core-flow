@@ -7,8 +7,6 @@ BEGIN
     DECLARE number_pointees INT DEFAULT 0;
     DECLARE msg VARCHAR(255);
 
-    SET NEW.flow_tag_attribute_guid = UUID_TO_BIN(UUID(),1); -- swap out the quicker time parts for faster indexing with the 1
-    SET NEW.created_at_ts = UNIX_TIMESTAMP(NOW());
 
     IF NEW.flow_tag_id THEN
         SET number_parents = number_parents + 1;

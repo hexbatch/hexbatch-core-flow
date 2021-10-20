@@ -85,7 +85,7 @@ class HomePages
      * @throws Exception
      * @noinspection PhpUnused
      */
-    public function general_search_ajax( ServerRequestInterface $request,ResponseInterface $response) :ResponseInterface {
+    public function general_search( ServerRequestInterface $request,ResponseInterface $response) :ResponseInterface {
 
         $args = $request->getQueryParams();
 

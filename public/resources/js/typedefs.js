@@ -119,27 +119,34 @@
 
 /**
  *
- * @typedef {Object} FlowSetTagResponse
+ * @typedef {Object} FlowBasicResponse
  * @property {boolean} success
  * @property {string} message
- * @property {?FlowTag} tag
  * @property {?FlowToken} token
  */
 
 /**
  *
- * @typedef {Object} FlowAttributeResponse
- * @property {boolean} success
- * @property {string} message
+ * @typedef {FlowBasicResponse} FlowTagResponse
  * @property {?FlowTag} tag
- * @property {?FlowTagAttribute} attribute
- * @property {?FlowToken} token
+ */
+
+/**
+ *
+ * @typedef {FlowTagResponse} FlowAttributeResponse
+ * @property {?FlowTagAttribute} [attribute]
  */
 
 /**
  *
  * @typedef {FlowAttributeResponse} FlowAppliedResponse
- * @property {FlowTagApplied} applied
+ * @property {FlowTagApplied} [applied]
+ */
+
+/**
+ * This callback is displayed as a global member.
+ * @callback FlowTagActionSuccessCallback
+ * @param {FlowTagResponse|FlowAttributeResponse|FlowAppliedResponse} data
  */
 
 

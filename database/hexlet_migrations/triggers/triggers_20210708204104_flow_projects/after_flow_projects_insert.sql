@@ -13,5 +13,5 @@ BEGIN
                             ;
 
     INSERT INTO flow_things(thing_id,  thing_type, thing_guid, thing_title)
-    VALUES (NEW.id,'user',NEW.flow_project_guid,NEW.flow_project_title);
+    VALUES (NEW.id,'project',NEW.flow_project_guid,NEW.flow_project_title);
 END

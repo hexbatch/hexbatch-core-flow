@@ -111,7 +111,8 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                GROUP_CONCAT( HEX(retag.flow_tag_guid) order by app.id) as tag_guid_list,
                GROUP_CONCAT( app.flow_tag_id order by app.id) as tag_id_list,    
                GROUP_CONCAT( app.created_at_ts order by app.id) as tagged_at_ts,
-               GROUP_CONCAT( HEX(app.flow_applied_tag_guid) order by app.id) as applied_guid_list,    
+               GROUP_CONCAT( HEX(app.flow_applied_tag_guid) order by app.id) as applied_guid_list, 
+               GROUP_CONCAT( HEX(app.id) order by app.id) as applied_id_list,
                app.tagged_flow_project_id as taggee_id,
                HEX(fp.flow_project_guid) as taggee_guid,
                fp.flow_project_title as tagged_title,
@@ -129,7 +130,8 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                 GROUP_CONCAT( HEX(retag.flow_tag_guid) order by app.id) as tag_guid_list,
                 GROUP_CONCAT( app.flow_tag_id order by app.id) as tag_id_list,   
                 GROUP_CONCAT( app.created_at_ts order by app.id) as tagged_at_ts,
-                GROUP_CONCAT( HEX(app.flow_applied_tag_guid) order by app.id) as applied_guid_list,   
+                GROUP_CONCAT( HEX(app.flow_applied_tag_guid) order by app.id) as applied_guid_list,
+                GROUP_CONCAT( HEX(app.id) order by app.id) as applied_id_list,   
                 app.tagged_flow_user_id as taggee_id,
                 HEX(fu.flow_user_guid) as taggee_guid,
                 fu.flow_user_name as tagged_title,
@@ -144,6 +146,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                 GROUP_CONCAT( HEX(retag.flow_tag_guid) order by app.id) as tag_guid_list,
                 GROUP_CONCAT( app.flow_tag_id order by app.id) as tag_id_list,   
                 GROUP_CONCAT( app.created_at_ts order by app.id) as tagged_at_ts,
+                GROUP_CONCAT( HEX(app.id) order by app.id) as applied_id_list,   
                 GROUP_CONCAT( HEX(app.flow_applied_tag_guid) order by app.id) as applied_guid_list,   
                 app.tagged_flow_entry_id as taggee_id,
                 HEX(fe.flow_entry_guid) as taggee_guid,
@@ -163,12 +166,14 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
             $tag_id_array = explode(",",$row->tag_id_list);
             $created_at_array = explode(",",$row->tagged_at_ts);
             $applied_guid_array = explode(",",$row->applied_guid_list);
+            $applied_id_array = explode(",",$row->applied_id_list);
             if (count($tag_guid_array) !== count($created_at_array) ||
                 count($tag_guid_array) !== count($tag_id_array) ||
+                count($applied_id_array) !== count($tag_id_array) ||
                 count($tag_guid_array) !== count($applied_guid_array)
             ) {
                 throw new RuntimeException(
-                    "[get_applied_tags] guid and created_at and id list does not have same numbers, check nulls");
+                    "[get_applied_tags] guid, created_at , id, applied_id list does not have same numbers, check nulls");
             }
             for($i = 0; $i< count($applied_guid_array); $i++) {
                 $node = new FlowAppliedTag();
@@ -176,6 +181,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                 $node->flow_tag_guid = $tag_guid_array[$i];
                 $node->flow_tag_id = $tag_id_array[$i];
                 $node->flow_applied_tag_guid = $applied_guid_array[$i];
+                $node->id = $applied_id_array[$i];
                 $node->tagged_title = $row->tagged_title;
                 switch ($row->taggie_type) {
                     case GeneralSearchResult::TYPE_ENTRY: {
@@ -265,6 +271,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
     public function delete_applied() {
         $db = static::get_connection();
         $db->delete('flow_applied_tags',['id'=>$this->id]);
+
     } //end function delete
 
 
@@ -275,13 +282,13 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
             if (empty($ret_array) || empty($ret_array[$parent_tag->flow_tag_guid])) {
                 throw new InvalidArgumentException("cannot find applied using the id of $args");
             }
-            $ret = $ret_array[0]; //only one
+            $ret = $ret_array[$parent_tag->flow_tag_guid][0]; //only one
         } elseif (is_string($args)) { //args expected to be applied guid
             $ret_array = static::get_applied_tags([$parent_tag->flow_tag_id],$args);
             if (empty($ret_array) || empty($ret_array[$parent_tag->flow_tag_guid])) {
                 throw new InvalidArgumentException("cannot find applied using the guid of $args");
             }
-            $ret = $ret_array[0]; //only one
+            $ret = $ret_array[$parent_tag->flow_tag_guid][0]; //only one
         } elseif (is_array($args) || is_object($args)) {
             $node = new FlowAppliedTag($args);
             if ($node->flow_applied_tag_guid) {

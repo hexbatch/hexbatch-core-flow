@@ -49,3 +49,84 @@ function set_object_with_flow_ajax_token_data(obj) {
     obj._CSRF_INDEX = token_csrf_index_input.val();
     obj._CSRF_TOKEN = token_csrf_token_input.val();
 }
+
+function process_ajax_response(data,success_title,fail_title) {
+    /**
+     * @type {FlowBasicResponse}
+     */
+    let ret;
+
+    if (flow_check_if_promise(data)) {
+        //console.debug('promise passed in for process_response_if_error',data);
+        if ('responseJSON' in data ) {
+            ret = data.responseJSON;
+            ret.success = false;
+            if (!ret.message) {
+                ret.message = '';
+                if ("error" in ret) {
+
+                    if ("type" in ret.error) {
+                        ret.message += ret.error.type + " ";
+                    }
+
+                    if ("title" in ret.error) {
+                        ret.message += ret.error.title + ": ";
+                    }
+
+                    if ("description" in ret.error) {
+                        ret.message += "<br>" + ret.error.description;
+                    }
+                }
+            } //end making message if not exists
+
+            if (!ret.token) { ret.token = null; }
+        } else if ( 'responseText' in data ) {
+            try {
+                ret = JSON.parse(data.responseText);
+                ret.success = false;
+                if (!ret.message) {
+                    ret.message = data.responseText;
+                }
+            } catch (err) {
+                ret = {success: false, message: data.responseText,tag: null, token: null}
+            }
+        }
+
+        else {
+            ret = {
+                success: false,
+                message: data.statusText,
+                tag: null,
+                token: null
+            };
+        }
+
+
+    } else {
+        ret = data;
+    }
+
+    if (ret && ret.token) {
+        update_root_flow_ajax_token(ret.token);
+    }
+
+    if (ret.success) {
+        do_toast({
+            title:success_title,
+            content: ret.message,
+            delay:5000,
+            type:'success'
+        });
+    } else {
+        do_toast({
+            title:fail_title,
+            subtitle:'There was an issue with the ajax',
+            content: ret.message,
+            delay:20000,
+            type:'error'
+        });
+        console.warn(ret);
+    }
+
+    return ret;
+}

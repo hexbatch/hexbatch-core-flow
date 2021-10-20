@@ -45,6 +45,7 @@ class AddFlowTags extends AbstractMigration
         $this->execute("ALTER TABLE `flow_tags` ADD INDEX `idx_parent_tag_id`   (`parent_tag_id`);");
         $this->execute("ALTER TABLE `flow_tags` ADD UNIQUE `udx_flow_tag_guid` (`flow_tag_guid`);");
         $this->execute("ALTER TABLE `flow_tags` ADD FULLTEXT `ft_flow_tag_name` (`flow_tag_name`);");
+        $this->execute("ALTER TABLE `flow_tags` ADD UNIQUE `udx_project_tag_name` (flow_project_id,flow_tag_name);");
 
 
         $this->execute("ALTER TABLE `flow_tags` ADD CONSTRAINT `fk_flow_tags_has_project_id` 

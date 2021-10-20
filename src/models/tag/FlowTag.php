@@ -116,6 +116,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
         $this->flow_project_guid = null ;
         $this->parent_tag_guid = null ;
         $this->flow_tag_parent = null;
+        $this->children_list_as_string = null;
 
         if (empty($object)) {
             return;
@@ -490,9 +491,9 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
     /**
      * @param string|null $attribute_name
-     * @param \app\models\tag\FlowTagAttribute|null $attribute
-     * @return $this|\app\models\tag\FlowTag
-     * @throws \Exception
+     * @param FlowTagAttribute|null $attribute
+     * @return $this|FlowTag
+     * @throws Exception
      */
     public  function save_tag_return_clones(?string $attribute_name, FlowTagAttribute &$attribute = null): FlowTag
     {

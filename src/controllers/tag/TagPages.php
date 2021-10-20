@@ -120,7 +120,7 @@ class TagPages extends BasePages
      */
     public function create_tag( ServerRequestInterface $request,ResponseInterface $response,
                               string $user_name, string $project_name) :ResponseInterface {
-        $token = null;
+        
         try {
             $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'create_tag';
@@ -135,8 +135,9 @@ class TagPages extends BasePages
             $tags_already_in_project = $call->project->get_all_owned_tags_in_project();
 
             foreach ($tags_already_in_project as $look_tag) {
-                if ($look_tag->flow_tag_name === $tag->flow_tag_guid) {
-                    throw new InvalidArgumentException("Cannot create tag because a tag already has the same name in this project");
+                if ($look_tag->flow_tag_name === $tag->flow_tag_name) {
+                    throw new InvalidArgumentException(
+                        "Cannot create tag because a tag already has the same name '$tag->flow_tag_name' in this project");
                 }
             }
 
@@ -144,7 +145,7 @@ class TagPages extends BasePages
             $saved_tag = $tag->clone_refresh();
 
 
-            $data = ['success'=>true,'message'=>'','tag'=>$saved_tag,'token'=> $call->new_token];
+            $data = ['success'=>true,'message'=>'ok','tag'=>$saved_tag,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -154,7 +155,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $token];
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -179,13 +180,23 @@ class TagPages extends BasePages
     public function edit_tag( ServerRequestInterface $request,ResponseInterface $response,
                                 string $user_name, string $project_name,string $tag_name) :ResponseInterface
     {
-        $token = null;
+        
         try {
             $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'edit_tag';
             $call = $this->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
-            $call->tag->save();
-            $data = ['success'=>true,'message'=>'ok','tag'=>$call->tag,'attribute'=>null,'token'=> $call->new_token];
+            if (property_exists($call->args,'flow_tag_parent')) {
+                unset($call->args->flow_tag_parent);
+            }
+            $baby_steps = new FlowTag($call->args);
+            $baby_steps->flow_project_id = $call->project->id;
+            $tag = $baby_steps->clone_with_missing_data();
+            if (!$tag->flow_tag_id || !$tag->flow_tag_guid) {
+                throw new InvalidArgumentException("Can only edit tags when found id and guid with this action");
+            }
+            $tag->save();
+            $saved_tag = $tag->clone_refresh();
+            $data = ['success'=>true,'message'=>'ok','tag'=>$saved_tag,'attribute'=>null,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -195,7 +206,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $token];
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -218,7 +229,7 @@ class TagPages extends BasePages
     public function delete_tag( ServerRequestInterface $request,ResponseInterface $response,
                                       string $user_name, string $project_name,string $tag_name) :ResponseInterface
     {
-        $token = null;
+        
         try {
             $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'delete_tag';
@@ -234,7 +245,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $token];
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -251,7 +262,7 @@ class TagPages extends BasePages
      * validates data, creates new form key too
      * @param FlowTagCallData $options
      * @param ServerRequestInterface $request
-     * @param string $route_name
+     * @param string|null $route_name
      * @param string $user_name
      * @param string $project_name
      * @param ?string $tag_name
@@ -259,11 +270,12 @@ class TagPages extends BasePages
      * @return FlowTagCallData
      * @throws
      */
-    protected function validate_ajax_call(FlowTagCallData $options, ServerRequestInterface $request, string $route_name, string $user_name,
+    protected function validate_ajax_call(FlowTagCallData $options, ServerRequestInterface $request, ?string $route_name, string $user_name,
                                           string $project_name, ?string $tag_name = null ,
                                           ?string $attribute_name = null) : FlowTagCallData
     {
 
+        $token = null;
         $args = $request->getParsedBody();
         if (empty($args)) {
             throw new InvalidArgumentException("No data sent");
@@ -304,9 +316,9 @@ class TagPages extends BasePages
             throw new HttpNotFoundException($request,"Project $project_name Not Found");
         }
 
-        $token = null;
+        
         if ($csrf && $options->has_option(FlowTagCallData::OPTION_MAKE_NEW_TOKEN) ) {
-            $token_lock_to = null;
+            $token_lock_to = '';
 
             if ($route_name) {
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
@@ -375,12 +387,12 @@ class TagPages extends BasePages
     public function create_attribute( ServerRequestInterface $request,ResponseInterface $response,
                               string $user_name, string $project_name,string $tag_name) :ResponseInterface
     {
-        $token = null;
+        
         try {
             $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'create_attribute';
             $call = $this->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
-            $attribute_data = $call->args->attribute ?? null;
+            $attribute_data = $call->args ?? null;
             $attribute_to_add = new FlowTagAttribute($attribute_data);
             $attribute_to_add->flow_tag_id = $call->tag->flow_tag_id;
             if (!$attribute_to_add->has_enough_data_set()) {
@@ -392,7 +404,7 @@ class TagPages extends BasePages
                 }
             }
             $call->tag->attributes[] = $attribute_to_add;
-            $altered_tag = $call->tag->save_tag_return_clones($call->attribute->tag_attribute_name,$new_attribute);
+            $altered_tag = $call->tag->save_tag_return_clones($attribute_to_add->tag_attribute_name,$new_attribute);
 
             $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$new_attribute,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
@@ -404,7 +416,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $token];
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -430,12 +442,12 @@ class TagPages extends BasePages
     public function edit_attribute( ServerRequestInterface $request,ResponseInterface $response,
                                       string $user_name, string $project_name,string $tag_name,string $attribute_name) :ResponseInterface
     {
-        $token = null;
+        
         try {
             $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'edit_attribute';
             $call = $this->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name,$attribute_name);
-            $attribute_data = $call->args->attribute ?? null;
+            $attribute_data = $call->args ?? null;
             $attribute_to_edit = new FlowTagAttribute($attribute_data);
             $attribute_to_edit->flow_tag_id = $call->tag->flow_tag_id;
             if (!$attribute_to_edit->has_enough_data_set()) {
@@ -443,7 +455,7 @@ class TagPages extends BasePages
             }
 
             $call->attribute->update_fields_with_public_data($attribute_to_edit);
-            $altered_tag = $call->tag->save_tag_return_clones($call->attribute->tag_attribute_name,$new_attribute);
+            $altered_tag = $call->tag->save_tag_return_clones($attribute_to_edit->tag_attribute_name,$new_attribute);
 
             $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$new_attribute,'token'=> $call->new_token];
 
@@ -457,7 +469,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $token];
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -483,7 +495,7 @@ class TagPages extends BasePages
     public function delete_attribute( ServerRequestInterface $request,ResponseInterface $response,
                                     string $user_name, string $project_name,string $tag_name,string $attribute_name) :ResponseInterface
     {
-        $token = null;
+        
         try {
             $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'delete_attribute';
@@ -491,7 +503,7 @@ class TagPages extends BasePages
 
             $call->attribute->delete_attribute();
 
-            $altered_tag = $call->tag->save_tag_return_clones($call->attribute->tag_attribute_name,$new_attribute);
+            $altered_tag = $call->tag->save_tag_return_clones(null,$new_attribute);
 
             $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$call->attribute,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
@@ -503,7 +515,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $token];
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -527,17 +539,14 @@ class TagPages extends BasePages
     public function create_applied( ServerRequestInterface $request,ResponseInterface $response,
                                 string $user_name, string $project_name,string $tag_name) :ResponseInterface
     {
-        $token = null;
         try {
             $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'create_applied';
             $call = $this->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
-            if(!$call->applied) {
-                throw new InvalidArgumentException("Need to set applied when calling this");
-            }
-            $call->applied->flow_tag_id = $call->tag->flow_tag_id;
-            $call->applied->save();
-            $applied_to_return = FlowAppliedTag::reconstitute($call->applied->id,$call->tag);
+            $new_applied = new FlowAppliedTag($call->args);
+            $new_applied->flow_tag_id = $call->tag->flow_tag_id;
+            $new_applied->save();
+            $applied_to_return = FlowAppliedTag::reconstitute($new_applied->id,$call->tag);
 
             $data = [
                 'success'=>true,'message'=>'ok','tag'=>$call->tag,'attribute'=>null,'applied'=>$applied_to_return,
@@ -552,7 +561,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $token];
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -577,15 +586,13 @@ class TagPages extends BasePages
     public function delete_applied( ServerRequestInterface $request,ResponseInterface $response,
                                     string $user_name, string $project_name,string $tag_name) :ResponseInterface
     {
-        $token = null;
         try {
             $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'delete_applied';
             $call = $this->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
-            if(!$call->applied) {
-                throw new InvalidArgumentException("Need to set applied when calling this");
-            }
-            $call->applied->delete_applied();
+            $applied_that_was_given = new FlowAppliedTag($call->args);
+            $applied_to_be_deleted = FlowAppliedTag::reconstitute($applied_that_was_given,$call->tag);
+            $applied_to_be_deleted->delete_applied();
 
             $data = [
                 'success'=>true,'message'=>'ok','tag'=>$call->tag,'attribute'=>null,'applied'=>$call->applied,
@@ -600,7 +607,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $token];
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
