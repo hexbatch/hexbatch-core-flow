@@ -86,16 +86,30 @@ class FlowProject extends FlowBase {
      */
     protected ?array $owned_tags = null;
 
+    protected bool $b_did_applied_for_owned_tags = false;
+
     /**
+     * @param bool $b_get_applied  if true will also get the applied in the set of tags found
      * @param bool $b_refresh  if true will not use previous value if set
      * @return FlowTag[]
      * @throws Exception
      */
-    function get_all_owned_tags_in_project(bool $b_refresh = false) : array {
-        if (!$b_refresh && is_array($this->owned_tags)) { return $this->owned_tags;}
+    function get_all_owned_tags_in_project(bool $b_get_applied = false,bool $b_refresh = false) : array {
+        if (!$b_refresh && is_array($this->owned_tags)) {
+            //refresh cache if first time getting applied
+            if ($b_get_applied && $this->b_did_applied_for_owned_tags) {
+                return $this->owned_tags;
+            }
+        }
         $search_params = new FlowTagSearchParams();
+        $search_params->flag_get_applied = $b_get_applied;
         $search_params->owning_project_guid = $this->flow_project_guid;
         $this->owned_tags = FlowTag::get_tags($search_params,1,100000);
+
+        if ($b_get_applied) {
+            $this->b_did_applied_for_owned_tags = true;
+        }
+
         return $this->owned_tags;
     }
 
@@ -211,6 +225,7 @@ class FlowProject extends FlowBase {
 
     public function __construct($object=null){
         $this->admin_user = null;
+        $this->b_did_applied_for_owned_tags = false;
         if (empty($object)) {
             $this->admin_flow_user_id = null;
             $this->flow_project_blurb = null;

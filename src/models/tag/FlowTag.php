@@ -477,6 +477,27 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 $filtered[] = $item;
             }
 
+            if ($search->flag_get_applied) {
+                //add attached tags
+                $tag_id_array = [];
+
+                /**
+                 * @var array<string,FlowTag> $match_map
+                 */
+                $match_map = [];
+                foreach ($filtered as $tag_rehydrated) {
+                    $tag_id_array[] = $tag_rehydrated->flow_tag_id;
+                    $match_map[$tag_rehydrated->flow_tag_guid] = $tag_rehydrated;
+                }
+
+                $attached_map = FlowAppliedTag::get_applied_tags($tag_id_array);
+
+                foreach ($attached_map as $tag_guid => $applied_array) {
+                    if (array_key_exists($tag_guid,$match_map)) {
+                        $match_map[$tag_guid]->applied = $applied_array;
+                    }
+                }
+            }
             return  $filtered;
         } catch (Exception $e) {
             static::get_logger()->alert("FlowTag model cannot get_tags ",['exception'=>$e]);

@@ -9,6 +9,9 @@
 
 <script src="{{ root_url }}/public/resources/js/project/edit-project-tags.js"></script>
 
+
+
+
 <div class="container p-0 m-1">
 
     <div class="card" style="width: fit-content">
@@ -16,10 +19,13 @@
         <div class="card-header">
             Tags For {{ project.flow_project_title }}
         </div>
+        <div class="card-body">
+            {{ include('tag/partials/project-tags-summary-list.twig') }}
+        </div>
 
         <div class="card-body">
             <h5 class="card-title">
-                WIP
+                Search
             </h5>
 
             <p>

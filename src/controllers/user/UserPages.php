@@ -507,11 +507,17 @@ class UserPages extends BasePages {
      * @noinspection PhpUnused
      */
     public function user_page( ServerRequestInterface $request,ResponseInterface $response, string $user_name) :ResponseInterface {
-        if ($this->user->flow_user_id) {
-            return $this->user_page_for_self( $request,$response,$user_name);
-        } else {
-            return $this->user_page_for_others( $request,$response,$user_name);
+
+        $for_user = FlowUser::find_one($user_name);
+        if ($for_user) {
+            if ($this->user->flow_user_id === $for_user->flow_user_id) {
+                return $this->user_page_for_self( $request,$response,$user_name);
+            } else {
+                return $this->user_page_for_others( $request,$response,$user_name);
+            }
         }
+        throw new HttpNotFoundException($request,"Could not find user $user_name");
+
     }
 
 

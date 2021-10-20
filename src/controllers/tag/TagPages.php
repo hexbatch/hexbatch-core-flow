@@ -58,6 +58,7 @@ class TagPages extends BasePages
             }
         }
 
+        $search_params->flag_get_applied = true;
         $page = 1;
         if (isset($args['page'])) {
             $page_number = intval($args['page']);
@@ -68,25 +69,6 @@ class TagPages extends BasePages
 
         $matches = FlowTag::get_tags($search_params,$page);
 
-        //add attached tags
-        $tag_id_array = [];
-
-        /**
-         * @var array<string,FlowTag> $match_map
-         */
-        $match_map = [];
-        foreach ($matches as $tag_rehydrated) {
-            $tag_id_array[] = $tag_rehydrated->flow_tag_id;
-            $match_map[$tag_rehydrated->flow_tag_guid] = $tag_rehydrated;
-        }
-
-        $attached_map = FlowAppliedTag::get_applied_tags($tag_id_array);
-
-        foreach ($attached_map as $tag_guid => $applied_array) {
-            if (array_key_exists($tag_guid,$match_map)) {
-                $match_map[$tag_guid]->applied = $applied_array;
-            }
-        }
 
         $b_more = true;
         if (count($matches) < FlowUser::DEFAULT_USER_PAGE_SIZE) {

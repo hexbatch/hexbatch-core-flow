@@ -27,6 +27,8 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
     public ?string $tagged_flow_project_guid;
 
     public ?string $tagged_title;
+    public ?string $tagged_flow_project_owner_user_guid;
+    public ?string $tagged_flow_project_owner_user_name;
 
 
     public function __construct($object=null){
@@ -43,6 +45,8 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
         $this->tagged_flow_user_guid = null;
         $this->tagged_flow_project_guid = null;
         $this->tagged_title = null;
+        $this->tagged_flow_project_owner_user_guid = null;
+        $this->tagged_flow_project_owner_user_name = null;
 
         if (empty($object)) {
             return;
@@ -66,6 +70,8 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
             "tagged_flow_project_guid" => $this->tagged_flow_project_guid,
             "created_at_ts" => $this->created_at_ts,
             "tagged_title" => $this->tagged_title,
+            "tagged_flow_project_owner_user_guid" => $this->tagged_flow_project_owner_user_guid,
+            "tagged_flow_project_owner_user_name" => $this->tagged_flow_project_owner_user_name,
         ];
     }
 
@@ -115,11 +121,14 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                GROUP_CONCAT( HEX(app.id) order by app.id) as applied_id_list,
                app.tagged_flow_project_id as taggee_id,
                HEX(fp.flow_project_guid) as taggee_guid,
+               HEX(fu_own.flow_user_guid) as taggee_user_guid,
+               fu_own.flow_user_name as taggee_user_name,    
                fp.flow_project_title as tagged_title,
                '{$I(GeneralSearchResult::TYPE_PROJECT)}' as taggie_type
             FROM flow_applied_tags app
                 INNER JOIN flow_tags retag ON retag.id = app.flow_tag_id
                 INNER JOIN flow_projects fp on app.tagged_flow_project_id = fp.id
+                INNER JOIN flow_users fu_own on fp.admin_flow_user_id = fu_own.id
             WHERE app.flow_tag_id in ($comma_delimited_tag_ids) AND 
                   app.tagged_flow_project_id IS NOT NULL AND
                   $where_match_guid AND $where_match_id
@@ -134,6 +143,8 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                 GROUP_CONCAT( HEX(app.id) order by app.id) as applied_id_list,   
                 app.tagged_flow_user_id as taggee_id,
                 HEX(fu.flow_user_guid) as taggee_guid,
+                NULL as taggee_user_guid,
+                NULL as taggee_user_name,
                 fu.flow_user_name as tagged_title,
                 '{$I(GeneralSearchResult::TYPE_USER)}' as taggie_type
             FROM flow_applied_tags app
@@ -149,7 +160,9 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                 GROUP_CONCAT( HEX(app.id) order by app.id) as applied_id_list,   
                 GROUP_CONCAT( HEX(app.flow_applied_tag_guid) order by app.id) as applied_guid_list,   
                 app.tagged_flow_entry_id as taggee_id,
-                HEX(fe.flow_entry_guid) as taggee_guid,
+                HEX(fe.flow_entry_guid) as taggee_guid,      
+                NULL as taggee_user_guid,   
+                NULL as taggee_user_name,   
                 fe.flow_entry_title as tagged_title,   
                 '{$I(GeneralSearchResult::TYPE_ENTRY)}' as taggie_type
             FROM flow_applied_tags app
@@ -183,6 +196,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                 $node->flow_applied_tag_guid = $applied_guid_array[$i];
                 $node->id = $applied_id_array[$i];
                 $node->tagged_title = $row->tagged_title;
+
                 switch ($row->taggie_type) {
                     case GeneralSearchResult::TYPE_ENTRY: {
                         $node->tagged_flow_entry_guid = $row->taggee_guid;
@@ -197,6 +211,8 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                     case GeneralSearchResult::TYPE_PROJECT:  {
                         $node->tagged_flow_project_guid = $row->taggee_guid;
                         $node->tagged_flow_project_id = $row->taggee_id;
+                        $node->tagged_flow_project_owner_user_guid = $row->taggee_user_guid;
+                        $node->tagged_flow_project_owner_user_name = $row->taggee_user_name;
                         break;
                     }
                     default: {

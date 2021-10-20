@@ -8,6 +8,11 @@ class FlowTagSearchParams {
     public ?string $tag_name_term;
 
     /**
+     * @var bool $flag_get_applied   if true will also get the applied in the set of tags found
+     */
+    public bool $flag_get_applied = false;
+
+    /**
      * @var string[] $tag_guids
      */
     public array $tag_guids = [];
@@ -22,5 +27,6 @@ class FlowTagSearchParams {
         $this->tag_name_term = null;
         $this->tag_guids = [];
         $this->tag_ids = [];
+        $this->flag_get_applied = false;
     }
 }
