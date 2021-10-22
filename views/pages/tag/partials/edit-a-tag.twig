@@ -1,3 +1,90 @@
+<div style="display: none" id="flow-edit-tag-template=holder">
+
+    <div
+         data-tag_guid=""
+         class="container flow-edit-container"
+    >
+        <div class="card col-12 col-md-12 col-lg-10 col-xl-8 col-xxl-6" >
+
+            <div class="card-header">
+                <span>
+                    Tag
+                </span>
+                <span class="flow-edit-tag-name-in-title"></span>
+
+                <button class="btn btn-success btn-sm float-end">
+                    <i class="bi bi-bookmark-x bg-danger text-warning"></i>
+                    Delete
+                </button>
+            </div>
+
+            <div class="card-body">
+
+                <div class="card-text ">
+                    <div class="row m-0">
+                        <div class="col-12 col-xl-6 input-group">
+
+                            <input type="text" class="form-control flow-edit-tag-title"
+                                   title="Tag Name" placeholder="Tag Name">
+
+                            <span class="input-group-text">
+                                <button class="btn btn-sm btn-success flow-edit-tag-title-save">
+                                    <i class="fas fa-save"></i>
+                                </button>
+                            </span>
+                        </div> <!-- /.col -->
+
+                        <div class="col-12 col-xl-6 input-group">
+
+                             <span class="input-group-text">
+                                <button class="btn btn-sm btn-success flow-edit-tag-parent-goto">
+                                    <i class="bi bi-arrow-bar-up"></i>
+                                </button>
+                            </span>
+
+                            <select title="Parents" class="form-control flow-edit-tag-parent-list"></select>
+
+                            <span class="input-group-text">
+                                <button class="btn btn-sm btn-success flow-edit-tag-parent-save">
+                                    <i class="fas fa-save"></i>
+                                </button>
+                            </span>
+                        </div> <!-- /.col -->
+                    </div><!-- /.row -->
+                    <div class="row m-0">
+                        <div class="col-4">
+                            <code class="flow-edit-tag-tag-guid"></code>
+                        </div>
+
+                        <div class="col-4">
+                            <span>Created</span>
+                            <span
+                                  data-ts=""
+                                  class="flow-long-date-time"
+                            ></span>
+                        </div>
+
+                        <div class="col-4">
+                            <span>Updated</span>
+                            <span
+                                  data-ts=""
+                                  class="flow-long-date-time"
+                            ></span>
+                        </div>
+
+                    </div><!-- /.row -->
+                </div> <!-- /.card-text -->
+            </div> <!-- /.card-body -->
+
+            <div class="card-body">
+                tabs for applied and attributes
+            </div>
+        </div> <!-- /.card -->
+    </div> <!-- /#flow-edit-tag -->
+
+</div> <!-- / anon div to hide modal screens -->
+
+
 
 {# the form values will be set by javascript,
 so the names just have to be the values in the editable typedef parts (or read only

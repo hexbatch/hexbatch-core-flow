@@ -1,20 +1,60 @@
-<ul class="list-group list-group-flush">
+
+<ul class="list-group list-group-flush" data-project_guid="{{ project.flow_project_guid }}">
     {% for tag in project.get_all_owned_tags_in_project(true) %}
     <li class="list-group-item">
-        <div class="d-flex w-100 justify-content-between">
-            <h5 class="me-5">{{ tag.flow_tag_name }}</h5>
-            <ul class="list-group">
-                {% for applied in tag.applied %}
-                    <a href="{% include 'tag/partials/applied/applied-url.twig' with {'applied': applied} %}"
-                       class="list-group-item list-group-item-action"
-                    >
-                        {% include 'tag/partials/applied/applied-title.twig' with {'applied': applied} %}
+        <div class="row">
+            <div class="col-12 col-xl-6">
+                <span class="flow-tag-list-name flow-tag-display flow-tag-{{ project.flow_project_guid }}"
+                      data-tag_guid="{{ tag.flow_tag_guid }}"
+                      style="display: none"
+                >
+                    {{ tag.flow_tag_name }}
+                </span>
+            </div> <!-- /.col -->
 
-                    </a>
-                {% endfor %}
-            </ul>
-        </div>
+            <div class="col-12 col-xl-6">
+                <ul class="list-group">
+                    {% for applied in tag.applied %}
+                        <a href="{% include 'tag/partials/applied/applied-url.twig' with {'applied': applied} %}"
+                           class="list-group-item list-group-item-action flow-tag-applied-target-title"
+                        >
+                            {% include 'tag/partials/applied/applied-title.twig' with {'applied': applied} %}
 
-    </li>
+                        </a>
+                    {% endfor %}
+                </ul>
+            </div> <!-- /.col -->
+        </div> <!-- /.row -->
+    </li> <!-- /.list-group-item -->
     {% endfor %}
-</ul>
+</ul> <!-- /.list-group -->
+
+
+
+<script>
+    jQuery(function($){
+
+
+        /**
+         *
+         * @type {FlowTag[]}
+         */
+        let tags_in_project = {{ project.get_all_owned_tags_in_project(true)|json_encode()|raw }}  ;
+        let tags_here = $('.flow-tag-{{ project.flow_project_guid }}');
+        if (!tags_here.length) {return;}
+
+        /**
+         *
+         * @type {Object.<string, FlowTag>} tag_map
+         */
+        let tag_map = {};
+        for(let i = 0; i < tags_in_project.length; i++) {
+            let node = tags_in_project[i];
+            tag_map[node.flow_tag_guid] = node;
+        }
+        add_tag_attributes_to_dom(tag_map,tags_here);
+        tags_here.show();
+    });
+
+
+</script>

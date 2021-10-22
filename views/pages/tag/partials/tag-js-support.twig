@@ -7,4 +7,15 @@
 
 </script>
 
-<script src="{{ root_url }}/public/resources/js/tags/tag-actions.js"></script>
+<script src="{{ root_url }}/public/resources/js/tags/individual-tag.js"></script>
+
+<script src="{{ root_url }}/public/resources/js/tags/create_select_2_for_tag_search.js"></script>
+
+{% if project.get_current_user_permissions().can_edit %}
+    {% include 'tag/partials/edit-a-tag.twig' %}
+    {% include 'tag/partials/new-tag.twig' %}
+    <script src="{{ root_url }}/public/resources/js/tags/tag-actions.js"></script>
+    <script src="{{ root_url }}/public/resources/js/tags/tag-new.js"></script>
+
+
+{% endif %}

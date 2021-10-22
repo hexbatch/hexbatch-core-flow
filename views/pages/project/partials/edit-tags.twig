@@ -11,14 +11,18 @@
 
 
 
-
 <div class="container p-0 m-1">
 
-    <div class="card" style="width: fit-content">
+    <div class="card col-12 col-lg-9">
 
         <div class="card-header">
             Tags For {{ project.flow_project_title }}
+            <button class="btn btn-success btn-sm float-end flow-new-tag-show-dialog">
+                <i class="bi bi-bookmark-plus"></i>
+                New Tag
+            </button>
         </div>
+
         <div class="card-body">
             {{ include('tag/partials/project-tags-summary-list.twig') }}
         </div>

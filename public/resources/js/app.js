@@ -11,19 +11,25 @@ function flow_check_if_promise (obj) {
     return normal || fnForm;
 }
 
-jQuery(function($){
+jQuery(function(){
+    refresh_auto_formatted_times();
+});
+
+function refresh_auto_formatted_times() {
     $('.flow-long-date-time').each(function() {
         let that = $(this);
         let timestamp = that.data('ts');
-        let date = new Date(timestamp*1000);
+        if (!timestamp ) {return;}
+        let number_of_mine = parseInt(timestamp.toString());
+        if (!number_of_mine || number_of_mine < 0) {return;}
+        let date = new Date(number_of_mine*1000);
         let options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',hour: 'numeric', minute: 'numeric' };
         let ss = new Intl.DateTimeFormat('en-US',options);
         let words = ss.format(date);
         that.text(words);
 
     })
-
-});
+}
 
 /**
  *
@@ -129,4 +135,17 @@ function process_ajax_response(data,success_title,fail_title) {
     }
 
     return ret;
+}
+
+function utterly_destroy_select2(bare_select_control) {
+
+    bare_select_control.val(null).trigger('change');
+
+    bare_select_control.select2('destroy');
+
+    // Unbind the event
+    bare_select_control.off('select2:select');
+
+    //clear the options
+    $('select#flow-find-user-list').empty();
 }

@@ -7,7 +7,7 @@ use JsonSerializable;
 class FlowTagStandardAttribute implements JsonSerializable {
 
     const STD_ATTR_COLOR = 'color';
-    const STD_ATTR_BACKGROUND_COLOR = 'background_color';
+    const STD_ATTR_BACKGROUND_COLOR = 'background-color';
 
     const STANDARD_ATTRIBUTES = [
         self::STD_ATTR_BACKGROUND_COLOR,
@@ -44,10 +44,10 @@ class FlowTagStandardAttribute implements JsonSerializable {
 
         foreach ($tag->attributes as $attribute) {
             if ($attribute->is_standard_attribute) {
-                if ($attribute->tag_attribute_long) {
-                    $value = $attribute->tag_attribute_long;
-                } elseif ($attribute->tag_attribute_text) {
+                if ($attribute->tag_attribute_text) {
                     $value = $attribute->tag_attribute_text;
+                } elseif ($attribute->tag_attribute_long) {
+                    $value = $attribute->tag_attribute_long;
                 } elseif ($attribute->points_to_flow_user_guid) {
                     $value = $attribute->points_to_flow_user_guid;
                 } elseif ($attribute->points_to_flow_project_guid) {
@@ -58,7 +58,8 @@ class FlowTagStandardAttribute implements JsonSerializable {
                     continue;
                 }
 
-                $ret[$attribute->tag_attribute_name] = new FlowTagStandardAttribute($attribute->tag_attribute_name,$value);
+                $at_node = new FlowTagStandardAttribute($attribute->tag_attribute_name,$value);
+                $ret[$attribute->tag_attribute_name] = $at_node->text;
             }
         }
 

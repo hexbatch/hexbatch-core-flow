@@ -20,7 +20,7 @@ use RuntimeException;
 
 class FlowUser extends FlowBase implements JsonSerializable {
     const DEFAULT_USER_PAGE_SIZE = 20;
-    const MAX_SIZE_NAME = 40;
+    const MAX_SIZE_NAME = 39;
     const SESSION_USER_KEY = 'flow_user';
 
     public ?int $flow_user_id;

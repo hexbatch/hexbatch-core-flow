@@ -2,6 +2,7 @@
 
 namespace app\models\tag;
 
+use app\hexlet\JsonHelper;
 use app\models\base\FlowBase;
 use Exception;
 use InvalidArgumentException;
@@ -100,7 +101,14 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
 
 
     public static function check_valid_name($words) : bool  {
-        return static::minimum_check_valid_name($words,static::LENGTH_ATTRIBUTE_NAME);
+
+        $b_min_ok =  static::minimum_check_valid_name($words,static::LENGTH_ATTRIBUTE_NAME);
+        if (!$b_min_ok) {return false;}
+        //no special punctuation
+        if (preg_match('/[\'"<>`]/', $words, $output_array)) {
+            return false;
+        }
+        return true;
     }
 
 
@@ -113,6 +121,8 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
             if (empty($this->tag_attribute_name)) {
                 throw new InvalidArgumentException("Attribute Name cannot be empty");
             }
+
+            $this->tag_attribute_name = JsonHelper::to_utf8($this->tag_attribute_name);
 
 
             $b_match = static::check_valid_name($this->tag_attribute_name);
@@ -152,6 +162,8 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
 
             if (empty($this->tag_attribute_text)) {
                 $this->tag_attribute_text = null;
+            } else {
+                $this->tag_attribute_text = htmlentities(JsonHelper::to_utf8($this->tag_attribute_text));
             }
 
 

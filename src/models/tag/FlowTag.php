@@ -3,6 +3,7 @@
 namespace app\models\tag;
 
 
+use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use Exception;
@@ -123,6 +124,8 @@ class FlowTag extends FlowBase implements JsonSerializable {
         }
 
         foreach ($object as $key => $val) {
+            if ($key === 'attributes') {continue;}
+            if ($key === 'applied') {continue;}
             if (property_exists($this,$key)) {
                 $this->$key = $val;
             }
@@ -139,6 +142,21 @@ class FlowTag extends FlowBase implements JsonSerializable {
         if (count($attributes_to_copy)) {
             foreach ($attributes_to_copy as $att) {
                 $this->attributes[] = new FlowTagAttribute($att);
+            }
+        }
+
+
+        if (is_object($object) && property_exists($object,'applied') && is_array($object->applied)) {
+            $applied_to_copy = $object->applied;
+        } elseif (is_array($object) && array_key_exists('attributes',$object) && is_array($object['attributes'])) {
+            $applied_to_copy  = $object['applied'];
+        } else {
+            $applied_to_copy = [];
+        }
+        $this->applied = [];
+        if (count($applied_to_copy)) {
+            foreach ($applied_to_copy as $app) {
+                $this->applied[] = new FlowAppliedTag($app);
             }
         }
 
@@ -507,7 +525,13 @@ class FlowTag extends FlowBase implements JsonSerializable {
     }
 
     public static function check_valid_name($words) : bool  {
-        return static::minimum_check_valid_name($words,static::LENGTH_TAG_NAME);
+        $b_min_ok =  static::minimum_check_valid_name($words,static::LENGTH_TAG_NAME);
+        if (!$b_min_ok) {return false;}
+        //no special punctuation
+        if (preg_match('/[\'"<>`]/', $words, $output_array)) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -541,7 +565,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
     /**
      * @throws Exception
      */
-    public function save(bool $b_do_transaction = false) :void {
+    public function save(bool $b_do_transaction = false, bool $b_save_children = false) :void {
         $db = null;
 
         try {
@@ -558,6 +582,8 @@ class FlowTag extends FlowBase implements JsonSerializable {
                     "First character cannot be a number. Name Cannot be greater than $max_len. ".
                     " Title cannot be a hex number greater than 25 and cannot be a decimal number");
             }
+
+            $this->flow_tag_name = JsonHelper::to_utf8($this->flow_tag_name);
 
 
             $db = static::get_connection();
@@ -611,11 +637,19 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 }
             }
 
-            foreach ($this->attributes as $attribute) {
-                $attribute->flow_tag_id = $this->flow_tag_id;
-                $attribute->flow_applied_tag_id = null;
-                $attribute->save();
+            if ($b_save_children) {
+                foreach ($this->attributes as $attribute) {
+                    $attribute->flow_tag_id = $this->flow_tag_id;
+                    $attribute->flow_applied_tag_id = null;
+                    $attribute->save();
+                }
+
+                foreach ($this->applied as $app) {
+                    $app->flow_tag_id = $this->flow_tag_id;
+                    $app->save();
+                }
             }
+
 
             if ($b_do_transaction) {$db->commit(); }
 
