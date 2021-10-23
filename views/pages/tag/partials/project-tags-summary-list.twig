@@ -34,12 +34,11 @@
 <script>
     jQuery(function($){
 
-
         /**
          *
          * @type {FlowTag[]}
          */
-        let tags_in_project = {{ project.get_all_owned_tags_in_project(true)|json_encode()|raw }}  ;
+        let tags_in_project = ({{ project.get_all_owned_tags_in_project(true)|json_encode()|raw }}) || null  ;
         let tags_here = $('.flow-tag-{{ project.flow_project_guid }}');
         if (!tags_here.length) {return;}
 
@@ -52,9 +51,26 @@
             let node = tags_in_project[i];
             tag_map[node.flow_tag_guid] = node;
         }
-        add_tag_attributes_to_dom(tag_map,tags_here);
+        // noinspection JSCheckFunctionSignatures
+        add_tag_attributes_to_dom(tag_map,tags_here,false);
         tags_here.show();
+
+        tags_here.click(function()  {
+            let tag_dom = $(this);
+            let tag_guid = tag_dom.data('tag_guid');
+            if (!tag_guid) {console.warn("No tag guid found for ",tag_dom); return;}
+            if (tag_guid in tag_map) {
+
+                /**
+                 * @type {FlowTag} tag
+                 */
+                let tag = tag_map[tag_guid];
+                flow_tag_show_editor(tag);
+            }
+        });
     });
+
+
 
 
 </script>

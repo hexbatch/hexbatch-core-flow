@@ -1,4 +1,4 @@
-//for project history
+
 
 jQuery(function ($){
     let modal;
@@ -23,7 +23,7 @@ jQuery(function ($){
         onOpen: function() {
             //clear out older values
             tag_name_input.val();
-            create_select_2_for_tag_search(bare_select_control,false,"Optionally select a parent",false);
+            create_select_2_for_tag_search(bare_select_control,false,"Optionally select a parent",false,null);
 
         },
         onClose: function() {

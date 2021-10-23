@@ -81,10 +81,11 @@ function get_tag_data(tag) {
 
 /**
  *
- * @param {Object.<string, FlowTag>}  tag_map
+ * @param {Object<string, FlowTag>}  tag_map
  * @param {string|jQuery} tags_here_jquery_or_string
+ * @param {boolean} b_allow_links
  */
-function add_tag_attributes_to_dom(tag_map,tags_here_jquery_or_string) {
+function add_tag_attributes_to_dom(tag_map,tags_here_jquery_or_string,b_allow_links) {
     let tags_here = $(tags_here_jquery_or_string);
     if (!tags_here.length) {return;}
 
@@ -107,9 +108,10 @@ function add_tag_attributes_to_dom(tag_map,tags_here_jquery_or_string) {
             tag_dom.addClass(tag_classes.join(' '));
 
             for(let data_key in tag_data) {
+                if (!b_allow_links && (data_key === 'tag_link_url')) {continue;}
                 tag_dom.data(data_key,tag_data);
                 if (typeof tag_data === 'string' || tag_data instanceof String) {
-                    tag_dom.attr(data_key,tag_data);
+                    tag_dom.attr('data-'+data_key,tag_data);
                 }
             }
         }

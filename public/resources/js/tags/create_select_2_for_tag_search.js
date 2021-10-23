@@ -4,8 +4,10 @@
  * @param {boolean} b_multi
  * @param {?string} placeholder
  * @param {boolean} b_tags
+ * @param {?string} not_guid
  */
-function create_select_2_for_tag_search(bare_select_control,b_multi,placeholder,b_tags) {
+function create_select_2_for_tag_search(bare_select_control,b_multi,
+                                        placeholder,b_tags,not_guid) {
     /**
      *
      * @param {FlowTag} tag
@@ -82,17 +84,23 @@ function create_select_2_for_tag_search(bare_select_control,b_multi,placeholder,
     }
 
     function process_results_for_dropdown (data) {
-        // Transforms the top-level key of the response object from 'items' to 'results'
 
-        let id_thing = 1;
+        let id_thing = 10;
+        let ret = [];
         for(let i in data.results) {
             /**
              * @type {FlowTag}
              */
             let tag = data.results[i];
+            if (not_guid) {
+                if (tag.flow_tag_guid === not_guid) { continue;}
+            }
+
             tag.id = id_thing ++;
             tag.text = tag.flow_tag_name;
+            ret.push(tag);
         }
+        data.results = ret;
         return data;
     }
 
