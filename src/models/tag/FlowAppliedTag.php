@@ -9,6 +9,7 @@ use InvalidArgumentException;
 use JsonSerializable;
 use PDO;
 use RuntimeException;
+use Slim\Interfaces\RouteParserInterface;
 
 class FlowAppliedTag extends FlowBase implements JsonSerializable {
 
@@ -30,6 +31,8 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
     public ?string $tagged_flow_project_owner_user_guid;
     public ?string $tagged_flow_project_owner_user_name;
 
+    public ?string $tagged_url;
+
 
     public function __construct($object=null){
 
@@ -47,6 +50,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
         $this->tagged_title = null;
         $this->tagged_flow_project_owner_user_guid = null;
         $this->tagged_flow_project_owner_user_name = null;
+        $this->tagged_url = null;
 
         if (empty($object)) {
             return;
@@ -72,7 +76,25 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
             "tagged_title" => $this->tagged_title,
             "tagged_flow_project_owner_user_guid" => $this->tagged_flow_project_owner_user_guid,
             "tagged_flow_project_owner_user_name" => $this->tagged_flow_project_owner_user_name,
+            "tagged_url" => $this->tagged_url,
         ];
+    }
+
+    public function set_link_for_tagged(RouteParserInterface $routeParser) {
+
+        if ($this->tagged_flow_project_guid) {
+            $this->tagged_url = $routeParser->urlFor('single_project_home',[
+                "user_name" => $this->tagged_flow_project_owner_user_name,
+                "project_name" => $this->tagged_title
+            ]);
+        } elseif ( $this->tagged_flow_user_guid) {
+            $this->tagged_url = $routeParser->urlFor('user_page',[
+                "user_name" => $this->tagged_title,
+            ]);
+        } else {
+            static::get_logger()->warning("Not able to genenerate a link for applied");
+        }
+
     }
 
     /**

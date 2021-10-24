@@ -33,6 +33,10 @@
     <link rel="stylesheet" href="{{ root_url }}/node_modules/sceditor/minified/themes/default.min.css" />
     <link rel="stylesheet" href="{{ root_url }}/public/resources/css/highlight/googlecode.css" />
 
+    <!-- Sweat Alert  -->
+    <link rel="stylesheet" href="{{ root_url }}/node_modules/sweetalert2/dist/sweetalert2.min.css" />
+
+
     <title>{{ page_title }}</title>
 
     <script src="{{ root_url }}/node_modules/jquery/dist/jquery.min.js" ></script>
@@ -68,6 +72,8 @@
     </div> <!-- /.container-fluid -->
 </main>
 
+
+
 {{ include('main/partials/bottom-nav.twig') }}
 
 
@@ -84,10 +90,12 @@
 <script src="{{ root_url }}/node_modules/sceditor/minified/formats/bbcode.js"></script>
 
 <script src="{{ root_url }}/public/resources/js/app.js"></script>
+<script src="{{ root_url }}/public/resources/js/tags/create_select_2_for_general_search.js"></script>
 
 <script src="{{ root_url }}/public/resources/js/toast.js"></script>
 
 <script type="text/javascript" src="{{ root_url }}/node_modules/diff2html/bundles/js/diff2html-ui.min.js"></script>
+<script type="text/javascript" src="{{ root_url }}/node_modules/sweetalert2/dist/sweetalert2.all.js"></script>
 
 {#{{ dump_session() }}#}
 

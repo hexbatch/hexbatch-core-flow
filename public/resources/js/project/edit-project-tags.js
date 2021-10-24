@@ -106,11 +106,11 @@ jQuery(function ($){
             if (working_tag.flow_tag_guid) {
                 edit_tag(working_tag,function(response) {
                     console.log("Updated tag",response)
-                });
+                },function(ret) {console.warn(ret);});
             } else {
                 create_tag(working_tag,function(response) {
                     console.log("created tag",response)
-                });
+                },function(ret) {console.warn(ret);});
             }
 
         }

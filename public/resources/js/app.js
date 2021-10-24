@@ -56,6 +56,13 @@ function set_object_with_flow_ajax_token_data(obj) {
     obj._CSRF_TOKEN = token_csrf_token_input.val();
 }
 
+/**
+ *
+ * @param data
+ * @param {?string} success_title
+ * @param {?string} fail_title
+ * @returns {FlowBasicResponse}
+ */
 function process_ajax_response(data,success_title,fail_title) {
     /**
      * @type {FlowBasicResponse}
@@ -116,7 +123,7 @@ function process_ajax_response(data,success_title,fail_title) {
         update_root_flow_ajax_token(ret.token);
     }
 
-    if (ret.success) {
+    if (ret.success && success_title) {
         do_toast({
             title:success_title,
             content: ret.message,
@@ -124,13 +131,15 @@ function process_ajax_response(data,success_title,fail_title) {
             type:'success'
         });
     } else {
-        do_toast({
-            title:fail_title,
-            subtitle:'There was an issue with the ajax',
-            content: ret.message,
-            delay:20000,
-            type:'error'
-        });
+        if (fail_title) {
+            do_toast({
+                title:fail_title,
+                subtitle:'There was an issue with the ajax',
+                content: ret.message,
+                delay:20000,
+                type:'error'
+            });
+        }
         console.warn(ret);
     }
 
@@ -149,3 +158,24 @@ function utterly_destroy_select2(bare_select_control) {
     //clear the options
     $('select#flow-find-user-list').empty();
 }
+
+function toggle_action_spinner(me,state) {
+    if (state === 'loading') {
+        me.find('.flow-action').hide();
+        me.find('.flow-spinner').show();
+    } else if (state === 'normal') {
+        me.find('.flow-action').show();
+        me.find('.flow-spinner').hide();
+    } else {
+        console.warn("invalid state for spinner things");
+    }
+}
+
+/**
+ * {Swal}
+ */
+let my_swal = null;
+
+jQuery(function() {
+   my_swal = SweetAlert;
+});

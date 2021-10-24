@@ -7,13 +7,12 @@
         <div class="card col-12" >
 
             <div class="card-header">
-                <span>
-                    Tag
-                </span>
-                <span class="flow-edit-tag-name-in-title"></span>
 
-                <button class="btn btn-success btn-sm float-end">
+                <span class="flow-edit-tag-name-in-title flow-tag-display fw-bold" data-tag_guid=""></span>
+
+                <button class="btn btn-success btn-sm float-end flow-edit-tag-delete-action">
                     <i class="bi bi-bookmark-x bg-danger text-warning"></i>
+                    <i class="fas fa-spinner fa-pulse flow-spinner"  style="display: none"></i>
                     Delete
                 </button>
             </div>
@@ -35,8 +34,9 @@
                                        title="Tag Name" placeholder="Tag Name">
 
                                 <span class="input-group-text">
-                                    <button class="btn btn-sm btn-success flow-edit-tag-title-save">
-                                        <i class="fas fa-save"></i>
+                                    <button class="btn btn-sm btn-success flow-edit-tag-title-save" type="button">
+                                        <i class="fas fa-save flow-action"></i>
+                                        <i class="fas fa-spinner fa-pulse flow-spinner"  style="display: none"></i>
                                     </button>
                                 </span>
                             </div>
@@ -53,7 +53,7 @@
 
                                 <span class="me-1">
 
-                                     <button class="btn btn-sm btn-success ms-1" id="flow-edit-tag-parent-goto">
+                                     <button class="btn btn-sm btn-success flow-edit-tag-parent-goto ms-1" >
                                         <i class="bi bi-arrow-bar-up"></i>
                                     </button>
 
@@ -67,7 +67,8 @@
 
                                 <span class="float-end ms-2">
                                    <button class="btn btn-sm btn-success flow-edit-tag-parent-save">
-                                        <i class="fas fa-save"></i>
+                                        <i class="fas fa-save flow-action"></i>
+                                       <i class="fas fa-spinner fa-pulse  flow-spinner" style="display: none"></i>
                                     </button>
                                 </span>
 
@@ -116,25 +117,54 @@
             </div> <!-- /.card-body -->
 
             <div class="card-body">
-                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <ul class="nav nav-tabs flow-edit-tag-tabs"  role="tablist">
                     <li class="nav-item" role="presentation">
-                        <a class="nav-link active" id="home-tab" data-bs-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Home</a>
+                        <button class="nav-link flow-edit-tag-attribute-tab active"
+                                data-bs-toggle="tab"  type="button" role="tab" aria-controls="attributes" aria-selected="true"
+                        >
+                            Attributes
+                        </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <a class="nav-link" id="profile-tab" data-bs-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">Profile</a>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <a class="nav-link" id="contact-tab" data-bs-toggle="tab" href="#contact" role="tab" aria-controls="contact" aria-selected="false">Contact</a>
+                        <button class="nav-link flow-edit-tag-applied-tab"
+                                data-bs-toggle="tab"  type="button" role="tab" aria-controls="applied" aria-selected="false"
+                        >
+                            Applied
+                        </button>
                     </li>
                 </ul>
-                <div class="tab-content" id="myTabContent">
-                    <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">A</div>
-                    <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">B</div>
-                    <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">C</div>
+                <div class="tab-content">
+
+                    <div class="tab-pane fade show active flow-edit-tag-attribute-content"  role="tabpanel" aria-labelledby="attributes-tab">
+                        <div class="text-center w-100 mt-2">
+                            <button class="btn btn-sm btn-success flow-create-attribute-action">
+                                New Attribute
+                                <i class="fas fa-plus-circle"></i>
+                            </button>
+                        </div>
+                        <ul class="list-group list-group-flush mt-1"></ul>
+                    </div>
+
+                    <div class="tab-pane fade flow-edit-tag-applied-content"  role="tabpanel" aria-labelledby="applied-tab">
+                        <ul class="list-group list-group-flush"></ul>
+                    </div>
                 </div>
             </div>
         </div> <!-- /.card -->
     </div> <!-- /#flow-edit-tag -->
+
+
+    <!-- template for line -->
+    <ul id="flow-attribute-one-line-template-holder">
+    {% include 'tag/partials/attribute/attribute-one-line-summary.twig' %}
+    </ul>
+
+    <!-- template for line -->
+    <ul id="flow-applied-one-line-template-holder">
+    {% include 'tag/partials/applied/applied-one-line-summary.twig' %}
+    </ul>
+
+    {% include 'tag/partials/attribute/edit-attribute.twig' %}}
 
 </div> <!-- / anon div to hide modal screens -->
 

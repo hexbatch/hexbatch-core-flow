@@ -81,6 +81,8 @@ sceditor to edit bbcode https://www.sceditor.com/
 
 diff2html for showing diffs in a nice way , see https://diff2html.xyz/index.html
 
+sweetalert2 for confirm boxes and simple popups https://sweetalert2.github.io/
+
 ### installation uses npm
  Run `nmp i` to install js dependencies that are not saved in the repo
  

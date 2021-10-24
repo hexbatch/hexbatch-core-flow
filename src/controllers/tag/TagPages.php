@@ -68,6 +68,16 @@ class TagPages extends BasePages
         }
 
         $matches = FlowTag::get_tags($search_params,$page);
+        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+        foreach ($matches as $mtag) {
+            foreach ( $mtag->applied as $mapp) {
+                $mapp->set_link_for_tagged($routeParser);
+            }
+
+            foreach ( $mtag->attributes as $matt) {
+                $matt->set_link_for_pointee($routeParser);
+            }
+        }
 
 
         $b_more = true;

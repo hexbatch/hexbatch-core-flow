@@ -8,6 +8,7 @@ use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
 use RuntimeException;
+use Slim\Interfaces\RouteParserInterface;
 
 class FlowTagAttribute extends FlowBase implements JsonSerializable {
 
@@ -34,6 +35,12 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     public ?string $points_to_flow_project_guid;
 
     public bool $is_standard_attribute;
+    public ?bool $is_inherited;
+
+    public ?string $points_to_title;
+    public ?string $points_to_admin_name;
+    public ?string $points_to_admin_guid;
+    public ?string $points_to_url;
 
     public function has_enough_data_set() :bool {
         if (!$this->flow_tag_id) {return false;}
@@ -86,6 +93,12 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         $this->points_to_flow_entry_guid = null ;
         $this->points_to_flow_user_guid = null ;
         $this->points_to_flow_project_guid = null ;
+        $this->is_inherited = null;
+        $this->points_to_title = null;
+        $this->points_to_admin_name = null;
+        $this->points_to_admin_guid = null;
+        $this->points_to_url = null;
+
         if (empty($object)) {
             return;
         }
@@ -95,6 +108,16 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                 $this->$key = $val;
             }
         }
+
+        if (empty($this->flow_tag_attribute_guid)) { $this->flow_tag_attribute_guid = null;}
+        if (empty($this->flow_tag_guid)) { $this->flow_tag_guid = null;}
+        if (empty($this->flow_applied_tag_guid)) { $this->flow_applied_tag_guid = null;}
+        if (empty($this->points_to_flow_user_guid)) { $this->points_to_flow_user_guid = null;}
+        if (empty($this->points_to_flow_project_guid)) { $this->points_to_flow_project_guid = null;}
+        if (empty($this->points_to_flow_entry_guid)) { $this->points_to_flow_entry_guid = null;}
+        if (empty($this->points_to_admin_guid)) { $this->points_to_admin_guid = null;}
+        if (empty($this->tag_attribute_long)) { $this->tag_attribute_long = null;}
+        if (empty($this->tag_attribute_text)) { $this->tag_attribute_text = null;}
 
         $this->is_standard_attribute = FlowTagStandardAttribute::is_standard_attribute($this);
     }
@@ -244,7 +267,12 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
             "tag_attribute_text" => $this->tag_attribute_text,
             "created_at_ts" => $this->applied_created_at_ts,
             "updated_at_ts" => $this->applied_updated_at_ts,
-            "is_standard_attribute" => $this->is_standard_attribute
+            "is_standard_attribute" => $this->is_standard_attribute,
+            "is_inherited" => $this->is_inherited,
+            "points_to_title" => $this->points_to_title,
+            "points_to_admin_guid" => $this->points_to_admin_guid,
+            "points_to_admin_name" => $this->points_to_admin_name,
+            "points_to_url" => $this->points_to_url
 
         ];
     }
@@ -252,5 +280,21 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     public function delete_attribute() {
         $db = static::get_connection();
         $db->delete('flow_tag_attributes',['id'=>$this->flow_tag_attribute_id]);
+    }
+
+
+    public function set_link_for_pointee(RouteParserInterface $routeParser) {
+
+        if ($this->points_to_flow_project_guid) {
+            $this->points_to_url = $routeParser->urlFor('single_project_home',[
+                "user_name" => $this->points_to_admin_name,
+                "project_name" => $this->points_to_title
+            ]);
+        } elseif ( $this->points_to_flow_user_guid) {
+            $this->points_to_url = $routeParser->urlFor('user_page',[
+                "user_name" => $this->points_to_title,
+            ]);
+        }
+
     }
 }

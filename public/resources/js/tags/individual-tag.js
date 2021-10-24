@@ -81,6 +81,40 @@ function get_tag_data(tag) {
 
 /**
  *
+ * @type {Object.<string, FlowTag>} remember_da_fallen_tags
+ */
+let remember_da_fallen_tags = {};
+
+/**
+ *
+ * @param {FlowTag} tag
+ */
+function update_tag_name_and_style_in_page(tag) {
+    let tag_map = {}
+    tag_map[tag.flow_tag_guid] = tag;
+    let victims = $(`.flow-tag-display[data-tag_guid="${tag.flow_tag_guid}"]`);
+    add_tag_attributes_to_dom(tag_map,victims,false);
+
+    victims.text(tag.flow_tag_name);
+
+    if (tag.flow_tag_guid in remember_da_fallen_tags) {
+        victims.addClass('text-decoration-line-through');
+    }
+}
+
+/**
+ *
+ * @param {FlowTag} tag
+ */
+function mark_tag_as_deleted_in_page(tag) {
+
+    let victims = $(`.flow-tag-display[data-tag_guid="${tag.flow_tag_guid}"]`);
+    victims.addClass('text-decoration-line-through');
+    remember_da_fallen_tags[tag.flow_tag_guid] = tag;
+}
+
+/**
+ *
  * @param {Object<string, FlowTag>}  tag_map
  * @param {string|jQuery} tags_here_jquery_or_string
  * @param {boolean} b_allow_links
@@ -113,6 +147,10 @@ function add_tag_attributes_to_dom(tag_map,tags_here_jquery_or_string,b_allow_li
                 if (typeof tag_data === 'string' || tag_data instanceof String) {
                     tag_dom.attr('data-'+data_key,tag_data);
                 }
+            }
+
+            if (tag.flow_tag_guid in remember_da_fallen_tags) {
+                tag_dom.addClass('text-decoration-line-through');
             }
         }
     });

@@ -5,7 +5,6 @@ jQuery(function ($){
     let editing_div = $("div#flow-new-tag-dialog");
     let bare_select_control = editing_div.find('select#flow-new-tag-parent-list');
     let tag_name_input = editing_div.find('input#flow-new-tag-name');
-    let body = $('body');
 
     /**
      * @type {?FlowTag}
@@ -13,7 +12,7 @@ jQuery(function ($){
     let parent_tag = null;
 
 
-    // noinspection JSPotentiallyInvalidConstructorUsage,JSUnusedGlobalSymbols
+
     modal = new tingle.modal({
         footer: true,
         stickyFooter: false,
@@ -45,9 +44,14 @@ jQuery(function ($){
         let tag_name = tag_name_input.val();
         if (tag_name) {
             create_tag({flow_tag_name: tag_name,parent_tag_guid:parent_guid}
-                ,function(response) {
+                ,
+                function(response) {
                     console.log('created tag',response)
                     modal.close();
+                    window.location.reload(true);
+                },
+                function() {
+                    //do nothing
                 });
         }
 
@@ -79,10 +83,10 @@ jQuery(function ($){
 
 
 
-
-
-    body.on('click', 'button#flow-new-tag-parent-goto', function () {
-        //todo add go to parent from new
+    $('button#flow-new-tag-parent-goto').click(function() {
+        if (parent_tag) {
+            flow_tag_show_editor(parent_tag);
+        }
     });
 
 

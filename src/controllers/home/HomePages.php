@@ -92,20 +92,23 @@ class HomePages
 
         $search = new GeneralSearchParams();
 
-        if (isset($args['term'])) {
-            $search->title = trim($args['term']);
+        $root = $args;
+        if (isset($args['search'])) { $root = $args['search'];}
+
+        if (isset($root['term'])) {
+            $search->title = trim($root['term']);
         }
 
-        if (isset($args['guid'])) {
-            $search->guid = trim($args['guid']);
+        if (isset($root['guid'])) {
+            $search->guid = trim($root['guid']);
         }
 
-        if (isset($args['title'])) {
-            $search->title = trim($args['title']);
+        if (isset($root['title'])) {
+            $search->title = trim($root['title']);
         }
 
-        if (isset($args['created_at_ts']) && intval($args['created_at_ts'])) {
-            $search->created_at_ts = (int)($args['created_at_ts']);
+        if (isset($root['created_at_ts']) && intval($root['created_at_ts'])) {
+            $search->created_at_ts = (int)($root['created_at_ts']);
         }
 
 

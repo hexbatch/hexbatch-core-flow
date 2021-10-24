@@ -1,0 +1,104 @@
+<div class="container attribute-edit-container" data-attribute_guid = "">
+    <div class="card col-12" >
+
+        <div class="card-header">
+
+            <span class="flow-edit-attribute-name-in-title fw-bold" ></span>
+            For
+            <span class="flow-edit-attribute-of-tag flow-tag-display fw-bold" data-tag_guid=""></span>
+
+            <button class="btn btn-danger btn-sm float-end flow-edit-attribute-delete-action">
+                <i class="fas fa-minus-circle"></i>
+                <i class="fas fa-spinner fa-pulse flow-spinner"  style="display: none"></i>
+                Delete
+            </button>
+        </div>
+
+        <div class="card-body flow-edit-tag-input-fields">
+
+            <div class="card-text ">
+                <div class="row m-0">
+                    <div class="col-12 col-xl-6">
+
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                   Attribute Name
+                            </span>
+
+                            <input type="text" class="form-control flow-edit-attribute-name"
+                                   maxlength="40"
+                                   title="Attribute Name" placeholder="Attribute Name">
+
+
+                        </div> <!-- /.input-group -->
+
+
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                   Integer value
+                            </span>
+
+                            <input type="number" class="form-control flow-edit-attribute-integer"
+                                   maxlength="40"
+                                   title="Integer Value" placeholder="Integer Value">
+
+
+                        </div> <!-- /.input-group -->
+
+                    </div> <!-- /.col -->
+
+                    <div class="col-12 col-xl-6 mt-2 mt-xl-0">
+
+
+                        <label class="input-group-text">
+                            <span class="me-2">
+                                Change Points To
+                            </span>
+
+                            <select title="Things to point to" class="form-control flow-edit-attribute-point-list p-0"></select>
+                        </label>
+
+
+                        <div class="ms-2">
+                            <a class="flow-edit-attribute-link">
+                                <span class="flow-attribute-link-title small"></span>
+                            </a>
+                        </div>
+
+                    </div> <!-- /.col -->
+                </div> <!-- /.row -->
+                <div class="row">
+                    <div class="col-4">
+                        <div class="small">
+                            <code class="flow-edit-attribute-guid"></code>
+                        </div>
+                    </div> <!-- /.col -->
+
+                    <div class="col-4">
+                        <div class="small">
+                            <span>Created</span>
+                            <span
+                                    data-ts=""
+                                    class="flow-edit-attribute-created-at flow-long-date-time"
+                            ></span>
+                        </div>
+                    </div><!-- /.col -->
+
+                    <div class="col-4">
+                        <div class="small">
+                            <span>Updated</span>
+                            <span
+                                    data-ts=""
+                                    class="flow-edit-attribute-modified-at flow-long-date-time"
+                            ></span>
+                        </div>
+                    </div> <!-- /.col -->
+                </div> <!-- /.row -->
+                <div class="row">
+                    <label>Text Value</label>
+                    <textarea class="form-control flow-edit-attribute-text-value w-100" rows="10" title="Text Value"></textarea>
+                </div>
+            </div> <!-- /.card-text -->
+        </div> <!-- /.card-body -->
+    </div><!-- /.card-->
+</div> <!-- /.container -->

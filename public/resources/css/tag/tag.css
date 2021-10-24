@@ -44,6 +44,8 @@ div.flow-tag-new-tingle  div.tingle-modal-box {
 
 }
 
+
+/* tag edit */
 div#flow-new-tag-dialog .flow-tag-new-parent-list ,
 div.flow-edit-container .flow-edit-tag-parent-list
 {
@@ -62,10 +64,14 @@ div.flow-tag-edit-tingle div.card-body.flow-edit-tag-input-fields {
     padding: 0.5em;
 }
 
+span.flow-attribute-text-value-preview {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+}
 
 
-
-/*Displaying in the select */
+/*Displaying the tag */
 span.flow-tag-display {
     padding: 0.125em;
 }

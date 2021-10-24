@@ -60,6 +60,9 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
         $attributes = static::get_attribute_map($this);
 
+        foreach ($attributes as $attribute) {
+            $attribute->is_inherited = $attribute->flow_tag_guid !== $this->flow_tag_guid;
+        }
 
         return [
             "flow_tag_guid" => $this->flow_tag_guid,
@@ -80,7 +83,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
     /**
      * Gets the attribute list merged with the parent's attribute, which may be altered by its parent
      * @param FlowTag|null $tag
-     * @return FlowTag[]
+     * @return FlowTagAttribute[]
      */
     public static function get_attribute_map(?FlowTag $tag) :array {
         $ret = [];
@@ -91,11 +94,11 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
         foreach ($tag->attributes as $attribute) {
             if (array_key_exists($attribute->tag_attribute_name,$ret)) {
-                $ret[$attribute->tag_attribute_name] =
-                    FlowTagAttribute::merge_attribute($attribute,$ret[$attribute->tag_attribute_name]);
+                $new_attribute = FlowTagAttribute::merge_attribute($attribute,$ret[$attribute->tag_attribute_name]);
             } else {
-                $ret[$attribute->tag_attribute_name] = $attribute;
+                $new_attribute = FlowTagAttribute::merge_attribute($attribute,null);
             }
+            $ret[$attribute->tag_attribute_name] = $new_attribute;
         }
 
         return $ret;
@@ -218,6 +221,11 @@ class FlowTag extends FlowBase implements JsonSerializable {
         if ($me->parent_tag_id && !$this->parent_tag_guid) {
             $me->parent_tag_id = null;
             $me->parent_tag_guid = null;
+        }
+
+        if (!$this->parent_tag_id && $this->parent_tag_guid) {
+            $me->parent_tag_id = null;
+            $me->parent_tag_guid = $this->parent_tag_guid;
         }
 
 
@@ -369,7 +377,19 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
                     HEX(point_entry.flow_entry_guid)        as points_to_flow_entry_guid,
                     HEX(point_user.flow_user_guid)          as points_to_flow_user_guid,
-                    HEX(point_project.flow_project_guid)    as points_to_flow_project_guid
+                    HEX(point_project.flow_project_guid)    as points_to_flow_project_guid,
+       
+                    IF(
+                        point_entry.flow_entry_title,
+                            point_entry.flow_entry_title,
+                            IF(point_user.flow_user_name,
+                                point_user.flow_user_name,
+                                point_project.flow_project_title
+                                )
+                        ) as points_to_title,
+       
+                    HEX(point_project_admin.flow_user_guid) as points_to_admin_guid,
+                    point_project_admin.flow_user_name as points_to_admin_name
        
                 FROM flow_tags t
                 INNER JOIN  (
@@ -409,6 +429,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 LEFT JOIN flow_entries point_entry on attribute.points_to_entry_id = point_entry.id
                 LEFT JOIN flow_users point_user on attribute.points_to_user_id = point_user.id 
                 LEFT JOIN flow_projects point_project on attribute.points_to_project_id = point_project.id 
+                LEFT JOIN flow_users point_project_admin on point_project_admin.id = point_project.admin_flow_user_id
                 WHERE 1 
                 ORDER BY flow_tag_id,flow_tag_attribute_id DESC ;
                 ";
@@ -542,7 +563,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
      */
     public  function save_tag_return_clones(?string $attribute_name, FlowTagAttribute &$attribute = null): FlowTag
     {
-        $this->save(true);
+        $this->save(true,true);
         $altered_tag = $this->clone_refresh();
 
         if ($attribute_name) {
@@ -662,6 +683,9 @@ class FlowTag extends FlowBase implements JsonSerializable {
     }
 
     public function delete_tag() {
+        if (count($this->children_list)) {
+            throw new InvalidArgumentException("Cannot delete tag, it has children");
+        }
         $db = static::get_connection();
         $db->delete('flow_tags',['id'=>$this->flow_tag_id]);
     }

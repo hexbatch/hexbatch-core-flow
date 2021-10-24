@@ -3,8 +3,8 @@
     {% for tag in project.get_all_owned_tags_in_project(true) %}
     <li class="list-group-item">
         <div class="row">
-            <div class="col-12 col-xl-6">
-                <span class="flow-tag-list-name flow-tag-display flow-tag-{{ project.flow_project_guid }}"
+            <div class="col-12 col-xl-6 flow-tag-show-edit-on-click" data-tag_guid="{{ tag.flow_tag_guid }}">
+                <span class="flow-tag-list-name flow-tag-display  flow-tag-{{ project.flow_project_guid }}"
                       data-tag_guid="{{ tag.flow_tag_guid }}"
                       style="display: none"
                 >
@@ -16,10 +16,11 @@
                 <ul class="list-group">
                     {% for applied in tag.applied %}
                         <a href="{% include 'tag/partials/applied/applied-url.twig' with {'applied': applied} %}"
-                           class="list-group-item list-group-item-action flow-tag-applied-target-title"
+                           class="list-group-item list-group-item-action "
                         >
+                            <span class="flow-tag-applied-target-title" data-applied_guid="{{ applied.flow_applied_tag_guid }}">
                             {% include 'tag/partials/applied/applied-title.twig' with {'applied': applied} %}
-
+                            </span>
                         </a>
                     {% endfor %}
                 </ul>
@@ -55,19 +56,6 @@
         add_tag_attributes_to_dom(tag_map,tags_here,false);
         tags_here.show();
 
-        tags_here.click(function()  {
-            let tag_dom = $(this);
-            let tag_guid = tag_dom.data('tag_guid');
-            if (!tag_guid) {console.warn("No tag guid found for ",tag_dom); return;}
-            if (tag_guid in tag_map) {
-
-                /**
-                 * @type {FlowTag} tag
-                 */
-                let tag = tag_map[tag_guid];
-                flow_tag_show_editor(tag);
-            }
-        });
     });
 
 

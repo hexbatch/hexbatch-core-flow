@@ -5,6 +5,11 @@
         project_name: project.flow_project_title
     } ) -}}";
 
+    let get_tags_ajax_url = "{{-  url_for('get_tags_ajax',{
+        user_name: project.get_admin_user().flow_user_name ,
+        project_name: project.flow_project_title
+    }) -}}";
+
 </script>
 
 <script src="{{ root_url }}/public/resources/js/tags/individual-tag.js"></script>
@@ -14,9 +19,11 @@
 {% if project.get_current_user_permissions().can_edit %}
     {% include 'tag/partials/edit-a-tag.twig' %}
     {% include 'tag/partials/new-tag.twig' %}
+    <script src="{{ root_url }}/public/resources/js/tags/proxy-attribute.js"></script>
     <script src="{{ root_url }}/public/resources/js/tags/tag-actions.js"></script>
     <script src="{{ root_url }}/public/resources/js/tags/tag-new.js"></script>
     <script src="{{ root_url }}/public/resources/js/tags/tag-edit.js"></script>
+    <script src="{{ root_url }}/public/resources/js/tags/attribute-edit.js"></script>
 
 
 {% endif %}
