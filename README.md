@@ -83,6 +83,9 @@ diff2html for showing diffs in a nice way , see https://diff2html.xyz/index.html
 
 sweetalert2 for confirm boxes and simple popups https://sweetalert2.github.io/
 
+uuid for creating those sweet sweet uuids in the browser https://www.npmjs.com/package/uuid
+
+
 ### installation uses npm
  Run `nmp i` to install js dependencies that are not saved in the repo
  

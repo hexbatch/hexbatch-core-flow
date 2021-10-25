@@ -3,14 +3,24 @@
 
 /**
  * @param {FlowTag} tag
- * @param {FlowTagAttribute|ProxyAttribute} attribute
- * @param {FlowTagAttributeUpdateCallback} callback_after_update
+ * @param {?FlowTagAttribute} passed_attribute
+ * @param {?FlowTagAttributeEditCallback} [callback_after_update]
+ * @param {?FlowTagAttributeEditCallback} [callback_after_delete]
  */
-function flow_attribute_show_editor(tag,attribute,callback_after_update){
+function flow_attribute_show_editor(tag,passed_attribute,
+                                    callback_after_update,
+                                    callback_after_delete){
     let modal;
 
-    if (!attribute) {
-        attribute = new ProxyAttribute();
+    /**
+     * @type {FlowTagAttribute}
+     */
+    let attribute;
+
+    if (passed_attribute) {
+        attribute = passed_attribute;
+    } else {
+        attribute = create_proxy_attribute();
     }
     /**
      * @type {?GeneralSearchResult}
@@ -18,6 +28,8 @@ function flow_attribute_show_editor(tag,attribute,callback_after_update){
     let attribute_points_to_search = null;
 
     let editing_div = $("div#flow-edit-tag-template-holder > div.attribute-edit-container ").clone();
+    let editing_div_id = 'attribute-editor-'+uuid.v4();
+    editing_div.attr('id',editing_div_id);
     let bare_select_control = editing_div.find('select.flow-edit-attribute-point-list');
     let attribute_name_input = editing_div.find('input.flow-edit-attribute-name');
     let attribute_integer_input = editing_div.find('input.flow-edit-attribute-integer');
@@ -41,6 +53,7 @@ function flow_attribute_show_editor(tag,attribute,callback_after_update){
         editing_div.find('.flow-edit-attribute-link').attr('href',attribute.points_to_url);
         editing_div.find('.flow-attribute-link-title').html(attribute.points_to_title);
         attribute_text.val(attribute.tag_attribute_text?? '');
+        attribute_integer_input.val(attribute.tag_attribute_long?? '');
         refresh_auto_formatted_times();
     }
 
@@ -91,7 +104,11 @@ function flow_attribute_show_editor(tag,attribute,callback_after_update){
     });
 
     // add a button
-    modal.addFooterBtn('Create Attribute', 'tingle-btn tingle-btn--primary', function() {
+    let footer_button_text = 'Create Attribute';
+    if (attribute.flow_tag_attribute_guid) {
+        footer_button_text = 'Update Attribute';
+    }
+    modal.addFooterBtn(footer_button_text, 'tingle-btn tingle-btn--primary', function() {
 
         if (attribute_points_to_search) {
             switch (attribute_points_to_search.type) {
@@ -183,13 +200,13 @@ function flow_attribute_show_editor(tag,attribute,callback_after_update){
             if (result.isConfirmed) {
                 if (!attribute.flow_tag_attribute_guid) {
                     modal.close();
+                    if (callback_after_delete) { callback_after_delete(attribute);}
                     return;
                 }
                 toggle_action_spinner(me,'loading');
 
                 delete_attribute(tag, attribute,
-                    function(ret) {
-                        tag = ret.tag;
+                    function() {
 
                         modal.close();
 
@@ -199,7 +216,9 @@ function flow_attribute_show_editor(tag,attribute,callback_after_update){
                             'Attribute Deleted!',
                             'Its no more..',
                             'success'
-                        )
+                        );
+
+                        if (callback_after_delete) { callback_after_delete(attribute);}
                     },
                     function(ret) {
                         toggle_action_spinner(me,'normal');

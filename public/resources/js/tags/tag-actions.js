@@ -53,7 +53,7 @@ function delete_tag(tag,on_success_callback,on_fail_callback) {
 
 /**
  * @param {FlowTag} tag
- * @param {FlowTagAttribute|ProxyAttribute} attribute
+ * @param {FlowTagAttribute} attribute
  * @param {FlowTagActionCallback} on_success_callback
  * @param {FlowTagActionCallback} on_fail_callback
  */
@@ -64,7 +64,7 @@ function create_attribute(tag,attribute,on_success_callback,on_fail_callback) {
 
 /**
  * @param {FlowTag} tag
- * @param {FlowTagAttribute|ProxyAttribute} attribute
+ * @param {FlowTagAttribute} attribute
  * @param {FlowTagActionCallback} on_success_callback
  * @param {FlowTagActionCallback} on_fail_callback
  */
@@ -75,7 +75,7 @@ function edit_attribute(tag,attribute,on_success_callback,on_fail_callback) {
 
 /**
  * @param {FlowTag} tag
- * @param {FlowTagAttribute|ProxyAttribute} attribute
+ * @param {FlowTagAttribute} attribute
  * @param {FlowTagActionCallback} on_success_callback
  * @param {FlowTagActionCallback} on_fail_callback
  */

@@ -188,6 +188,16 @@ class TagPages extends BasePages
             }
             $tag->save();
             $saved_tag = $tag->clone_refresh();
+
+            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+            foreach ( $saved_tag->applied as $mapp) {
+                $mapp->set_link_for_tagged($routeParser);
+            }
+
+            foreach ( $saved_tag->attributes as $matt) {
+                $matt->set_link_for_pointee($routeParser);
+            }
+
             $data = ['success'=>true,'message'=>'ok','tag'=>$saved_tag,'attribute'=>null,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
 
@@ -398,6 +408,15 @@ class TagPages extends BasePages
             $call->tag->attributes[] = $attribute_to_add;
             $altered_tag = $call->tag->save_tag_return_clones($attribute_to_add->tag_attribute_name,$new_attribute);
 
+            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+            foreach ( $altered_tag->applied as $mapp) {
+                $mapp->set_link_for_tagged($routeParser);
+            }
+
+            foreach ( $altered_tag->attributes as $matt) {
+                $matt->set_link_for_pointee($routeParser);
+            }
+
             $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$new_attribute,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
 
@@ -449,7 +468,16 @@ class TagPages extends BasePages
             $call->attribute->update_fields_with_public_data($attribute_to_edit);
             $altered_tag = $call->tag->save_tag_return_clones($attribute_to_edit->tag_attribute_name,$new_attribute);
 
-            $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$new_attribute,'token'=> $call->new_token];
+            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+            foreach ( $altered_tag->applied as $mapp) {
+                $mapp->set_link_for_tagged($routeParser);
+            }
+
+            foreach ( $altered_tag->attributes as $matt) {
+                $matt->set_link_for_pointee($routeParser);
+            }
+
+            $data = ['success'=>true,'message'=>'ok attribute','tag'=>$altered_tag,'attribute'=>$new_attribute,'token'=> $call->new_token];
 
 
             $payload = JsonHelper::toString($data);
@@ -497,6 +525,15 @@ class TagPages extends BasePages
 
             $altered_tag = $call->tag->save_tag_return_clones(null,$new_attribute);
 
+            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+            foreach ( $altered_tag->applied as $mapp) {
+                $mapp->set_link_for_tagged($routeParser);
+            }
+
+            foreach ( $altered_tag->attributes as $matt) {
+                $matt->set_link_for_pointee($routeParser);
+            }
+
             $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$call->attribute,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
 
@@ -539,6 +576,16 @@ class TagPages extends BasePages
             $new_applied->flow_tag_id = $call->tag->flow_tag_id;
             $new_applied->save();
             $applied_to_return = FlowAppliedTag::reconstitute($new_applied->id,$call->tag);
+            $call->tag->applied[] = $new_applied;
+
+            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+            foreach ( $call->tag->applied as $mapp) {
+                $mapp->set_link_for_tagged($routeParser);
+            }
+
+            foreach ( $call->tag->attributes as $matt) {
+                $matt->set_link_for_pointee($routeParser);
+            }
 
             $data = [
                 'success'=>true,'message'=>'ok','tag'=>$call->tag,'attribute'=>null,'applied'=>$applied_to_return,
@@ -585,6 +632,15 @@ class TagPages extends BasePages
             $applied_that_was_given = new FlowAppliedTag($call->args);
             $applied_to_be_deleted = FlowAppliedTag::reconstitute($applied_that_was_given,$call->tag);
             $applied_to_be_deleted->delete_applied();
+
+            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+            foreach ( $call->tag->applied as $mapp) {
+                $mapp->set_link_for_tagged($routeParser);
+            }
+
+            foreach ( $call->tag->attributes as $matt) {
+                $matt->set_link_for_pointee($routeParser);
+            }
 
             $data = [
                 'success'=>true,'message'=>'ok','tag'=>$call->tag,'attribute'=>null,'applied'=>$call->applied,

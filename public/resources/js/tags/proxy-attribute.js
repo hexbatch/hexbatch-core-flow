@@ -1,3 +1,5 @@
+// noinspection JSValidateTypes,JSUnusedGlobalSymbols
+
 function ProxyAttribute() {
 
     this.flow_tag_attribute_guid = null;
@@ -18,4 +20,12 @@ function ProxyAttribute() {
     this.points_to_admin_name = null;
     this.points_to_url = null;
 
+}
+
+/**
+ *
+ * @returns {FlowTagAttribute}
+ */
+function create_proxy_attribute() {
+    return new ProxyAttribute();
 }

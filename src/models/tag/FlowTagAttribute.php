@@ -58,18 +58,11 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         $this->points_to_flow_user_guid = $attribute->points_to_flow_user_guid ;
         $this->points_to_flow_project_guid = $attribute->points_to_flow_project_guid ;
 
-        //remove ids if no guid
-        if (empty($this->points_to_flow_entry_guid) && $this->points_to_entry_id) {
-            $this->points_to_entry_id = null;
-        }
+        //instead of doing a lot of edge case testing, just null them out and reform them when saving
+        $this->points_to_user_id = null;
+        $this->points_to_project_id = null;
+        $this->points_to_entry_id = null;
 
-        if (empty($this->points_to_flow_project_guid) && $this->points_to_project_id) {
-            $this->points_to_project_id = null;
-        }
-
-        if (empty($this->points_to_flow_user_guid) && $this->points_to_user_id) {
-            $this->points_to_user_id = null;
-        }
     }
 
 
