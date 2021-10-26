@@ -16,7 +16,8 @@ jQuery(function ($){
     let b_open = true;
 
     let bare_select_control = $('select#flow-select-tags');
-    create_select_2_for_tag_search(bare_select_control,true,"Select or make a tag", true,null);
+    create_select_2_for_tag_search(bare_select_control,true,"Select or make a tag", true,
+        null,null,null,);
 
 
 

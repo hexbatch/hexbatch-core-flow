@@ -1,8 +1,13 @@
 /**
  *
  * @param {FlowTag} tag
+ *
+ * @param {?FlowTagEditCallback} [callback_after_update]
+ * @param {?FlowTagEditCallback} [callback_after_delete]
  */
-function flow_tag_show_editor(tag) {
+function flow_tag_show_editor(tag,
+                              callback_after_update,
+                              callback_after_delete) {
     let modal;
     /**
      * @type {?FlowTag}
@@ -51,6 +56,7 @@ function flow_tag_show_editor(tag) {
                     update_tag_display();
                     update_tag_name_and_style_in_page(tag);
                     toggle_action_spinner(me, 'normal');
+                    if (callback_after_update) {callback_after_update(tag)}
                 },
                 function () {
                     toggle_action_spinner(me, 'normal');
@@ -85,13 +91,15 @@ function flow_tag_show_editor(tag) {
                             'Deleted!',
                             'That pesky tag is gone',
                             'success'
-                        )
+                        );
+
+                        if (callback_after_delete) {callback_after_delete(ret.tag);}
                     },
                     function (ret) {
                         toggle_action_spinner(me, 'normal');
                         my_swal.fire(
                             'Oh No!',
-                            'The tag could not be deleted, did you ask its children? ' + ret.message,
+                            'The tag could not be deleted <br>\n ' + ret.message,
                             'error'
                         )
                     })
@@ -113,9 +121,15 @@ function flow_tag_show_editor(tag) {
                     tag = ret.tag;
                     update_tag_display();
                     toggle_action_spinner(me, 'normal');
+                    if (callback_after_update) {callback_after_update(tag)}
                 },
-                function () {
+                function (ret) {
                     toggle_action_spinner(me, 'normal');
+                    my_swal.fire(
+                        'Oh No!',
+                        'The tag could not be deleted \n<br> ' + ret.message,
+                        'error'
+                    )
                 })
         }
     });
@@ -280,7 +294,8 @@ function flow_tag_show_editor(tag) {
 
                         toggle_action_spinner(me, 'loading');
                         delete_applied(tag, applied,
-                            function () {
+                            function (ret) {
+                                tag = ret.tag;
                                 li.remove();
                                 let victims = $(`.flow-tag-applied-target-title[data-applied_guid="${applied.flow_applied_tag_guid}"]`);
                                 victims.addClass('text-decoration-line-through');
@@ -320,7 +335,7 @@ function flow_tag_show_editor(tag) {
             //clear out older values
             tag_name_input.val();
             create_select_2_for_tag_search(bare_select_control, false, "Optionally select a parent",
-                false, tag.flow_tag_guid);
+                false, tag.flow_tag_guid,null,null);
 
             refresh_auto_formatted_times();
 
@@ -329,6 +344,7 @@ function flow_tag_show_editor(tag) {
             utterly_destroy_select2(bare_select_control);
             this.destroy();
             $('body').off("click", `div#${editing_div_id} .flow-attribute-show-edit-on-click`, edit_attribute);
+            if (callback_after_update) {callback_after_update(tag);}
         },
 
         beforeClose: function () {

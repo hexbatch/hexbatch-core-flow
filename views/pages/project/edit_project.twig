@@ -28,6 +28,14 @@
 
     <div class="col ">
         {{ include('project/partials/project-form.twig') }}
+        <div class="w-100 mt-2"></div>
+        {% include 'tag/partials/applied-control.twig' with{
+            'tags_of_applied': project.get_applied_tags(),
+            'applied_target_guid':project.flow_project_guid,
+            'applied_target_type': 'project'
+        } %}
     </div><!-- /.col -->
 
 </div> <!-- /.row -->
+
+{{ include('tag/partials/tag-js-support.twig') }}

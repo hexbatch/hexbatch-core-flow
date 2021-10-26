@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use app\hexlet\FlowAntiCSRF;
+use Ramsey\Uuid\Uuid;
 use Slim\App;
 use Slim\Views\Twig;
 use Slim\Views\TwigMiddleware;
@@ -55,7 +56,16 @@ class Hexlet_Twig_Extension extends AbstractExtension implements GlobalsInterfac
             ['is_safe' => ['html']]
         );
 
-        return [$csrf,$session_dump];
+        $generate_uuid = new TwigFunction(
+            'uuid',
+            function() {
+                $uuid = Uuid::uuid4();
+                return $uuid->toString();
+            },
+            ['is_safe' => ['html']]
+        );
+
+        return [$csrf,$session_dump,$generate_uuid];
     }
 
 }

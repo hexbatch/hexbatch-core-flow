@@ -58,7 +58,11 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
 
         foreach ($object as $key => $val) {
             if (property_exists($this,$key)) {
-                $this->$key = $val;
+                $careful_value = $val;
+                if (!(is_array($val) || is_object($val))) {
+                    if ($val === '') {$careful_value = null;}
+                }
+                $this->$key = $careful_value;
             }
         }
     }
@@ -140,7 +144,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                GROUP_CONCAT( app.flow_tag_id order by app.id) as tag_id_list,    
                GROUP_CONCAT( app.created_at_ts order by app.id) as tagged_at_ts,
                GROUP_CONCAT( HEX(app.flow_applied_tag_guid) order by app.id) as applied_guid_list, 
-               GROUP_CONCAT( HEX(app.id) order by app.id) as applied_id_list,
+               GROUP_CONCAT( app.id order by app.id) as applied_id_list,
                app.tagged_flow_project_id as taggee_id,
                HEX(fp.flow_project_guid) as taggee_guid,
                HEX(fu_own.flow_user_guid) as taggee_user_guid,
@@ -352,6 +356,19 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
         }
 
         return $ret;
+    }
+
+    /**
+     * @param string[] $guid_list
+     * @return bool
+     */
+    public function has_at_least_one_of_these_tagged_guid(array $guid_list) :bool{
+        foreach ($guid_list as $guid) {
+            if ($this->tagged_flow_user_guid === $guid) {return true;}
+            if ($this->tagged_flow_project_guid === $guid) {return true;}
+            if ($this->tagged_flow_entry_guid === $guid) {return true;}
+        }
+        return false;
     }
 
 

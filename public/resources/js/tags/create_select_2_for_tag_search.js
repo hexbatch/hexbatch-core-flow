@@ -4,10 +4,13 @@
  * @param {boolean} b_multi
  * @param {?string} placeholder
  * @param {boolean} b_tags
- * @param {?string} not_guid
+ * @param {?string} not_tag_guid
+ * @param {?string[]} only_applied_to_guids
+ * @param {?string[]} not_applied_to_guids
  */
 function create_select_2_for_tag_search(bare_select_control,b_multi,
-                                        placeholder,b_tags,not_guid) {
+                                        placeholder,b_tags,not_tag_guid,
+                                        only_applied_to_guids,not_applied_to_guids,) {
     /**
      *
      * @param {FlowTag} tag
@@ -92,8 +95,8 @@ function create_select_2_for_tag_search(bare_select_control,b_multi,
              * @type {FlowTag}
              */
             let tag = data.results[i];
-            if (not_guid) {
-                if (tag.flow_tag_guid === not_guid) { continue;}
+            if (not_tag_guid) {
+                if (tag.flow_tag_guid === not_tag_guid) { continue;}
             }
 
             tag.id = id_thing ++;
@@ -110,7 +113,11 @@ function create_select_2_for_tag_search(bare_select_control,b_multi,
      */
     function prepare_query_for_dropdown(params) {
         let query = {
-            search: {term: params.term || null},
+            search: {
+                term: params.term || null,
+                only_applied_to_guids: only_applied_to_guids,
+                not_applied_to_guids: not_applied_to_guids
+            },
             page: params.page || 1
         }
         //console.log("params",params);

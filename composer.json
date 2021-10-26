@@ -15,6 +15,7 @@
         "ext-mbstring": "*",
         "ext-mysqli": "*",
         "ext-zip": "*",
+        "ext-fileinfo": "*",
         "slim/slim": "4.*",
         "slim/psr7": "^1.4",
         "php-di/slim-bridge": "^3.1",
@@ -30,7 +31,6 @@
         "ramsey/uuid": "^4.1",
         "paragonie/anti-csrf": "^2.3",
         "scrivo/highlight.php": "v9.18.1.7"
-
     },
     "autoload": {
         "psr-4": {"app\\": "src/"}

@@ -6,6 +6,8 @@ namespace app\models\tag;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
+use app\models\multi\GeneralSearch;
+use app\models\multi\GeneralSearchParams;
 use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
@@ -319,6 +321,9 @@ class FlowTag extends FlowBase implements JsonSerializable {
         $where_name = 4;
         $where_tag_guid = 8;
         $where_tag_id = 16;
+        $where_only_applied_to = 32;
+        $where_not_applied_to = 64;
+
 
         if ($search->owning_project_guid) {
             $where_project = "driver_project.flow_project_guid = UNHEX(?)";
@@ -331,17 +336,90 @@ class FlowTag extends FlowBase implements JsonSerializable {
         }
 
         if (count($search->tag_guids)) {
-            $wrapped_guids = $search->tag_guids;
-            array_walk($wrapped_guids, function(&$x)  use(&$args) {$args[] = $x; $x = "UNHEX(?)";});
-            $comma_delimited_tag_guids = implode(",",$wrapped_guids);
-            $where_tag_guid = "driver_tag.flow_tag_guid in ($comma_delimited_tag_guids)";
+            $in_question_array = [];
+            foreach ($search->tag_guids as $a_guid) {
+                if ( ctype_xdigit($a_guid) ) {
+                    $args[] = $a_guid;
+                    $in_question_array[] = "UNHEX(?)";
+                }
+            }
+            if (count($in_question_array)) {
+                $comma_delimited_unhex_question = implode(",",$in_question_array);
+                $where_tag_guid = "driver_tag.flow_tag_guid in ($comma_delimited_unhex_question)";
+            }
         }
+
+
 
         if (count($search->tag_ids)) {
             $cast_ids = $search->tag_ids;
             array_walk($cast_ids, function(&$x)  use(&$args) {$args[] = intval($x);$x = "?";});
             $comma_delimited_ids = implode(",",$cast_ids);
             $where_tag_id = "driver_tag.id in ($comma_delimited_ids)";
+        }
+
+        $maybe_join_inner_driver_applied = '';
+        if (count($search->only_applied_to_guids)) {
+            $general_search = new GeneralSearchParams();
+            $general_search->guids = $search->only_applied_to_guids;
+            $gmatches = GeneralSearch::general_search($general_search,1,100000);
+            $applied_project_ids=[];
+            $applied_user_ids = [];
+            $applied_entry_ids = [];
+            GeneralSearch::sort_ids_into_arrays($gmatches,$applied_project_ids,$applied_user_ids,$applied_entry_ids);
+            $where_part_guid_match = [];
+            if (count($applied_project_ids)) {
+                $comma_list_applied_projects = implode(',',$applied_project_ids);
+                $where_part_guid_match[] = "driver_applied.tagged_flow_project_id in ($comma_list_applied_projects)";
+            }
+            if (count($applied_user_ids)) {
+                $comma_list_applied_users = implode(',',$applied_user_ids);
+                $where_part_guid_match[] = "driver_applied.tagged_flow_user_id in ($comma_list_applied_users)";
+            }
+            if (count($applied_entry_ids)) {
+                $comma_list_applied_projects = implode(',',$applied_entry_ids);
+                $where_part_guid_match[] = "driver_applied.tagged_flow_entry_id in ($comma_list_applied_projects)";
+            }
+
+            if (count($search->only_applied_to_guids) !== (count($applied_project_ids) + count($applied_user_ids) + count($applied_entry_ids))) {
+                throw new InvalidArgumentException("One or more invalid guids in the only_applied_to_guids");
+            }
+
+            $where_not_applied_to = '(' . implode(' OR ',$where_part_guid_match) . ')';
+            $maybe_join_inner_driver_applied = "INNER JOIN flow_applied_tags driver_applied on driver_tag.id = driver_applied.flow_tag_id";
+
+        }
+
+
+        $maybe_left_join_inner_driver_applied = '';
+        if (count($search->not_applied_to_guids)) {
+            $general_search = new GeneralSearchParams();
+            $general_search->guids = $search->not_applied_to_guids;
+            $gmatches = GeneralSearch::general_search($general_search,1,100000);
+            $applied_project_ids=[];
+            $applied_user_ids = [];
+            $applied_entry_ids = [];
+            GeneralSearch::sort_ids_into_arrays($gmatches,$applied_project_ids,$applied_user_ids,$applied_entry_ids);
+            $where_part_guid_match = [];
+            if (count($applied_project_ids)) {
+                $comma_list_applied_projects = implode(',',$applied_project_ids);
+                $where_part_guid_match[] = "driver_applied.tagged_flow_project_id NOT IN ($comma_list_applied_projects)";
+            }
+            if (count($applied_user_ids)) {
+                $comma_list_applied_users = implode(',',$applied_user_ids);
+                $where_part_guid_match[] = "driver_applied.tagged_flow_user_id NOT IN ($comma_list_applied_users)";
+            }
+            if (count($applied_entry_ids)) {
+                $comma_list_applied_projects = implode(',',$applied_entry_ids);
+                $where_part_guid_match[] = "driver_applied.tagged_flow_entry_id NOT IN ($comma_list_applied_projects)";
+            }
+
+            if (count($search->not_applied_to_guids) !== (count($applied_project_ids) + count($applied_user_ids) + count($applied_entry_ids))) {
+                throw new InvalidArgumentException("One or more invalid guids in the not_applied_to_guids");
+            }
+            $where_only_applied_to = '( driver_applied.tagged_flow_project_id IS NULL OR ' . implode(' OR ',$where_part_guid_match) . ')';
+            $maybe_left_join_inner_driver_applied = "LEFT JOIN flow_applied_tags driver_applied on driver_tag.id = driver_applied.flow_tag_id";
+
         }
 
         $start_place = ($page - 1) * $page_size;
@@ -400,11 +478,15 @@ class FlowTag extends FlowBase implements JsonSerializable {
                             SELECT driver_tag.id as flow_tag_id , driver_tag.parent_tag_id, cast(null as SIGNED ) as child_tag_id
                             FROM flow_tags driver_tag
                             INNER JOIN flow_projects driver_project ON driver_project.id = driver_tag.flow_project_id
+                            $maybe_join_inner_driver_applied
+                            $maybe_left_join_inner_driver_applied
                             WHERE 1 
                                 AND $where_project  
                                 AND $where_name
                                 AND $where_tag_guid  
-                                AND $where_tag_id  
+                                AND $where_tag_id
+                                AND $where_only_applied_to
+                                AND $where_not_applied_to
                                 LIMIT $start_place , $page_size
                         )
                         UNION
@@ -513,6 +595,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
                     }
                     if (!$found_id) {continue;}
                 }
+
                 $filtered[] = $item;
             }
 
@@ -536,6 +619,31 @@ class FlowTag extends FlowBase implements JsonSerializable {
                         $match_map[$tag_guid]->applied = $applied_array;
                     }
                 }
+            }
+
+            //filter some more if restricting to things that are applied
+            if (count($search->only_applied_to_guids)) {
+                $applied_filter = [];
+                foreach ($filtered as $check_again_tag) {
+                    $applied_that_includes_tagged = $check_again_tag->find_applied_by_guid_of_tagged($search->only_applied_to_guids);
+                    if (empty($applied_that_includes_tagged)) {
+                        continue;
+                    }
+                    $applied_filter[] = $check_again_tag;
+                }
+                $filtered = $applied_filter;
+            }
+
+            if (count($search->not_applied_to_guids)) {
+                $applied_filter = [];
+                foreach ($filtered as $check_again_tag) {
+                    $applied_that_includes_tagged = $check_again_tag->find_applied_by_guid_of_tagged($search->not_applied_to_guids);
+                    if (count($applied_that_includes_tagged)) {
+                        continue;
+                    }
+                    $applied_filter[] = $check_again_tag;
+                }
+                $filtered = $applied_filter;
             }
             return  $filtered;
         } catch (Exception $e) {
@@ -688,6 +796,20 @@ class FlowTag extends FlowBase implements JsonSerializable {
         }
         $db = static::get_connection();
         $db->delete('flow_tags',['id'=>$this->flow_tag_id]);
+    }
+
+    /**
+     * @param string[] $guid_list
+     * @return FlowAppliedTag[]
+     */
+    public function find_applied_by_guid_of_tagged(array $guid_list) : array {
+        $ret = [];
+        foreach ($this->applied as $app) {
+            if ($app->has_at_least_one_of_these_tagged_guid($guid_list)) {
+                $ret[]= $app;
+            }
+        }
+        return $ret;
     }
 
 }

@@ -88,6 +88,7 @@ class FlowProject extends FlowBase {
 
     protected bool $b_did_applied_for_owned_tags = false;
 
+
     /**
      * @param bool $b_get_applied  if true will also get the applied in the set of tags found
      * @param bool $b_refresh  if true will not use previous value if set
@@ -111,6 +112,30 @@ class FlowProject extends FlowBase {
         }
 
         return $this->owned_tags;
+    }
+
+    /**
+     * @var FlowTag[]|null $tags_applied_to_this
+     */
+    protected ?array $tags_applied_to_this = null;
+
+    /** @noinspection PhpUnused */
+    /**
+     * @param bool $b_refresh  if true will not use previous value if set
+     * @return FlowTag[]
+     * @throws Exception
+     */
+    function get_applied_tags(bool $b_refresh = false) : array {
+        if (!$b_refresh && is_array($this->tags_applied_to_this)) {
+            //refresh cache if first time getting applied
+            return $this->tags_applied_to_this;
+        }
+        $search_params = new FlowTagSearchParams();
+        $search_params->flag_get_applied = true;
+        $search_params->owning_project_guid = $this->flow_project_guid;
+        $search_params->only_applied_to_guids[] = $this->flow_project_guid;
+        $this->tags_applied_to_this = FlowTag::get_tags($search_params,1,100000);
+        return $this->tags_applied_to_this;
     }
 
 

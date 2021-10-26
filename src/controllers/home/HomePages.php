@@ -100,7 +100,7 @@ class HomePages
         }
 
         if (isset($root['guid'])) {
-            $search->guid = trim($root['guid']);
+            $search->guids[] = trim($root['guid']);
         }
 
         if (isset($root['title'])) {
