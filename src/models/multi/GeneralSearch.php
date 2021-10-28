@@ -9,6 +9,7 @@ use PDO;
 class GeneralSearch extends FlowBase{
 
     const DEFAULT_PAGE_SIZE = 20;
+    const UNLIMITED_RESULTS_PER_PAGE = 100000;
 
     /**
      * @param GeneralSearchResult[] $matches
@@ -58,6 +59,9 @@ class GeneralSearch extends FlowBase{
         $args = [];
         $where_array = [];
 
+        if ($page_size === self::UNLIMITED_RESULTS_PER_PAGE) {
+            $page = 1;
+        }
 
         if (count($search->guids)) {
             $in_question_array = [];

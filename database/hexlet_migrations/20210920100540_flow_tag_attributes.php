@@ -68,7 +68,7 @@ class FlowTagAttributes extends AbstractMigration
             FOREIGN KEY (`flow_applied_tag_id`) REFERENCES `flow_applied_tags`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
 
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD CONSTRAINT `fk_flow_tag_attributes_has_tag_id` 
-            FOREIGN KEY (`flow_tag_id`) REFERENCES `flow_tags`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
+            FOREIGN KEY (`flow_tag_id`) REFERENCES `flow_tags`(`id`) ON DELETE CASCADE ON UPDATE CASCADE ;");
 
 
 

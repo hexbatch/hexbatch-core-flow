@@ -46,6 +46,14 @@
 
 <div class="col-12">
     <ul class="list-group m-1 flow-history-file-list">
+        <li class="list-group-item bg-dark text-light">
+            <span class="flow-commit-subject">
+                {{ history.subject }}
+            </span>
+            {% if history.body %}
+                <span class="flow-commit-body">{{- history.body -}}</span>
+            {% endif %}
+        </li>
     {% for git_file in history.changed_files %}
         {% if git_file.is_public %}
         <li class="list-group-item bg-light text-dark"
@@ -55,6 +63,7 @@
             <span>
                 {{ git_file.short_name }}
             </span>
+
             <button class="btn  btn-sm btn-outline-info float-end flow-show-file-diff">
                 <i class="bi bi-file-diff"></i>
             </button>

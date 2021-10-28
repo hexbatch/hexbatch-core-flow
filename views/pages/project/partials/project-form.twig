@@ -24,7 +24,23 @@
                     <input type="hidden" name="flow_project_git_hash" value="{{ project.get_head_commit_hash() }}">
 
                     <div class="col-12">
-                        <label for="flow_project_title">Project Title</label>
+                        {% if project.flow_project_guid %}
+                            <div class="float-end d-inline-block ps-1 pe-1">
+                                <code id="editing-flow-project-guid">{{ project.flow_project_guid }}</code>
+                                <!-- Trigger -->
+                                <button class="btn clipy-btn"
+                                        type="button"
+                                        data-clipboard-target="#editing-flow-project-guid"
+                                        data-popover_on_success="Copied!"
+                                        data-popover_on_fail="Use Control-C"
+                                >
+                                    <img width="13" src="{{ root_url }}/public/resources/images/clippy.svg" alt="Copy to clipboard">
+                                </button>
+                            </div>
+                        {% endif %}
+                        <label for="flow_project_title">
+                            Project Title
+                        </label>
                         <input type="text" id="flow_project_title" name="flow_project_title"
                                class="form-control" placeholder="Title" required autofocus
                                maxlength="{{ project.max_title }}" value="{{ project.flow_project_title }}"

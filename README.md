@@ -85,6 +85,8 @@ sweetalert2 for confirm boxes and simple popups https://sweetalert2.github.io/
 
 uuid for creating those sweet sweet uuids in the browser https://www.npmjs.com/package/uuid
 
+copy to clipboard at https://clipboardjs.com because I deserve to not have to make yet another handcrafted one, and this looks good
+
 
 ### installation uses npm
  Run `nmp i` to install js dependencies that are not saved in the repo

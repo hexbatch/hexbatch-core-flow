@@ -4,6 +4,7 @@ namespace app\models\tag;
 
 use app\hexlet\JsonHelper;
 use app\models\base\FlowBase;
+use app\models\tag\brief\BriefFlowTagAttribute;
 use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
@@ -21,8 +22,8 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     public ?int $points_to_entry_id;
     public ?int $points_to_user_id;
     public ?int $points_to_project_id;
-    public ?int $applied_created_at_ts;
-    public ?int $applied_updated_at_ts;
+    public ?int $attribute_created_at_ts;
+    public ?int $attribute_updated_at_ts;
     public ?string $flow_tag_attribute_guid;
     public ?string $tag_attribute_name;
     public ?string$tag_attribute_long;
@@ -41,6 +42,9 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     public ?string $points_to_admin_name;
     public ?string $points_to_admin_guid;
     public ?string $points_to_url;
+
+    protected bool $b_brief_json = false;
+    public function set_brief_json(bool $what) { $this->b_brief_json = $what; }
 
     public function has_enough_data_set() :bool {
         if (!$this->flow_tag_id) {return false;}
@@ -74,8 +78,8 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         $this->points_to_entry_id = null ;
         $this->points_to_user_id = null ;
         $this->points_to_project_id = null ;
-        $this->applied_created_at_ts = null ;
-        $this->applied_updated_at_ts = null ;
+        $this->attribute_created_at_ts = null ;
+        $this->attribute_updated_at_ts = null ;
         $this->flow_tag_attribute_guid = null ;
         $this->tag_attribute_name = null ;
         $this->tag_attribute_long = null ;
@@ -113,6 +117,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         if (empty($this->tag_attribute_text)) { $this->tag_attribute_text = null;}
 
         $this->is_standard_attribute = FlowTagStandardAttribute::is_standard_attribute($this);
+        $this->b_brief_json = false;
     }
 
 
@@ -248,26 +253,32 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     
     public function jsonSerialize(): array
     {
-        return [
-            "flow_tag_attribute_guid" => $this->flow_tag_attribute_guid,
-            "flow_tag_guid" => $this->flow_tag_guid,
-            "flow_applied_tag_guid" => $this->flow_applied_tag_guid,
-            "points_to_flow_entry_guid" => $this->points_to_flow_entry_guid,
-            "points_to_flow_user_guid" => $this->points_to_flow_user_guid,
-            "points_to_flow_project_guid" => $this->points_to_flow_project_guid,
-            "tag_attribute_name" => $this->tag_attribute_name,
-            "tag_attribute_long" => $this->tag_attribute_long,
-            "tag_attribute_text" => $this->tag_attribute_text,
-            "created_at_ts" => $this->applied_created_at_ts,
-            "updated_at_ts" => $this->applied_updated_at_ts,
-            "is_standard_attribute" => $this->is_standard_attribute,
-            "is_inherited" => $this->is_inherited,
-            "points_to_title" => $this->points_to_title,
-            "points_to_admin_guid" => $this->points_to_admin_guid,
-            "points_to_admin_name" => $this->points_to_admin_name,
-            "points_to_url" => $this->points_to_url
+        if ($this->b_brief_json) {
+           $brief = new BriefFlowTagAttribute($this);
+           return $brief->to_array();
+        } else {
+            return [
+                "flow_tag_attribute_guid" => $this->flow_tag_attribute_guid,
+                "flow_tag_guid" => $this->flow_tag_guid,
+                "flow_applied_tag_guid" => $this->flow_applied_tag_guid,
+                "points_to_flow_entry_guid" => $this->points_to_flow_entry_guid,
+                "points_to_flow_user_guid" => $this->points_to_flow_user_guid,
+                "points_to_flow_project_guid" => $this->points_to_flow_project_guid,
+                "tag_attribute_name" => $this->tag_attribute_name,
+                "tag_attribute_long" => $this->tag_attribute_long,
+                "tag_attribute_text" => $this->tag_attribute_text,
+                "created_at_ts" => $this->attribute_created_at_ts,
+                "updated_at_ts" => $this->attribute_updated_at_ts,
+                "is_standard_attribute" => $this->is_standard_attribute,
+                "is_inherited" => $this->is_inherited,
+                "points_to_title" => $this->points_to_title,
+                "points_to_admin_guid" => $this->points_to_admin_guid,
+                "points_to_admin_name" => $this->points_to_admin_name,
+                "points_to_url" => $this->points_to_url
 
-        ];
+            ];
+        }
+
     }
 
     public function delete_attribute() {

@@ -163,6 +163,8 @@ class FlowGitHistory {
             }
         }
 
+        $this->body = str_replace("|","\n",$this->body);
+
     }
 
     /**

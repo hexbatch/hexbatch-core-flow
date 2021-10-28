@@ -1170,7 +1170,7 @@ class ProjectPages extends BasePages
             return $response;
 
         } catch (Exception $e) {
-            $this->logger->error("Could not download project zip",['exception'=>$e]);
+            $this->logger->error("Could not download project resource",['exception'=>$e]);
             throw $e;
         }
 

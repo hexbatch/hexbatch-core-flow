@@ -4,6 +4,7 @@ namespace app\models\tag;
 
 use app\models\base\FlowBase;
 use app\models\multi\GeneralSearchResult;
+use app\models\tag\brief\BriefFlowAppliedTag;
 use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
@@ -32,6 +33,9 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
     public ?string $tagged_flow_project_owner_user_name;
 
     public ?string $tagged_url;
+
+    protected bool $b_brief_json = false;
+    public function set_brief_json(bool $what) { $this->b_brief_json = $what; }
 
 
     public function __construct($object=null){
@@ -70,18 +74,24 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
     
     public function jsonSerialize(): array
     {
-        return [
-            "flow_applied_tag_guid" => $this->flow_applied_tag_guid,
-            "flow_tag_guid" => $this->flow_tag_guid,
-            "tagged_flow_entry_guid" => $this->tagged_flow_entry_guid,
-            "tagged_flow_user_guid" => $this->tagged_flow_user_guid,
-            "tagged_flow_project_guid" => $this->tagged_flow_project_guid,
-            "created_at_ts" => $this->created_at_ts,
-            "tagged_title" => $this->tagged_title,
-            "tagged_flow_project_owner_user_guid" => $this->tagged_flow_project_owner_user_guid,
-            "tagged_flow_project_owner_user_name" => $this->tagged_flow_project_owner_user_name,
-            "tagged_url" => $this->tagged_url,
-        ];
+        if ($this->b_brief_json) {
+            $brief = new BriefFlowAppliedTag($this);
+            return $brief->to_array();
+        } else {
+            return [
+                "flow_applied_tag_guid" => $this->flow_applied_tag_guid,
+                "flow_tag_guid" => $this->flow_tag_guid,
+                "tagged_flow_entry_guid" => $this->tagged_flow_entry_guid,
+                "tagged_flow_user_guid" => $this->tagged_flow_user_guid,
+                "tagged_flow_project_guid" => $this->tagged_flow_project_guid,
+                "created_at_ts" => $this->created_at_ts,
+                "tagged_title" => $this->tagged_title,
+                "tagged_flow_project_owner_user_guid" => $this->tagged_flow_project_owner_user_guid,
+                "tagged_flow_project_owner_user_name" => $this->tagged_flow_project_owner_user_name,
+                "tagged_url" => $this->tagged_url,
+            ];
+        }
+
     }
 
     public function set_link_for_tagged(RouteParserInterface $routeParser) {

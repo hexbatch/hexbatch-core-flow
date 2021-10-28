@@ -34,90 +34,106 @@ class TagPages extends BasePages
     public function get_tags( ServerRequestInterface $request,ResponseInterface $response,
                               string $user_name, string $project_name) :ResponseInterface {
 
-        /**
-         * @var ProjectPages $project_pages
-         */
-        $project_pages = $this->container->get('projectPages');
+        try {
+            /**
+             * @var ProjectPages $project_pages
+             */
+            $project_pages = $this->container->get('projectPages');
 
-        $project = $project_pages->get_project_with_permissions($request,$user_name,$project_name,'read');
+            $project = $project_pages->get_project_with_permissions($request, $user_name, $project_name, 'read');
 
-        if (!$project) {
-            throw new HttpNotFoundException($request,"Project $project_name Not Found");
-        }
-        $args = $request->getQueryParams();
-        $search_params = new FlowTagSearchParams();
-        $search_params->owning_project_guid = $project->flow_project_guid;
-        if (isset($args['search'])) {
-
-            if (isset($args['search']['tag_guid'])) {
-                $search_params->tag_guids[] = trim($args['search']['tag_guid']);
+            if (!$project) {
+                throw new HttpNotFoundException($request, "Project $project_name Not Found");
             }
+            $args = $request->getQueryParams();
+            $search_params = new FlowTagSearchParams();
+            $search_params->owning_project_guid = $project->flow_project_guid;
+            if (isset($args['search'])) {
 
-            if (isset($args['search']['term'])) {
-                $search_params->tag_name_term = trim(JsonHelper::to_utf8($args['search']['term']));
-            }
+                if (isset($args['search']['tag_guid'])) {
+                    $search_params->tag_guids[] = trim($args['search']['tag_guid']);
+                }
 
-            if (isset($args['search']['not_applied_to_guids']) && $args['search']['not_applied_to_guids']) {
-                if (is_array($args['search']['not_applied_to_guids'])) {
-                    foreach ($args['search']['not_applied_to_guids'] as $not_for_guid) {
-                        $search_params->not_applied_to_guids[]  = trim(JsonHelper::to_utf8($not_for_guid));
+                if (isset($args['search']['term'])) {
+                    $search_params->tag_name_term = trim(JsonHelper::to_utf8($args['search']['term']));
+                }
+
+                if (isset($args['search']['not_applied_to_guids']) && $args['search']['not_applied_to_guids']) {
+                    if (is_array($args['search']['not_applied_to_guids'])) {
+                        foreach ($args['search']['not_applied_to_guids'] as $not_for_guid) {
+                            $search_params->not_applied_to_guids[] = trim(JsonHelper::to_utf8($not_for_guid));
+                        }
+                    } else {
+                        $search_params->not_applied_to_guids[] = trim(JsonHelper::to_utf8($args['search']['not_applied_to_guid']));
                     }
-                } else {
-                    $search_params->not_applied_to_guids[]  = trim(JsonHelper::to_utf8($args['search']['not_applied_to_guid']));
+                }
+                if (isset($args['search']['only_applied_to_guids']) && $args['search']['only_applied_to_guids']) {
+                    if (is_array($args['search']['only_applied_to_guids'])) {
+                        foreach ($args['search']['only_applied_to_guids'] as $not_for_guid) {
+                            $search_params->only_applied_to_guids[] = trim(JsonHelper::to_utf8($not_for_guid));
+                        }
+                    } else {
+                        $search_params->only_applied_to_guids[] = trim(JsonHelper::to_utf8($args['search']['only_applied_to_guids']));
+                    }
+                }
+
+            }
+
+            $search_params->flag_get_applied = true;
+            $page = 1;
+            if (isset($args['page'])) {
+                $page_number = intval($args['page']);
+                if ($page_number > 0) {
+                    $page = $page_number;
                 }
             }
-            if (isset($args['search']['only_applied_to_guids']) && $args['search']['only_applied_to_guids']) {
-                if (is_array($args['search']['only_applied_to_guids'])) {
-                    foreach ($args['search']['only_applied_to_guids'] as $not_for_guid) {
-                        $search_params->only_applied_to_guids[]  = trim(JsonHelper::to_utf8($not_for_guid));
-                    }
-                } else {
-                    $search_params->only_applied_to_guids[]  = trim(JsonHelper::to_utf8($args['search']['only_applied_to_guids']));
+
+            $matches = FlowTag::get_tags($search_params, $page);
+            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+            foreach ($matches as $mtag) {
+                foreach ($mtag->applied as $mapp) {
+                    $mapp->set_link_for_tagged($routeParser);
+                }
+
+                foreach ($mtag->attributes as $matt) {
+                    $matt->set_link_for_pointee($routeParser);
                 }
             }
 
-        }
 
-        $search_params->flag_get_applied = true;
-        $page = 1;
-        if (isset($args['page'])) {
-            $page_number = intval($args['page']);
-            if ($page_number > 0) {
-                $page = $page_number;
-            }
-        }
-
-        $matches = FlowTag::get_tags($search_params,$page);
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-        foreach ($matches as $mtag) {
-            foreach ( $mtag->applied as $mapp) {
-                $mapp->set_link_for_tagged($routeParser);
+            $b_more = true;
+            if (count($matches) < FlowUser::DEFAULT_USER_PAGE_SIZE) {
+                $b_more = false;
             }
 
-            foreach ( $mtag->attributes as $matt) {
-                $matt->set_link_for_pointee($routeParser);
-            }
+            $data = [
+                "results" => $matches,
+                "pagination" => [
+                    "more" => $b_more,
+                    "page" => $page
+                ]
+            ];
+
+            $payload = json_encode($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json');
+        } catch (Exception $e) {
+            $this->logger->error("Could not get_tag: ".$e->getMessage(),['exception'=>$e]);
+            $data = ['success'=>false,'message'=>$e->getMessage(),
+                'results'=>[],"pagination" => [
+                                    "more" => false,
+                                    "page" => $page??null
+                                ]
+            ];
+            $payload = JsonHelper::toString($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(500);
         }
-
-
-        $b_more = true;
-        if (count($matches) < FlowUser::DEFAULT_USER_PAGE_SIZE) {
-            $b_more = false;
-        }
-
-        $data = [
-            "results" => $matches,
-            "pagination" => [
-                "more" => $b_more,
-                "page" => $page
-            ]
-        ];
-
-        $payload = json_encode($data);
-
-        $response->getBody()->write($payload);
-        return $response
-            ->withHeader('Content-Type', 'application/json');
     }
 
     /**
@@ -156,7 +172,7 @@ class TagPages extends BasePages
             $tag->save(true);
             $saved_tag = $tag->clone_refresh();
 
-
+            $call->project->do_tag_save();
             $data = ['success'=>true,'message'=>'ok','tag'=>$saved_tag,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
 
@@ -167,6 +183,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
+            $this->logger->error("Could not create_tag: ".$e->getMessage(),['exception'=>$e]);
             $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
             $payload = JsonHelper::toString($data);
 
@@ -218,6 +235,8 @@ class TagPages extends BasePages
                 $matt->set_link_for_pointee($routeParser);
             }
 
+            $call->project->do_tag_save();
+
             $data = ['success'=>true,'message'=>'ok','tag'=>$saved_tag,'attribute'=>null,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
 
@@ -228,6 +247,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
+            $this->logger->error("Could not edit_tag: ".$e->getMessage(),['exception'=>$e]);
             $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
             $payload = JsonHelper::toString($data);
 
@@ -257,6 +277,7 @@ class TagPages extends BasePages
             $option->note = 'delete_tag';
             $call = $this->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
             $call->tag->delete_tag();
+            $call->project->do_tag_save();
             $data = ['success'=>true,'message'=>'ok','tag'=>$call->tag,'attribute'=>null,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
 
@@ -267,6 +288,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
+            $this->logger->error("Could not delete_tag: ".$e->getMessage(),['exception'=>$e]);
             $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
             $payload = JsonHelper::toString($data);
 
@@ -437,6 +459,7 @@ class TagPages extends BasePages
                 $matt->set_link_for_pointee($routeParser);
             }
 
+            $call->project->do_tag_save();
             $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$new_attribute,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
 
@@ -447,6 +470,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
+            $this->logger->error("Could not create_attribute: ".$e->getMessage(),['exception'=>$e]);
             $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
             $payload = JsonHelper::toString($data);
 
@@ -497,6 +521,8 @@ class TagPages extends BasePages
                 $matt->set_link_for_pointee($routeParser);
             }
 
+            $call->project->do_tag_save();
+
             $data = ['success'=>true,'message'=>'ok attribute','tag'=>$altered_tag,'attribute'=>$new_attribute,'token'=> $call->new_token];
 
 
@@ -509,6 +535,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
+            $this->logger->error("Could not edit_attribute: ".$e->getMessage(),['exception'=>$e]);
             $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
             $payload = JsonHelper::toString($data);
 
@@ -554,6 +581,8 @@ class TagPages extends BasePages
                 $matt->set_link_for_pointee($routeParser);
             }
 
+            $call->project->do_tag_save();
+
             $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$call->attribute,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
 
@@ -564,6 +593,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
+            $this->logger->error("Could not delete_attribute: ".$e->getMessage(),['exception'=>$e]);
             $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
             $payload = JsonHelper::toString($data);
 
@@ -607,6 +637,7 @@ class TagPages extends BasePages
                 $matt->set_link_for_pointee($routeParser);
             }
 
+            $call->project->do_tag_save();
             $data = [
                 'success'=>true,'message'=>'ok','tag'=>$call->tag,'attribute'=>null,'applied'=>$applied_to_return,
                 'token'=> $call->new_token
@@ -620,6 +651,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
+            $this->logger->error("Could not create_applied: ".$e->getMessage(),['exception'=>$e]);
             $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
             $payload = JsonHelper::toString($data);
 
@@ -662,6 +694,8 @@ class TagPages extends BasePages
                 $matt->set_link_for_pointee($routeParser);
             }
 
+            $call->project->do_tag_save();
+
             $data = [
                 'success'=>true,'message'=>'ok','tag'=>$call->tag,'attribute'=>null,'applied'=>$call->applied,
                 'token'=> $call->new_token
@@ -675,6 +709,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
+            $this->logger->error("Could not delete_applied: ".$e->getMessage(),['exception'=>$e]);
             $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
             $payload = JsonHelper::toString($data);
 

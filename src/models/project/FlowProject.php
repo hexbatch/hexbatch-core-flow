@@ -5,6 +5,7 @@ namespace app\models\project;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
+use app\models\tag\brief\BriefDiffFromYaml;
 use app\models\tag\FlowTagSearchParams;
 use app\models\user\FlowUser;
 use app\models\tag\FlowTag;
@@ -436,9 +437,110 @@ class FlowProject extends FlowBase {
 
 
     /**
+     * @return string
      * @throws Exception
      */
-    public function save() :string {
+    public function get_tag_yaml_path() : string {
+        $dir = $this->get_project_directory();
+        if (!is_readable($dir)) {
+            throw new LogicException("Project directory of $dir not created before saving tags");
+        }
+
+        $tag_yaml_path = $dir . DIRECTORY_SEPARATOR . 'tags.yaml';
+        return $tag_yaml_path;
+    }
+
+    /**
+     * writes a yaml file [tags.yaml] of all the tags, attributes and applied to the project repo base folder
+     * will overwrite if already existing
+     * does not refresh tags, so make sure is current
+     * @throws Exception
+     */
+    public function save_tags_to_yaml_in_project_directory()  {
+        $tags = $this->get_all_owned_tags_in_project(true);
+
+        foreach ($tags as $tag) {
+            $tag->set_brief_json(true);
+        }
+
+        $pigs_in_space = JsonHelper::toString($tags);
+        $tags_serialized = JsonHelper::fromString($pigs_in_space);
+
+        foreach ($tags as $tag) {
+            $tag->set_brief_json(false);
+        }
+
+        $tag_yaml = Yaml::dump($tags_serialized);
+
+        $tag_yaml_path = $this->get_tag_yaml_path();
+        $b_ok = file_put_contents($tag_yaml_path,$tag_yaml);
+        if ($b_ok === false) {throw new RuntimeException("Could not write to $tag_yaml_path");}
+    }
+
+    /**
+     * returns true if changes and commit made
+     * @param bool $b_commit , default true, will only commit if true. If false will write commit message to log
+     * @param bool $b_log_message , default false, if true will write commit message to log
+     * @throws Exception
+     * @return false|string  returns false if no changes, else returns the commit message (regardless if committed)
+     */
+    public function save_tag_yaml_and_commit(bool $b_commit = true,bool $b_log_message = false)  {
+        $brief_changes = new BriefDiffFromYaml($this); //compare current changes to older saved in yaml
+
+        $this->save_tags_to_yaml_in_project_directory();
+
+        $number_tag_changes = $brief_changes->count_changes();
+        $commit_message = null;
+        if ($number_tag_changes) {
+            $this->do_git_command("add .");
+
+            $tag_summary = $brief_changes->get_changed_tag_summary_line();
+            $attribute_summary = $brief_changes->get_changed_attribute_summary_line();
+            $applied_summary = $brief_changes->get_changed_applied_summary_line();
+            if ($number_tag_changes === 1) {
+                $commit_message = $tag_summary .  $attribute_summary . $applied_summary;
+            } else {
+                $commit_message = "Did $number_tag_changes tag operations";
+                if ($tag_summary) {$commit_message .= "\n$tag_summary";}
+                if ($attribute_summary) {$commit_message .= "\n$attribute_summary";}
+                if ($applied_summary) {$commit_message .= "\n$applied_summary";}
+            }
+
+            if ($b_log_message) {
+                static::get_logger()->debug("Tag Commit message",['message'=>$commit_message]);
+            }
+            if ($b_commit) {
+                $this->do_git_command("commit  -m '$commit_message'");
+                if (isset($_SESSION[FlowUser::SESSION_USER_KEY])) {
+                    /**
+                     * @var FlowUser $logged_in_user
+                     */
+                    $logged_in_user = $_SESSION[FlowUser::SESSION_USER_KEY];
+                    $user_info = "$logged_in_user->flow_user_guid <$logged_in_user->flow_user_email>";
+                    $this->do_git_command("commit --amend --author='$user_info' --no-edit");
+                }
+                if ($this->export_repo_do_auto_push) {
+                    $this->push_repo();
+                }
+            }
+        }
+
+        return $commit_message?? false;
+
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function do_tag_save() {
+        $this->save_tag_yaml_and_commit();
+    }
+
+    /**
+     * @throws Exception
+     * @return bool true if committed, false if nothing to commit
+     */
+    public function save() :bool {
         $db = null;
         try {
             if (empty($this->flow_project_title)) {
@@ -553,18 +655,28 @@ class FlowProject extends FlowBase {
             if ($b_ok === false) {throw new RuntimeException("Could not write to $title_path");}
 
 
-            $commit_title = "Changed Project";
+            $commit_title_array = [];
             $commit_message_array = [];
-            if ($b_did_title_change) { $commit_message_array[] = "Updated Project Title";}
-            if ($b_did_blurb_change) { $commit_message_array[] = "Updated Project Blurb";}
-            if ($b_did_readme_bb_change) { $commit_message_array[] = "Updated Project Read Me";}
-            //todo save entities and tags here , they will update the title and message
+            if ($b_did_title_change) {
+                $commit_message_array[] = "Updated Project Title"; $commit_title_array[] = "Project Title";}
+            if ($b_did_blurb_change) { $commit_message_array[] = "Updated Project Blurb"; $commit_title_array[] = "Project Blurb";}
+            if ($b_did_readme_bb_change) { $commit_message_array[] = "Updated Project Read Me"; $commit_title_array[] = "Project Description";}
 
+            $tag_changes_message_or_false = $this->save_tag_yaml_and_commit(false);
+            if ($tag_changes_message_or_false) {
+                $commit_message_array[] = $tag_changes_message_or_false;
+                $commit_title_array[] = "Tags";
+            }
+
+            if (empty($commit_title_array) && empty($commit_message_array)) {
+                return false; //nothing to commit
+            }
             $this->do_git_command("add .");
 
-            array_unshift($commit_message_array,'');
-            array_unshift($commit_message_array,$commit_title);
-            $commit_message_full = implode("\n",$commit_message_array);
+            $commit_title = implode('; ',$commit_title_array);
+            $commit_body = implode('\n',$commit_message_array);
+
+            $commit_message_full =  "$commit_title\n\n$commit_body";
 
             //if any ` in there, then escape them
             $commit_message_full = str_replace("'","\'",$commit_message_full);
@@ -596,7 +708,7 @@ class FlowProject extends FlowBase {
             $push_info = $this->push_repo();
             return "Saved and pushed to $this->export_repo_url<br>$push_info";
         }
-        return "Saved";
+        return true;
     }
 
     /**

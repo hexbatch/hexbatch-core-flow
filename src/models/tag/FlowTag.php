@@ -8,6 +8,7 @@ use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\multi\GeneralSearch;
 use app\models\multi\GeneralSearchParams;
+use app\models\tag\brief\BriefFlowTag;
 use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
@@ -55,29 +56,44 @@ class FlowTag extends FlowBase implements JsonSerializable {
      */
     public array $applied = [];
 
+    protected bool $b_brief_json = false;
+
+    public function set_brief_json(bool $what) {
+        $this->b_brief_json = $what;
+    }
+
 
     public function jsonSerialize(): array
     {
-        $standard = FlowTagStandardAttribute::find_standard_attributes($this);
 
-        $attributes = static::get_attribute_map($this);
+        if ($this->b_brief_json) {
 
-        foreach ($attributes as $attribute) {
-            $attribute->is_inherited = $attribute->flow_tag_guid !== $this->flow_tag_guid;
+            $brief = new BriefFlowTag($this);
+            return $brief->to_array();
+        } else {
+            $standard = FlowTagStandardAttribute::find_standard_attributes($this);
+
+            $attributes = static::get_attribute_map($this);
+
+            foreach ($attributes as $attribute) {
+                $attribute->is_inherited = $attribute->flow_tag_guid !== $this->flow_tag_guid;
+            }
+
+            return [
+                "flow_tag_guid" => $this->flow_tag_guid,
+                "parent_tag_guid" => $this->parent_tag_guid,
+                "flow_project_guid" => $this->flow_project_guid,
+                "created_at_ts" => $this->tag_created_at_ts,
+                "updated_at_ts" => $this->tag_updated_at_ts,
+                "flow_tag_name" => $this->flow_tag_name,
+                "attributes" => $attributes,
+                "standard_attributes" => $standard,
+                "flow_tag_parent" => $this->flow_tag_parent,
+                "applied" => $this->applied
+            ];
         }
 
-        return [
-            "flow_tag_guid" => $this->flow_tag_guid,
-            "parent_tag_guid" => $this->parent_tag_guid,
-            "flow_project_guid" => $this->flow_project_guid,
-            "created_at_ts" => $this->tag_created_at_ts,
-            "updated_at_ts" => $this->tag_updated_at_ts,
-            "flow_tag_name" => $this->flow_tag_name,
-            "attributes" => $attributes,
-            "standard_attributes" => $standard,
-            "flow_tag_parent" => $this->flow_tag_parent,
-            "applied" => $this->applied
-        ];
+
     }
 
 
@@ -362,7 +378,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
         if (count($search->only_applied_to_guids)) {
             $general_search = new GeneralSearchParams();
             $general_search->guids = $search->only_applied_to_guids;
-            $gmatches = GeneralSearch::general_search($general_search,1,100000);
+            $gmatches = GeneralSearch::general_search($general_search,1,GeneralSearch::UNLIMITED_RESULTS_PER_PAGE);
             $applied_project_ids=[];
             $applied_user_ids = [];
             $applied_entry_ids = [];
@@ -395,7 +411,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
         if (count($search->not_applied_to_guids)) {
             $general_search = new GeneralSearchParams();
             $general_search->guids = $search->not_applied_to_guids;
-            $gmatches = GeneralSearch::general_search($general_search,1,100000);
+            $gmatches = GeneralSearch::general_search($general_search,1,GeneralSearch::UNLIMITED_RESULTS_PER_PAGE);
             $applied_project_ids=[];
             $applied_user_ids = [];
             $applied_entry_ids = [];
@@ -446,8 +462,8 @@ class FlowTag extends FlowBase implements JsonSerializable {
                     attribute.points_to_entry_id,
                     attribute.points_to_user_id,
                     attribute.points_to_project_id,
-                    attribute.created_at_ts                 as applied_created_at_ts,
-                    UNIX_TIMESTAMP(attribute.updated_at)    as applied_updated_at_ts,
+                    attribute.created_at_ts                 as attribute_created_at_ts,
+                    UNIX_TIMESTAMP(attribute.updated_at)    as attribute_updated_at_ts,
                     HEX(attribute.flow_tag_attribute_guid)  as flow_tag_attribute_guid,
                     attribute.tag_attribute_name,
                     attribute.tag_attribute_long,

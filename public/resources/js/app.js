@@ -177,5 +177,36 @@ function toggle_action_spinner(me,state) {
 let my_swal = null;
 
 jQuery(function() {
-   my_swal = SweetAlert;
+   // noinspection JSUnresolvedVariable
+    my_swal = SweetAlert;
+
+    let clipboard = new ClipboardJS('.clipy-btn');
+
+    clipboard.on('success', function(e) {
+        //e.text e.action
+
+        let message = $(e.trigger).data('popover_on_success');
+        let popover = new bootstrap.Popover(e.trigger,{
+            content: message
+        });
+        popover.show();
+        setTimeout(function() {
+            popover.dispose();
+        },2000);
+        e.clearSelection();
+    });
+
+    clipboard.on('error', function(e) {
+        //e.text e.action
+
+        let message = $(e.trigger).data('popover_on_fail');
+        let popover = new bootstrap.Popover(e.trigger,{
+            content: message
+        });
+        popover.show();
+        setTimeout(function() {
+             popover.dispose();
+        },2000);
+        e.clearSelection();
+    });
 });
