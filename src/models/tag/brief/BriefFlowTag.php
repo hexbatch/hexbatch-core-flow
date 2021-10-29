@@ -78,4 +78,51 @@ class BriefFlowTag implements JsonSerializable {
             "applied" => $this->applied
         ];
     }
+
+    /**
+     * @param string[] $put_issues_here
+     * @return int  returns 0 or 1
+     */
+    public function has_minimal_information(array &$put_issues_here = []) : int {
+
+        $us =
+            (
+            ($this->flow_project_guid && WillFunctions::is_valid_guid_format($this->flow_project_guid) ) &&
+            ($this->flow_tag_guid && WillFunctions::is_valid_guid_format($this->flow_tag_guid) ) &&
+            $this->tag_created_at_ts &&
+            $this->flow_tag_name
+
+            );
+        $missing_list = [];
+
+        if (!$this->flow_project_guid || !WillFunctions::is_valid_guid_format($this->flow_project_guid) ) {$missing_list[] = 'project guid';}
+        if (!$this->flow_tag_guid || !WillFunctions::is_valid_guid_format($this->flow_project_guid) ) {$missing_list[] = 'own guid';}
+        if (!$this->tag_created_at_ts) {$missing_list[] = 'timestamp';}
+        if (!$this->flow_tag_name  ) {$missing_list[] = 'name';}
+
+        $tag_name = $this->flow_tag_name??'{unnamed}';
+        $tag_guid = $this->flow_tag_guid??'{no-guid}';
+        if (!$us) {
+            $put_issues_here[] = "Tag $tag_name of guid $tag_guid missing: ". implode(',',$missing_list);
+        }
+        $b_bad_children = false;
+
+        foreach ($this->attributes as $att) {
+            $what =  $att->has_minimal_information($put_issues_here);
+            if (!$what) {$b_bad_children = true;}
+            $us &= $what;
+        }
+
+        foreach ($this->applied as $app) {
+            $what =  $app->has_minimal_information($put_issues_here);
+            if (!$what) {$b_bad_children = true;}
+            $us &= $what;
+        }
+
+        if ($b_bad_children) {
+            $put_issues_here[] = "Tag $tag_name of guid $tag_guid children missing data ";
+        }
+
+        return intval($us);
+    }
 }

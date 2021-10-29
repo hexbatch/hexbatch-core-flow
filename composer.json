@@ -1,7 +1,8 @@
 {
     "name": "hexbatch/core",
     "description": "Website for organizing the ideas, and code for the core",
-    "type": "library",
+    "version": "0.4.0",
+    "type": "project",
     "license": "MIT",
     "authors": [
         {
@@ -30,7 +31,8 @@
         "paquettg/php-html-parser": "^3.1",
         "ramsey/uuid": "^4.1",
         "paragonie/anti-csrf": "^2.3",
-        "scrivo/highlight.php": "v9.18.1.7"
+        "scrivo/highlight.php": "v9.18.1.7",
+        "bluem/tree": "^3.1"
     },
     "autoload": {
         "psr-4": {"app\\": "src/"}

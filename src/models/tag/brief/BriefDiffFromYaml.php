@@ -65,6 +65,12 @@ class BriefDiffFromYaml {
      */
     public $brief_tag_map = [];
 
+
+    /**
+     * @var array<string,BriefFlowTag> $brief_tag_map
+     */
+    public $from_yaml_as_brief_tag_map = [];
+
     public function count_changes() : int {
         $total_count =
             count($this->changed_tags) +
@@ -222,9 +228,10 @@ class BriefDiffFromYaml {
     /**
      * @param FlowProject $project
      * @param string|null $yaml_file
+     * @param bool $b_changed_is_set_from_file
      * @throws Exception
      */
-    public function __construct(FlowProject $project,?string $yaml_file=null){
+    public function __construct(FlowProject $project,?string $yaml_file=null,bool $b_changed_is_set_from_file = false){
         $this->project = $project;
         $this->changed_tags = [];
         $this->added_tags = [];
@@ -235,6 +242,7 @@ class BriefDiffFromYaml {
         $this->added_applied = [];
         $this->removed_applied = [];
         $this->brief_tag_map = [];
+        $this->from_yaml_as_brief_tag_map = [];
 
         $current_tags = $this->project->get_all_owned_tags_in_project(true);
         if (empty($yaml_file)) {
@@ -289,6 +297,7 @@ class BriefDiffFromYaml {
             $btag_object = new BriefFlowTag($btag);
             $b_tag_map[$btag_object->flow_tag_guid] = $btag_object;
             $this->brief_tag_map[$btag_object->flow_tag_guid] = $btag_object;
+            $this->from_yaml_as_brief_tag_map[$btag_object->flow_tag_guid] = $btag_object;
 
             foreach ($btag_object->attributes as $batt) {
                 $b_attribute_map[$batt->flow_tag_attribute_guid] = new BriefFlowTagAttribute($batt);
@@ -321,7 +330,12 @@ class BriefDiffFromYaml {
                 if ($tag->flow_tag_name !== $btag->flow_tag_name ||
                     $tag->parent_tag_guid !== $btag->parent_tag_guid)
                 {
-                    $this->changed_tags[] = new BriefFlowTag($tag);
+                    if ($b_changed_is_set_from_file) {
+                        $this->changed_tags[] = $btag;
+                    } else {
+                        $this->changed_tags[] = new BriefFlowTag($tag);
+                    }
+
                 }
 
                 if ($tag->flow_tag_name !== $btag->flow_tag_name) {
@@ -350,7 +364,12 @@ class BriefDiffFromYaml {
                     $attribute->tag_attribute_long !== $battribute->tag_attribute_long ||
                     $attribute->tag_attribute_name !== $battribute->tag_attribute_name
                 ) {
-                    $this->changed_attributes[] = new BriefFlowTagAttribute($attribute);
+                    if ($b_changed_is_set_from_file) {
+                        $this->changed_attributes[] = $battribute;
+                    } else {
+                        $this->changed_attributes[] = new BriefFlowTagAttribute($attribute);
+                    }
+
                 }
 
                 if ($attribute->tag_attribute_name !== $battribute->tag_attribute_name) {

@@ -206,10 +206,10 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
             }
             elseif ($this->flow_tag_attribute_guid) {
                 $insert_sql = "
-                    INSERT INTO flow_tag_attributes(flow_tag_id, flow_applied_tag_id, created_at_ts, updated_at, points_to_entry_id,
+                    INSERT INTO flow_tag_attributes(flow_tag_id, flow_applied_tag_id, created_at_ts, points_to_entry_id,
                                                     points_to_user_id, points_to_project_id, flow_tag_attribute_guid,
                                                     tag_attribute_name, tag_attribute_long, tag_attribute_text)  
-                    VALUES (?,?,?,?,?,?,?,UNHEX(?),?,?,?) 
+                    VALUES (?,?,?,?,?,?,UNHEX(?),?,?,?) 
                     ON DUPLICATE KEY UPDATE    flow_tag_id = VALUES(flow_tag_id),   
                                                 flow_applied_tag_id = VALUES(flow_applied_tag_id),
                                                 points_to_entry_id = VALUES(points_to_entry_id),
@@ -224,7 +224,6 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                     $this->flow_tag_id,
                     $this->flow_applied_tag_id,
                     $this->attribute_created_at_ts,
-                    $this->attribute_updated_at_ts,
                     $this->points_to_entry_id,
                     $this->points_to_user_id,
                     $this->points_to_project_id,

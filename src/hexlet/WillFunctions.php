@@ -20,4 +20,11 @@ class WillFunctions {
         }
         return $default;
     }
+
+    public static function is_valid_guid_format(?string $guid) : bool{
+        if (empty($guid)) {return false;}
+        if (!ctype_xdigit($guid)) {return false;}
+        if (strlen($guid) !== 32) {return false;}
+        return true;
+    }
 }

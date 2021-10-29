@@ -5,6 +5,8 @@ namespace app\models\project;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
+use app\models\multi\GeneralSearch;
+use app\models\tag\brief\BriefCheckValidYaml;
 use app\models\tag\brief\BriefDiffFromYaml;
 use app\models\tag\brief\BriefUpdateFromYaml;
 use app\models\tag\FlowTagSearchParams;
@@ -107,7 +109,9 @@ class FlowProject extends FlowBase {
         $search_params = new FlowTagSearchParams();
         $search_params->flag_get_applied = $b_get_applied;
         $search_params->owning_project_guid = $this->flow_project_guid;
-        $this->owned_tags = FlowTag::get_tags($search_params,1,100000);
+        $unsorted_array = FlowTag::get_tags($search_params,1,GeneralSearch::UNLIMITED_RESULTS_PER_PAGE);
+
+        $this->owned_tags = FlowTag::sort_tag_array_by_parent($unsorted_array);
 
         if ($b_get_applied) {
             $this->b_did_applied_for_owned_tags = true;
@@ -136,7 +140,7 @@ class FlowProject extends FlowBase {
         $search_params->flag_get_applied = true;
         $search_params->owning_project_guid = $this->flow_project_guid;
         $search_params->only_applied_to_guids[] = $this->flow_project_guid;
-        $this->tags_applied_to_this = FlowTag::get_tags($search_params,1,100000);
+        $this->tags_applied_to_this = FlowTag::get_tags($search_params,1,GeneralSearch::UNLIMITED_RESULTS_PER_PAGE);
         return $this->tags_applied_to_this;
     }
 
@@ -979,6 +983,15 @@ class FlowProject extends FlowBase {
         }
 
         $old_head = $this->get_head_commit_hash();
+        $command = "reset --hard"; //clear up any earlier bugs or crashes
+        try {
+            $this->do_key_command_with_private_key($this->export_repo_key,$this->export_repo_url,$command);
+        } catch (Exception $e) {
+            $message = "Could not do a hard reset";
+            $message.="<br>{$e->getMessage()}\n";
+            throw new RuntimeException($message);
+        }
+
         $command = "pull import $this->import_repo_branch";
         try {
             $git_ret =  $this->do_key_command_with_private_key($this->export_repo_key,$this->export_repo_url,$command);
@@ -986,8 +999,13 @@ class FlowProject extends FlowBase {
             $maybe_changes = $this->do_git_command('diff');
             $message = $e->getMessage();
             if (!empty(trim($maybe_changes))) {
-                $this->do_git_command('merge --abort');
-                $message.="<br>Aborted Merge\n";
+                try {
+                    $this->do_git_command('merge --abort');
+                    $message.="<br>Aborted Merge\n";
+                } catch (Exception $oh_no) {
+                    $message.="<br>{$oh_no->getMessage()}\n";
+                }
+
             }
             throw new RuntimeException($message);
         }
@@ -997,10 +1015,11 @@ class FlowProject extends FlowBase {
             $this->check_integrity();
             $this->set_db_from_file_state();
         } catch (Exception $e) {
-            //do not use commit just imported
+            //do not use commit just imported, and remove any changes to files
             if ($old_head !== $new_head) {
-                $this->do_git_command("reset $old_head");
+                $this->do_git_command("reset --hard $old_head");
             }
+            throw $e;
         }
 
         return $git_ret;
@@ -1022,6 +1041,11 @@ class FlowProject extends FlowBase {
         $blurb = $this->do_project_directory_command('cat flow_project_blurb');
         if (mb_strlen($blurb) > static::MAX_SIZE_BLURB) {
             throw new InvalidArgumentException("Project Blurb cannot be more than ".static::MAX_SIZE_BLURB." characters");
+        }
+        $valid_tags = new BriefCheckValidYaml($this);
+        if (!$valid_tags->is_valid()) {
+            throw new InvalidArgumentException("tags.yaml does not have minimal information for each thing in it: \n<br>".
+                implode("\n<br>",$valid_tags->issues));
         }
     }
 
@@ -1058,7 +1082,7 @@ class FlowProject extends FlowBase {
 
             //do children here
 
-            $tags = new BriefUpdateFromYaml($this); //todo test this
+            $tags = new BriefUpdateFromYaml($this);
             WillFunctions::will_do_nothing($tags); //for debugging
 
             $db->commit();

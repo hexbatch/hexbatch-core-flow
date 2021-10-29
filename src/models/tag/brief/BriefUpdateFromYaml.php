@@ -29,7 +29,7 @@ class BriefUpdateFromYaml extends FlowBase {
      */
     public function __construct( FlowProject $project){
         $this->project = $project;
-        $this->yaml_diff = new BriefDiffFromYaml($this->project);
+        $this->yaml_diff = new BriefDiffFromYaml($this->project,null,true);
 
         //get ids for the removed and modified
 
@@ -102,43 +102,54 @@ class BriefUpdateFromYaml extends FlowBase {
             }
         }
 
-        $search_params = new GeneralSearchParams();
-        $search_params->guids = array_keys($guids_needed);
-        $things = GeneralSearch::general_search($search_params,1,GeneralSearch::UNLIMITED_RESULTS_PER_PAGE);
+        if (count($guids_needed)) {
+            $search_params = new GeneralSearchParams();
+            $search_params->guids = array_keys($guids_needed);
+            $things = GeneralSearch::general_search($search_params,1,GeneralSearch::UNLIMITED_RESULTS_PER_PAGE);
 
-        /**
-         * @type array<string,int> $guid_map_to_ids
-         */
-        $guid_map_to_ids = [];
-        foreach ($things as $thing) {
-            $guid_map_to_ids[$thing->guid] = $thing->id;
-        }
+            /**
+             * @type array<string,int> $guid_map_to_ids
+             */
+            $guid_map_to_ids = [];
+            foreach ($things as $thing) {
+                $guid_map_to_ids[$thing->guid] = $thing->id;
+            }
 
-        foreach ($saved_tags as $tag) {
-            $tag->fill_ids_from_guids($guid_map_to_ids);
-            if (count($tag->get_needed_guids_for_empty_ids())) {
-                throw new RuntimeException(
-                    "[BriefUpdateFromYaml] Missing some filled guids for tag $tag->flow_tag_guid  $tag->flow_tag_name");
+            foreach ($saved_tags as $tag) {
+                $tag->fill_ids_from_guids($guid_map_to_ids);
+                if (count($tag->get_needed_guids_for_empty_ids())) {
+                    throw new RuntimeException(
+                        "[BriefUpdateFromYaml] Missing some filled guids for tag $tag->flow_tag_guid  $tag->flow_tag_name");
+                }
+            }
+
+            //might need tag guids from tags not saved yet (will not be in the results from above)
+            //so save tags without the children, then fill in the guid map, can save again below if skipping this step
+            foreach ($saved_tags as $tag) {
+                $tag->save();
+                $guid_map_to_ids[$tag->flow_tag_guid] = $tag->flow_tag_id;
+            }
+
+
+            foreach ($saved_attributes as $att) {
+                $att->fill_ids_from_guids($guid_map_to_ids);
+                if (count($att->get_needed_guids_for_empty_ids())) {
+                    throw new RuntimeException(
+                        "[BriefUpdateFromYaml] Missing some filled guids for attribute ".
+                        "$att->flow_tag_attribute_guid  $att->tag_attribute_name");
+                }
+            }
+
+            foreach ($saved_applied as $app) {
+                $app->fill_ids_from_guids($guid_map_to_ids);
+                if (count($app->get_needed_guids_for_empty_ids())) {
+                    throw new RuntimeException(
+                        "[BriefUpdateFromYaml] Missing some filled guids for applied ".
+                        "$app->flow_applied_tag_guid ");
+                }
             }
         }
 
-        foreach ($saved_attributes as $att) {
-            $att->fill_ids_from_guids($guid_map_to_ids);
-            if (count($att->get_needed_guids_for_empty_ids())) {
-                throw new RuntimeException(
-                    "[BriefUpdateFromYaml] Missing some filled guids for attribute ".
-                    "$att->flow_tag_attribute_guid  $att->tag_attribute_name");
-            }
-        }
-
-        foreach ($saved_applied as $app) {
-            $app->fill_ids_from_guids($guid_map_to_ids);
-            if (count($app->get_needed_guids_for_empty_ids())) {
-                throw new RuntimeException(
-                    "[BriefUpdateFromYaml] Missing some filled guids for applied ".
-                    "$app->flow_applied_tag_guid ");
-            }
-        }
 
         //got all guids in, so lets insert, update, and delete
         foreach ($saved_tags as $tag) {
@@ -155,7 +166,7 @@ class BriefUpdateFromYaml extends FlowBase {
 
         //deleting go backwards because do not know what was cherry picked or removed entirely for tag parts
 
-        foreach ($this->yaml_diff->removed_applied as $b_applied) {
+        foreach ($this->yaml_diff->added_applied as $b_applied) {
             $app = new FlowAppliedTag($b_applied);
             $app->delete_applied();
         }

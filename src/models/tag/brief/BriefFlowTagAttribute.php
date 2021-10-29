@@ -68,4 +68,33 @@ class BriefFlowTagAttribute  implements JsonSerializable {
 
         ];
     }
+
+    /**
+     * @param string[] $put_issues_here
+     * @return int  returns 0 or 1
+     */
+    public function has_minimal_information(array &$put_issues_here = []) : int {
+
+        $what =
+            (
+                ($this->flow_tag_attribute_guid && WillFunctions::is_valid_guid_format($this->flow_tag_attribute_guid)) &&
+                ($this->flow_tag_guid && WillFunctions::is_valid_guid_format($this->flow_tag_guid)) &&
+                $this->attribute_created_at_ts &&
+                $this->tag_attribute_name
+
+            );
+
+        $missing_list = [];
+        if (!$this->flow_tag_attribute_guid || !WillFunctions::is_valid_guid_format($this->flow_tag_attribute_guid) ) {$missing_list[] = 'own guid';}
+        if (!$this->flow_tag_guid || !WillFunctions::is_valid_guid_format($this->flow_tag_guid) ) {$missing_list[] = 'owning tag guid';}
+        if (!$this->attribute_created_at_ts) {$missing_list[] = 'timestamp';}
+        if (!$this->tag_attribute_name) {$missing_list[] = 'name';}
+
+        $own_name = $this->tag_attribute_name??'{unnamed}';
+        $own_guid = $this->flow_tag_attribute_guid??'{no-guid}';
+        if (!$what) {
+            $put_issues_here[] = "Attribute $own_name of guid $own_guid missing: ". implode(',',$missing_list);
+        }
+        return intval($what);
+    }
 }

@@ -4,8 +4,58 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b18cbb937b95ffe10370c8c21a17a2f1",
+    "content-hash": "ae219525167455ad5c04f0f21b85949d",
     "packages": [
+        {
+            "name": "bluem/tree",
+            "version": "3.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/BlueM/Tree.git",
+                "reference": "e520150cc713b4318c6ceae05d578462d930bc59"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/BlueM/Tree/zipball/e520150cc713b4318c6ceae05d578462d930bc59",
+                "reference": "e520150cc713b4318c6ceae05d578462d930bc59",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "php": ">=7.0"
+            },
+            "require-dev": {
+                "doctrine/instantiator": "1.0.*",
+                "phpunit/phpunit": "6.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "BlueM\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Carsten Blüm",
+                    "email": "carsten@bluem.net"
+                }
+            ],
+            "description": "Library for handling tree structures based on parent IDs",
+            "homepage": "https://github.com/BlueM/Tree",
+            "keywords": [
+                "hierarchical",
+                "tree"
+            ],
+            "support": {
+                "issues": "https://github.com/BlueM/Tree/issues",
+                "source": "https://github.com/BlueM/Tree/tree/3.1"
+            },
+            "time": "2019-09-15T06:11:51+00:00"
+        },
         {
             "name": "brick/math",
             "version": "0.9.2",
@@ -3641,7 +3691,9 @@
         "ext-pdo": "*",
         "ext-json": "*",
         "ext-mbstring": "*",
-        "ext-mysqli": "*"
+        "ext-mysqli": "*",
+        "ext-zip": "*",
+        "ext-fileinfo": "*"
     },
     "platform-dev": [],
     "plugin-api-version": "2.0.0"

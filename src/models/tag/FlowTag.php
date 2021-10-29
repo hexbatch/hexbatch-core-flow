@@ -9,6 +9,7 @@ use app\models\base\FlowBase;
 use app\models\multi\GeneralSearch;
 use app\models\multi\GeneralSearchParams;
 use app\models\tag\brief\BriefFlowTag;
+use BlueM\Tree;
 use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
@@ -765,8 +766,8 @@ class FlowTag extends FlowBase implements JsonSerializable {
             }
             elseif ($this->flow_project_guid) {
                 $insert_sql = "
-                    INSERT INTO flow_tags(flow_project_id, parent_tag_id, created_at_ts,updated_at, flow_tag_guid, flow_tag_name)  
-                    VALUES (?,?,?,?,UNHEX(?),?)
+                    INSERT INTO flow_tags(flow_project_id, parent_tag_id, created_at_ts, flow_tag_guid, flow_tag_name)  
+                    VALUES (?,?,?,UNHEX(?),?)
                     ON DUPLICATE KEY UPDATE flow_project_id =   VALUES(flow_project_id),
                                             parent_tag_id =     VALUES(parent_tag_id),
                                             flow_tag_name =     VALUES(flow_tag_name)       
@@ -775,7 +776,6 @@ class FlowTag extends FlowBase implements JsonSerializable {
                     $this->flow_project_id,
                     $this->parent_tag_id,
                     $this->tag_created_at_ts,
-                    $this->tag_updated_at_ts,
                     $this->flow_tag_guid,
                     $this->flow_tag_name
                 ];
@@ -858,7 +858,6 @@ class FlowTag extends FlowBase implements JsonSerializable {
     public function get_needed_guids_for_empty_ids() : array
     {
         $ret = [];
-        if (empty($this->flow_tag_id) && $this->flow_tag_guid) { $ret[] = $this->flow_tag_guid;}
         if (empty($this->flow_project_id) && $this->flow_project_guid) { $ret[] = $this->flow_project_guid;}
         if (empty($this->parent_tag_id) && $this->parent_tag_guid) { $ret[] = $this->parent_tag_guid;}
 
@@ -871,13 +870,41 @@ class FlowTag extends FlowBase implements JsonSerializable {
      */
     public function fill_ids_from_guids(array $guid_map_to_ids)
     {
-        if (empty($this->flow_tag_id) && $this->flow_tag_guid) {
-            $this->flow_tag_id = $guid_map_to_ids[$this->flow_tag_guid] ?? null;}
+
         if (empty($this->flow_project_id) && $this->flow_project_guid) {
             $this->flow_project_id = $guid_map_to_ids[$this->flow_project_guid] ?? null;}
         if (empty($this->parent_tag_id) && $this->parent_tag_guid) {
             $this->parent_tag_id = $guid_map_to_ids[$this->parent_tag_guid] ?? null;}
 
+    }
+
+
+
+    /**
+     * sort parents before children
+     * if there are tags with a parent set, but not in the array, then those are put at the end
+     * @param FlowTag[] $tag_array_to_sort
+     * @return FlowTag[]
+     */
+    public static function sort_tag_array_by_parent(array $tag_array_to_sort) : array {
+
+        $data = [];
+        $data[] = ['id' => 0, 'parent' => -1, 'title' => 'dummy_root','tag'=>null];
+        foreach ($tag_array_to_sort as $tag) {
+            $data[] = ['id' => $tag->flow_tag_id, 'parent' => $tag->parent_tag_id??0, 'title' => $tag->flow_tag_name,'tag'=>$tag];
+        }
+        $tree = new Tree(
+            $data,
+            ['rootId' => -1]
+        );
+
+        $sorted_nodes =  $tree->getNodes();
+        $ret = [];
+        foreach ($sorted_nodes as $node) {
+            $what =  $node->tag??null;
+            if ($what) {$ret[] = $what;}
+        }
+        return $ret;
     }
 
 }

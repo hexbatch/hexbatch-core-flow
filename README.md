@@ -1,8 +1,49 @@
 # hexbatch-core-flow
-Sets up the organization and work flow for the core
+Sets up the organization and work flow for the core hexbatch library. Can be used for other things too!
 
-This is also a sub repo for https://github.com/hexbatch/hexbatch-core-flow
-To create the php , server and db then go two levels up and do 
+The main use of this web app is to organize ideas, its useful for planning complex specifications
+
+## Releases
+| Date  | Version | Name |
+| ------------- | ------------- | ------------- |
+| November 26, 2021  | 0.4.0  | Tags Oh My! |
+| September 2, 2021  | 0.3.0  | Import Export |
+| August 9, 2021  | 0.2.0  | Projects and Users Exist |
+| July 4, 2021  | 0.1.0  | First Commit |
+
+
+### Tags Oh My!  ~ Released November 26, 2021
+
+Each project can create and manage a list of tags
+
+A tag has a name , a possible parent tag to inherit from, and a guid (and some other things like timestamps)
+
+Each tag can have 0 or more attributes. An attribute can have a name, an integer value and a text value. 
+An attribute can also link to any one user or entry or project. 
+A tag will inherit all the attributes of its ancestors, with the ability to overwrite exiting tags for itself and its own descendants.
+Some attributes are used to style the tag name or things the tag points too, or when a tag is applied to something.
+These are called standard attributes. standard attributes of color, background-color are currently used to change the tag name
+
+Projects, Users and Entries can be assigned tags. This is called applying tags.
+Tags are assigned by any project but if a project is visible the tag names and properties are too
+
+### Import Export ~ Released September 2,2021
+
+Save projects to an internal repository, see the commits on a web page, auto push to remote repo for each save
+
+Can import a new branch , or commit of the same repo (as long as derived from current branch )
+
+
+## Installation
+This project is also a sub repo for https://github.com/hexbatch/hexbatch-core-flow.
+Download that repo, it will have all the docker composer things to setup the environment.
+This project is designed to run in these linux containers, with this database, server and php installation .
+The code can be directly worked on because of a mapping between htdocs, the host computer, the php-fpm, and the ngix
+
+The development database and repositories for the projects are inside docker volumns, which can be migrated.
+The development version of this project has a db and repo volume, saved and downloaded from a aws bucket, for easy startup 
+
+To create the php , server and db, go two levels up from this and do 
 `make -C tools docker-up`
 
 ## Database 
@@ -54,8 +95,8 @@ https://github.com/paragonie/anti-csrf for protection against cross site attacks
 
 https://github.com/scrivo/highlight.php for syntax highlighting of bb code blocks when converting to html
 
+https://github.com/BlueM/Tree for those hard to reach sorting issues
 
-todo gmp in docker image
 
 
 ## Javascript Libraries Used
@@ -110,15 +151,14 @@ The important things to add to the docker-compose.yml file for xdebug to work is
           host.docker.internal: host-gateway
 
 
-# Notes
-
-do git commands like this ` exec('cd /var/www/flow_projects/a/b && git status 2>&1',$output,$result_code);`
 
 
 
+# Project Layout
 
+## All html markup is done by twig templates the views folder
 
-twig helpers
+### twig helpers
 
     url_for() - returns the URL for a given route. e.g.: /hello/world
     full_url_for() - returns the URL for a given route. e.g.: http://www.example.com/hello/world
@@ -126,3 +166,13 @@ twig helpers
     current_url() - returns the current path, with or without the query string.
     get_uri() - returns the UriInterface object from the incoming ServerRequestInterface object
     base_path() - returns the base path.
+
+### custom twig helpers
+
+    form_token() - creates a safety token for ajax
+    dump_session() - shows the current session contents (for debugging)
+    uuid() - generates a new v4 uuid
+
+# Notes
+
+do git commands like this ` exec('cd /var/www/flow_projects/a/b && git status 2>&1',$output,$result_code);`

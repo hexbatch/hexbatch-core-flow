@@ -7,7 +7,7 @@ BEGIN
     DECLARE bad_pointer INT DEFAULT NULL;
     DECLARE msg VARCHAR(255);
 
-    IF NOT NEW.flow_tag_guid OR NEW.flow_tag_guid IS NULL THEN
+    IF  NEW.flow_tag_guid IS NULL THEN
         SET NEW.flow_tag_guid = UUID_TO_BIN(UUID(),1); -- swap out the quicker time parts for faster indexing with the 1
     END IF;
 

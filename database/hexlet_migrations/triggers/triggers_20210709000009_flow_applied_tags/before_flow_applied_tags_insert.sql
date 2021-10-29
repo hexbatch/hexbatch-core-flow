@@ -6,11 +6,11 @@ BEGIN
     DECLARE number_fields INT DEFAULT 0;
     DECLARE msg VARCHAR(255);
 
-    IF NOT NEW.flow_applied_tag_guid OR NEW.flow_applied_tag_guid IS NULL THEN
+    IF  NEW.flow_applied_tag_guid IS NULL THEN
         SET NEW.flow_applied_tag_guid = UUID_TO_BIN(UUID(),1); -- swap out the quicker time parts for faster indexing with the 1
     END IF;
 
-    IF NOT NEW.created_at_ts OR NEW.created_at_ts IS NULL THEN
+    IF  NEW.created_at_ts IS NULL THEN
         SET NEW.created_at_ts = UNIX_TIMESTAMP(NOW());
     END IF;
 

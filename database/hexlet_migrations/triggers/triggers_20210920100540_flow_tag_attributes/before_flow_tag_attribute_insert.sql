@@ -8,11 +8,11 @@ BEGIN
     DECLARE msg VARCHAR(255);
 
 
-    IF NOT NEW.flow_tag_attribute_guid OR NEW.flow_tag_attribute_guid IS NULL THEN
+    IF  NEW.flow_tag_attribute_guid IS NULL THEN
         SET NEW.flow_tag_attribute_guid = UUID_TO_BIN(UUID(),1); -- swap out the quicker time parts for faster indexing with the 1
     END IF;
 
-    IF NOT NEW.created_at_ts OR NEW.created_at_ts IS NULL THEN
+    IF  NEW.created_at_ts IS NULL THEN
         SET NEW.created_at_ts = UNIX_TIMESTAMP(NOW());
     END IF;
 
