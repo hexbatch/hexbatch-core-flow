@@ -8,6 +8,8 @@ use app\models\tag\brief\BriefFlowTagAttribute;
 use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
+use LogicException;
+use PDO;
 use RuntimeException;
 use Slim\Interfaces\RouteParserInterface;
 
@@ -42,9 +44,6 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     public ?string $points_to_admin_name;
     public ?string $points_to_admin_guid;
     public ?string $points_to_url;
-
-    protected bool $b_brief_json = false;
-    public function set_brief_json(bool $what) { $this->b_brief_json = $what; }
 
     public function has_enough_data_set() :bool {
         if (!$this->flow_tag_id) {return false;}
@@ -117,7 +116,6 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         if (empty($this->tag_attribute_text)) { $this->tag_attribute_text = null;}
 
         $this->is_standard_attribute = FlowTagStandardAttribute::is_standard_attribute($this);
-        $this->b_brief_json = false;
     }
 
 
@@ -199,13 +197,47 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                 'tag_attribute_text' => $this->tag_attribute_text
             ];
 
-            if ($this->flow_tag_attribute_id) {
+            if ($this->flow_tag_attribute_id && $this->flow_tag_attribute_guid) {
 
                 $db->update('flow_tag_attributes',$saving_info,[
                     'id' => $this->flow_tag_attribute_id
                 ]);
 
-            } else {
+            }
+            elseif ($this->flow_tag_attribute_guid) {
+                $insert_sql = "
+                    INSERT INTO flow_tag_attributes(flow_tag_id, flow_applied_tag_id, created_at_ts, updated_at, points_to_entry_id,
+                                                    points_to_user_id, points_to_project_id, flow_tag_attribute_guid,
+                                                    tag_attribute_name, tag_attribute_long, tag_attribute_text)  
+                    VALUES (?,?,?,?,?,?,?,UNHEX(?),?,?,?) 
+                    ON DUPLICATE KEY UPDATE    flow_tag_id = VALUES(flow_tag_id),   
+                                                flow_applied_tag_id = VALUES(flow_applied_tag_id),
+                                                points_to_entry_id = VALUES(points_to_entry_id),
+                                                points_to_user_id = VALUES(points_to_user_id),
+                                                points_to_project_id = VALUES(points_to_project_id),
+                                                tag_attribute_name = VALUES(tag_attribute_name),
+                                                tag_attribute_long = VALUES(tag_attribute_long),
+                                                tag_attribute_text = VALUES(tag_attribute_text)
+                                                          
+                ";
+                $insert_params = [
+                    $this->flow_tag_id,
+                    $this->flow_applied_tag_id,
+                    $this->attribute_created_at_ts,
+                    $this->attribute_updated_at_ts,
+                    $this->points_to_entry_id,
+                    $this->points_to_user_id,
+                    $this->points_to_project_id,
+                    $this->flow_tag_attribute_guid,
+                    $this->tag_attribute_name,
+                    $this->tag_attribute_long,
+                    $this->tag_attribute_text
+
+                ];
+                $db->safeQuery($insert_sql, $insert_params, PDO::FETCH_BOTH, true);
+                $this->flow_tag_attribute_id = $db->lastInsertId();
+            }
+            else {
                 $db->insert('flow_tag_attributes',$saving_info);
                 $this->flow_tag_attribute_id = $db->lastInsertId();
             }
@@ -253,7 +285,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     
     public function jsonSerialize(): array
     {
-        if ($this->b_brief_json) {
+        if ($this->get_brief_json()) {
            $brief = new BriefFlowTagAttribute($this);
            return $brief->to_array();
         } else {
@@ -283,22 +315,67 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
 
     public function delete_attribute() {
         $db = static::get_connection();
-        $db->delete('flow_tag_attributes',['id'=>$this->flow_tag_attribute_id]);
+        if ($this->flow_tag_attribute_id) {
+            $db->delete('flow_tag_attributes',['id'=>$this->flow_tag_attribute_id]);
+        } else if($this->flow_tag_attribute_guid) {
+            $sql = "DELETE FROM flow_tag_attributes WHERE flow_tag_attribute_guid = UNHEX(?)";
+            $params = [$this->flow_tag_attribute_guid];
+            $db->safeQuery($sql, $params, PDO::FETCH_BOTH, true);
+        } else {
+            throw new LogicException("Cannot delete flow_tag_attributes without an id or guid");
+        }
+
     }
 
 
-    public function set_link_for_pointee(RouteParserInterface $routeParser) {
+    public function set_link_for_pointee(RouteParserInterface $routeParser)
+    {
 
-        if ($this->points_to_flow_project_guid) {
-            $this->points_to_url = $routeParser->urlFor('single_project_home',[
-                "user_name" => $this->points_to_admin_name,
-                "project_name" => $this->points_to_title
-            ]);
-        } elseif ( $this->points_to_flow_user_guid) {
-            $this->points_to_url = $routeParser->urlFor('user_page',[
-                "user_name" => $this->points_to_title,
-            ]);
+        if ($this->points_to_flow_project_guid)
+        {
+            $this->points_to_url = $routeParser->urlFor('single_project_home',
+                [
+                    "user_name" => $this->points_to_admin_name,
+                    "project_name" => $this->points_to_title
+                ]
+            );
         }
+        elseif ( $this->points_to_flow_user_guid)
+        {
+            $this->points_to_url = $routeParser->urlFor('user_page',
+                [
+                    "user_name" => $this->points_to_title,
+                ]
+            );
+        }
+    }
 
+    /**
+     * @return string[]
+     */
+    public function get_needed_guids_for_empty_ids() : array
+    {
+        $ret = [];
+        if (empty($this->flow_tag_id) && $this->flow_tag_guid) { $ret[] = $this->flow_tag_guid;}
+        if (empty($this->points_to_entry_id) && $this->points_to_flow_entry_guid) { $ret[] = $this->points_to_flow_entry_guid;}
+        if (empty($this->points_to_user_id) && $this->points_to_flow_user_guid) { $ret[] = $this->points_to_flow_user_guid;}
+        if (empty($this->points_to_project_id) && $this->points_to_flow_project_guid) { $ret[] = $this->points_to_flow_project_guid;}
+
+        return $ret;
+    }
+
+    /**
+     * @@param  array<string,int> $guid_map_to_ids
+     */
+    public function fill_ids_from_guids(array $guid_map_to_ids)
+    {
+        if (empty($this->flow_tag_id) && $this->flow_tag_guid) {
+            $this->flow_tag_id = $guid_map_to_ids[$this->flow_tag_guid] ?? null;}
+        if (empty($this->points_to_entry_id) && $this->points_to_flow_entry_guid) {
+            $this->points_to_entry_id = $guid_map_to_ids[$this->points_to_flow_entry_guid] ?? null;}
+        if (empty($this->points_to_user_id) && $this->points_to_flow_user_guid) {
+            $this->points_to_user_id = $guid_map_to_ids[$this->points_to_flow_user_guid] ?? null;}
+        if (empty($this->points_to_project_id) && $this->points_to_flow_project_guid) {
+            $this->points_to_project_id= $guid_map_to_ids[$this->points_to_flow_project_guid] ?? null;}
     }
 }

@@ -6,9 +6,7 @@ use JsonSerializable;
 
 class GeneralSearchResult implements JsonSerializable  {
 
-    const TYPE_USER = 'user';
-    const TYPE_PROJECT = 'project';
-    const TYPE_ENTRY = 'entry';
+
 
     public ?int $id;
     public ?string $title;
@@ -45,4 +43,5 @@ class GeneralSearchResult implements JsonSerializable  {
             "type" => $this->type,
         ];
     }
+
 }

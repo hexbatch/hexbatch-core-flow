@@ -6,6 +6,7 @@ use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\tag\brief\BriefDiffFromYaml;
+use app\models\tag\brief\BriefUpdateFromYaml;
 use app\models\tag\FlowTagSearchParams;
 use app\models\user\FlowUser;
 use app\models\tag\FlowTag;
@@ -669,7 +670,7 @@ class FlowProject extends FlowBase {
             }
 
             if (empty($commit_title_array) && empty($commit_message_array)) {
-                return false; //nothing to commit
+                return ''; //nothing to commit
             }
             $this->do_git_command("add .");
 
@@ -708,7 +709,7 @@ class FlowProject extends FlowBase {
             $push_info = $this->push_repo();
             return "Saved and pushed to $this->export_repo_url<br>$push_info";
         }
-        return true;
+        return "Saved";
     }
 
     /**
@@ -1056,6 +1057,10 @@ class FlowProject extends FlowBase {
             ]);
 
             //do children here
+
+            $tags = new BriefUpdateFromYaml($this); //todo test this
+            WillFunctions::will_do_nothing($tags); //for debugging
+
             $db->commit();
 
 

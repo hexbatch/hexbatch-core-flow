@@ -3,11 +3,12 @@
 namespace app\models\tag;
 
 use app\models\base\FlowBase;
-use app\models\multi\GeneralSearchResult;
+use app\models\multi\GeneralSearch;
 use app\models\tag\brief\BriefFlowAppliedTag;
 use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
+use LogicException;
 use PDO;
 use RuntimeException;
 use Slim\Interfaces\RouteParserInterface;
@@ -34,8 +35,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
 
     public ?string $tagged_url;
 
-    protected bool $b_brief_json = false;
-    public function set_brief_json(bool $what) { $this->b_brief_json = $what; }
+
 
 
     public function __construct($object=null){
@@ -74,7 +74,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
     
     public function jsonSerialize(): array
     {
-        if ($this->b_brief_json) {
+        if ($this->get_brief_json()) {
             $brief = new BriefFlowAppliedTag($this);
             return $brief->to_array();
         } else {
@@ -160,7 +160,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                HEX(fu_own.flow_user_guid) as taggee_user_guid,
                fu_own.flow_user_name as taggee_user_name,    
                fp.flow_project_title as tagged_title,
-               '{$I(GeneralSearchResult::TYPE_PROJECT)}' as taggie_type
+               '{$I(GeneralSearch::TYPE_PROJECT)}' as taggie_type
             FROM flow_applied_tags app
                 INNER JOIN flow_tags retag ON retag.id = app.flow_tag_id
                 INNER JOIN flow_projects fp on app.tagged_flow_project_id = fp.id
@@ -182,7 +182,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                 NULL as taggee_user_guid,
                 NULL as taggee_user_name,
                 fu.flow_user_name as tagged_title,
-                '{$I(GeneralSearchResult::TYPE_USER)}' as taggie_type
+                '{$I(GeneralSearch::TYPE_USER)}' as taggie_type
             FROM flow_applied_tags app
                      INNER JOIN flow_tags retag ON retag.id = app.flow_tag_id
                      INNER JOIN flow_users fu on app.tagged_flow_user_id = fu.id
@@ -200,7 +200,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                 NULL as taggee_user_guid,   
                 NULL as taggee_user_name,   
                 fe.flow_entry_title as tagged_title,   
-                '{$I(GeneralSearchResult::TYPE_ENTRY)}' as taggie_type
+                '{$I(GeneralSearch::TYPE_ENTRY)}' as taggie_type
             FROM flow_applied_tags app
                      INNER JOIN flow_tags retag ON retag.id = app.flow_tag_id
                      INNER JOIN flow_entries fe on app.tagged_flow_entry_id = fe.id
@@ -234,17 +234,17 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                 $node->tagged_title = $row->tagged_title;
 
                 switch ($row->taggie_type) {
-                    case GeneralSearchResult::TYPE_ENTRY: {
+                    case GeneralSearch::TYPE_ENTRY: {
                         $node->tagged_flow_entry_guid = $row->taggee_guid;
                         $node->tagged_flow_entry_id = $row->taggee_id;
                         break;
                     }
-                    case GeneralSearchResult::TYPE_USER: {
+                    case GeneralSearch::TYPE_USER: {
                         $node->tagged_flow_user_guid = $row->taggee_guid;
                         $node->tagged_flow_user_id = $row->taggee_id;
                         break;
                     }
-                    case GeneralSearchResult::TYPE_PROJECT:  {
+                    case GeneralSearch::TYPE_PROJECT:  {
                         $node->tagged_flow_project_guid = $row->taggee_guid;
                         $node->tagged_flow_project_id = $row->taggee_id;
                         $node->tagged_flow_project_owner_user_guid = $row->taggee_user_guid;
@@ -313,7 +313,30 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
                 'id' => $this->id
             ]);
 
-        } else {
+        }
+        elseif ($this->flow_applied_tag_guid) {
+            $insert_sql = "
+                    INSERT INTO flow_applied_tags(flow_tag_id, tagged_flow_entry_id, tagged_flow_user_id,
+                                                  tagged_flow_project_id, created_at_ts, flow_applied_tag_guid)  
+                    VALUES (?,?,?,?,?,UNHEX(?))  
+                    ON DUPLICATE KEY UPDATE 
+                                            flow_tag_id             = VALUES(flow_tag_id) ,       
+                                            tagged_flow_entry_id    = VALUES(tagged_flow_entry_id) ,       
+                                            tagged_flow_user_id     = VALUES(tagged_flow_user_id) ,       
+                                            tagged_flow_project_id  = VALUES(tagged_flow_project_id)        
+                ";
+            $insert_params = [
+                $this->flow_tag_id,
+                $this->tagged_flow_entry_id,
+                $this->tagged_flow_user_id,
+                $this->tagged_flow_project_id,
+                $this->created_at_ts,
+                $this->flow_applied_tag_guid
+            ];
+            $db->safeQuery($insert_sql, $insert_params, PDO::FETCH_BOTH, true);
+            $this->flow_tag_id = $db->lastInsertId();
+        }
+        else {
             $db->insert('flow_applied_tags',$saving_info);
             $this->id = $db->lastInsertId();
         }
@@ -322,7 +345,16 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
 
     public function delete_applied() {
         $db = static::get_connection();
-        $db->delete('flow_applied_tags',['id'=>$this->id]);
+        if ($this->id) {
+            $db->delete('flow_applied_tags',['id'=>$this->id]);
+        } else if($this->flow_applied_tag_guid) {
+            $sql = "DELETE FROM flow_applied_tags WHERE flow_applied_tag_guid = UNHEX(?)";
+            $params = [$this->flow_applied_tag_guid];
+            $db->safeQuery($sql, $params, PDO::FETCH_BOTH, true);
+        } else {
+            throw new LogicException("Cannot delete flow_applied_tags without an id or guid");
+        }
+
 
     } //end function delete
 
@@ -379,6 +411,36 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
             if ($this->tagged_flow_entry_guid === $guid) {return true;}
         }
         return false;
+    }
+
+
+    /**
+     * @return string[]
+     */
+    public function get_needed_guids_for_empty_ids() : array
+    {
+        $ret = [];
+        if (empty($this->flow_tag_id) && $this->flow_tag_guid) { $ret[] = $this->flow_tag_guid;}
+        if (empty($this->tagged_flow_entry_id) && $this->tagged_flow_entry_guid) { $ret[] = $this->tagged_flow_entry_id;}
+        if (empty($this->tagged_flow_user_id) && $this->tagged_flow_user_guid) { $ret[] = $this->tagged_flow_user_guid;}
+        if (empty($this->tagged_flow_project_id) && $this->tagged_flow_project_guid) { $ret[] = $this->tagged_flow_project_guid;}
+
+        return $ret;
+    }
+
+    /**
+     * @@param  array<string,int> $guid_map_to_ids
+     */
+    public function fill_ids_from_guids(array $guid_map_to_ids)
+    {
+        if (empty($this->flow_tag_id) && $this->flow_tag_guid) {
+            $this->flow_tag_id = $guid_map_to_ids[$this->flow_tag_guid] ?? null;}
+        if (empty($this->tagged_flow_entry_id) && $this->tagged_flow_entry_guid) {
+            $this->tagged_flow_entry_id = $guid_map_to_ids[$this->tagged_flow_entry_guid] ?? null;}
+        if (empty($this->tagged_flow_user_id) && $this->tagged_flow_user_guid) {
+            $this->tagged_flow_user_id = $guid_map_to_ids[$this->tagged_flow_user_guid] ?? null;}
+        if (empty($this->tagged_flow_project_id) && $this->tagged_flow_project_guid) {
+            $this->tagged_flow_project_id= $guid_map_to_ids[$this->tagged_flow_project_guid] ?? null;}
     }
 
 

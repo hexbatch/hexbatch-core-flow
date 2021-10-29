@@ -11,6 +11,31 @@ class GeneralSearch extends FlowBase{
     const DEFAULT_PAGE_SIZE = 20;
     const UNLIMITED_RESULTS_PER_PAGE = 100000;
 
+    const TYPE_USER = 'user';
+    const TYPE_PROJECT = 'project';
+    const TYPE_ENTRY = 'entry';
+    const TYPE_TAG = 'tag';
+
+    const ALL_TYPES_KEYWORD = 'all';
+    const ALL_TYPES_BUT_TAGS_KEYWORD = 'not-tags';
+
+    const ALL_TYPES_BUT_TAGS = [
+        GeneralSearch::TYPE_PROJECT,
+        GeneralSearch::TYPE_ENTRY,
+        GeneralSearch::TYPE_USER
+    ];
+
+    const ALL_TYPES = [
+        GeneralSearch::TYPE_PROJECT,
+        GeneralSearch::TYPE_ENTRY,
+        GeneralSearch::TYPE_USER,
+        GeneralSearch::TYPE_TAG
+    ];
+
+    public static function is_valid_type($what_type) : bool {
+        return in_array($what_type,static::ALL_TYPES);
+    }
+
     /**
      * @param GeneralSearchResult[] $matches
      * @param int[] $project_ids
@@ -23,15 +48,15 @@ class GeneralSearch extends FlowBase{
         $entry_ids = [];
         foreach ($matches as $match) {
             switch ($match->type) {
-                case GeneralSearchResult::TYPE_USER: {
+                case GeneralSearch::TYPE_USER: {
                     $user_ids[] = $match->id;
                     break;
                 }
-                case GeneralSearchResult::TYPE_ENTRY: {
+                case GeneralSearch::TYPE_ENTRY: {
                     $entry_ids[] = $match->id;
                     break;
                 }
-                case GeneralSearchResult::TYPE_PROJECT: {
+                case GeneralSearch::TYPE_PROJECT: {
                     $project_ids[] = $match->id;
                     break;
                 }
@@ -87,10 +112,20 @@ class GeneralSearch extends FlowBase{
             $args[] = $search->created_at_ts;
         }
 
-        if ($search->type) {
-            $where_array[] = "thing.thing_created_at = ? ";
-            $args[] = $search->created_at_ts;
+        if (count($search->types)) {
+            $in_question_array=[];
+            foreach ($search->types as $a_type) {
+                if ( GeneralSearch::is_valid_type($a_type) ) {
+                    $args[] = $a_type;
+                    $in_question_array[] = "?";
+                }
+            }
+            $comma_delimited_unhex_question = implode(",",$in_question_array);
+            $where_array[] = "thing.thing_type in ($comma_delimited_unhex_question) ";
+
         }
+
+
 
         $where_conditions = 4;
         if (!empty($where_array)) {

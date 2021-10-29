@@ -4,9 +4,12 @@
  * @param {boolean} b_multi
  * @param {?string} placeholder
  * @param {?string} not_guid
+ * @param {?string} [search_types]
  */
 function create_select_2_for_general_search(bare_select_control,b_multi,
-                                        placeholder,not_guid) {
+                                        placeholder,not_guid,search_types) {
+
+    if (!search_types) { search_types = 'not-tags';}
     /**
      *
      * @param {GeneralSearchResult} general
@@ -22,6 +25,8 @@ function create_select_2_for_general_search(bare_select_control,b_multi,
                 icon = `<i class="bi bi-box"></i>`;
             } else if (general.type === 'user') {
                 icon = `<i class="bi-person-circle"></i>`;
+            } else if (general.type === 'tag') {
+                icon = `<i class="bi bi-tag"></i>`;
             }
             let display = `${icon} <span class="${extra_class}">${general.title}</span>`;
 
@@ -75,7 +80,7 @@ function create_select_2_for_general_search(bare_select_control,b_multi,
      */
     function prepare_query_for_dropdown(params) {
         let query = {
-            search: {term: params.term || null},
+            search: {term: params.term || null, types : search_types},
             page: params.page || 1
         }
         //console.log("params",params);

@@ -64,5 +64,9 @@ class FlowBase  {
         return true;
     }
 
+    protected bool $b_brief_json = false;
+    public function set_brief_json(bool $what) { $this->b_brief_json = $what; }
+    public function get_brief_json() : bool { return $this->b_brief_json ; }
+
 
 }

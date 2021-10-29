@@ -111,6 +111,31 @@ class HomePages
             $search->created_at_ts = (int)($root['created_at_ts']);
         }
 
+        if (isset($root['types'])) {
+            if (is_array($root['types']))
+            {
+                foreach ($root['types'] as $a_type)
+                {
+                    $search->types[] = $a_type;
+                }
+            }
+            else
+            {
+                if ($root['types'] === GeneralSearch::ALL_TYPES_KEYWORD )
+                {
+                    $search->types = GeneralSearch::ALL_TYPES;
+                }
+                elseif ($root['types'] === GeneralSearch::ALL_TYPES_BUT_TAGS_KEYWORD)
+                {
+                    $search->types = GeneralSearch::ALL_TYPES_BUT_TAGS;
+                }
+                else
+                {
+                    $search->types[] = $root['types'];
+                }
+            }
+        }
+
 
 
         $page = 1;

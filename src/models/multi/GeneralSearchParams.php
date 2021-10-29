@@ -2,21 +2,32 @@
 
 namespace app\models\multi;
 
-
 class GeneralSearchParams   {
 
 
     public ?string $title;
-    public array $guids;
-    public ?string $type;
+
+    /**
+     * @var string[] $guids
+     */
+    public array $guids = [];
+
+    /**
+     * @var string[] $types
+     */
+    public array $types;
+
     public ?int $created_at_ts;
 
 
-    function __construct($object=null){
+
+
+    function __construct(){
         $this->title = null;
         $this->guids = [];
-        $this->type = null;
+        $this->types  = [];
         $this->created_at_ts = null;
     }
+
 
 }

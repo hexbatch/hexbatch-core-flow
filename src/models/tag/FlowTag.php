@@ -56,17 +56,11 @@ class FlowTag extends FlowBase implements JsonSerializable {
      */
     public array $applied = [];
 
-    protected bool $b_brief_json = false;
-
-    public function set_brief_json(bool $what) {
-        $this->b_brief_json = $what;
-    }
-
 
     public function jsonSerialize(): array
     {
 
-        if ($this->b_brief_json) {
+        if ($this->get_brief_json()) {
 
             $brief = new BriefFlowTag($this);
             return $brief->to_array();
@@ -760,14 +754,35 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 'flow_tag_name' => $this->flow_tag_name
             ];
 
+
             if ($b_do_transaction) {$db->beginTransaction();}
-            if ($this->flow_project_guid) {
+            if ($this->flow_project_guid && $this->flow_tag_id) {
 
                 $db->update('flow_tags',$save_info,[
                     'id' => $this->flow_tag_id
                 ]);
 
-            } else {
+            }
+            elseif ($this->flow_project_guid) {
+                $insert_sql = "
+                    INSERT INTO flow_tags(flow_project_id, parent_tag_id, created_at_ts,updated_at, flow_tag_guid, flow_tag_name)  
+                    VALUES (?,?,?,?,UNHEX(?),?)
+                    ON DUPLICATE KEY UPDATE flow_project_id =   VALUES(flow_project_id),
+                                            parent_tag_id =     VALUES(parent_tag_id),
+                                            flow_tag_name =     VALUES(flow_tag_name)       
+                ";
+                $insert_params = [
+                    $this->flow_project_id,
+                    $this->parent_tag_id,
+                    $this->tag_created_at_ts,
+                    $this->tag_updated_at_ts,
+                    $this->flow_tag_guid,
+                    $this->flow_tag_name
+                ];
+                $db->safeQuery($insert_sql, $insert_params, PDO::FETCH_BOTH, true);
+                $this->flow_tag_id = $db->lastInsertId();
+            }
+            else {
                 $db->insert('flow_tags',$save_info);
                 $this->flow_tag_id = $db->lastInsertId();
             }
@@ -811,7 +826,16 @@ class FlowTag extends FlowBase implements JsonSerializable {
             throw new InvalidArgumentException("Cannot delete tag, it has children");
         }
         $db = static::get_connection();
-        $db->delete('flow_tags',['id'=>$this->flow_tag_id]);
+        if ($this->flow_tag_id) {
+            $db->delete('flow_tags',['id'=>$this->flow_tag_id]);
+        } else if($this->flow_tag_guid) {
+            $sql = "DELETE FROM flow_tags WHERE flow_tag_guid = UNHEX(?)";
+            $params = [$this->flow_tag_guid];
+            $db->safeQuery($sql, $params, PDO::FETCH_BOTH, true);
+        } else {
+            throw new LogicException("Cannot delete flow_tags without an id or guid");
+        }
+
     }
 
     /**
@@ -826,6 +850,34 @@ class FlowTag extends FlowBase implements JsonSerializable {
             }
         }
         return $ret;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function get_needed_guids_for_empty_ids() : array
+    {
+        $ret = [];
+        if (empty($this->flow_tag_id) && $this->flow_tag_guid) { $ret[] = $this->flow_tag_guid;}
+        if (empty($this->flow_project_id) && $this->flow_project_guid) { $ret[] = $this->flow_project_guid;}
+        if (empty($this->parent_tag_id) && $this->parent_tag_guid) { $ret[] = $this->parent_tag_guid;}
+
+
+        return $ret;
+    }
+
+    /**
+     * @@param  array<string,int> $guid_map_to_ids
+     */
+    public function fill_ids_from_guids(array $guid_map_to_ids)
+    {
+        if (empty($this->flow_tag_id) && $this->flow_tag_guid) {
+            $this->flow_tag_id = $guid_map_to_ids[$this->flow_tag_guid] ?? null;}
+        if (empty($this->flow_project_id) && $this->flow_project_guid) {
+            $this->flow_project_id = $guid_map_to_ids[$this->flow_project_guid] ?? null;}
+        if (empty($this->parent_tag_id) && $this->parent_tag_guid) {
+            $this->parent_tag_id = $guid_map_to_ids[$this->parent_tag_guid] ?? null;}
+
     }
 
 }
