@@ -120,34 +120,8 @@ function delete_applied(tag,applied,on_success_callback,on_fail_callback) {
 function do_tag_action(url,data,
                        on_success_callback,on_fail_callback,
                        success_title, fail_title) {
-    let tag = JSON.parse(JSON.stringify(data));
 
-    set_object_with_flow_ajax_token_data(tag);
-
-    $.ajax({
-        url: url,
-        method: "POST",
-        dataType: 'json',
-        data : tag
-    })
-        .always(function( data ) {
-            /**
-             * @type {FlowAppliedResponse|FlowBasicResponse}
-             * maybe basic if a failure
-             */
-            let ret = process_ajax_response(data,success_title,fail_title);
-
-            if (ret.success) {
-                if (on_success_callback) {on_success_callback(ret);}
-            } else {
-
-                if (on_fail_callback) {on_fail_callback(ret);}
-            }
-
-
-
-
-        });
+    do_flow_ajax_action(url,data,on_success_callback,on_fail_callback,success_title,fail_title);
 
 }
 

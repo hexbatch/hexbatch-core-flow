@@ -118,7 +118,7 @@ class RecursiveClasses {
      * @param string $pattern
      * @return array
      */
-	private  function rsearch(string $folder, string $pattern): array
+	protected static function rsearch(string $folder, string $pattern): array
     {
 		$dir = new RecursiveDirectoryIterator($folder);
 		$ite = new RecursiveIteratorIterator($dir);
@@ -129,6 +129,23 @@ class RecursiveClasses {
 		}
 		return $fileList;
 	}
+
+    /**
+     * @param string $folder
+     * @param string $pattern
+     * @return array
+     */
+    public static function rsearch_for_paths(string $folder, string $pattern): array
+    {
+        $dir = new RecursiveDirectoryIterator($folder);
+        $ite = new RecursiveIteratorIterator($dir);
+        $files = new RegexIterator($ite, $pattern, RegexIterator::GET_MATCH);
+        $fileList = [];
+        foreach($files as $matches) {
+            $fileList[] = $matches[0];
+        }
+        return $fileList;
+    }
 
 	/**
 	 * Gets the string class name, if more than one class defined in the file, then returns the last class defined

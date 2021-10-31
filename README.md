@@ -6,13 +6,13 @@ The main use of this web app is to organize ideas, its useful for planning compl
 ## Releases
 | Date  | Version | Name |
 | ------------- | ------------- | ------------- |
-| November 26, 2021  | 0.4.0  | Tags Oh My! |
+| October 26, 2021  | 0.4.0  | Tags Oh My! |
 | September 2, 2021  | 0.3.0  | Import Export |
 | August 9, 2021  | 0.2.0  | Projects and Users Exist |
 | July 4, 2021  | 0.1.0  | First Commit |
 
 
-### Tags Oh My!  ~ Released November 26, 2021
+### Tags Oh My!  ~ Released October 26, 2021
 
 Each project can create and manage a list of tags
 
@@ -66,7 +66,7 @@ Run `sudo docker exec -it hexbatch_dev_php-fpm_1 bash` and then inside do compos
 
 If this is the first time running the project on this computer, also run `composer dump-autoload` as a second command to build the autoload class map so the classes in the src folder will load
 
-### Using Libraries 
+### Using PHP Libraries 
 
 https://github.com/slimphp/Slim For the overall framework
 see https://discourse.slimframework.com
@@ -128,6 +128,9 @@ uuid for creating those sweet sweet uuids in the browser https://www.npmjs.com/p
 
 copy to clipboard at https://clipboardjs.com because I deserve to not have to make yet another handcrafted one, and this looks good
 
+swiper at https://swiperjs.com/ for nice looking media display
+
+dropzone at https://docs.dropzone.dev/ for uploading files
 
 ### installation uses npm
  Run `nmp i` to install js dependencies that are not saved in the repo

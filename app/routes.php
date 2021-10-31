@@ -57,6 +57,7 @@ return function (App $app) {
 
         $group->group('/{user_name:[[:alnum:]\-]+}', function (RouteCollectorProxy $group) {
             $group->get('/{project_name:[[:alnum:]\-]+}', ['projectPages', 'single_project_home'])->setName('single_project_home');
+            $group->get('/{project_name:[[:alnum:]\-]+}/', ['projectPages', 'single_project_home'])->setName('single_project_home');
             $group->get('/{project_name:[[:alnum:]\-]+}/edit', ['projectPages', 'edit_project'])->setName('edit_project');
             $group->post('/{project_name:[[:alnum:]\-]+}/edit', ['projectPages', 'update_project'])->setName('update_project');
             $group->post('/{project_name:[[:alnum:]\-]+}/edit_permissions_ajax', ['projectPages', 'change_project_permissions'])->setName('edit_permissions_ajax');
@@ -71,7 +72,10 @@ return function (App $app) {
             $group->post('/{project_name:[[:alnum:]\-]+}/import', ['projectPages', 'import_from_git'])->setName('project_import_from_git');
             $group->post('/{project_name:[[:alnum:]\-]+}/import_from_file', ['projectPages', 'import_from_file'])->setName('project_import_from_file');
 
-            $group->get('/{project_name:[[:alnum:]\-]+}/resources/{resource}', ['projectPages', 'get_resource_file'])->setName('project_resource');
+            $group->get('/{project_name:[[:alnum:]\-]+}/files/{resource}', ['projectPages', 'get_resource_file'])->setName('project_files');
+            $group->get('/{project_name:[[:alnum:]\-]+}/resources/', ['projectPages', 'resources'])->setName('project_resources');
+            $group->post('/{project_name:[[:alnum:]\-]+}/resources', ['projectPages', 'upload_resource_file'])->setName('project_upload_resource_file');
+            $group->post('/{project_name:[[:alnum:]\-]+}/resources_delete', ['projectPages', 'delete_resource_file'])->setName('project_delete_resource_file');
 
             //tags in project , no matter how they are used or attached to
             $group->get('/{project_name:[[:alnum:]\-]+}/get_tags_ajax', ['tagPages', 'get_tags'])->setName('get_tags_ajax');

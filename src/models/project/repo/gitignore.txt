@@ -1,14 +1,2 @@
-# exclude everything
-*
-
-# exception to the rule
-!*.bbcode
-!*.yaml
-!*.pdf
-!*.png
-!*.jpg
-!*.md
-!*.txt
-!*.text
-!flow_project_blurb
-!flow_project_title
+# ignore html
+*.html

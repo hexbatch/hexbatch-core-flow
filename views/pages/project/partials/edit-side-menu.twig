@@ -41,6 +41,20 @@
                 </a>
             </li>
 
+
+            {% if project.get_current_user_permissions().can_edit %}
+                <li class="list-group-item">
+                    <a class="btn btn-outline-primary border border-light"
+                       href="{{ url_for('project_resources',{
+                           user_name: project.get_admin_user().flow_user_name ,
+                           project_name: project.flow_project_title
+                       } )
+                       }}">
+                        Resources
+                    </a>
+                </li>
+            {% endif %}
+
             {% if project.get_current_user_permissions().can_edit %}
                 <li class="list-group-item">
                     <a class="btn btn-outline-primary border border-light"

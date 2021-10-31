@@ -1,0 +1,173 @@
+
+<style>
+    .swiper {
+        width: 600px;
+        height: 600px;
+    }
+
+</style>
+
+<div class="card ">
+
+    <div class="card-header">
+        <div class="row">
+            <div class="col-8">
+                <span class="" style="font-size: 0.7em">
+                    <code class=" d-inline-block" style="word-break: break-all; "
+                          id="flow-resource-url-selected"></code>
+                </span>
+            </div>
+
+            <div class="col-2">
+                <!-- Trigger -->
+                <button class="btn  btn-sm btn-outline-secondary clipy-btn"
+                        type="button"
+                        data-clipboard-target="#flow-resource-url-selected"
+                        data-popover_on_success="Copied!"
+                        data-popover_on_fail="Use Control-C"
+                >
+                    <img width="25%" src="{{ root_url }}/public/resources/images/clippy.svg" alt="Copy to clipboard">
+                </button>
+            </div>
+
+            <div class="col-2">
+                <button class="btn btn-danger btn-sm " type="button" id="flow-resource-delete-action">
+                    <i class="bi bi-x-lg"></i>
+                    <i class="fas fa-spinner fa-pulse flow-spinner"  style="display: none"></i>
+                </button>
+            </div>
+        </div>
+
+    </div> <!-- /.card-header -->
+
+    <div class="card-body ">
+        <!-- Slider main container -->
+        <div class="swiper">
+            <!-- Additional required wrapper -->
+            <div class="swiper-wrapper">
+                {% for resource_url in resource_urls %}
+                    <!-- Slides -->
+                    {% if resource_url matches '{\.(png|jpeg|jpg)$}' %}
+                        <div class="swiper-slide" data-flow_resource="{{ resource_url }}">
+                            <img src="{{ resource_url }}" class="img-fluid" alt="1">
+                        </div>
+                    {% endif %}
+                    <!-- end slides -->
+                {% endfor %}
+            </div>
+            <!-- If we need pagination -->
+            <div class="swiper-pagination"></div>
+
+            <!-- If we need navigation buttons -->
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-button-next"></div>
+
+            <!-- If we need scrollbar -->
+            <div class="swiper-scrollbar"></div>
+        </div> <!-- /.swiper -->
+    </div> <!-- /.card-body -->
+</div> <!-- /.card -->
+
+
+
+<script>
+    jQuery(function($) {
+        const swiper = new Swiper('.swiper', {
+            // Optional parameters
+            direction: 'horizontal',
+            loop: true,
+
+            // If we need pagination
+            pagination: {
+                el: '.swiper-pagination',
+            },
+
+            // Navigation arrows
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+
+            // And if we need scrollbar
+            scrollbar: {
+                el: '.swiper-scrollbar',
+            },
+        });
+
+        function fill_in_details(el) {
+            let that = $(el);
+            let url;
+            if (that.data('flow_resource')) {
+                url = that.data('flow_resource');
+            } else {
+                let active = that.find("div.swiper-slide-active");
+                url = active.data('flow_resource');
+            }
+
+            if (url)  {
+                let full_url = `{{ root_url }}${url}`;
+                $("#flow-resource-url-selected").text(full_url)
+            }
+
+
+        }
+        swiper.on('slideChangeTransitionEnd', function (s) {
+            fill_in_details(s.el);
+        });
+
+        swiper.on('click', function (s) {
+            fill_in_details(s.el);
+        });
+
+        fill_in_details($('div.swiper-slide-active').first());
+
+        let flow_project_delete_resource_file_url = "{{-  url_for('project_delete_resource_file',{
+            user_name: project.get_admin_user().flow_user_name ,
+            project_name: project.flow_project_title
+        }) -}}";
+
+        $("#flow-resource-delete-action").click(function() {
+            let me = $(this);
+            let resource_url = $("#flow-resource-url-selected").text();
+            my_swal.fire({
+                title: 'Are you sure?',
+                text: `Going to delete the resource ${resource_url}`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+
+                    toggle_action_spinner(me, 'loading');
+                    let out_data = {
+                        file_url: resource_url
+                    };
+
+                    do_flow_ajax_action(flow_project_delete_resource_file_url,out_data,
+                        function (ret) {
+                            toggle_action_spinner(me, 'normal');
+                            my_swal.fire(
+                                'Deleted!',
+                                'The resource was removed: ' + ret.message,
+                                'success'
+                            );
+                            window.location.reload(true);
+
+                        },
+                        function (ret) {
+                            toggle_action_spinner(me, 'normal');
+                            my_swal.fire(
+                                'Oh No!',
+                                'The resource could not be deleted <br>\n ' + ret.message,
+                                'error'
+                            )
+                        })
+
+
+                }
+            });
+        }) ;
+    });
+</script>

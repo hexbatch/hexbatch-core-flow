@@ -168,38 +168,3 @@
 
 </div> <!-- / anon div to hide modal screens -->
 
-
-
-{# the form values will be set by javascript,
-so the names just have to be the values in the editable typedef parts (or read only
-
-Editable tag info:
-    flow_tag_name
-    parent_tag : dropdown with all the tags except this one, that are not descended from this tag
-
-readable tag info:
-        flow_tag_guid
-        created_at_ts
-        updated_at_ts
-        applied info
-
-
-
- Attributes: (can add or remove rows)
-
- Editable attribute Info:
-    tag_attribute_name
-    tag_attribute_long (if inherited value will show that different)
-    tag_attribute_text (if inherited value will show that different)
-    points to: dropdown with all the user, project names, guids, what type it is, and applied tags (add entry later)
-
- Readable attribute Info:
-    flow_tag_attribute_guid
-    created_at_ts
-    updated_at_ts
-    is_standard_attribute (check icon)
-
- Also read only list of attributes, same format, that are inherited
-
-
- #}

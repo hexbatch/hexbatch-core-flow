@@ -19,6 +19,7 @@ use ParagonIE\AntiCSRF\AntiCSRF;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UploadedFileInterface;
+use RuntimeException;
 use Slim\Exception\HttpBadRequestException;
 use Slim\Exception\HttpForbiddenException;
 use Slim\Exception\HttpInternalServerErrorException;
@@ -313,7 +314,6 @@ class ProjectPages extends BasePages
                 $form_in_progress = $project;
             }
 
-
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/edit_project.twig',
                 'page_title' => "Edit Project $project_name",
@@ -403,6 +403,51 @@ class ProjectPages extends BasePages
             }
         }
 
+    }
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function resources( ServerRequestInterface $request,ResponseInterface $response,
+                                              string $user_name, string $project_name) :ResponseInterface {
+        try {
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+
+            if (!$project) {
+                throw new HttpNotFoundException($request,"Project $project_name Not Found");
+            }
+
+            $resource_files = $project->get_resource_file_paths();
+            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+            $base_project_url = $routeParser->urlFor('single_project_home',[
+                "user_name" => $project->get_admin_user()->flow_user_guid,
+                "project_name" => $project->flow_project_guid
+            ]);
+            $base_resource_file_path = $project->get_project_directory(); //no slash at end
+
+            $resource_urls = [];
+            foreach ($resource_files as $full_path_file) {
+                $resource_urls[] = str_replace($base_resource_file_path,$base_project_url,$full_path_file);
+            }
+
+
+            return $this->view->render($response, 'main.twig', [
+                'page_template_path' => 'project/resources.twig',
+                'page_title' => "Project Resources for $project->flow_project_title",
+                'page_description' => 'View and upload publicly viewable resources for this project',
+                'project' => $project,
+                'resource_urls' => $resource_urls
+            ]);
+        } catch (Exception $e) {
+            $this->logger->error("Could not render resources page",['exception'=>$e]);
+            throw $e;
+        }
     }
 
 
@@ -1034,6 +1079,185 @@ class ProjectPages extends BasePages
     }
 
 
+    /**
+     * @param ServerRequestInterface $request
+     * @param string $file_form_name
+
+     * @throws
+     * @return UploadedFileInterface
+     */
+    protected function find_and_move_uploaded_file(ServerRequestInterface $request,string $file_form_name) : UploadedFileInterface {
+        $uploadedFiles = $request->getUploadedFiles();
+        if (!array_key_exists($file_form_name,$uploadedFiles)) {
+            throw new HttpBadRequestException($request,"Need the file named $file_form_name");
+        }
+        // handle single input with single file upload
+        /**
+         * @var UploadedFileInterface $uploadedFile
+         */
+        $uploadedFile = $uploadedFiles[$file_form_name];
+        $file_name = $uploadedFile->getClientFilename();
+        if ($uploadedFile->getError() !== UPLOAD_ERR_OK) {
+            $phpFileUploadErrors = array(
+                0 => 'There is no error, the file uploaded with success',
+                1 => 'The uploaded file exceeds the upload_max_filesize directive in php.ini',
+                2 => 'The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form',
+                3 => 'The uploaded file was only partially uploaded',
+                4 => 'No file was uploaded',
+                6 => 'Missing a temporary folder',
+                7 => 'Failed to write file to disk.',
+                8 => 'A PHP extension stopped the file upload.',
+            );
+            throw new RuntimeException($request,"File Error $file_name : ". $phpFileUploadErrors[$uploadedFile->getError()] );
+        }
+
+        return $uploadedFile;
+    }
+
+
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function upload_resource_file(ServerRequestInterface $request,ResponseInterface $response,
+                                     string $user_name, string $project_name) :ResponseInterface {
+
+        $file_name = null;
+        try {
+            $csrf = new AntiCSRF;
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+
+            if (!empty($_POST)) {
+                if (!$csrf->validateRequest()) {
+                    throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
+                }
+            }
+
+
+
+            try {
+                $file_upload = static::find_and_move_uploaded_file($request,'flow_resource_file');
+                $file_resource_path = $project->get_project_directory().
+                    DIRECTORY_SEPARATOR. FlowProject::REPO_RESOURCES_DIRECTORY.
+                    DIRECTORY_SEPARATOR. $file_upload->getClientFilename();
+                $file_name = $file_upload->getClientFilename();
+
+                $file_upload->moveTo($file_resource_path);
+
+                $project->commit_changes("Added resource file $file_name\n\nFile path is $file_resource_path");
+
+                $data = ['success'=>true,'message'=>'ok file upload','file-name'=>$file_name,'new_file_path'=>$file_resource_path];
+                $payload = json_encode($data);
+
+                $response->getBody()->write($payload);
+                return $response
+                    ->withHeader('Content-Type', 'application/json')
+                    ->withStatus(200);
+            } catch (Exception $e) {
+                $this->logger->error("Cannot upload file", ['exception' => $e]);
+                throw $e;
+            }
+        } catch (Exception $e) {
+            try {
+
+                $data = ['success'=>false,'message'=>$file_name??'' .': '.$e->getMessage()];
+                $payload = json_encode($data);
+
+                $response->getBody()->write($payload);
+                return $response
+                    ->withHeader('Content-Type', 'application/json')
+                    ->withStatus(400);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to project resources after error", ['exception' => $e]);
+                throw $e;
+            }
+        }
+
+    }
+
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function delete_resource_file(ServerRequestInterface $request,ResponseInterface $response,
+                                               string $user_name, string $project_name) :ResponseInterface {
+
+        $token = null;
+        try {
+            $args = $request->getParsedBody();
+            if (empty($args)) {
+                throw new InvalidArgumentException("No data sent");
+            }
+            $csrf = new FlowAntiCSRF($args,$_SESSION,FlowAntiCSRF::$fake_server);
+            if (!$csrf->validateRequest()) {
+                throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
+            }
+
+            $x_header = $request->getHeader('X-Requested-With') ?? [];
+            if (empty($x_header) || $x_header[0] !== 'XMLHttpRequest') {
+                throw new InvalidArgumentException("Need the X-Requested-With header");
+            }
+
+            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+            $token_lock_to = '';
+            $token = $csrf->getTokenArray($token_lock_to);
+
+
+            $file_url = $args['file_url'] ?? '';
+            if (!$file_url) {throw new InvalidArgumentException("Need a file url");}
+
+            $file_url_parts = array_reverse(explode('/',$file_url));
+            $backwards_parts = [];
+            foreach ($file_url_parts as $part) {
+                if (strpos($part,":") !== false) {break;}
+                $backwards_parts[] =$part;
+                if ($part === 'resources') {break;}
+            }
+            $file_part_path = implode(DIRECTORY_SEPARATOR,array_reverse($backwards_parts)) ;
+            $base_resource_file_path = $project->get_project_directory(); //no slash at end
+            $test_file_path = $base_resource_file_path . DIRECTORY_SEPARATOR . $file_part_path;
+            $real_file_path = realpath($test_file_path);
+            if (!$real_file_path) {
+                throw new RuntimeException("Could not find the file of $file_part_path in the project repo");
+            }
+            if (!is_writable($real_file_path)){
+                throw new RuntimeException("no system permissions to delete the file of $file_part_path in the project repo");
+            }
+            unlink($real_file_path);
+            $project->commit_changes("Deleted the resource $file_part_path");
+
+            $data = ['success'=>true,'message'=>'deleted file ','file_url'=>$file_url,'token'=> $token];
+            $payload = json_encode($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(201);
+
+
+        } catch (Exception $e) {
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $token];
+            $payload = json_encode($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(500);
+        }
+
+    }
 
 
     /**
@@ -1061,36 +1285,13 @@ class ProjectPages extends BasePages
             }
 
 
-            $uploadedFiles = $request->getUploadedFiles();
-            if (!array_key_exists('repo_or_patch_file',$uploadedFiles)) {
-                throw new HttpBadRequestException($request,"Need the file named repo_or_patch_file");
-            }
-            // handle single input with single file upload
-            /**
-             * @var UploadedFileInterface $uploadedFile
-             */
-            $uploadedFile = $uploadedFiles['repo_or_patch_file'];
-            $file_name = $uploadedFile->getClientFilename();
-            if ($uploadedFile->getError() !== UPLOAD_ERR_OK) {
-                $phpFileUploadErrors = array(
-                    0 => 'There is no error, the file uploaded with success',
-                    1 => 'The uploaded file exceeds the upload_max_filesize directive in php.ini',
-                    2 => 'The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form',
-                    3 => 'The uploaded file was only partially uploaded',
-                    4 => 'No file was uploaded',
-                    6 => 'Missing a temporary folder',
-                    7 => 'Failed to write file to disk.',
-                    8 => 'A PHP extension stopped the file upload.',
-                );
-                throw new HttpBadRequestException($request,"File Error $file_name : ". $phpFileUploadErrors[$uploadedFile->getError()] );
-            }
-
-
+            $file_upload = static::find_and_move_uploaded_file($request,'repo_or_patch_file');
+            $file_name = $file_upload->getClientFilename();
             $success_message = "Nothing Done "  . $project->flow_project_title;
             $args = $request->getParsedBody();
             if (array_key_exists('import-now',$args)) {
                 //do push now
-                $push_status = $project->update_repo_from_file();
+                $push_status = $project->update_repo_from_file($file_upload);
                 $success_message = "Merging from file $file_name to "  . $project->flow_project_title . "<br>$push_status";
             }
             $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY] = null;
@@ -1148,7 +1349,8 @@ class ProjectPages extends BasePages
             }
 
 
-            $resource_path = $project->get_project_directory(). DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . $resource ;
+            $resource_path = $project->get_project_directory(). DIRECTORY_SEPARATOR .
+                FlowProject::REPO_FILES_DIRECTORY . DIRECTORY_SEPARATOR . $resource ;
             if (!is_readable($resource_path)) {
                 throw new HttpNotFoundException($request,"Resource $resource NOT found in the resources directory of $project_name");
             }

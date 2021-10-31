@@ -3,6 +3,7 @@
 namespace app\models\project;
 
 use app\hexlet\JsonHelper;
+use app\hexlet\RecursiveClasses;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\multi\GeneralSearch;
@@ -16,6 +17,7 @@ use Exception;
 use InvalidArgumentException;
 use LogicException;
 use PDO;
+use Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -28,6 +30,15 @@ class FlowProject extends FlowBase {
     const MAX_SIZE_EXPORT_URL = 200;
 
     const MAX_SIZE_READ_ME_IN_CHARACTERS = 4000000;
+
+    const REPO_FILES_DIRECTORY = 'files';
+    const REPO_RESOURCES_DIRECTORY = 'resources';
+    const REPO_RESOURCES_VALID_TYPES = [
+      'png',
+      'jpeg',
+      'jpg',
+      'pdf'
+    ];
 
     public ?int $id;
     public ?int $created_at_ts;
@@ -483,6 +494,34 @@ class FlowProject extends FlowBase {
     }
 
     /**
+     * @param string $commit_message
+     * @param bool $b_commit
+     * @param bool $b_log_message
+     * @throws Exception
+     */
+    public function commit_changes(string $commit_message,bool $b_commit = true,bool $b_log_message = false) {
+
+        if ($b_log_message) {
+            static::get_logger()->debug(" Commit message",['message'=>$commit_message]);
+        }
+        if ($b_commit) {
+            $this->do_git_command("add .");
+            $this->do_git_command("commit  -m '$commit_message'");
+            if (isset($_SESSION[FlowUser::SESSION_USER_KEY])) {
+                /**
+                 * @var FlowUser $logged_in_user
+                 */
+                $logged_in_user = $_SESSION[FlowUser::SESSION_USER_KEY];
+                $user_info = "$logged_in_user->flow_user_guid <$logged_in_user->flow_user_email>";
+                $this->do_git_command("commit --amend --author='$user_info' --no-edit");
+            }
+            if ($this->export_repo_do_auto_push) {
+                $this->push_repo();
+            }
+        }
+    }
+
+    /**
      * returns true if changes and commit made
      * @param bool $b_commit , default true, will only commit if true. If false will write commit message to log
      * @param bool $b_log_message , default false, if true will write commit message to log
@@ -497,7 +536,6 @@ class FlowProject extends FlowBase {
         $number_tag_changes = $brief_changes->count_changes();
         $commit_message = null;
         if ($number_tag_changes) {
-            $this->do_git_command("add .");
 
             $tag_summary = $brief_changes->get_changed_tag_summary_line();
             $attribute_summary = $brief_changes->get_changed_attribute_summary_line();
@@ -510,24 +548,8 @@ class FlowProject extends FlowBase {
                 if ($attribute_summary) {$commit_message .= "\n$attribute_summary";}
                 if ($applied_summary) {$commit_message .= "\n$applied_summary";}
             }
+            $this->commit_changes($commit_message,$b_commit,$b_log_message);
 
-            if ($b_log_message) {
-                static::get_logger()->debug("Tag Commit message",['message'=>$commit_message]);
-            }
-            if ($b_commit) {
-                $this->do_git_command("commit  -m '$commit_message'");
-                if (isset($_SESSION[FlowUser::SESSION_USER_KEY])) {
-                    /**
-                     * @var FlowUser $logged_in_user
-                     */
-                    $logged_in_user = $_SESSION[FlowUser::SESSION_USER_KEY];
-                    $user_info = "$logged_in_user->flow_user_guid <$logged_in_user->flow_user_email>";
-                    $this->do_git_command("commit --amend --author='$user_info' --no-edit");
-                }
-                if ($this->export_repo_do_auto_push) {
-                    $this->push_repo();
-                }
-            }
         }
 
         return $commit_message?? false;
@@ -1025,7 +1047,8 @@ class FlowProject extends FlowBase {
         return $git_ret;
     }
 
-    function update_repo_from_file() :string {
+    function update_repo_from_file(UploadedFileInterface $uploaded_file) :string {
+        WillFunctions::will_do_nothing($uploaded_file);
         return 'stub updated repo from file';
     }
 
@@ -1096,7 +1119,28 @@ class FlowProject extends FlowBase {
 
     }
 
+    /**
+     * returns array of full file paths of any resources found that is sharable (png,jpg,jpeg,pdf)
+     * @return string[]
+     * @throws
+     */
+    public function get_resource_file_paths(): array{
+        $resource_directory = $this->get_project_directory().DIRECTORY_SEPARATOR. static::REPO_RESOURCES_DIRECTORY;
+        $types_piped = implode('|',static::REPO_RESOURCES_VALID_TYPES);
+        $pattern = "/.+($types_piped)\$/";
+        $list = RecursiveClasses::rsearch_for_paths($resource_directory,$pattern);
+        $ret = [];
+        foreach ($list as $path) {
+            if (!is_string($path)) {
+                static::get_logger()->error("File path in resource directory is not a string",['$path'=>$path]);
+                throw new LogicException("File path in resource directory is not a string");
+            }
 
+            $what = realpath($path);
+            if ($what && is_readable($path)) {$ret[] = $what;}
+        }
+        return $ret;
+    }
 
 
 }

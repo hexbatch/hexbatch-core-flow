@@ -171,6 +171,47 @@ function toggle_action_spinner(me,state) {
     }
 }
 
+
+/**
+ *
+ * @param {string} url
+ * @param {*} out_data
+ * @param  on_success_callback
+ * @param  on_fail_callback
+ * @param {string} success_title
+ * @param {string} fail_title
+ */
+function do_flow_ajax_action(url,out_data,
+                       on_success_callback,on_fail_callback,
+                       success_title, fail_title) {
+    let out_data_redux = JSON.parse(JSON.stringify(out_data));
+
+    set_object_with_flow_ajax_token_data(out_data_redux);
+
+    $.ajax({
+        url: url,
+        method: "POST",
+        dataType: 'json',
+        data : out_data_redux
+    })
+        .always(function( data ) {
+            /**
+             * @type {FlowBasicResponse}
+             * maybe basic if a failure
+             */
+            let ret = process_ajax_response(data,success_title,fail_title);
+
+            if (ret.success) {
+                if (on_success_callback) {on_success_callback(ret);}
+            } else {
+
+                if (on_fail_callback) {on_fail_callback(ret);}
+            }
+
+        });
+
+}
+
 /**
  * {Swal}
  */

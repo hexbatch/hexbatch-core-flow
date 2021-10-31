@@ -36,8 +36,25 @@ class FlowGitFile {
             case 'flow_project_blurb': { $this->is_public = true ; return 'Project Blurb'; }
             case 'flow_project_title': { $this->is_public = true ; return 'Project Title'; }
             case 'tags.yaml': { $this->is_public = true ; return 'Tags'; }
-            default: {$this->is_public = false; return '';}
+            default: {
+                if ($this->is_valid_resource_file()) {
+                    $this->is_public = true ; return $this->get_resouce_file_name();
+                } else {
+                    $this->is_public = false; return '';
+                }
+
+            }
         }
+    }
+
+    protected function is_valid_resource_file() : bool{
+        if (strpos($this->file,FlowProject::REPO_FILES_DIRECTORY.DIRECTORY_SEPARATOR) !== false) {return true;}
+        if (strpos($this->file,FlowProject::REPO_RESOURCES_DIRECTORY.DIRECTORY_SEPARATOR) !== false) {return true;}
+        return false;
+    }
+
+    protected function get_resouce_file_name() : ?string  {
+        return $this->file;
     }
 
     /**

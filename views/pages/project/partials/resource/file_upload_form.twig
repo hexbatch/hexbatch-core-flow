@@ -1,0 +1,59 @@
+
+{% set url_to_action = url_for('project_upload_resource_file',{
+                                                            user_name: project.get_admin_user().flow_user_name ,
+                                                            project_name: project.flow_project_title
+                                                        } )
+%}
+
+<div class="card ">
+
+    <div class="card-header p-3 p-xxl-2">
+        Upload a new file to resources
+    </div>
+    <div class="card-body ">
+        <form action="{{ url_to_action }}" class="dropzone w-100" id="flow-resource-file-upload" style="min-height: 20em">
+
+            {{ form_token( url_to_action)  }}
+
+            <!--  fallback form -->
+            <div class="fallback"> <!-- This div will be removed if the fallback is not necessary -->
+                <input type="file" name="flow_resource_file" />
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script>
+    jQuery(function(){
+        let myDropzone = new Dropzone("form#flow-resource-file-upload", {
+            url: "{{ url_to_action }}",
+            paramName: "flow_resource_file", // The name that will be used to transfer the file
+            maxFilesize: 10 // MB
+
+        });
+
+        myDropzone.on("error", function(file, response) {
+            let message;
+            if($.type(response) === "string") {
+                message = response;
+            } else {
+                message = response.message
+            }
+
+            my_swal.fire(
+                'Oh No!',
+                'File could not be uploaed<br>\n ' + message,
+                'error'
+            )
+
+        });
+
+        myDropzone.on("success", function(file) {
+            console.log("file success",file);
+            window.location.reload(true);
+        });
+
+
+    });
+</script>
