@@ -46,7 +46,6 @@ class AddFlowProjects extends AbstractMigration
                 `import_repo_key` TEXT NULL DEFAULT NULL ,
                 `flow_project_readme` MEDIUMTEXT NULL DEFAULT NULL ,
                 `flow_project_readme_bb_code` MEDIUMTEXT NULL DEFAULT NULL ,
-                `flow_project_readme_html` MEDIUMTEXT NULL DEFAULT NULL ,
                 PRIMARY KEY (`id`)
            ) ENGINE = InnoDB COMMENT = 'defines the units made in a flow';
 

@@ -37,7 +37,8 @@ class AddFlowEntries extends AbstractMigration
                 `flow_entry_type` VARCHAR(10) NULL DEFAULT NULL ,
                 `flow_entry_title` VARCHAR(40) NULL DEFAULT NULL,
                 `flow_entry_blurb` VARCHAR(120) NULL DEFAULT NULL,
-                `flow_entry_body` MEDIUMTEXT NULL DEFAULT NULL,
+                `flow_entry_body_bb_code` MEDIUMTEXT NULL DEFAULT NULL,
+                `flow_entry_body_bb_text` MEDIUMTEXT NULL DEFAULT NULL,
                 PRIMARY KEY (`id`)
            ) ENGINE = InnoDB COMMENT = 'defines the units made in a flow';
 
@@ -48,7 +49,8 @@ class AddFlowEntries extends AbstractMigration
         $this->execute("ALTER TABLE `flow_entries` ADD UNIQUE `udx_flow_entry_guid` (`flow_entry_guid`);");
         $this->execute("ALTER TABLE `flow_entries` ADD FULLTEXT `ft_flow_entry_title` (`flow_entry_title`);");
         $this->execute("ALTER TABLE `flow_entries` ADD FULLTEXT `ft_flow_entry_blurb` (`flow_entry_blurb`);");
-        $this->execute("ALTER TABLE `flow_entries` ADD FULLTEXT `ft_flow_entry_body` (`flow_entry_body`);");
+        $this->execute("ALTER TABLE `flow_entries` ADD FULLTEXT `ft_flow_entry_body` (flow_entry_body_bb_code);");
+        $this->execute("ALTER TABLE `flow_entries` ADD FULLTEXT `ft_flow_entry_body_bb_text` (flow_entry_body_bb_text);");
 
         $this->execute("ALTER TABLE `flow_entries` ADD CONSTRAINT `fk_flow_entries_has_flow_project_id` 
             FOREIGN KEY (`flow_project_id`) REFERENCES `flow_projects`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");

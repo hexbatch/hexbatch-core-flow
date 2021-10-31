@@ -263,18 +263,22 @@ class FlowProject extends FlowBase {
     }
 
 
-
-
+    /**
+     * @param null|array|object $object
+     * @throws Exception
+     */
     public function __construct($object=null){
         $this->admin_user = null;
         $this->b_did_applied_for_owned_tags = false;
+        $this->flow_project_readme_html = null;
+
         if (empty($object)) {
             $this->admin_flow_user_id = null;
             $this->flow_project_blurb = null;
             $this->flow_project_title = null;
             $this->flow_project_readme = null;
             $this->flow_project_readme_bb_code = null;
-            $this->flow_project_readme_html = null;
+
             $this->flow_project_guid = null;
             $this->flow_project_type = null;
             $this->created_at_ts = null;
@@ -300,6 +304,7 @@ class FlowProject extends FlowBase {
             }
         }
 
+        $this->get_html(); //sets the html var
         $this->old_flow_project_blurb = $this->flow_project_blurb;
         $this->old_flow_project_readme_bb_code = $this->flow_project_readme_bb_code;
         $this->old_flow_project_title = $this->flow_project_title;
@@ -564,6 +569,38 @@ class FlowProject extends FlowBase {
     }
 
     /**
+     * @return string|null
+     * @throws Exception
+     */
+    public function get_html_path() : ?string{
+        $dir = $this->get_project_directory();
+        if (empty($dir)) {return null;}
+        $path = $dir . DIRECTORY_SEPARATOR . 'flow_project_readme_html.html';
+        return $path;
+    }
+
+    /**
+     * @return string|null
+     * @throws Exception
+     */
+    public function get_html() : ?string {
+        if (!$this->flow_project_readme_html) {
+            $path = $this->get_html_path();
+            if (is_readable($path)){
+                $this->flow_project_readme_html = file_get_contents($this->get_html_path());
+                if ($this->flow_project_readme_html === false) {
+                    throw new RuntimeException("Project html path exists but could not read");
+                }
+            } else {
+                $this->flow_project_readme_html = null;
+            }
+
+        }
+       return $this->flow_project_readme_html;
+
+    }
+
+    /**
      * @throws Exception
      * @return bool true if committed, false if nothing to commit
      */
@@ -604,7 +641,6 @@ class FlowProject extends FlowBase {
                     'flow_project_title' => $this->flow_project_title,
                     'flow_project_blurb' => $this->flow_project_blurb,
                     'flow_project_readme' => $this->flow_project_readme,
-                    'flow_project_readme_html' => $this->flow_project_readme_html,
                     'flow_project_readme_bb_code' => $this->flow_project_readme_bb_code,
                 ],[
                     'id' => $this->id
@@ -621,7 +657,6 @@ class FlowProject extends FlowBase {
                     'flow_project_title' => $this->flow_project_title,
                     'flow_project_blurb' => $this->flow_project_blurb,
                     'flow_project_readme' => $this->flow_project_readme,
-                    'flow_project_readme_html' => $this->flow_project_readme_html,
                     'flow_project_readme_bb_code' => $this->flow_project_readme_bb_code,
                 ]);
                 $this->id = $db->lastInsertId();
@@ -639,14 +674,12 @@ class FlowProject extends FlowBase {
             $this->old_flow_project_blurb = $this->flow_project_blurb;
             $this->old_flow_project_title = $this->flow_project_title;
 
-            $dir = $this->get_project_directory();
-            $make_first_commit = false;
-            if (!is_readable($dir)) {
-                $this->create_project_repo();
-                $make_first_commit = true;
-            }
+            $b_already_created = false;
+            $dir = $this->get_project_directory($b_already_created);
+            $make_first_commit = !$b_already_created;
+
             $read_me_path_bb = $dir . DIRECTORY_SEPARATOR . 'flow_project_readme_bb_code.bbcode';
-            $read_me_path_html = $dir . DIRECTORY_SEPARATOR . 'flow_project_readme_html.html';
+            $read_me_path_html = $this->get_html_path();
             $blurb_path = $dir . DIRECTORY_SEPARATOR . 'flow_project_blurb';
             $title_path = $dir . DIRECTORY_SEPARATOR . 'flow_project_title';
             $yaml_path = $dir . DIRECTORY_SEPARATOR . 'flow_project.yaml';
@@ -809,7 +842,6 @@ class FlowProject extends FlowBase {
                 p.flow_project_title,
                 p.flow_project_blurb,
                 p.flow_project_readme,
-                p.flow_project_readme_html,
                 p.flow_project_readme_bb_code,
        
                 p.export_repo_do_auto_push,
@@ -837,6 +869,10 @@ class FlowProject extends FlowBase {
         }
     }
 
+    /**
+     * files not written until save called
+     * @param string $read_me
+     */
     public function set_read_me(string $read_me) {
         $this->flow_project_readme_bb_code = $read_me;
         $this->flow_project_readme_html = JsonHelper::html_from_bb_code($read_me);
@@ -856,33 +892,44 @@ class FlowProject extends FlowBase {
     }
 
     /**
-     * @return string
+     * @param bool $b_already_created optional, OUTREF, set to true if already created
+     * @return string|null
      * @throws Exception
      */
-    public function get_project_directory() : string {
+    public function get_project_directory(bool &$b_already_created = false) : ?string {
+        if (empty($this->flow_project_guid) || empty($this->get_admin_user())) {return null;}
         $check =  $this->get_projects_base_directory(). DIRECTORY_SEPARATOR .
             $this->get_admin_user()->flow_user_guid . DIRECTORY_SEPARATOR . $this->flow_project_guid;
-        return $check;
+        $b_already_created = true;
+        if (!is_readable($check)) {
+            $b_already_created = false;
+            $this->create_project_repo($check);
+        }
+        $real = realpath($check);
+        if (!$real) {
+            throw new LogicException("Could not find project directory at $check");
+        }
+        return $real;
     }
 
     /**
+     * @param string $repo_path
      * @throws Exception
      */
-    protected function create_project_repo() {
-        $dir = $this->get_project_directory();
-        if (!is_readable($dir)) {
-            $check =  mkdir($dir,0777,true);
+    protected function create_project_repo(string $repo_path) {
+        if (!is_readable($repo_path)) {
+            $check =  mkdir($repo_path,0777,true);
             if (!$check) {
-                throw new RuntimeException("Could not create the directory of $dir");
+                throw new RuntimeException("Could not create the directory of $repo_path");
             }
             /** @noinspection PhpConditionAlreadyCheckedInspection */
-            if (!is_readable($dir)) {
-                throw new RuntimeException("Could not make a readable directory of $dir");
+            if (!is_readable($repo_path)) {
+                throw new RuntimeException("Could not make a readable directory of $repo_path");
             }
         }
         //have a directory, now need to add the .gitignore
         $ignore = file_get_contents(__DIR__. DIRECTORY_SEPARATOR . 'repo'. DIRECTORY_SEPARATOR . 'gitignore.txt');
-        file_put_contents($dir.DIRECTORY_SEPARATOR.'.gitignore',$ignore);
+        file_put_contents($repo_path.DIRECTORY_SEPARATOR.'.gitignore',$ignore);
         $this->do_git_command("init");
     }
 
@@ -893,8 +940,11 @@ class FlowProject extends FlowBase {
      * @return string
      * @throws Exception
      */
-    protected function do_git_command(string $command,bool $b_include_git_word = true,?string $pre_command = null) : string {
+    protected function do_git_command( string $command,bool $b_include_git_word = true,?string $pre_command = null) : string {
         $dir = $this->get_project_directory();
+        if (!$dir) {
+            throw new RuntimeException("Project Directory is not created yet");
+        }
         return FlowGitHistory::do_git_command($dir,$command,$b_include_git_word,$pre_command);
     }
 
@@ -1081,12 +1131,6 @@ class FlowProject extends FlowBase {
         $this->flow_project_readme_bb_code = $this->do_project_directory_command('cat flow_project_readme_bb_code.bbcode');
         $this->set_read_me($this->flow_project_readme_bb_code);
 
-        $dir = $this->get_project_directory();
-        $read_me_path_html = $dir . DIRECTORY_SEPARATOR . 'flow_project_readme_html.html';
-
-        $b_ok = file_put_contents($read_me_path_html,$this->flow_project_readme_html);
-        if ($b_ok === false) {throw new RuntimeException("[set_db_from_file_state] Could not write to $read_me_path_html");}
-
         $db = null;
         try {
             $db = static::get_connection();
@@ -1097,13 +1141,12 @@ class FlowProject extends FlowBase {
                 'flow_project_title' => $this->flow_project_title,
                 'flow_project_blurb' => $this->flow_project_blurb,
                 'flow_project_readme' => $this->flow_project_readme,
-                'flow_project_readme_html' => $this->flow_project_readme_html,
                 'flow_project_readme_bb_code' => $this->flow_project_readme_bb_code,
             ],[
                 'id' => $this->id
             ]);
 
-            //do children here
+            //todo save entries here as children if any have changed ( call function to see if dirty)
 
             $tags = new BriefUpdateFromYaml($this);
             WillFunctions::will_do_nothing($tags); //for debugging
