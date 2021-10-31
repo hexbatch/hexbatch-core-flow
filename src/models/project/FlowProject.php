@@ -481,14 +481,14 @@ class FlowProject extends FlowBase {
         $tags = $this->get_all_owned_tags_in_project(true);
 
         foreach ($tags as $tag) {
-            $tag->set_brief_json(true);
+            $tag->set_brief_json_flag(true);
         }
 
         $pigs_in_space = JsonHelper::toString($tags);
         $tags_serialized = JsonHelper::fromString($pigs_in_space);
 
         foreach ($tags as $tag) {
-            $tag->set_brief_json(false);
+            $tag->set_brief_json_flag(false);
         }
 
         $tag_yaml = Yaml::dump($tags_serialized);
@@ -1163,12 +1163,35 @@ class FlowProject extends FlowBase {
     }
 
     /**
+     * @return string|null
+     * @throws Exception
+     */
+    public function get_resource_directory() : ?string {
+        $project_directory = $this->get_project_directory();
+        if (!$project_directory) {return null;}
+        $resource_directory = $project_directory.DIRECTORY_SEPARATOR. static::REPO_RESOURCES_DIRECTORY;
+        $real = realpath($resource_directory);
+        if (!$real) {
+            $b_made = mkdir($resource_directory);
+            if (!$b_made) {
+                throw new RuntimeException("Cannot make resource directory at $real");
+            }
+            $real = realpath($resource_directory);
+        }
+        if (!is_readable($real)) {
+            throw new RuntimeException("Resource directory is not readable at $real");
+        }
+        return $real;
+    }
+
+    /**
      * returns array of full file paths of any resources found that is sharable (png,jpg,jpeg,pdf)
      * @return string[]
      * @throws
      */
     public function get_resource_file_paths(): array{
-        $resource_directory = $this->get_project_directory().DIRECTORY_SEPARATOR. static::REPO_RESOURCES_DIRECTORY;
+        $resource_directory = $this->get_resource_directory();
+        if (empty($resource_directory)) {return [];}
         $types_piped = implode('|',static::REPO_RESOURCES_VALID_TYPES);
         $pattern = "/.+($types_piped)\$/";
         $list = RecursiveClasses::rsearch_for_paths($resource_directory,$pattern);

@@ -284,7 +284,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     
     public function jsonSerialize(): array
     {
-        if ($this->get_brief_json()) {
+        if ($this->get_brief_json_flag()) {
            $brief = new BriefFlowTagAttribute($this);
            return $brief->to_array();
         } else {

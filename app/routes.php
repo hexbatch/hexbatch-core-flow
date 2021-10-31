@@ -56,57 +56,73 @@ return function (App $app) {
         $group->get('/{user_name:[[:alnum:]\-]+}', ['userPages', 'user_page'])->setName('user_page');
 
         $group->group('/{user_name:[[:alnum:]\-]+}', function (RouteCollectorProxy $group) {
+
             $group->get('/{project_name:[[:alnum:]\-]+}', ['projectPages', 'single_project_home'])->setName('single_project_home');
-            $group->get('/{project_name:[[:alnum:]\-]+}/', ['projectPages', 'single_project_home'])->setName('single_project_home');
-            $group->get('/{project_name:[[:alnum:]\-]+}/edit', ['projectPages', 'edit_project'])->setName('edit_project');
-            $group->post('/{project_name:[[:alnum:]\-]+}/edit', ['projectPages', 'update_project'])->setName('update_project');
-            $group->post('/{project_name:[[:alnum:]\-]+}/edit_permissions_ajax', ['projectPages', 'change_project_permissions'])->setName('edit_permissions_ajax');
-            $group->get('/{project_name:[[:alnum:]\-]+}/permissions', ['projectPages', 'edit_project_permissions'])->setName('project_permissions');
-            $group->get('/{project_name:[[:alnum:]\-]+}/tags', ['projectPages', 'edit_project_tags'])->setName('project_tags');
-            $group->get('/{project_name:[[:alnum:]\-]+}/history[/page/{page:[1-9]+[0-9]*}]', ['projectPages', 'project_history'])->setName('project_history');
-            $group->post('/{project_name:[[:alnum:]\-]+}/file_change_ajax', ['projectPages', 'get_file_change'])->setName('get_file_change_ajax');
-            $group->get('/{project_name:[[:alnum:]\-]+}/export', ['projectPages', 'export_view'])->setName('project_export');
-            $group->post('/{project_name:[[:alnum:]\-]+}/export', ['projectPages', 'update_export'])->setName('update_project_export');
-            $group->get('/{project_name:[[:alnum:]\-]+}/download_export', ['projectPages', 'download_export'])->setName('download_project_export');
-            $group->get('/{project_name:[[:alnum:]\-]+}/import', ['projectPages', 'import_view'])->setName('project_import');
-            $group->post('/{project_name:[[:alnum:]\-]+}/import', ['projectPages', 'import_from_git'])->setName('project_import_from_git');
-            $group->post('/{project_name:[[:alnum:]\-]+}/import_from_file', ['projectPages', 'import_from_file'])->setName('project_import_from_file');
+            
+            $group->group('/{project_name:[[:alnum:]\-]+}', function (RouteCollectorProxy $group) {
+                
+                $group->get('/', ['projectPages', 'single_project_home'])->setName('single_project_home');
+                $group->get('/edit', ['projectPages', 'edit_project'])->setName('edit_project');
+                $group->post('/edit', ['projectPages', 'update_project'])->setName('update_project');
+                $group->post('/edit_permissions_ajax', ['projectPages', 'change_project_permissions'])->setName('edit_permissions_ajax');
+                $group->get('/permissions', ['projectPages', 'edit_project_permissions'])->setName('project_permissions');
+                $group->get('/tags', ['projectPages', 'edit_project_tags'])->setName('project_tags');
+                $group->get('/history[/page/{page:[1-9]+[0-9]*}]', ['projectPages', 'project_history'])->setName('project_history');
+                $group->post('/file_change_ajax', ['projectPages', 'get_file_change'])->setName('get_file_change_ajax');
+                $group->get('/export', ['projectPages', 'export_view'])->setName('project_export');
+                $group->post('/export', ['projectPages', 'update_export'])->setName('update_project_export');
+                $group->get('/download_export', ['projectPages', 'download_export'])->setName('download_project_export');
+                $group->get('/import', ['projectPages', 'import_view'])->setName('project_import');
+                $group->post('/import', ['projectPages', 'import_from_git'])->setName('project_import_from_git');
+                $group->post('/import_from_file', ['projectPages', 'import_from_file'])->setName('project_import_from_file');
 
-            $group->get('/{project_name:[[:alnum:]\-]+}/files/{resource}', ['projectPages', 'get_resource_file'])->setName('project_files');
-            $group->get('/{project_name:[[:alnum:]\-]+}/resources/', ['projectPages', 'resources'])->setName('project_resources');
-            $group->post('/{project_name:[[:alnum:]\-]+}/resources', ['projectPages', 'upload_resource_file'])->setName('project_upload_resource_file');
-            $group->post('/{project_name:[[:alnum:]\-]+}/resources_delete', ['projectPages', 'delete_resource_file'])->setName('project_delete_resource_file');
-
-            //tags in project , no matter how they are used or attached to
-            $group->get('/{project_name:[[:alnum:]\-]+}/get_tags_ajax', ['tagPages', 'get_tags'])->setName('get_tags_ajax');
-
-
-            //tag in project
-            $group->post('/{project_name:[[:alnum:]\-]+}/tag/create', ['tagPages', 'create_tag'])->setName('create_tag_ajax');
-
-            $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/edit',
-                ['tagPages', 'edit_tag'])->setName('edit_tag_ajax');
-
-            $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/delete',
-                ['tagPages', 'delete_tag'])->setName('delete_tag_ajax');
-
-            //attributes in project
-            $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/attribute/create',
-                ['tagPages', 'create_attribute'])->setName('create_tag_attribute_ajax');
-
-            $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/attribute/{attribute_name:[[:alnum:]\-]+}/edit',
-                ['tagPages', 'edit_attribute'])->setName('edit_tag_attribute_ajax');
-
-            $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/attribute/{attribute_name:[[:alnum:]\-]+}/delete',
-                ['tagPages', 'delete_attribute'])->setName('delete_tag_attribute_ajax');
-
-            //applied in project
-            $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/applied/create',
-                ['tagPages', 'create_applied'])->setName('create_applied_ajax');
+                $group->get('/files/{resource}', ['projectPages', 'get_resource_file'])->setName('project_files');
+                $group->get('/resources/', ['projectPages', 'resources'])->setName('project_resources');
+                $group->post('/resources', ['projectPages', 'upload_resource_file'])->setName('project_upload_resource_file');
+                $group->post('/resources_delete', ['projectPages', 'delete_resource_file'])->setName('project_delete_resource_file');
 
 
-            $group->post('/{project_name:[[:alnum:]\-]+}/tag/{tag_name:[[:alnum:]\-]+}/applied/delete',
-                ['tagPages', 'delete_applied'])->setName('delete_applied_ajax');
+
+                $group->group('/tag', function (RouteCollectorProxy $group) {
+
+                    //tags in project , no matter how they are used or attached to
+                    $group->get('/get', ['tagPages', 'get_tags'])->setName('get_tags_ajax');
+
+                    //tag in project
+                    $group->post('/create', ['tagPages', 'create_tag'])->setName('create_tag_ajax');
+
+                    $group->post('{tag_name:[[:alnum:]\-]+}/edit',
+                        ['tagPages', 'edit_tag'])->setName('edit_tag_ajax');
+
+                    $group->post('{tag_name:[[:alnum:]\-]+}/delete',
+                        ['tagPages', 'delete_tag'])->setName('delete_tag_ajax');
+
+                    //attributes in project
+                    $group->post('/{tag_name:[[:alnum:]\-]+}/attribute/create',
+                        ['tagPages', 'create_attribute'])->setName('create_tag_attribute_ajax');
+
+                    $group->post('/{tag_name:[[:alnum:]\-]+}/attribute/{attribute_name:[[:alnum:]\-]+}/edit',
+                        ['tagPages', 'edit_attribute'])->setName('edit_tag_attribute_ajax');
+
+                    $group->post('/{tag_name:[[:alnum:]\-]+}/attribute/{attribute_name:[[:alnum:]\-]+}/delete',
+                        ['tagPages', 'delete_attribute'])->setName('delete_tag_attribute_ajax');
+
+                    //applied in project
+                    $group->post('/{tag_name:[[:alnum:]\-]+}/applied/create',
+                        ['tagPages', 'create_applied'])->setName('create_applied_ajax');
+
+
+                    $group->post('{tag_name:[[:alnum:]\-]+}/applied/delete',
+                        ['tagPages', 'delete_applied'])->setName('delete_applied_ajax');
+                });
+
+                $group->group('/entry', function (RouteCollectorProxy $group) {
+
+                } );
+
+
+            });
+            
 
 
         });

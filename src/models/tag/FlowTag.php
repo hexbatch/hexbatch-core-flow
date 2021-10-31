@@ -61,7 +61,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
     public function jsonSerialize(): array
     {
 
-        if ($this->get_brief_json()) {
+        if ($this->get_brief_json_flag()) {
 
             $brief = new BriefFlowTag($this);
             return $brief->to_array();
@@ -757,14 +757,14 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
 
             if ($b_do_transaction) {$db->beginTransaction();}
-            if ($this->flow_project_guid && $this->flow_tag_id) {
+            if ($this->flow_tag_guid && $this->flow_tag_id) {
 
                 $db->update('flow_tags',$save_info,[
                     'id' => $this->flow_tag_id
                 ]);
 
             }
-            elseif ($this->flow_project_guid) {
+            elseif ($this->flow_tag_guid) {
                 $insert_sql = "
                     INSERT INTO flow_tags(flow_project_id, parent_tag_id, created_at_ts, flow_tag_guid, flow_tag_name)  
                     VALUES (?,?,?,UNHEX(?),?)

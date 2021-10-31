@@ -47,7 +47,7 @@ class AddFlowProjects extends AbstractMigration
                 `flow_project_readme` MEDIUMTEXT NULL DEFAULT NULL ,
                 `flow_project_readme_bb_code` MEDIUMTEXT NULL DEFAULT NULL ,
                 PRIMARY KEY (`id`)
-           ) ENGINE = InnoDB COMMENT = 'defines the units made in a flow';
+           ) ENGINE = InnoDB COMMENT = 'defines the top most organization made in a flow';
 
        ");
 
