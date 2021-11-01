@@ -13,6 +13,7 @@ class GeneralSearchResult implements JsonSerializable  {
     public ?string $guid;
     public ?string $type;
     public ?int $created_at_ts;
+    public ?string $url;
 
 
     function __construct($object=null){
@@ -21,6 +22,7 @@ class GeneralSearchResult implements JsonSerializable  {
         $this->guid = null;
         $this->type = null;
         $this->created_at_ts = null;
+        $this->url = null;
 
         if (empty($object)) {
             return;
@@ -41,6 +43,7 @@ class GeneralSearchResult implements JsonSerializable  {
             "created_at_ts" => $this->created_at_ts,
             "title" => $this->title,
             "type" => $this->type,
+            "url" => $this->url,
         ];
     }
 

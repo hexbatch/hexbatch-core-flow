@@ -145,7 +145,14 @@ class JsonHelper {
      */
     public static function fromString($what, bool $b_exception=true, bool $b_association=true) {
         if (is_null($what) ) { return null;}
-        if (empty($what) && !is_numeric($what)) {return [];}
+        if (empty($what) && !is_numeric($what)) {
+            if ($b_association) {
+                return [];
+            } else {
+                return (object)[];
+            }
+
+        }
         $what = strval($what);
         if ( strcasecmp($what,'null') == 0) {return null;}
         $out = json_decode(strval($what), $b_association);
@@ -159,6 +166,15 @@ class JsonHelper {
             }
 
         } else {
+            if (empty($out) ) {
+                if (is_array($out) || is_object($out)) {
+                    if ($b_association) {
+                        return [];
+                    } else {
+                        return (object)[];
+                    }
+                }
+            }
             return $out;
         }
 

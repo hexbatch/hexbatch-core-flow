@@ -32,7 +32,9 @@
         "ramsey/uuid": "^4.1",
         "paragonie/anti-csrf": "^2.3",
         "scrivo/highlight.php": "v9.18.1.7",
-        "bluem/tree": "^3.1"
+        "bluem/tree": "^3.1",
+        "malkusch/lock": "^2.2",
+        "nesbot/carbon": "^2.54"
     },
     "autoload": {
         "psr-4": {"app\\": "src/"}

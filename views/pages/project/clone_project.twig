@@ -1,0 +1,126 @@
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+
+        <li class="breadcrumb-item">
+            <a href="{{  url_for('all_projects')  }}">{{ user.flow_user_name }}</a>
+        </li>
+
+        <li class="breadcrumb-item active" aria-current="page">Clone Project</li>
+    </ol>
+</nav>
+
+<div class="row">
+
+    <div class="card col-12 col-lg-9">
+
+        <div class="card-header">
+            Copy an already existing project
+        </div>
+
+        <div class="card-body">
+            <nav>
+                <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                    <button class="nav-link active" id="flow-clone-from-project" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
+                        Clone From a project you can read here
+                    </button>
+                    
+                    <button class="nav-link" id="flow-clone-from-git" data-bs-toggle="tab" data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile" aria-selected="false">
+                        Clone from Git
+                    </button>
+                </div>
+            </nav>
+            <div class="tab-content" id="nav-tabContent">
+                <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="flow-clone-from-project">
+                    <div class="row">
+                        <div class="mt-2 col-12 col-md-6 col-xxl-3">
+                            <label for="flow-select-project">
+                                Choose a project
+                            </label>
+                            <select id="flow-select-project"
+                                    class="w-100"
+                                    tabindex="-1"
+                                    aria-hidden="true"
+                            >
+                            </select>
+                        </div>
+
+                        <div class="mt-4 col-12 col-md-6 col-xxl-auto">
+                            <span id="flow-selected_project-name"></span>
+                            <code id="flow-selected_project-guid"></code>
+                            <button class="btn btn-outline-secondary btn-sm clipy-btn invisible flow-import-project-button"
+                                    type="button"
+                                    data-clipboard-target="#flow-selected_project-guid"
+                                    data-popover_on_success="Copied!"
+                                    data-popover_on_fail="Use Control-C"
+                            >
+                                Copy
+                            </button>
+                            <br>
+                            <button class="btn btn-primary invisible flow-import-project-button mt-2" id="flow-action-clone-from-project">
+                                Clone
+                            </button>
+                        </div>
+                    </div>
+
+                </div><!-- /.tab-pane -->
+
+                <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="flow-clone-from-git">
+
+
+                </div><!-- /.tab-pane -->
+            </div> <!-- /.tab-content -->
+        </div>
+
+
+    </div>
+
+</div> <!-- /.row -->
+
+<script>
+    jQuery(function($) {
+
+       let bare_select_control = $(`select#flow-select-project`);
+        create_select_2_for_general_search(bare_select_control,false,"Choose a project",null,'project');
+
+        /**
+         * @type {?GeneralSearchResult}
+         */
+        let selected_project = null;
+        bare_select_control.on('select2:select', function () {
+            let data_array = bare_select_control.select2("data");
+            console.debug('selected project', selected_project);
+
+            if (data_array.length) {
+                selected_project = data_array[0];
+            } else {
+                selected_project = null;
+            }
+            display_selected(selected_project);
+            console.log(selected_project)
+        });
+
+        bare_select_control.on('select2:unselecting', function () {
+            selected_project = null;
+            console.debug('unselected project');
+            display_selected(selected_project);
+        });
+
+        /**
+         *
+         * @param {?GeneralSearchResult} what
+         */
+        function display_selected(what) {
+            if (what) {
+                $(`#flow-selected_project-name`).text(what.title);
+                $(`#flow-selected_project-guid`).text(what.guid);
+                $(`.flow-import-project-button`).removeClass('invisible');
+            } else {
+                $(`#flow-selected_project-name`).text('');
+                $(`#flow-selected_project-guid`).text('');
+                $(`.flow-import-project-button`).addClass('invisible');
+            }
+
+        }
+    });
+
+</script>

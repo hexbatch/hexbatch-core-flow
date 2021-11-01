@@ -1,0 +1,68 @@
+{{ include('entry/partials/entry-breadcrumbs.twig') }}
+
+<script>
+    let create_entry_url = "{{- url_for('create_entry',{
+        user_name: project.get_admin_user().flow_user_name ,
+        project_name: project.flow_project_title
+    } )
+    -}}";
+</script>
+
+<script src="{{ root_url }}/public/resources/js/entry/edit-entry.js"></script>
+
+<div class="container container-xxl">
+    <div class="card col-12">
+        <div class="card-header">
+            <h4>
+                New Entry
+                <button class="btn btn-lg btn-primary float-end " id="fl-entry-create-action">
+                    <i class="far fa-save pe-1"></i>
+                    Save
+                </button>
+            </h4>
+        </div> <!-- /.card-header -->
+        <div class="card-body">
+            <div class="row">
+                <div class="col-12 col-xxl-6">
+                    <label for="flow_entry_title">
+                        Title
+                    </label>
+                    <input type="text" id="flow_entry_title" name="flow_entry_title"
+                           class="form-control" placeholder="Title" required autofocus
+                           maxlength="{{ entry.max_title_length }}" value="{{ entry.title }}"
+                    >
+                </div>
+
+                <div class="col-12 col-xxl-6">
+                    <label for="flow_entry_blurb">
+                        Blurb
+                    </label>
+                    <textarea type="text" id="flow_entry_blurb" name="flow_entry_blurb"
+                              class="form-control" placeholder="Blurb" required
+                              rows="3" maxlength="{{ entry.max_blurb_length }}"
+                    >{{ entry.blurb }}</textarea>
+                </div>
+            </div> <!-- /.row -->
+
+            <div class="row">
+                <div class="col-12">
+                    <input type="hidden" name="flow_entry_body_bb_code" id="flow_entry_body_bb_code"
+                           value="{{ project.flow_project_readme_bb_code }}">
+
+                    <label for="flow_entry_body_bb_code_area">Body</label>
+
+                    <textarea type="text" id="flow_entry_body_bb_code_area"
+                              class="form-control" placeholder="Body" required
+                              rows="40"
+                    >{{ entry.bb_code }}</textarea>
+                </div> <!-- /.col  -->
+            </div> <!-- /.row  -->
+        </div>
+    </div> <!-- /.card -->
+</div> <!-- .container -->
+
+
+{% include 'entry/partials/body-editor.twig' with{
+    'textarea_id': 'flow_entry_body_bb_code_area',
+    'hidden_id': 'flow_entry_body_bb_code'
+} %}

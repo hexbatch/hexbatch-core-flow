@@ -1,39 +1,21 @@
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
+{{ include('project/partials/project-breadcrumbs.twig') }}
 
-        <li class="breadcrumb-item">
-            <a href="{{  url_for('all_projects')  }}">{{ project.get_admin_user().flow_user_name }}</a>
-        </li>
-
-        <li class="breadcrumb-item">
-            <a href="{{ url_for('single_project_home',{
+<div class="float-end">
+    {% if project.get_current_user_permissions().can_edit %}
+        <div class="breadcrumb-item active" aria-current="page">
+            <a href="{{ url_for('download_project_export',{
                 user_name: project.get_admin_user().flow_user_name ,
                 project_name: project.flow_project_title
             } )
-            }}">
-                <span class="flow-project-title">
-                   Editing {{ project.flow_project_title }}
-                </span>
+            }}"
+               class="btn btn-outline-info py-0"
+            >
+                Download as Zip
             </a>
-        </li>
+        </div>
+    {% endif %}
+</div>
 
-        <li class="breadcrumb-item">Exporting  {{ project.flow_project_title }}</li>
-
-        {% if project.get_current_user_permissions().can_edit %}
-            <li class="breadcrumb-item active" aria-current="page">
-                <a href="{{ url_for('download_project_export',{
-                    user_name: project.get_admin_user().flow_user_name ,
-                    project_name: project.flow_project_title
-                } )
-                }}"
-                   class="btn btn-outline-info py-0"
-                >
-                    Download as Zip
-                </a>
-            </li>
-        {% endif %}
-    </ol>
-</nav>
 
 
 

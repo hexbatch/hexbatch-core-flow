@@ -156,6 +156,7 @@ class GeneralSearch extends FlowBase{
          * @var GeneralSearchResult[] $ret
          */
         $ret = [];
+
         foreach ($res as $row) {
             $node = new GeneralSearchResult($row);
             $ret[] = $node;

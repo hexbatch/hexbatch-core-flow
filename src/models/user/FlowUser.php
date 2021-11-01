@@ -70,7 +70,7 @@ class FlowUser extends FlowBase implements JsonSerializable {
     /**
      * @return FlowUser
      */
-    public static function get_logged_in_user() : FlowUser {
+    public static function get_logged_in_user() : ?FlowUser {
         try {
             return  static::$container->get('user');
         } catch (Exception $e) {

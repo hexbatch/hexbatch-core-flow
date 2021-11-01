@@ -4,7 +4,7 @@
  * @param {boolean} b_multi
  * @param {?string} placeholder
  * @param {?string} not_guid
- * @param {?string} [search_types]
+ * @param {?string} [search_types]  project|user|tag|entry|all|not-tags
  */
 function create_select_2_for_general_search(bare_select_control,b_multi,
                                         placeholder,not_guid,search_types) {
