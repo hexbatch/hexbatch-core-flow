@@ -31,32 +31,33 @@ class AddFlowEntries extends AbstractMigration
             CREATE TABLE flow_entries (
                 `id` INT NOT NULL AUTO_INCREMENT ,
                 `flow_project_id` INT  NOT NULL , 
-                `parent_flow_entry_id` INT NULL DEFAULT NULL ,
+                `flow_entry_parent_id` INT NULL DEFAULT NULL ,
                 `created_at_ts` INT NULL DEFAULT NULL,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 `flow_entry_guid` BINARY(16) NOT NULL ,
-                `flow_entry_type` VARCHAR(10) NULL DEFAULT NULL ,
                 `flow_entry_title` VARCHAR(40) NULL DEFAULT NULL,
                 `flow_entry_blurb` VARCHAR(120) NULL DEFAULT NULL,
                 `flow_entry_body_bb_code` MEDIUMTEXT NULL DEFAULT NULL,
                 `flow_entry_body_bb_text` MEDIUMTEXT NULL DEFAULT NULL,
                 PRIMARY KEY (`id`)
-           ) ENGINE = InnoDB COMMENT = 'defines the units made in a flow';
+           ) ENGINE = InnoDB COMMENT = 'defines the entries made in a project';
 
        ");
 
         $this->execute("ALTER TABLE `flow_entries` ADD INDEX `idx_flow_project_id`   (`flow_project_id`);");
-        $this->execute("ALTER TABLE `flow_entries` ADD INDEX `idx_parent_flow_entry_id`   (`parent_flow_entry_id`);");
+        $this->execute("ALTER TABLE `flow_entries` ADD INDEX `idx_flow_entry_parent_id`   (flow_entry_parent_id);");
         $this->execute("ALTER TABLE `flow_entries` ADD UNIQUE `udx_flow_entry_guid` (`flow_entry_guid`);");
         $this->execute("ALTER TABLE `flow_entries` ADD FULLTEXT `ft_flow_entry_title` (`flow_entry_title`);");
         $this->execute("ALTER TABLE `flow_entries` ADD FULLTEXT `ft_flow_entry_blurb` (`flow_entry_blurb`);");
         $this->execute("ALTER TABLE `flow_entries` ADD FULLTEXT `ft_flow_entry_body` (flow_entry_body_bb_code);");
         $this->execute("ALTER TABLE `flow_entries` ADD FULLTEXT `ft_flow_entry_body_bb_text` (flow_entry_body_bb_text);");
+        $this->execute("CREATE UNIQUE INDEX udx_unique_title_in_project ON flow_entries (flow_project_id, flow_entry_title);");
 
         $this->execute("ALTER TABLE `flow_entries` ADD CONSTRAINT `fk_flow_entries_has_flow_project_id` 
             FOREIGN KEY (`flow_project_id`) REFERENCES `flow_projects`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
 
         $this->execute("ALTER TABLE `flow_entries` ADD CONSTRAINT `fk_flow_entries_has_flow_entry_id` 
-            FOREIGN KEY (`parent_flow_entry_id`) REFERENCES `flow_entries`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
+            FOREIGN KEY (flow_entry_parent_id) REFERENCES `flow_entries`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
 
         //NOW UPDATE THE TRIGGERS !
         $files = MYDB::recursive_search_sql_files(static::TRIGGER_DIR);

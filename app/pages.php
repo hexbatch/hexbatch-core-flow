@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use app\controllers\entry\EntryPages;
 use app\controllers\home\HomePages;
 use app\controllers\project\ProjectPages;
 use app\controllers\tag\TagPages;
@@ -30,6 +31,10 @@ return function (App $app) {
 
     $container->set('tagPages', function() use ($app, $container) {
         return new TagPages($container->get('auth'),$container->get(LoggerInterface::class),$container);
+    });
+
+    $container->set('entryPages', function() use ($app, $container) {
+        return new EntryPages($container->get('auth'),$container->get(LoggerInterface::class),$container);
     });
 
 };
