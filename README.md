@@ -98,11 +98,6 @@ https://github.com/scrivo/highlight.php for syntax highlighting of bb code block
 https://github.com/BlueM/Tree for those hard to reach sorting issues
 
 
-Hook and Action and Filter callback system
-https://github.com/tormjens/eventy
-Have not embedded to project, only added with composer to vendor folders
-see how to add here : https://github.com/tormjens/eventy/tree/master/tests/Unit  
-
 
 ## Javascript Libraries Used
 
@@ -183,4 +178,20 @@ The important things to add to the docker-compose.yml file for xdebug to work is
 
 # Notes
 
-do git commands like this ` exec('cd /var/www/flow_projects/a/b && git status 2>&1',$output,$result_code);`
+## GIT
+in the php , the git repo is not on the computer , but on a mapped folder from docker,
+when needing to do more git commands, either Run `sudo docker exec -it hexbatch_dev_php-fpm_1 bash` 
+    and go up to the /var/www/flow_projects folder and then find the correct project repo there (they are listed by guid not name)
+
+or to add code, php like this ` exec('cd /var/www/flow_projects/a/b && git status 2>&1',$output,$result_code);`
+
+
+## Wishlist
+
+There is a hook and filter library I really like, but am not including it now, as no need for it , and it has a LOT of dependencies
+
+Hook and Action and Filter callback system
+https://github.com/tormjens/eventy
+see how to add here to non laraval project: https://github.com/tormjens/eventy/tree/master/tests/Unit  
+
+
