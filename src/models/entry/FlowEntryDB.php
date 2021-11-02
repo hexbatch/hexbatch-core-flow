@@ -4,22 +4,19 @@ namespace app\models\entry;
 
 
 use app\hexlet\JsonHelper;
-use app\hexlet\WillFunctions;
-use app\models\base\FlowBase;
-use app\models\entry\brief\BriefFlowEntry;
+use app\models\entry\brief\IFlowEntryBrief;
 use app\models\project\FlowProject;
 use BlueM\Tree;
 use Exception;
 use InvalidArgumentException;
-use JsonSerializable;
 use LogicException;
 use PDO;
 use RuntimeException;
 
 
-class FlowEntryDB extends FlowBase implements JsonSerializable {
+abstract class FlowEntryDB extends FlowEntryBase {
 
-    const LENGTH_ENTRY_TITLE = 40;
+
     
 
     public ?int $flow_entry_id;
@@ -30,8 +27,7 @@ class FlowEntryDB extends FlowBase implements JsonSerializable {
     public ?string $flow_entry_guid;
     public ?string $flow_entry_title;
     public ?string $flow_entry_blurb;
-    public ?string $flow_entry_body_bb_code;
-    public ?string $flow_entry_body_bb_text;
+
 
     public ?string $flow_project_guid;
     public ?string $flow_entry_parent_guid;
@@ -54,22 +50,7 @@ class FlowEntryDB extends FlowBase implements JsonSerializable {
     protected ?string $child_id_list_as_string;
 
 
-    /**
-     * @var FlowEntryDB[] $member_entries
-     */
-    public array $member_entries;
 
-    /**
-     * @var string[] $member_guids
-     */
-    public array $member_guids;
-
-    /**
-     * @var int[]
-     */
-    public array $member_entry_ids;
-
-    protected ?string $member_id_list_as_string;
 
 
     /**
@@ -79,37 +60,12 @@ class FlowEntryDB extends FlowBase implements JsonSerializable {
 
 
 
-
-    public function jsonSerialize(): array
-    {
-
-        if ($this->get_brief_json_flag()) {
-
-            $brief = new BriefFlowEntry($this);
-            return $brief->to_array();
-        } else {
-
-            return [
-                "flow_entry_guid" => $this->flow_entry_guid,
-                "flow_entry_parent_guid" => $this->flow_entry_guid,
-                "flow_project_guid" => $this->flow_entry_guid,
-                "entry_created_at_ts" => $this->entry_created_at_ts,
-                "entry_updated_at_ts" => $this->entry_updated_at_ts,
-                "flow_entry_title" => $this->flow_entry_title,
-                "flow_entry_blurb" => $this->flow_entry_blurb,
-                "flow_entry_body_bb_code" => $this->flow_entry_body_bb_code,
-                "child_entries" => $this->child_entries,
-                "member_guids" => $this->member_guids,
-
-            ];
-        }
-    }
-
-
-
-
-
-    public function __construct($object=null){
+    /**
+     * @param array|object|IFlowEntry|null $object
+     * @param FlowProject|null $project
+     * @throws Exception
+     */
+    public function __construct($object,?FlowProject $project){
 
 
         $this->flow_entry_id = null;
@@ -120,92 +76,91 @@ class FlowEntryDB extends FlowBase implements JsonSerializable {
         $this->flow_entry_guid = null;
         $this->flow_entry_title = null;
         $this->flow_entry_blurb = null;
-        $this->flow_entry_body_bb_code = null;
-        $this->flow_entry_body_bb_text = null;
         $this->flow_project_guid = null;
         $this->flow_entry_parent_guid = null;
         $this->child_id_list_as_string = null;
-        $this->member_id_list_as_string = null;
         $this->flow_entry_parent = null;
 
         $this->child_entries = [];
         $this->child_guids = [];
         $this->child_entry_ids = [];
-        $this->member_entries = [];
-        $this->member_guids = [];
-        $this->member_entry_ids = [];
 
         if (empty($object)) {
             return;
         }
 
-        foreach ($object as $key => $val) {
-            if ($key === 'flow_entry_parent') {continue;}
-            if ($key === 'child_entries') {continue;}
-            if ($key === 'member_entries') {continue;}
-            if (property_exists($this,$key)) {
-                $this->$key = $val;
+        if ($object instanceof IFlowEntry || $object instanceof IFlowEntryBrief) {
+            $this->flow_entry_guid = $object->get_guid();
+            $this->flow_entry_parent_guid = $object->get_parent_guid();
+            $this->flow_project_guid = $object->get_project_guid();
+            $this->entry_created_at_ts =  $object->get_created_at_ts();
+            $this->entry_updated_at_ts = $object->get_updated_at_ts();
+            $this->flow_entry_title = $object->get_title();
+            $this->flow_entry_blurb = $object->get_blurb();
+            $this->child_entries = [];
+
+            foreach ($object->get_children() as $child) {
+                $this->child_entries[] = static::create_entry($project,$child);
             }
-        }
 
-        if (is_object($object) && property_exists($object,'flow_entry_parent') && !empty($object->flow_entry_parent)) {
-            $parent_to_copy = $object->flow_tag_parent;
-        } elseif (is_array($object) && array_key_exists('flow_entry_parent',$object) && !empty($object['flow_entry_parent'])) {
-            $parent_to_copy  = $object['flow_entry_parent'];
-        } else {
-            $parent_to_copy = null;
-        }
-        if ($parent_to_copy) {
-            $this->flow_entry_parent = new FlowEntryDB($parent_to_copy);
-        }
+            if ($object instanceof IFlowEntry ) {
+                foreach ($object->get_children_guids() as $child_guid) {
+                    $this->child_guids[] = $child_guid;
+                }
 
-        if (is_object($object) && property_exists($object,'child_entries') && is_array($object->child_entries)) {
-            $members_to_copy = $object->child_entries;
-        } elseif (is_array($object) && array_key_exists('child_entries',$object) && is_array($object['attributes'])) {
-            $members_to_copy  = $object['child_entries'];
-        } else {
-            $members_to_copy = [];
-        }
-        if (count($members_to_copy)) {
-            foreach ($members_to_copy as $att) {
-                $this->child_entries[] = new FlowEntryDB($att);
+                foreach ($object->get_children_id() as $child_id) {
+                    $this->child_entry_ids[] = $child_id;
+                }
             }
-        }
 
 
-        if (is_object($object) && property_exists($object,'member_entries') && is_array($object->member_entries)) {
-            $members_to_copy = $object->member_entries;
-        } elseif (is_array($object) && array_key_exists('member_entries',$object) && is_array($object['member_entries'])) {
-            $members_to_copy  = $object['member_entries'];
         } else {
-            $members_to_copy = [];
-        }
-        if (count($members_to_copy)) {
-            foreach ($members_to_copy as $member) {
-                $this->member_entries[] = new FlowEntryDB($member);
+
+            foreach ($object as $key => $val) {
+                if ($key === 'flow_entry_parent') {continue;}
+                if ($key === 'child_entries') {continue;}
+                if ($key === 'member_entries') {continue;}
+                if (property_exists($this,$key)) {
+                    $this->$key = $val;
+                }
             }
-        }
+
+            if (is_object($object) && property_exists($object,'flow_entry_parent') && !empty($object->flow_entry_parent)) {
+                $parent_to_copy = $object->flow_tag_parent;
+            } elseif (is_array($object) && array_key_exists('flow_entry_parent',$object) && !empty($object['flow_entry_parent'])) {
+                $parent_to_copy  = $object['flow_entry_parent'];
+            } else {
+                $parent_to_copy = null;
+            }
+            if ($parent_to_copy) {
+                $this->flow_entry_parent = static::create_entry($project,$parent_to_copy);
+            }
+
+            if (is_object($object) && property_exists($object,'child_entries') && is_array($object->child_entries)) {
+                $children_to_copy = $object->child_entries;
+            } elseif (is_array($object) && array_key_exists('child_entries',$object) && is_array($object['attributes'])) {
+                $children_to_copy  = $object['child_entries'];
+            } else {
+                $children_to_copy = [];
+            }
+            if (count($children_to_copy)) {
+                foreach ($children_to_copy as $att) {
+                    $this->child_entries[] = static::create_entry($project,$att);
+                }
+            }
 
 
-        if ($this->child_id_list_as_string) {
-            $dat_ids = explode(',',$this->child_id_list_as_string);
-            foreach ($dat_ids as $dat_id) {
-                if (intval($dat_id)) {
-                    $this->child_entry_ids[] = (int)$dat_id;
+            if (isset($this->child_id_list_as_string)) {
+                $dat_ids = explode(',',$this->child_id_list_as_string);
+                foreach ($dat_ids as $dat_id) {
+                    if (intval($dat_id)) {
+                        $this->child_entry_ids[] = (int)$dat_id;
+                    }
                 }
             }
         }
 
-        if ($this->member_id_list_as_string) {
-            $dat_ids = explode(',',$this->member_id_list_as_string);
-            foreach ($dat_ids as $dat_id) {
-                if (intval($dat_id)) {
-                    $this->member_entry_ids[] = (int)$dat_id;
-                }
-            }
-        }
-
-    }
+    }  //end constructor
 
 
     public static function check_valid_name($words) : bool  {
@@ -223,7 +178,7 @@ class FlowEntryDB extends FlowBase implements JsonSerializable {
     /**
      * @throws Exception
      */
-    public function save(bool $b_do_transaction = false, bool $b_save_children = false) :void {
+    public function save_entry(bool $b_do_transaction = false, bool $b_save_children = false) :void {
         $db = null;
 
         try {
@@ -231,64 +186,52 @@ class FlowEntryDB extends FlowBase implements JsonSerializable {
                 throw new InvalidArgumentException("Entry Title cannot be empty");
             }
 
-            $b_match = static::check_valid_name($this->flow_entry_title);
-            if (!$b_match) {
-                $max_len = static::LENGTH_ENTRY_TITLE;
-                throw new InvalidArgumentException(
-                    "Entry title invalid! ".
-                    "First character cannot be a number. Name Cannot be greater than $max_len. ".
-                    " Title cannot be a hex number greater than 25 and cannot be a decimal number. No quotes or greater or less than");
-            }
-
-            $this->flow_entry_title = JsonHelper::to_utf8($this->flow_entry_title);
-            if (empty($this->flow_entry_blurb)) {
+            if (empty($this->get_blurb())) {
                 throw new InvalidArgumentException("Entry Blurb cannot be empty");
             }
-            $this->flow_entry_blurb = JsonHelper::to_utf8($this->flow_entry_blurb);
 
 
             $db = static::get_connection();
 
 
-
-            if (!$this->flow_project_id && $this->flow_project_guid) {
+            if (!$this->get_id() && $this->get_guid()) {
                 $this->flow_project_id = $db->cell(
                     "SELECT id  FROM flow_projects WHERE flow_project_guid = UNHEX(?)",
-                    $this->flow_project_guid);
+                    $this->get_guid());
             }
 
-            if(  !$this->flow_project_id) {
+            if(  !$this->get_id()) {
                 throw new InvalidArgumentException("When saving an entry for the first time, need its project id or guid");
             }
 
-            if (!$this->flow_entry_parent_id && $this->flow_entry_parent_guid) {
+            if (!$this->get_parent_id() && $this->get_parent_guid()) {
                 $this->flow_entry_parent_id = $db->cell(
                     "SELECT id  FROM flow_entries WHERE flow_entry_guid = UNHEX(?)",
-                    $this->flow_entry_parent_guid);
+                    $this->get_parent_guid());
             }
 
-            if (empty($this->flow_entry_parent_id)) {$this->flow_entry_parent_id = null;}
+            if (empty($this->get_parent_id())) {$this->set_parent_id(null) ;}
 
 
             $save_info = [
-                'flow_project_id' => $this->flow_project_id,
-                'flow_entry_parent_id' => $this->flow_entry_parent_id,
-                'flow_entry_title' => $this->flow_entry_title,
-                'flow_entry_blurb' => $this->flow_entry_blurb,
-                'flow_entry_body_bb_code' => $this->flow_entry_body_bb_code,
-                'flow_entry_body_bb_text' => $this->flow_entry_body_bb_text,
+                'flow_project_id' => $this->get_project_id(),
+                'flow_entry_parent_id' => $this->get_parent_id(),
+                'flow_entry_title' => $this->get_title(),
+                'flow_entry_blurb' => $this->get_blurb(),
+                'flow_entry_body_bb_code' => $this->get_bb_code(),
+                'flow_entry_body_bb_text' => $this->get_text(),
             ];
 
 
             if ($b_do_transaction) {$db->beginTransaction();}
-            if ($this->flow_entry_guid && $this->flow_entry_id) {
+            if ($this->get_guid() && $this->get_id()) {
 
                 $db->update('flow_entries',$save_info,[
-                    'id' => $this->flow_entry_id
+                    'id' => $this->get_id()
                 ]);
 
             }
-            elseif ($this->flow_entry_guid) {
+            elseif ($this->get_guid()) {
                 $insert_sql = "
                     INSERT INTO flow_entries(flow_project_id, flow_entry_parent_id, created_at_ts, flow_entry_guid,
                                              flow_entry_title, flow_entry_blurb, flow_entry_body_bb_code, flow_entry_body_bb_text)  
@@ -302,37 +245,38 @@ class FlowEntryDB extends FlowBase implements JsonSerializable {
                                             flow_entry_body_bb_text =   VALUES(flow_entry_body_bb_text)       
                 ";
                 $insert_params = [
-                    $this->flow_project_id,
-                    $this->flow_entry_parent_id,
-                    $this->entry_created_at_ts,
-                    $this->flow_entry_guid,
-                    $this->flow_entry_title,
-                    $this->flow_entry_blurb,
-                    $this->flow_entry_body_bb_code,
-                    $this->flow_entry_body_bb_text
+                    $this->get_project_id(),
+                    $this->get_parent_id(),
+                    $this->get_created_at_ts(),
+                    $this->get_guid(),
+                    $this->get_title(),
+                    $this->get_blurb(),
+                    $this->get_bb_code(),
+                    $this->get_text()
                 ];
                 $db->safeQuery($insert_sql, $insert_params, PDO::FETCH_BOTH, true);
-                $this->flow_entry_id = $db->lastInsertId();
+                $this->set_id($db->lastInsertId());
             }
             else {
                 $db->insert('flow_entries',$save_info);
-                $this->flow_entry_id = $db->lastInsertId();
+                $this->set_id($db->lastInsertId());
             }
 
             if (!$this->flow_entry_guid) {
-                $this->flow_entry_guid = $db->cell(
+                $new_guid = $db->cell(
                     "SELECT HEX(flow_entry_guid) as flow_entry_guid FROM flow_entries WHERE id = ?",
-                    $this->flow_entry_id);
+                    $this->get_id());
 
-                if (!$this->flow_entry_guid) {
-                    throw new RuntimeException("Could not get entry guid using id of ". $this->flow_entry_id);
+                if (!$new_guid) {
+                    throw new RuntimeException("Could not get entry guid using id of ". $this->get_id);
                 }
+                $this->set_guid($new_guid);
             }
 
             if ($b_save_children) {
                 foreach ($this->child_entries as $child_entry) {
-                    $child_entry->flow_entry_parent_id = $this->flow_entry_id;
-                    $child_entry->save();
+                    $child_entry->set_parent_id( $this->flow_entry_id);
+                    $child_entry->save_entry();
                 }
             }
 
@@ -354,21 +298,23 @@ class FlowEntryDB extends FlowBase implements JsonSerializable {
      * @throws Exception
      */
     public function fetch_this(FlowProject $project) : FlowEntryDB {
-        WillFunctions::will_do_nothing($project);
-        if (empty($this->flow_entry_id) && empty($this->flow_entry_guid)) {
-            $me = new FlowEntryDB($this); //new to db
+        if (empty($this->get_id()) && empty($this->get_guid())) {
+            $me = static::create_entry($project,$this); //new to db
             return $me;
         }
         $search = new FlowEntrySearchParams();
-        if ($this->flow_entry_guid) {
-            $search->entry_guids[] = $this->flow_entry_guid;
-        } elseif ($this->flow_entry_id) {
-            $search->entry_ids[] = $this->flow_entry_id;
+        if ($this->get_guid()) {
+            $search->entry_guids[] = $this->get_guid();
+        } elseif ($this->get_id()) {
+            $search->entry_ids[] = $this->get_id();
         }
 
         $me_array = FlowEntrySearch::search($search);
         if (empty($me_array)) {
-            throw new InvalidArgumentException("Entry is not found from guid of $this->flow_entry_guid or id of $this->flow_entry_id");
+            $me_guid = $this->get_guid();
+            $me_id = $this->get_id();
+            throw new InvalidArgumentException(
+                "Entry is not found from guid of $me_guid or id of $me_id");
         }
         $me = $me_array[0];
         return $me;
@@ -380,43 +326,41 @@ class FlowEntryDB extends FlowBase implements JsonSerializable {
      * @return FlowEntryDB
      * @throws Exception
      */
-    public function clone_with_missing_data(FlowProject $project) : FlowEntryDB
+    public function clone_with_missing_data(FlowProject $project) : IFlowEntry
     {
-        WillFunctions::will_do_nothing($project);
         $me = $this->fetch_this($project);
-        if (empty($me->flow_entry_id) && empty($me->flow_entry_guid)) {
+        if (empty($me->get_id()) && empty($me->get_guid())) {
             return $me;
         }
         //clear out the settable ids in the $me, if not set in this
         //set new data for this, overwriting the old
-        if ($me->flow_entry_parent_id && !$this->flow_entry_parent_guid) {
-            $me->flow_entry_parent_id = null;
-            $me->flow_entry_parent_guid = null;
+        if ($me->get_parent_id() && !$this->get_parent_guid()) {
+            $me->set_parent_id(null);
+            $me->set_parent_guid(null) ;
         }
 
-        if (!$this->flow_entry_parent_id && $this->flow_entry_parent_guid) {
-            $me->flow_entry_parent_id = null;
-            $me->flow_entry_parent_guid = $this->flow_entry_parent_guid;
+        if (!$this->get_parent_id() && $this->get_parent_guid()) {
+            $me->set_parent_id(null);
+            $me->set_parent_guid($this->get_parent_guid());
         }
 
-        $me->flow_entry_title = $this->flow_entry_title;
-        $me->flow_entry_blurb = $this->flow_entry_blurb;
-        $me->flow_entry_body_bb_code = $this->flow_entry_body_bb_code;
-        $me->flow_entry_body_bb_text = $this->flow_entry_body_bb_text;
+        $me->set_title($this->get_title());
+        $me->set_blurb($this->get_blurb()) ;
+        $me->set_body_bb_code($this->get_bb_code()) ;
 
         return $me;
     }
 
-    public function delete_entry() {
-        if (count($this->child_entries) || count($this->child_entry_ids)) {
+    public function delete_entry() : void {
+        if (count($this->get_children()) || count($this->get_children_id())) {
             throw new InvalidArgumentException("Cannot delete entry, it has children");
         }
         $db = static::get_connection();
-        if ($this->flow_entry_id) {
-            $db->delete('flow_entries',['id'=>$this->flow_entry_id]);
-        } else if($this->flow_entry_guid) {
+        if ($this->get_id()) {
+            $db->delete('flow_entries',['id'=>$this->get_id()]);
+        } else if($this->get_guid()) {
             $sql = "DELETE FROM flow_entries WHERE flow_entry_guid = UNHEX(?)";
-            $params = [$this->flow_entry_guid];
+            $params = [$this->get_guid()];
             $db->safeQuery($sql, $params, PDO::FETCH_BOTH, true);
         } else {
             throw new LogicException("Cannot delete flow_entries without an id or guid");
@@ -425,39 +369,14 @@ class FlowEntryDB extends FlowBase implements JsonSerializable {
     }
 
 
-    /**
-     * @return string[]
-     */
-    public function get_needed_guids_for_empty_ids() : array
-    {
-        $ret = [];
-        if (empty($this->flow_project_id) && $this->flow_project_guid) { $ret[] = $this->flow_project_guid;}
-        if (empty($this->flow_entry_parent_id) && $this->flow_entry_parent_guid) { $ret[] = $this->flow_entry_parent_guid;}
-
-
-        return $ret;
-    }
-
-    /**
-     * @@param  array<string,int> $guid_map_to_ids
-     */
-    public function fill_ids_from_guids(array $guid_map_to_ids)
-    {
-
-        if (empty($this->flow_project_id) && $this->flow_project_guid) {
-            $this->flow_project_id = $guid_map_to_ids[$this->flow_project_guid] ?? null;}
-        if (empty($this->flow_entry_parent_id) && $this->flow_entry_parent_guid) {
-            $this->flow_entry_parent_id = $guid_map_to_ids[$this->flow_entry_parent_guid] ?? null;}
-
-    }
 
 
 
     /**
      * sort parents before children
      * if there are tags with a parent set, but not in the array, then those are put at the end
-     * @param FlowEntryDB[] $entry_array_to_sort
-     * @return FlowEntryDB[]
+     * @param IFlowEntry[] $entry_array_to_sort
+     * @return IFlowEntry[]
      */
     public static function sort_array_by_parent(array $entry_array_to_sort) : array {
 
@@ -465,9 +384,9 @@ class FlowEntryDB extends FlowBase implements JsonSerializable {
         $data[] = ['id' => 0, 'parent' => -1, 'title' => 'dummy_root','tag'=>null];
         foreach ($entry_array_to_sort as $entry) {
             $data[] = [
-                'id' => $entry->flow_entry_id,
-                'parent' => $entry->flow_entry_parent_id??0,
-                'title' => $entry->flow_entry_title,
+                'id' => $entry->get_id(),
+                'parent' => $entry->get_parent_id()??0,
+                'title' => $entry->get_title(),
                 'entry'=>$entry
             ];
         }
@@ -483,6 +402,97 @@ class FlowEntryDB extends FlowBase implements JsonSerializable {
             if ($what) {$ret[] = $what;}
         }
         return $ret;
+    }
+
+    public function get_parent_id(): ?int { return $this->flow_entry_parent_id;}
+    public function get_parent_guid(): ?string { return $this->flow_entry_parent_guid;}
+    public function get_parent(): ?IFlowEntry { return $this->flow_entry_parent;}
+    public function get_created_at_ts(): ?int { return $this->entry_created_at_ts;}
+    public function get_updated_at_ts(): ?int { return $this->entry_updated_at_ts;}
+    public function get_guid(): ?string { return $this->flow_entry_guid;}
+    public function get_id(): ?int { return $this->flow_entry_id;}
+    public function get_title(): ?string { return $this->flow_entry_title;}
+    public function get_blurb(): ?string { return $this->flow_entry_blurb;}
+
+    public function get_project_guid(): ?string {return $this->flow_project_guid;}
+    public function get_project_id(): ?int {return $this->flow_project_id;}
+
+     /**
+     * @return IFlowEntry[]
+     */
+    public function get_children(): array {return $this->child_entries;}
+
+    /**
+     * @return string[]
+     */
+    public function get_children_guids(): array {return $this->child_guids;}
+
+    /**
+     * @return int[]
+     */
+    public function get_children_id() : array {return $this->child_entry_ids;}
+
+
+    public function set_id(?int $what): void {$this->flow_entry_id = $what;}
+    public function set_guid(?string $what): void {$this->flow_entry_guid = $what;}
+    public function set_parent_id(?int $what): void {$this->flow_entry_parent_id = $what;}
+    public function set_parent_guid(?string $what): void {$this->flow_entry_parent_guid = $what;}
+    public function set_project_id(?int $what): void {$this->flow_project_id = $what;}
+
+    public function set_title(?string $what): void {
+        $safe_what = JsonHelper::to_utf8($what);
+
+        if (mb_strlen($safe_what > static::LENGTH_ENTRY_TITLE)) {
+            throw new InvalidArgumentException(
+                sprintf("Title Must be %s or less characters ",static::LENGTH_ENTRY_TITLE)
+            );
+        }
+
+        $b_match = static::check_valid_name($safe_what);
+        if (!$b_match) {
+            throw new InvalidArgumentException(
+                "Entry title invalid! ".
+                "First character cannot be a number. ".
+                " Title cannot be a hex number greater than 25 and cannot be a decimal number. No quotes or greater or less than");
+        }
+
+        $this->flow_entry_title = $safe_what;
+    }
+
+    public function set_blurb(?string $what): void {
+        $safe_what = JsonHelper::to_utf8($what);
+
+        if (mb_strlen($safe_what > static::LENGTH_ENTRY_BLURB)) {
+            throw new InvalidArgumentException(
+                sprintf("Blurb Must be %s or less characters ",static::LENGTH_ENTRY_BLURB)
+            );
+        }
+
+        $this->flow_entry_blurb = $safe_what;
+    }
+
+
+    /**
+     * @return string[]
+     */
+    public function get_needed_guids_for_empty_ids(): array
+    {
+        $ret = [];
+        if (empty($this->get_project_id()) && $this->get_project_guid()) { $ret[] = $this->get_project_guid();}
+        if (empty($this->get_parent_id()) && $this->get_parent_guid()) { $ret[] = $this->get_parent_guid();}
+
+        return $ret;
+    }
+
+    /**
+     * @param array<string,int> $guid_map_to_ids
+     */
+    public function fill_ids_from_guids(array $guid_map_to_ids): void
+    {
+        if (empty($this->get_project_id()) && $this->get_project_guid()) {
+            $this->set_project_id( $guid_map_to_ids[$this->get_project_guid()] ?? null);}
+        if (empty($this->flow_entry_parent_id) && $this->get_project_guid()) {
+            $this->set_parent_id($guid_map_to_ids[$this->get_project_guid()] ?? null);}
     }
 
 }

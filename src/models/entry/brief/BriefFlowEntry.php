@@ -6,10 +6,10 @@ namespace app\models\entry\brief;
 
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
-use app\models\entry\FlowEntryDB;
+use app\models\entry\IFlowEntry;
 use JsonSerializable;
 
-class BriefFlowEntry implements JsonSerializable {
+class BriefFlowEntry implements JsonSerializable, IFlowEntryBrief {
 
     public ?int $entry_created_at_ts;
     public ?int $entry_updated_at_ts;
@@ -19,6 +19,15 @@ class BriefFlowEntry implements JsonSerializable {
     public ?string $flow_entry_body_bb_code;
     public ?string $flow_project_guid;
     public ?string $flow_entry_parent_guid;
+
+    public function get_parent_guid(): ?string { return $this->flow_entry_parent_guid;}
+    public function get_project_guid(): ?string { return $this->flow_project_guid;}
+    public function get_created_at_ts(): ?int { return $this->entry_created_at_ts;}
+    public function get_updated_at_ts(): ?int { return $this->entry_updated_at_ts;}
+    public function get_guid(): ?string { return $this->flow_entry_guid;}
+    public function get_title(): ?string { return $this->flow_entry_title;}
+    public function get_blurb(): ?string { return $this->flow_entry_blurb;}
+    public function get_bb_code(): ?string { return $this->flow_entry_body_bb_code;}
 
     /**
      * @var BriefFlowEntry[] $child_entries
@@ -32,34 +41,72 @@ class BriefFlowEntry implements JsonSerializable {
 
 
     /**
-     * @param FlowEntryDB|BriefFlowEntry $entry
+     * @param IFlowEntry|IFlowEntryBrief|object|array $entry
      */
     public function __construct($entry){
+
+        $this->flow_entry_guid = null;
+        $this->flow_entry_parent_guid = null;
+        $this->flow_project_guid = null;
+        $this->entry_created_at_ts =  null;
+        $this->entry_updated_at_ts = null;
+        $this->flow_entry_title = null;
+        $this->flow_entry_blurb = null;
+        $this->flow_entry_body_bb_code = null;
+        $this->child_entries = [];
+
+        if (empty($entry)) {
+            return;
+        }
 
         if (is_array($entry)) {
             $entry = JsonHelper::fromString(JsonHelper::toString($entry),true,false);
         }
 
+        if ($entry instanceof IFlowEntry || $entry instanceof IFlowEntryBrief) {
+            $this->flow_entry_guid = $entry->get_guid();
+            $this->flow_entry_parent_guid = $entry->get_parent_guid();
+            $this->flow_project_guid = $entry->get_project_guid();
+            $this->entry_created_at_ts =  $entry->get_created_at_ts();
+            $this->entry_updated_at_ts = $entry->get_updated_at_ts();
+            $this->flow_entry_title = $entry->get_title();
+            $this->flow_entry_blurb = $entry->get_blurb();
+            $this->flow_entry_body_bb_code = $entry->get_bb_code();
+            $this->child_entries = [];
+            foreach ($entry->get_children() as $child) {
+                $this->child_entries[] = new BriefFlowEntry($child);
+            }
+
+            $this->member_guids = [];
+
+            foreach ($entry->get_member_guids() as $member_guid) {
+                $this->member_guids[] = $member_guid;
+            }
+        } else {
+            $this->flow_entry_guid = $entry->flow_entry_guid ?? null;
+            $this->flow_entry_parent_guid = $entry->flow_entry_parent_guid ?? null;
+            $this->flow_project_guid = $entry->flow_project_guid ?? null;
+            $this->entry_created_at_ts =  $entry->entry_created_at_ts ?? null;
+            $this->entry_updated_at_ts = $entry->entry_updated_at_ts ?? null;
+            $this->flow_entry_title = $entry->flow_entry_title ?? null;
+            $this->flow_entry_blurb = $entry->flow_entry_blurb ?? null;
+            $this->flow_entry_body_bb_code = $entry->flow_entry_body_bb_code ?? null;
+
+            $this->child_entries = [];
+            if (isset($entry->children)) {
+                foreach ($entry->children as $child) {
+                    $this->child_entries[] = new BriefFlowEntry($child);
+                }
+            }
 
 
-        $this->flow_entry_guid = $entry->flow_entry_guid;
-        $this->flow_entry_parent_guid = $entry->flow_entry_parent_guid;
-        $this->flow_project_guid = $entry->flow_project_guid;
-        $this->entry_created_at_ts =  $entry->entry_created_at_ts;
-        $this->entry_updated_at_ts = $entry->entry_updated_at_ts;
-        $this->flow_entry_title = $entry->flow_entry_title;
-        $this->flow_entry_blurb = $entry->flow_entry_blurb;
-        $this->flow_entry_body_bb_code = $entry->flow_entry_body_bb_code;
+            $this->member_guids = [];
+            if (isset($entry->member_guids)) {
+                foreach ($entry->member_guids as $member_guid) {
+                    $this->member_guids[] = $member_guid;
+                }
+            }
 
-        $this->child_entries = [];
-        foreach ($entry->children as $child) {
-            $this->child_entries[] = new BriefFlowEntry($child);
-        }
-
-        $this->member_guids = [];
-
-        foreach ($entry->member_guids as $member_guid) {
-            $this->member_guids[] = $member_guid;
         }
 
     }
@@ -130,4 +177,26 @@ class BriefFlowEntry implements JsonSerializable {
         return intval($us);
     }
     //todo verify all member guids in db or file when doing verification later
+
+
+
+    /**
+     * @inheritDoc
+     */
+    public function get_children(): array { return $this->child_entries;}
+
+    /**
+     * @inheritDoc
+     */
+    public function get_member_guids(): array { return $this->member_guids;}
+
+    /**
+     * @inheritDoc
+     */
+    public static function create_entry_brief( $entry_or_brief_orobject_or_array): IFlowEntryBrief
+    {
+        return new BriefFlowEntry($entry_or_brief_orobject_or_array);
+    }
+
+
 }

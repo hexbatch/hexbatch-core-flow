@@ -44,8 +44,8 @@ class EntryPages extends EntryBase
                     'success'=>true,
                     'message'=>'ok',
                     'data'=>$call->entry_array,
-                    'page' => $call->search_used->page,
-                    'page_size' => $call->search_used->page_size,
+                    'page' => $call->search_used->get_page(),
+                    'page_size' => $call->search_used->get_page_size(),
                     'token'=> $call->new_token
                 ];
                 $payload = JsonHelper::toString($data);
@@ -59,8 +59,8 @@ class EntryPages extends EntryBase
                     'page_template_path' => 'entry/list_entries.twig',
                     'page_title' => "Entries for Project $project_name",
                     'page_description' => 'Entry List',
-                    'page_number' => $call->search_used->page,
-                    'page_size' => $call->search_used->page_size,
+                    'page_number' => $call->search_used->get_page(),
+                    'page_size' => $call->search_used->get_page_size(),
                     'project' => $call->project,
                     'entries' => $call->entry_array,
                 ]);
@@ -155,10 +155,10 @@ class EntryPages extends EntryBase
                 $form_in_progress = $_SESSION[static::REM_NEW_ENTRY_WITH_ERROR_SESSION_KEY];
                 $_SESSION[static::REM_NEW_ENTRY_WITH_ERROR_SESSION_KEY] = null;
                 if (empty($form_in_progress)) {
-                    $form_in_progress = new FlowEntry();
+                    $form_in_progress = FlowEntry::create_entry($call->project,null);
                 }
             } else {
-                $form_in_progress = new FlowEntry();
+                $form_in_progress = FlowEntry::create_entry($call->project,null);
             }
             $form_in_progress->project = $call->project;
             return $this->view->render($response, 'main.twig', [
@@ -255,7 +255,7 @@ class EntryPages extends EntryBase
                 $options->set_option(FlowEntryCallData::OPTION_MAKE_NEW_TOKEN);
             }
             $call = $this->validate_call($options,$request,null,$user_name,$project_name);
-            $entry_to_insert =  new FlowEntry($call->args);
+            $entry_to_insert =  FlowEntry::create_entry($call->project,$call->args);
             $entry_to_insert->flow_entry_guid = null;
             $entry_to_insert->flow_project_guid = null;
             $entry_to_insert->flow_project_id = $call->project->id;

@@ -41,8 +41,21 @@ class FlowEntrySearchParams {
     public array $entry_ids = [];
 
 
-    public int     $page = 1;
-    public int     $page_size =  self::DEFAULT_PAGE_SIZE;
+    protected int     $page = 1;
+    protected int     $page_size =  self::DEFAULT_PAGE_SIZE;
+
+    public function get_page() :int  {return $this->page;}
+    public function get_page_size() :int  {return $this->page_size;}
+
+    public function set_page(int $what) {
+        $this->page = intval($what);
+        if ($this->page < 1) {$this->page = 1;}
+    }
+
+    public function set_page_size( int $what) {
+        $this->page_size = intval($what);
+        if ($this->page_size < 1) { $this->page_size = 1;}
+    }
 
 
 

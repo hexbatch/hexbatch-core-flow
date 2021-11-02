@@ -3,19 +3,27 @@
 namespace app\models\entry;
 
 
-use app\models\project\FlowProject;
-use Exception;
 
-class FlowEntry extends FlowEntryFiles  {
-    /**
-     * @param FlowProject $project
-     * @return FlowEntry
-     * @throws Exception
-     */
-    public function clone_with_missing_data(FlowProject $project) : FlowEntry {
-        $base = parent::clone_with_missing_data($project);
-        $ret = new FlowEntry($base);
-        return $ret;
+use app\models\entry\brief\BriefFlowEntry;
+use app\models\entry\brief\IFlowEntryBrief;
+use app\models\project\FlowProject;
+
+
+class FlowEntry extends FlowEntryMembers  {
+
+
+    public function to_i_flow_entry_brief() : IFlowEntryBrief {
+        return BriefFlowEntry::create_entry_brief($this);
     }
 
+    /**
+     * @param FlowProject $project
+     * @param object|array|IFlowEntry
+     * @return IFlowEntry
+     * @throws
+     */
+    public static function create_entry(FlowProject $project, $object): IFlowEntry
+    {
+        return new FlowEntry($object,$project);
+    }
 }

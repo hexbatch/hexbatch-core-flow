@@ -12,20 +12,22 @@ use RuntimeException;
  * All the public resources and files an entry uses is in the project resources folder
  * so the html is simply a file in the top project directory
  */
-class FlowEntryFiles extends FlowEntryDB  {
+abstract class FlowEntryFiles extends FlowEntryDB  {
 
     public ?string $flow_entry_body_html;
+    public ?string $flow_entry_body_bb_code;
+    public ?string $flow_entry_body_bb_text;
 
     public ?FlowProject $project;
 
 
     /**
-     * @param array|object|FlowEntryDB|null $object
+     * @param array|object|IFlowEntry|null $object
      * @param FlowProject|null $project
      * @throws Exception
      */
-    public function __construct($object=null,?FlowProject $project = null){
-        parent::__construct($object);
+    public function __construct($object,?FlowProject $project){
+        parent::__construct($object,$project);
         $this->project = $project;
         $this->flow_entry_body_html = $this->get_html();
     }
@@ -38,11 +40,10 @@ class FlowEntryFiles extends FlowEntryDB  {
     public function save(bool $b_do_transaction = false, bool $b_save_children = false) :void {
 
         try {
+            parent::save_entry($b_do_transaction,$b_save_children);
             $path_html = $this->get_html_path();
             $b_ok = file_put_contents($path_html,$this->flow_entry_body_html);
             if ($b_ok === false) {throw new RuntimeException("Could not write to $path_html");}
-
-            parent::save($b_do_transaction,$b_save_children);
 
         } catch (Exception $e) {
             static::get_logger()->alert("Entry Files model cannot save ",['exception'=>$e]);
@@ -72,6 +73,9 @@ class FlowEntryFiles extends FlowEntryDB  {
 
     }
 
+    public function get_text() : ?string { return $this->flow_entry_body_bb_text;}
+    public function get_bb_code(): ?string { return $this->flow_entry_body_bb_code;}
+
 
     /**
      * @return string|null
@@ -90,7 +94,7 @@ class FlowEntryFiles extends FlowEntryDB  {
      * files not written until save called
      * @param string $bb_code
      */
-    public function set_read_me(string $bb_code) {
+    public function set_body_bb_code(string $bb_code) {
         $this->flow_entry_body_bb_code = $bb_code;
         $this->flow_entry_body_html = JsonHelper::html_from_bb_code($bb_code);
         $this->flow_entry_body_bb_text = str_replace('&nbsp;',' ',strip_tags($this->flow_entry_body_html));
@@ -102,25 +106,12 @@ class FlowEntryFiles extends FlowEntryDB  {
      * @return FlowEntryFiles
      * @throws Exception
      */
-    public function clone_with_missing_data(FlowProject $project ) : FlowEntryFiles {
+    public function clone_with_missing_data(FlowProject $project ) : IFlowEntry {
 
-        $base = parent::clone_with_missing_data($project);
-        $ret = new FlowEntryFiles($base,$project);
-        $ret->set_read_me($this->flow_entry_body_bb_code);
+        $ret = parent::clone_with_missing_data($project);
+        $ret->set_body_bb_code($this->flow_entry_body_bb_code);
         return $ret;
     }
-
-    /**
-     * @param FlowProject $project
-     * @return FlowEntryFiles
-     * @throws Exception
-     */
-    public function fetch_this(FlowProject $project ) : FlowEntryFiles {
-        $base = parent::fetch_this($project);
-        $ret = new FlowEntryFiles($base);
-        return $ret;
-    }
-
 
 
 }
