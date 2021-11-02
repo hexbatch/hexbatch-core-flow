@@ -3,6 +3,7 @@
 namespace app\models\entry;
 
 use app\models\entry\brief\IFlowEntryBrief;
+use app\models\entry\public_json\IFlowEntryJson;
 use app\models\project\FlowProject;
 use Exception;
 
@@ -47,7 +48,8 @@ Interface IFlowEntry {
     /**
      * @return int[]
      */
-    public function get_children_id() : array;
+    public function get_children_ids() : array;
+
 
 
     /**
@@ -77,6 +79,10 @@ Interface IFlowEntry {
 
     public function set_title(?string $what): void;
     public function set_blurb(?string $what): void;
+
+
+    public function add_child(IFlowEntry $what): void;
+    public function remove_child(IFlowEntry $what): void;
 
 
 
@@ -117,13 +123,7 @@ Interface IFlowEntry {
 
 
 
-    /**
-     * sort parents before children
-     * if there are tags with a parent set, but not in the array, then those are put at the end
-     * @param IFlowEntry[] $entry_array_to_sort
-     * @return IFlowEntry[]
-     */
-    public static function sort_array_by_parent(array $entry_array_to_sort) : array;
+
 
 
     /**
@@ -137,5 +137,12 @@ Interface IFlowEntry {
     public function fill_ids_from_guids(array $guid_map_to_ids): void;
 
     public function to_i_flow_entry_brief() : IFlowEntryBrief ;
+
+
+    /**
+     * Used to make json
+     * @return IFlowEntryJson
+     */
+    public function to_public_json() : IFlowEntryJson ;
 
 }

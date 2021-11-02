@@ -5,6 +5,7 @@ use app\controllers\base\BasePages;
 use app\controllers\project\ProjectPages;
 use app\hexlet\FlowAntiCSRF;
 use app\hexlet\JsonHelper;
+use app\hexlet\WillFunctions;
 use app\models\entry\FlowEntrySearch;
 use app\models\entry\FlowEntrySearchParams;
 use InvalidArgumentException;
@@ -115,14 +116,19 @@ class EntryBase extends BasePages
         if ($search) {
             $ret->search_used = $search;
             if ($options->has_option(FlowEntryCallData::OPTION_LIMIT_SEARCH_TO_PROJECT)) {
-                $ret->search_used->owning_project_guid_or_title = $project->flow_project_guid;
+                $ret->search_used->owning_project_guid = $project->flow_project_guid;
             }
         } else if (property_exists($ret->args,'search')) {
             $ret->search_used = new FlowEntrySearchParams($ret->args->search);
         } else if ($entry_name && empty($search)) {
             $ret->search_used = $ret->search_used?? new FlowEntrySearchParams();
-            $ret->search_used->entry_guid_or_title = $entry_name;
-            $ret->search_used->owning_project_guid_or_title = $project->flow_project_guid;
+            if (WillFunctions::is_valid_guid_format($entry_name)) {
+                $ret->search_used->entry_guids[] = $entry_name;
+            } else {
+                $ret->search_used->entry_titles[] = $entry_name;
+            }
+
+            $ret->search_used->owning_project_guid = $project->flow_project_guid;
         }
 
         if ($ret->search_used) {

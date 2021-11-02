@@ -8,9 +8,8 @@ class FlowEntrySearchParams {
 
     const DEFAULT_PAGE_SIZE = 30;
 
-    public ?string $owning_project_guid_or_title;
-    public ?string $owning_user_guid_or_title;
-    public ?string $entry_guid_or_title = null;
+    public ?string $owning_project_guid;
+    public ?string $owning_user_guid;
 
     public ?string $full_text_term;
 
@@ -34,6 +33,11 @@ class FlowEntrySearchParams {
      * @var string[] $entry_guids
      */
     public array $entry_guids = [];
+
+    /**
+     * @var string[] $entry_titles
+     */
+    public array $entry_titles = [];
 
     /**
      * @var int[] $entry_ids
@@ -60,13 +64,13 @@ class FlowEntrySearchParams {
 
 
     function __construct($object=null){
-        $this->owning_project_guid_or_title = null;
-        $this->owning_user_guid_or_title = null;
+        $this->owning_project_guid = null;
+        $this->owning_user_guid = null;
         $this->full_text_term = null;
         $this->parent_entry_guid = null;
         $this->host_entry_guid = null;
-        $this->entry_guid_or_title = null;
         $this->entry_guids = [];
+        $this->entry_titles = [];
         $this->entry_ids = [];
         $this->flag_full_text_natural_languages = false;
         $this->flag_top_entries_only = false;

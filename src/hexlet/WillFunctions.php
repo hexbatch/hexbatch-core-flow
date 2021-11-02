@@ -6,6 +6,10 @@ class WillFunctions {
 
     }
 
+    public static function will_do_action_later(...$what) {
+
+    }
+
     /**
      * @param object $obj
      * @param string[]  $names_to_try

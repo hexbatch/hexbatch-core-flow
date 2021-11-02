@@ -814,59 +814,10 @@ class FlowProject extends FlowBase {
      */
     public static function find_one(?string $project_title_guid_or_id, ?string $user_name_guid_or_id = null): ?FlowProject
     {
-        $db = static::get_connection();
-
-
-        if (trim($project_title_guid_or_id) && trim($user_name_guid_or_id)) {
-            $where_condition = " ( u.flow_user_name = ? OR u.flow_user_guid = UNHEX(?) ) AND ".
-                " (  p.flow_project_title = ? or p.flow_project_guid = UNHEX(?))";
-            $args = [$user_name_guid_or_id,$user_name_guid_or_id,
-                $project_title_guid_or_id,$project_title_guid_or_id];
-        } else if (trim($project_title_guid_or_id) ) {
-            $where_condition = " (p.id = ? OR  p.flow_project_guid = UNHEX(?) )";
-            $args = [(int)$project_title_guid_or_id,$project_title_guid_or_id];
-        } else{
-            throw new LogicException("Need at least one project id/name/string");
-        }
-
-
-
-        $sql = "SELECT 
-                p.id,
-                p.created_at_ts,
-                p.is_public,    
-                HEX(p.flow_project_guid) as flow_project_guid,
-                p.admin_flow_user_id,
-                p.parent_flow_project_id,      
-                p.flow_project_type,
-                p.flow_project_title,
-                p.flow_project_blurb,
-                p.flow_project_readme,
-                p.flow_project_readme_bb_code,
-       
-                p.export_repo_do_auto_push,
-                p.export_repo_url,
-                p.export_repo_branch,
-                p.export_repo_key,
-       
-                p.import_repo_url,
-                p.import_repo_branch,
-                p.import_repo_key
-
-                FROM flow_projects p 
-                INNER JOIN  flow_users u ON u.id = p.admin_flow_user_id
-                WHERE 1 AND $where_condition";
-
-        try {
-            $what = $db->safeQuery($sql, $args, PDO::FETCH_OBJ);
-            if (empty($what)) {
-                return null;
-            }
-            return new FlowProject($what[0]);
-        } catch (Exception $e) {
-            static::get_logger()->alert("Project model cannot find_one ",['exception'=>$e]);
-            throw $e;
-        }
+        $limit_projects = [];
+        if (trim($project_title_guid_or_id)) {$limit_projects[] = trim($project_title_guid_or_id);}
+        $what = FlowProjectSearch::find_projects($limit_projects,$user_name_guid_or_id);
+        return $what[0]??null;
     }
 
     /**
