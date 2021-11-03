@@ -4,7 +4,7 @@ namespace app\models\entry;
 
 
 use app\hexlet\WillFunctions;
-use app\models\entry\brief\IFlowEntryBrief;
+use app\models\entry\archive\IFlowEntryArchive;
 use app\models\project\FlowProject;
 use Exception;
 
@@ -50,7 +50,7 @@ abstract class FlowEntryMembers extends FlowEntryChildren  {
 
 
     /**
-     * @param array|object|FlowEntryBase|IFlowEntryBrief|null $object
+     * @param array|object|FlowEntryBase|IFlowEntryArchive|null $object
      * @param FlowProject|null $project
      * @throws Exception
      */

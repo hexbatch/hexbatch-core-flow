@@ -4,7 +4,7 @@ namespace app\models\entry;
 
 
 use app\hexlet\JsonHelper;
-use app\models\entry\brief\IFlowEntryBrief;
+use app\models\entry\archive\IFlowEntryArchive;
 use app\models\project\FlowProject;
 use Exception;
 use RuntimeException;
@@ -19,20 +19,31 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
     public ?string $flow_entry_body_bb_code;
     public ?string $flow_entry_body_text;
 
-    public ?FlowProject $project;
-
 
     /**
-     * @param array|object|IFlowEntry|IFlowEntryBrief|null $object
+     * @param array|object|IFlowEntry|IFlowEntryArchive|null $object
      * @param FlowProject|null $project
      * @throws Exception
      */
     public function __construct($object,?FlowProject $project){
         parent::__construct($object,$project);
-        $this->project = $project;
         $this->flow_entry_body_html = $this->get_html();
     }
 
+
+    /**
+     * returns folder with no trailing slash
+     * @return string|null
+     * @throws Exception
+     */
+    public function get_entry_folder() : ?string{
+        if (!$this->project) {return null;}
+        if (!$this->flow_entry_guid) {return null;}
+        $project_dir = $this->project->get_project_directory();
+        if (empty($project_dir)) {return null;}
+        $path = $project_dir . DIRECTORY_SEPARATOR . "entry-$this->flow_entry_guid";
+        return $path;
+    }
 
 
     /**
@@ -81,15 +92,14 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
 
 
     /**
+     * gets the full file path of the generated html for the entry
      * @return string|null
      * @throws Exception
      */
     public function get_html_path() : ?string{
-        if (!$this->project) {return null;}
-        if (!$this->flow_entry_guid) {return null;}
-        $project_dir = $this->project->get_project_directory();
-        if (empty($project_dir)) {return null;}
-        $path = $project_dir . DIRECTORY_SEPARATOR . "entry-$this->flow_entry_guid.html";
+        $base_path = $this->get_entry_folder();
+        if (!$base_path) {return null;}
+        $path = $base_path . DIRECTORY_SEPARATOR . "entry.html";
         return $path;
     }
 

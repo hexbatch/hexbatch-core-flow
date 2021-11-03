@@ -69,6 +69,7 @@ class FlowEntrySearch extends FlowBase {
            $args[] = $params->owning_project_guid;
        }
 
+       //todo fill in the values for flow_entry_ancestor_guid_list
        $sql = /** @lang MySQL */
            "
             SELECT  
@@ -85,7 +86,8 @@ class FlowEntrySearch extends FlowBase {
                 HEX(parent_entry.flow_entry_guid)       as flow_entry_parent_guid ,
                 HEX(project.flow_project_guid)          as flow_project_guid,
                 HEX(admin_user.flow_user_guid)          as flow_user_guid,
-                driver.parent_list                      as flow_entry_parent_id_list   
+                driver.parent_list                      as flow_entry_parent_debug_id_list ,
+                null                                    as flow_entry_ancestor_guid_list   
             FROM flow_entries entry
             INNER JOIN  (
                     

@@ -5,7 +5,8 @@ namespace app\models\entry;
 
 use app\hexlet\JsonHelper;
 use app\models\base\FlowBase;
-use app\models\entry\brief\IFlowEntryBrief;
+use app\models\entry\archive\FlowEntryArchive;
+use app\models\entry\archive\IFlowEntryArchive;
 use app\models\entry\public_json\FlowEntryJsonBase;
 use app\models\entry\public_json\IFlowEntryJson;
 use app\models\project\FlowProject;
@@ -20,35 +21,42 @@ use RuntimeException;
 abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowEntry {
 
 
-    
 
-    public ?int $flow_entry_id;
-    public ?int $flow_entry_parent_id;
-    public ?int $flow_project_id;
-    public ?int $entry_created_at_ts;
-    public ?int $entry_updated_at_ts;
-    public ?string $flow_entry_guid;
-    public ?string $flow_entry_title;
-    public ?string $flow_entry_blurb;
-    public ?string $flow_project_guid;
-    public ?string $flow_entry_parent_guid;
+
+    protected ?int $flow_entry_id;
+    protected ?int $flow_entry_parent_id;
+    protected ?int $flow_project_id;
+    protected ?int $entry_created_at_ts;
+    protected ?int $entry_updated_at_ts;
+    protected ?string $flow_entry_guid;
+    protected ?string $flow_entry_title;
+    protected ?string $flow_entry_blurb;
+    protected ?string $flow_project_guid;
+    protected ?string $flow_entry_parent_guid;
+
+    protected FlowProject $project;
 
 
     /**
      * @var IFlowEntry|null $flow_entry_parent
      */
-    public ?IFlowEntry $flow_entry_parent;
+    protected ?IFlowEntry $flow_entry_parent;
+
+    /**
+     * @var string[] $flow_entry_ancestor_guids
+     */
+    protected array $flow_entry_ancestor_guids = [];
 
 
 
     /**
-     * @param array|object|IFlowEntry|IFlowEntryBrief|null $object
+     * @param array|object|IFlowEntry|IFlowEntryArchive|null $object
      * @param FlowProject|null $project
      * @throws Exception
      */
     public function __construct($object,?FlowProject $project){
 
-
+        $this->project = $project;
         $this->flow_entry_id = null;
         $this->flow_entry_parent_id = null;
         $this->flow_project_id = null;
@@ -68,7 +76,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
             return;
         }
 
-        if ($object instanceof IFlowEntry || $object instanceof IFlowEntryBrief) {
+        if ($object instanceof IFlowEntry || $object instanceof IFlowEntryArchive) {
             $this->flow_entry_guid = $object->get_guid();
             $this->flow_entry_parent_guid = $object->get_parent_guid();
             $this->flow_project_guid = $object->get_project_guid();
@@ -316,6 +324,15 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     public function get_parent_id(): ?int { return $this->flow_entry_parent_id;}
     public function get_parent_guid(): ?string { return $this->flow_entry_parent_guid;}
     public function get_parent(): ?IFlowEntry { return $this->flow_entry_parent;}
+
+    /**
+     * @return string[]
+     */
+    public function get_ancestor_guids(): array {
+        return $this->flow_entry_ancestor_guids;
+    }
+
+
     public function get_created_at_ts(): ?int { return $this->entry_created_at_ts;}
     public function get_updated_at_ts(): ?int { return $this->entry_updated_at_ts;}
     public function get_guid(): ?string { return $this->flow_entry_guid;}
@@ -325,6 +342,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
 
     public function get_project_guid(): ?string {return $this->flow_project_guid;}
     public function get_project_id(): ?int {return $this->flow_project_id;}
+    public function get_project() : FlowProject {return $this->project;}
 
 
 
@@ -334,6 +352,16 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     public function set_parent_id(?int $what): void {$this->flow_entry_parent_id = $what;}
     public function set_parent_guid(?string $what): void {$this->flow_entry_parent_guid = $what;}
     public function set_project_id(?int $what): void {$this->flow_project_id = $what;}
+
+    public function set_created_at_ts(?int $what) : void {
+        if ($what <0 ) {throw new InvalidArgumentException("Timestamps cannot be negative");}
+        $this->entry_created_at_ts = $what;
+    }
+
+    public function set_updated_at_ts(?int $what) : void {
+        if ($what <0 ) {throw new InvalidArgumentException("Timestamps cannot be negative");}
+        $this->entry_updated_at_ts = $what;
+    }
 
     public function set_title(?string $what): void {
         $safe_what = JsonHelper::to_utf8($what);
@@ -368,28 +396,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     }
 
 
-    /**
-     * @return string[]
-     */
-    public function get_needed_guids_for_empty_ids(): array
-    {
-        $ret = [];
-        if (empty($this->get_project_id()) && $this->get_project_guid()) { $ret[] = $this->get_project_guid();}
-        if (empty($this->get_parent_id()) && $this->get_parent_guid()) { $ret[] = $this->get_parent_guid();}
 
-        return $ret;
-    }
-
-    /**
-     * @param array<string,int> $guid_map_to_ids
-     */
-    public function fill_ids_from_guids(array $guid_map_to_ids): void
-    {
-        if (empty($this->get_project_id()) && $this->get_project_guid()) {
-            $this->set_project_id( $guid_map_to_ids[$this->get_project_guid()] ?? null);}
-        if (empty($this->flow_entry_parent_id) && $this->get_project_guid()) {
-            $this->set_parent_id($guid_map_to_ids[$this->get_project_guid()] ?? null);}
-    }
 
     /**
      * Used to make json
@@ -401,6 +408,48 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
 
     public function jsonSerialize() : array {
         return $this->to_public_json()->to_array();
+    }
+
+
+
+
+
+    /**
+     * Write the entry state to the entry folder
+     * @throws
+     */
+    public function store(): void {
+        FlowEntryArchive::clear_archive_cache();
+        FlowEntryArchive::create_archive($this)->write_archive(); //can have many children or members to also save if changed
+        FlowEntryArchive::finalize_archive_cache();
+    }
+
+    /**
+     * Loads entries from the entry folder (does not use db)
+     * if no guids listed, then will return an array of all
+     * else will only return the guids asked for, if some or all missing will only return the found, if any
+     * @param FlowProject $project
+     * @param string[] $only_these_guids
+     * @return IFlowEntry[]
+     * @throws
+     */
+    public static function load(FlowProject $project,array $only_these_guids = []) : array {
+        $archive_list = [];
+        $guid_list = $only_these_guids;
+        if (empty($guid_list)) {
+            $guid_list = FlowEntryArchive::discover_all_archived_entries();
+        }
+        foreach ($guid_list as $guid) {
+            $node = FlowEntry::create_entry($project,null);
+            $node->set_guid($guid);
+            $archive_list[] = FlowEntryArchive::create_archive($node);
+        }
+        FlowEntryArchive::clear_archive_cache();
+        foreach ($archive_list as $archive) {
+            $archive->read_archive();
+        }
+        FlowEntryArchive::finalize_archive_cache();
+        return $archive_list;
     }
 
 }

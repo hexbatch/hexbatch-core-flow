@@ -2,19 +2,12 @@
 
 namespace app\models\entry;
 
-
-
-use app\models\entry\brief\BriefFlowEntry;
-use app\models\entry\brief\IFlowEntryBrief;
 use app\models\project\FlowProject;
 
 
-class FlowEntry extends FlowEntryMembers  {
+final class FlowEntry extends FlowEntryMembers  {
 
 
-    public function to_i_flow_entry_brief() : IFlowEntryBrief {
-        return BriefFlowEntry::create_entry_brief($this);
-    }
 
     /**
      * @param FlowProject $project
