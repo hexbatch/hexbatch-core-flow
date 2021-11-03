@@ -6,7 +6,7 @@ use app\models\entry\IFlowEntry;
 use Exception;
 use RuntimeException;
 
-final class FlowEntryArchive extends FlowEntryArchiveChildren {
+final class FlowEntryArchive extends FlowEntryArchiveMembers {
 
     /**
      * @param IFlowEntry $entry
