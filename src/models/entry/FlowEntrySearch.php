@@ -163,12 +163,14 @@ class FlowEntrySearch extends FlowBase {
 
            //get the projects
            $project_guids = array_keys($projects);
-           $projects_found = FlowProjectSearch::find_projects($project_guids);
-           foreach ($projects_found as $found_project) {
-               if (!array_key_exists($found_project->flow_project_guid,$projects)) {
-                   throw new LogicException("Could not find the project after a select");
+           if (count($project_guids)) {
+               $projects_found = FlowProjectSearch::find_projects($project_guids);
+               foreach ($projects_found as $found_project) {
+                   if (!array_key_exists($found_project->flow_project_guid, $projects)) {
+                       throw new LogicException("Could not find the project after a select");
+                   }
+                   $projects[$found_project->flow_project_guid] = $found_project;
                }
-               $projects[$found_project->flow_project_guid] = $found_project;
            }
 
 

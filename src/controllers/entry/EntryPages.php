@@ -6,6 +6,7 @@ use app\controllers\user\UserPages;
 use app\hexlet\JsonHelper;
 
 use app\models\entry\FlowEntry;
+use app\models\entry\FlowEntrySearchParams;
 use Exception;
 use InvalidArgumentException;
 use Psr\Http\Message\ServerRequestInterface;
@@ -35,9 +36,10 @@ class EntryPages extends EntryBase
             $options = new FlowEntryCallData();
             $options->note = "list_entries";
             $options->set_option(FlowEntryCallData::OPTION_LIMIT_SEARCH_TO_PROJECT);
-
+            $search_params = new FlowEntrySearchParams();
+            $search_params->set_page($page??1);
             $call = $this->validate_call($options,$request,null,$user_name,$project_name,
-                null,'read',null,$page);
+                null,'read',$search_params,$page);
 
             if ($call->is_ajax_call) {
                 $data = [

@@ -46,7 +46,7 @@ class EntryBase extends BasePages
         $token = null;
         $args = $request->getParsedBody();
         if (empty($args)) {
-            throw new InvalidArgumentException("No data sent");
+            $args = [];
         }
 
         $csrf = null;
