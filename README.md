@@ -97,6 +97,8 @@ https://github.com/scrivo/highlight.php for syntax highlighting of bb code block
 
 https://github.com/BlueM/Tree for those hard to reach sorting issues
 
+https://github.com/php-lock/lock for making sure only one thing at a time can do critical file changes
+
 https://carbon.nesbot.com for date/time strings
 
 ## Javascript Libraries Used
