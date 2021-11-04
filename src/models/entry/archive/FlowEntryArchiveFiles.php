@@ -83,6 +83,8 @@ abstract class FlowEntryArchiveFiles extends FlowEntryArchiveBase {
      * @throws
      */
     public function read_archive() : void  {
+        parent::read_archive();
+
         $path = $this->get_entry()->get_entry_folder();
 
         $bb_code_path = $path. DIRECTORY_SEPARATOR . static::BB_CODE_FILE_NAME;

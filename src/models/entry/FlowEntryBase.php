@@ -4,6 +4,7 @@ namespace app\models\entry;
 
 
 use app\hexlet\JsonHelper;
+use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\entry\archive\FlowEntryArchive;
 use app\models\entry\archive\IFlowEntryArchive;
@@ -14,6 +15,7 @@ use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
 use LogicException;
+use malkusch\lock\mutex\FlockMutex;
 use PDO;
 use RuntimeException;
 
@@ -133,14 +135,8 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
         $db = null;
 
         try {
-            if (empty($this->flow_entry_title)) {
-                throw new InvalidArgumentException("Entry Title cannot be empty");
-            }
 
-            if (empty($this->get_blurb())) {
-                throw new InvalidArgumentException("Entry Blurb cannot be empty");
-            }
-
+            $this->validate_entry_before_save();
 
             $db = static::get_connection();
 
@@ -234,6 +230,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
 
             if ($b_do_transaction) {$db->commit(); }
 
+            $this->on_after_save_entry();
 
         } catch (Exception $e) {
             if ($b_do_transaction && $db) { $db->rollBack(); }
@@ -316,6 +313,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
         } else {
             throw new LogicException("Cannot delete flow_entries without an id or guid");
         }
+        $this->on_after_delete_entry();
 
     }
 
@@ -419,9 +417,15 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
      * @throws
      */
     public function store(): void {
-        FlowEntryArchive::clear_archive_cache();
-        FlowEntryArchive::create_archive($this)->write_archive(); //can have many children or members to also save if changed
-        FlowEntryArchive::finalize_archive_cache();
+
+        $mutex = new FlockMutex(fopen(__FILE__, "r"));
+        $mutex->synchronized(function ()  {
+            FlowEntryArchive::start_archive_write();
+            FlowEntryArchive::create_archive($this)->write_archive(); //can have many children or members to also save if changed
+            FlowEntryArchive::finish_archive_write();
+            FlowEntryArchive::record_all_stored_entries($this->get_project());
+        });
+
     }
 
     /**
@@ -437,19 +441,60 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
         $archive_list = [];
         $guid_list = $only_these_guids;
         if (empty($guid_list)) {
-            $guid_list = FlowEntryArchive::discover_all_archived_entries();
+            $guid_list = FlowEntryArchive::discover_all_archived_entries($project);
         }
         foreach ($guid_list as $guid) {
             $node = FlowEntry::create_entry($project,null);
             $node->set_guid($guid);
             $archive_list[] = FlowEntryArchive::create_archive($node);
         }
-        FlowEntryArchive::clear_archive_cache();
-        foreach ($archive_list as $archive) {
-            $archive->read_archive();
+        $mutex = new FlockMutex(fopen(__FILE__, "r"));
+        $mutex->synchronized(function ()  use(&$archive_list) {
+            FlowEntryArchive::start_archive_write();
+            /**
+             * @var IFlowEntryArchive $archive
+             */
+            foreach ($archive_list as $archive) {
+                $archive->read_archive();
+            }
+            FlowEntryArchive::finish_archive_write();
+        });
+
+        $archive_list_sorted = FlowEntryJsonBase::sort_array_by_parent($archive_list);
+        return $archive_list_sorted;
+    }
+
+    /**
+     * called before a save, any child can do logic and throw an exception to stop the save
+     */
+    public function validate_entry_before_save() :void {
+        if (empty($this->flow_entry_title)) {
+            throw new InvalidArgumentException("Entry Title cannot be empty");
         }
-        FlowEntryArchive::finalize_archive_cache();
-        return $archive_list;
+
+        if (empty($this->get_blurb())) {
+            throw new InvalidArgumentException("Entry Blurb cannot be empty");
+        }
+    }
+
+    /**
+     * called after the save is made
+     */
+    public function on_after_save_entry() :void {
+        WillFunctions::will_do_nothing("base method");
+    }
+
+    /**
+     * called after the delete is done
+     * @throws
+     */
+    public function on_after_delete_entry() :void {
+        $mutex = new FlockMutex(fopen(__FILE__, "r"));
+        $mutex->synchronized(function ()  {
+            $archive = FlowEntryArchive::create_archive($this);
+            $archive->delete_archive();
+            FlowEntryArchive::record_all_stored_entries($this->get_project());
+        });
     }
 
 }

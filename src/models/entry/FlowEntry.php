@@ -2,6 +2,7 @@
 
 namespace app\models\entry;
 
+use app\models\entry\archive\FlowEntryArchive;
 use app\models\project\FlowProject;
 
 
@@ -19,4 +20,14 @@ final class FlowEntry extends FlowEntryMembers  {
     {
         return new FlowEntry($object,$project);
     }
+
+    /**
+     * called after the save is made
+     */
+    public function on_after_save_entry() :void {
+        parent::on_after_save_entry();
+        $this->store(); //write it to archive
+    }
+
+
 }

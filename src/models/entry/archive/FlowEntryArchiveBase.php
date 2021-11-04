@@ -3,13 +3,15 @@
 namespace app\models\entry\archive;
 
 
+use app\hexlet\RecursiveClasses;
 use app\hexlet\WillFunctions;
+use app\models\base\FlowBase;
 use app\models\entry\IFlowEntry;
 use JsonSerializable;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
-abstract class FlowEntryArchiveBase implements JsonSerializable, IFlowEntryArchive {
+abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable, IFlowEntryArchive {
     
 
     const BASE_YAML_FILE_NAME = 'entry.yaml';
@@ -102,6 +104,18 @@ abstract class FlowEntryArchiveBase implements JsonSerializable, IFlowEntryArchi
     }
 
 
+    /**
+     * deletes the entry folder
+     * @throws
+     */
+    public function delete_archive() : void {
+        $path = $this->get_entry()->get_entry_folder();
+        if (!is_readable($path)) {
+            static::get_logger()->warning("Could not delete entry base folder of $path because it does not exist");
+            return;
+        }
+        RecursiveClasses::rrmdir($path);
+    }
 
     /**
      * Writes the entry, and its children , to the archive

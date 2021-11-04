@@ -212,4 +212,23 @@ class RecursiveClasses {
 		return $constant_value;
 	}
 
+    /**
+     * @param string $dir
+     * @author https://www.php.net/manual/en/function.rmdir.php#98622
+     */
+    public static function rrmdir(string $dir) {
+        if (is_dir($dir)) {
+            $objects = scandir($dir);
+            foreach ($objects as $object) {
+                if ($object != "." && $object != "..") {
+                    if (filetype($dir."/".$object) == "dir")
+                        static::rrmdir($dir."/".$object);
+                    else unlink   ($dir."/".$object);
+                }
+            }
+            reset($objects);
+            rmdir($dir);
+        }
+    }
+
 }

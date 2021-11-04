@@ -4,6 +4,7 @@ namespace app\models\entry\archive;
 
 
 use app\models\entry\IFlowEntry;
+use app\models\project\FlowProject;
 use Exception;
 
 Interface IFlowEntryArchive {
@@ -44,6 +45,13 @@ Interface IFlowEntryArchive {
      */
     public function read_archive() : void ;
 
+
+    /**
+     * deletes the entry folder
+     * @throws
+     */
+    public function delete_archive() : void ;
+
     /**
      * @param IFlowEntry $entry
      * @return IFlowEntryArchive
@@ -55,22 +63,27 @@ Interface IFlowEntryArchive {
     /**
      * reads a yaml file at the project root that is a list of all the stored entrees with the guid and title
      * verifies that the folders exist, and return the guid strings
+     * @param FlowProject $project
      * @return string[]
+     * @throws
      */
-    public static function discover_all_archived_entries() :array;
+    public static function discover_all_archived_entries(FlowProject $project) :array;
+
 
 
     /**
      * Writes a yaml file at the project root that is a list of all the stored entrees with the guid and title and last modified timestamp
      * To be run whenever an entry is saved, created, updated, deleted, etc
+     * @param FlowProject $project
+     * @throws
      */
-    public static function record_all_stored_entries() : void ;
+    public static function record_all_stored_entries(FlowProject $project) : void ;
 
     /**
      * Removes all archives from the cache; but only if the cache has been finalized first, otherwise exception
      * prevents operations from overlapping
      */
-    public static function clear_archive_cache(): void;
+    public static function start_archive_write(): void;
 
     public static function get_archive_from_cache(string $guid): ?IFlowEntryArchive;
 
@@ -80,6 +93,6 @@ Interface IFlowEntryArchive {
     /**
      * Allows the cache to be cleared again, prevents different operations from using same cache
      */
-    public static function finalize_archive_cache(): void;
+    public static function finish_archive_write(): void;
 
 }

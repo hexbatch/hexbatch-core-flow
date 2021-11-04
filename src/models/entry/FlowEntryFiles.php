@@ -4,6 +4,7 @@ namespace app\models\entry;
 
 
 use app\hexlet\JsonHelper;
+use app\hexlet\WillFunctions;
 use app\models\entry\archive\IFlowEntryArchive;
 use app\models\project\FlowProject;
 use Exception;
@@ -14,6 +15,8 @@ use RuntimeException;
  * so the html is simply a file in the top project directory
  */
 abstract class FlowEntryFiles extends FlowEntryBase  {
+
+    const ENTRY_FOLDER_PREFIX = 'entry-';
 
     public ?string $flow_entry_body_html;
     public ?string $flow_entry_body_bb_code;
@@ -41,29 +44,20 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
         if (!$this->flow_entry_guid) {return null;}
         $project_dir = $this->project->get_project_directory();
         if (empty($project_dir)) {return null;}
-        $path = $project_dir . DIRECTORY_SEPARATOR . "entry-$this->flow_entry_guid";
+        $path = $project_dir . DIRECTORY_SEPARATOR . static::ENTRY_FOLDER_PREFIX . $this->flow_entry_guid;
         return $path;
     }
 
 
     /**
-     * @throws Exception
+     * called before a save, any child can do logic and throw an exception to stop the save
      */
-    public function save(bool $b_do_transaction = false, bool $b_save_children = false) :void {
+    public function validate_entry_before_save() :void {
+        parent::validate_entry_before_save();
+        WillFunctions::will_do_action_later('validate and maybe change some tags in the html');
 
-        parent::save_entry($b_do_transaction,$b_save_children);
-
-        try {
-
-            $path_html = $this->get_html_path();
-            $b_ok = file_put_contents($path_html,$this->flow_entry_body_html);
-            if ($b_ok === false) {throw new RuntimeException("Could not write to $path_html");}
-
-        } catch (Exception $e) {
-            static::get_logger()->alert("Entry Files model cannot save ",['exception'=>$e]);
-            throw $e;
-        }
     }
+
 
 
     /**

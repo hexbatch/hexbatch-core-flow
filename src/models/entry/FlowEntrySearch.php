@@ -69,7 +69,7 @@ class FlowEntrySearch extends FlowBase {
            $args[] = $params->owning_project_guid;
        }
 
-       //todo fill in the values for flow_entry_ancestor_guid_list
+       //todo search sql: fill in the values for flow_entry_ancestor_guid_list
        $sql = /** @lang MySQL */
            "
             SELECT  

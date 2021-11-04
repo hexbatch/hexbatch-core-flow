@@ -6,6 +6,7 @@ use app\hexlet\JsonHelper;
 use app\hexlet\RecursiveClasses;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
+use app\models\entry\archive\FlowEntryArchive;
 use app\models\multi\GeneralSearch;
 use app\models\tag\brief\BriefCheckValidYaml;
 use app\models\tag\brief\BriefDiffFromYaml;
@@ -1097,7 +1098,7 @@ class FlowProject extends FlowBase {
                 'id' => $this->id
             ]);
 
-            //todo save entries here as children if any have changed ( call function to see if dirty)
+            FlowEntryArchive::update_all_entries_from_project_directory($this);
 
             $tags = new BriefUpdateFromYaml($this);
             WillFunctions::will_do_nothing($tags); //for debugging

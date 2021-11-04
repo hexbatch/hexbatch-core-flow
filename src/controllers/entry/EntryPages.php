@@ -112,8 +112,8 @@ class EntryPages extends EntryBase
             } else {
                 return $this->view->render($response, 'main.twig', [
                     'page_template_path' => 'entry/show_entry.twig',
-                    'page_title' => "Entry $entry_to_show->flow_entry_title",
-                    'page_description' => "Show Entry $entry_to_show->flow_entry_title",
+                    'page_title' => "Entry ".$entry_to_show->get_title(),
+                    'page_description' => "Show Entry " . $entry_to_show->get_title(),
                     'entry'=>$entry_to_show,
                     'project' => $call->project
                 ]);
@@ -156,11 +156,13 @@ class EntryPages extends EntryBase
                 $_SESSION[static::REM_NEW_ENTRY_WITH_ERROR_SESSION_KEY] = null;
                 if (empty($form_in_progress)) {
                     $form_in_progress = FlowEntry::create_entry($call->project,null);
+                } else {
+                    $form_in_progress = FlowEntry::create_entry($call->project,$form_in_progress);
                 }
             } else {
                 $form_in_progress = FlowEntry::create_entry($call->project,null);
             }
-            $form_in_progress->project = $call->project;
+
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/new_entry.twig',
                 'page_title' => 'Make A New Entry',
@@ -213,15 +215,17 @@ class EntryPages extends EntryBase
                 $_SESSION[static::REM_EDIT_ENTRY_WITH_ERROR_SESSION_KEY] = null;
                 if (empty($form_in_progress)) {
                     $form_in_progress =$entry_to_edit;
+                } else {
+                    $form_in_progress = FlowEntry::create_entry($call->project,$form_in_progress);
                 }
             } else {
                 $form_in_progress = $entry_to_edit;
             }
-            $form_in_progress->project = $call->project;
+
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/edit_entry.twig',
-                'page_title' => "Edit Entry $form_in_progress->flow_entry_title",
-                'page_description' => "New Entry Form $form_in_progress->flow_entry_title",
+                'page_title' => "Edit Entry ". $form_in_progress->get_title(),
+                'page_description' => "New Entry Form ". $form_in_progress->get_title(),
                 'project' => $call->project,
                 'entry' => $form_in_progress
 
@@ -256,9 +260,6 @@ class EntryPages extends EntryBase
             }
             $call = $this->validate_call($options,$request,null,$user_name,$project_name);
             $entry_to_insert =  FlowEntry::create_entry($call->project,$call->args);
-            $entry_to_insert->flow_entry_guid = null;
-            $entry_to_insert->flow_project_guid = null;
-            $entry_to_insert->flow_project_id = $call->project->id;
             $entry_to_insert->save(true,false);
             $_SESSION[static::REM_NEW_ENTRY_WITH_ERROR_SESSION_KEY] = null;
 
@@ -279,14 +280,14 @@ class EntryPages extends EntryBase
             } else {
                 UserPages::add_flash_message(
                     'success',
-                    "Updated Entry  " . $entry_to_insert->flow_entry_title
+                    "Updated Entry  " . $entry_to_insert->get_title()
                 );
 
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
                 $url = $routeParser->urlFor('show_entry',[
                     "user_name" => $call->project->get_admin_user()->flow_user_name,
                     "project_name" => $call->project->flow_project_title,
-                    "entry_name" => $entry_to_insert->flow_entry_title
+                    "entry_name" => $entry_to_insert->get_title()
                 ]);
                 $response = $response->withStatus(302);
                 return $response->withHeader('Location', $url);

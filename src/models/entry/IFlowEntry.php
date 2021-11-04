@@ -111,6 +111,15 @@ Interface IFlowEntry {
     public function set_body_bb_code(string $bb_code);
 
     /**
+     * called before a save, any child can do logic and throw an exception to stop the save
+     */
+    public function validate_entry_before_save() :void ;
+
+    /**
+     * called after the save is made
+     */
+    public function on_after_save_entry() :void ;
+    /**
      * @throws Exception
      */
     public function save_entry(bool $b_do_transaction = false, bool $b_save_children = false) :void ;
@@ -119,6 +128,12 @@ Interface IFlowEntry {
      * @throws Exception
      */
     public function delete_entry(): void;
+
+    /**
+     * called after the delete is done
+     * @throws
+     */
+    public function on_after_delete_entry() :void ;
 
     /**
      * @param FlowProject $project
