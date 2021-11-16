@@ -2,6 +2,8 @@
 namespace app\models\project;
 
 
+use app\models\entry\archive\IFlowEntryArchive;
+use app\models\entry\IFlowEntry;
 use Exception;
 
 class FlowGitFile {
@@ -37,8 +39,14 @@ class FlowGitFile {
             case 'flow_project_title': { $this->is_public = true ; return 'Project Title'; }
             case 'tags.yaml': { $this->is_public = true ; return 'Tags'; }
             default: {
+
                 if ($this->is_valid_resource_file()) {
-                    $this->is_public = true ; return $this->get_resouce_file_name();
+                    $this->is_public = true ;
+                    return $this->get_resouce_file_name();
+                }
+                else if ($this->is_valid_entry_file()) {
+                    $this->is_public = true ;
+                    return $this->get_entry_file_name();
                 } else {
                     $this->is_public = false; return '';
                 }
@@ -53,8 +61,22 @@ class FlowGitFile {
         return false;
     }
 
+    protected function is_valid_entry_file() : bool{
+
+        $what = preg_match('/entry-.+\//', $this->file, $output_array);
+        if ($what) {return true;}
+        return false;
+    }
+
     protected function get_resouce_file_name() : ?string  {
         return $this->file;
+    }
+    protected function get_entry_file_name() : ?string  {
+        if (strpos($this->file,IFlowEntryArchive::TITLE_FILE_NAME) !== false) {return 'Entry Name';}
+        if (strpos($this->file,IFlowEntryArchive::BLURB_FILE_NAME) !== false) {return 'Entry Blurb';}
+        if (strpos($this->file,IFlowEntryArchive::BB_CODE_FILE_NAME) !== false) {return 'Entry BB Code';}
+        if (strpos($this->file,IFlowEntryArchive::BASE_YAML_FILE_NAME) !== false) {return 'Entry Yaml';}
+        return "Other Entry File";
     }
 
     /**

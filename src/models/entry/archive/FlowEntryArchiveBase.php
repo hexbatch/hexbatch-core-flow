@@ -14,7 +14,7 @@ use Symfony\Component\Yaml\Yaml;
 abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable, IFlowEntryArchive {
     
 
-    const BASE_YAML_FILE_NAME = 'entry.yaml';
+
     protected IFlowEntry $entry;
     
     /**

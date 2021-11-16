@@ -500,6 +500,13 @@ class FlowProject extends FlowBase {
     }
 
     /**
+     * @throws Exception
+     */
+    public function reset_local_files() {
+        $this->do_git_command('add .');
+        $this->do_git_command('reset --hard');
+    }
+    /**
      * @param string $commit_message
      * @param bool $b_commit
      * @param bool $b_log_message
@@ -1007,9 +1014,8 @@ class FlowProject extends FlowBase {
         }
 
         $old_head = $this->get_head_commit_hash();
-        $command = "reset --hard"; //clear up any earlier bugs or crashes
         try {
-            $this->do_key_command_with_private_key($this->export_repo_key,$this->export_repo_url,$command);
+            $this->do_git_command('reset --hard'); //clear up any earlier bugs or crashes
         } catch (Exception $e) {
             $message = "Could not do a hard reset";
             $message.="<br>{$e->getMessage()}\n";

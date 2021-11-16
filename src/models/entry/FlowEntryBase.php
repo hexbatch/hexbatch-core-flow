@@ -22,7 +22,8 @@ use RuntimeException;
 
 abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowEntry {
 
-
+    public function get_max_title_length() : int { return static::LENGTH_ENTRY_TITLE;}
+    public function get_max_blurb_length() : int { return static::LENGTH_ENTRY_BLURB;}
 
 
     protected ?int $flow_entry_id;
@@ -132,7 +133,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
      * @throws Exception
      */
     public function save_entry(bool $b_do_transaction = false, bool $b_save_children = false) :void {
-        $db = null;
+
 
         try {
 
@@ -141,15 +142,12 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
             $db = static::get_connection();
 
 
-            if (!$this->get_id() && $this->get_guid()) {
-                $this->flow_project_id = $db->cell(
-                    "SELECT id  FROM flow_projects WHERE flow_project_guid = UNHEX(?)",
-                    $this->get_guid());
+            if(  !$this->get_project()->id) {
+                throw new InvalidArgumentException("When saving an entry for the first time, need its project id set");
             }
 
-            if(  !$this->get_id()) {
-                throw new InvalidArgumentException("When saving an entry for the first time, need its project id or guid");
-            }
+            $this->set_project_id($this->get_project()->id);
+            $this->set_project_guid($this->get_project()->flow_project_guid);
 
             if (!$this->get_parent_id() && $this->get_parent_guid()) {
                 $this->flow_entry_parent_id = $db->cell(
@@ -161,7 +159,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
 
 
             $save_info = [
-                'flow_project_id' => $this->get_project_id(),
+                'flow_project_id' => $this->get_project()->id,
                 'flow_entry_parent_id' => $this->get_parent_id(),
                 'flow_entry_title' => $this->get_title(),
                 'flow_entry_blurb' => $this->get_blurb(),
@@ -169,17 +167,18 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                 'flow_entry_body_text' => $this->get_text(),
             ];
 
+            try {
+                if ($b_do_transaction) {
+                    $db->beginTransaction();
+                }
+                if ($this->get_guid() && $this->get_id()) {
 
-            if ($b_do_transaction) {$db->beginTransaction();}
-            if ($this->get_guid() && $this->get_id()) {
+                    $db->update('flow_entries', $save_info, [
+                        'id' => $this->get_id()
+                    ]);
 
-                $db->update('flow_entries',$save_info,[
-                    'id' => $this->get_id()
-                ]);
-
-            }
-            elseif ($this->get_guid()) {
-                $insert_sql = "
+                } elseif ($this->get_guid()) {
+                    $insert_sql = "
                     INSERT INTO flow_entries(flow_project_id, flow_entry_parent_id, created_at_ts, flow_entry_guid,
                                              flow_entry_title, flow_entry_blurb, flow_entry_body_bb_code, flow_entry_body_text)  
                     VALUES (?,?,?,UNHEX(?),?,?,?,?)
@@ -191,49 +190,56 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                                             flow_entry_body_bb_code =   VALUES(flow_entry_body_bb_code) ,      
                                             flow_entry_body_text =   VALUES(flow_entry_body_text)       
                 ";
-                $insert_params = [
-                    $this->get_project_id(),
-                    $this->get_parent_id(),
-                    $this->get_created_at_ts(),
-                    $this->get_guid(),
-                    $this->get_title(),
-                    $this->get_blurb(),
-                    $this->get_bb_code(),
-                    $this->get_text()
-                ];
-                $db->safeQuery($insert_sql, $insert_params, PDO::FETCH_BOTH, true);
-                $this->set_id($db->lastInsertId());
-            }
-            else {
-                $db->insert('flow_entries',$save_info);
-                $this->set_id($db->lastInsertId());
-            }
+                    $insert_params = [
+                        $this->get_project()->id,
+                        $this->get_parent_id(),
+                        $this->get_created_at_ts(),
+                        $this->get_guid(),
+                        $this->get_title(),
+                        $this->get_blurb(),
+                        $this->get_bb_code(),
+                        $this->get_text()
+                    ];
+                    $db->safeQuery($insert_sql, $insert_params, PDO::FETCH_BOTH, true);
+                    $this->set_id($db->lastInsertId());
+                } else {
+                    $db->insert('flow_entries', $save_info);
+                    $this->set_id($db->lastInsertId());
+                }
 
-            if (!$this->flow_entry_guid) {
-                $new_guid = $db->cell(
-                    "SELECT HEX(flow_entry_guid) as flow_entry_guid FROM flow_entries WHERE id = ?",
+                $update_info = $db->row(
+                    "SELECT 
+                                        HEX(flow_entry_guid) as flow_entry_guid ,
+                                        created_at_ts,
+                                        UNIX_TIMESTAMP(updated_at) as updated_at_ts
+                                  FROM flow_entries WHERE id = ?",
                     $this->get_id());
 
-                if (!$new_guid) {
-                    throw new RuntimeException("Could not get entry guid using id of ". $this->get_id);
+                if (empty($update_info)) {
+                    throw new RuntimeException("Could not get entry refresh data using id of " . $this->get_id);
                 }
-                $this->set_guid($new_guid);
-            }
 
-            if ($b_save_children) {
-                foreach ($this->child_entries as $child_entry) {
-                    $child_entry->set_parent_id( $this->flow_entry_id);
-                    $child_entry->save_entry();
+                $this->set_guid($update_info['flow_entry_guid']);
+                $this->set_created_at_ts($update_info['created_at_ts']);
+                $this->set_updated_at_ts($update_info['updated_at_ts']);
+
+                if ($b_save_children) {
+                    foreach ($this->child_entries as $child_entry) {
+                        $child_entry->set_parent_id($this->flow_entry_id);
+                        $child_entry->save_entry();
+                    }
                 }
+
+
+                if ($b_do_transaction && $db->inTransaction()) {
+                    $db->commit();
+                }
+            } catch (Exception $e) {
+                if ($b_do_transaction && $db &&  $db->inTransaction()) { $db->rollBack(); }
+                throw $e;
             }
-
-
-            if ($b_do_transaction) {$db->commit(); }
-
-            $this->on_after_save_entry();
 
         } catch (Exception $e) {
-            if ($b_do_transaction && $db) { $db->rollBack(); }
             static::get_logger()->alert("Entry DB model cannot save ",['exception'=>$e]);
             throw $e;
         }
@@ -350,6 +356,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     public function set_parent_id(?int $what): void {$this->flow_entry_parent_id = $what;}
     public function set_parent_guid(?string $what): void {$this->flow_entry_parent_guid = $what;}
     public function set_project_id(?int $what): void {$this->flow_project_id = $what;}
+    public function set_project_guid(?string $what) : void {$this->flow_project_guid = $what;}
 
     public function set_created_at_ts(?int $what) : void {
         if ($what <0 ) {throw new InvalidArgumentException("Timestamps cannot be negative");}

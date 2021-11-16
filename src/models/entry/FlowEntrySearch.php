@@ -58,6 +58,7 @@ class FlowEntrySearch extends FlowBase {
        $args = [];
        $where_project = 2;
        $where_user = 4;
+       $where_entry_guid = 8;
 
        if ($params->owning_project_guid) {
            $where_project = "driver_project.flow_project_guid = UNHEX(?)";
@@ -67,6 +68,21 @@ class FlowEntrySearch extends FlowBase {
        if ($params->owning_user_guid) {
            $where_user = "driver_user.flow_user_guid = UNHEX(?)";
            $args[] = $params->owning_project_guid;
+       }
+
+
+       if (count($params->entry_guids)) {
+           $in_question_array = [];
+           foreach ($params->entry_guids as $a_guid) {
+               if ( ctype_xdigit($a_guid) ) {
+                   $args[] = $a_guid;
+                   $in_question_array[] = "UNHEX(?)";
+               }
+           }
+           if (count($in_question_array)) {
+               $comma_delimited_unhex_question = implode(",",$in_question_array);
+               $where_entry_guid = "driver_entry.flow_entry_guid in ($comma_delimited_unhex_question)";
+           }
        }
 
        //todo search sql: fill in the values for flow_entry_ancestor_guid_list
@@ -86,6 +102,7 @@ class FlowEntrySearch extends FlowBase {
                 HEX(parent_entry.flow_entry_guid)       as flow_entry_parent_guid ,
                 HEX(project.flow_project_guid)          as flow_project_guid,
                 HEX(admin_user.flow_user_guid)          as flow_user_guid,
+                driver.is_primary                       as is_primary,   
                 driver.parent_list                      as flow_entry_parent_debug_id_list ,
                 null                                    as flow_entry_ancestor_guid_list   
             FROM flow_entries entry
@@ -105,6 +122,7 @@ class FlowEntrySearch extends FlowBase {
                         WHERE 1 
                             AND $where_project  
                             AND $where_user  
+                            AND $where_entry_guid
                         
                             LIMIT $start_place , $page_size
                     )
@@ -120,7 +138,7 @@ class FlowEntrySearch extends FlowBase {
                         INNER JOIN flow_entries child_entry ON child_entry.flow_entry_parent_id = c.parent_id
                     )
                 )
-                SELECT cte.entry_id, group_concat(cte.parent_id) as parent_list
+                SELECT cte.entry_id, group_concat(cte.parent_id) as parent_list,SUM(is_primary) as is_primary
                 FROM cte
                 GROUP BY cte.entry_id
                 
@@ -179,7 +197,7 @@ class FlowEntrySearch extends FlowBase {
                if (!$using_project) {throw new LogicException("could not find the project when creating entries");}
                $node = FlowEntry::create_entry($using_project,$row);
                $all[$node->get_guid()] = $node;
-               if ($row->is_primary) {$unsorted_ret[] = $node;}
+               if (intval($row->is_primary)) {$unsorted_ret[] = $node;}
            }
 
 

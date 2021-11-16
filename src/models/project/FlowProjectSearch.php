@@ -32,8 +32,13 @@ class FlowProjectSearch extends FlowBase {
                 $args = [$user_name_guid_or_id,$user_name_guid_or_id,
                     $project_title_guid_or_id,$project_title_guid_or_id];
             } else if (trim($project_title_guid_or_id) ) {
-                $where_conditions[] = " (p.id = ? OR  p.flow_project_guid = UNHEX(?) )";
-                $args = [(int)$project_title_guid_or_id,$project_title_guid_or_id];
+                if (ctype_digit($project_title_guid_or_id) && (intval($project_title_guid_or_id) < (PHP_INT_MAX/2))) {
+                    $where_conditions[] = " (p.id = ? )";
+                } else {
+                    $where_conditions[] = " (p.flow_project_guid = UNHEX(?) )";
+                }
+                $args = [$project_title_guid_or_id];
+
             } else{
                 throw new LogicException("Need at least one project id/name/string");
             }

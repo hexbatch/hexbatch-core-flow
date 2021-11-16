@@ -16,7 +16,7 @@ use RuntimeException;
  */
 abstract class FlowEntryFiles extends FlowEntryBase  {
 
-    const ENTRY_FOLDER_PREFIX = 'entry-';
+
 
     public ?string $flow_entry_body_html;
     public ?string $flow_entry_body_bb_code;
@@ -30,7 +30,33 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
      */
     public function __construct($object,?FlowProject $project){
         parent::__construct($object,$project);
-        $this->flow_entry_body_html = $this->get_html();
+        $this->flow_entry_body_html = null;
+        $this->flow_entry_body_bb_code = null;
+        $this->flow_entry_body_text = null;
+
+        if ($object instanceof IFlowEntry || $object instanceof IFlowEntryArchive) {
+            $this->flow_entry_body_html = $object->get_html();
+            $this->flow_entry_body_bb_code = $object->get_bb_code();
+            $this->flow_entry_body_text = $object->get_text();
+
+        } else {
+
+            if (is_object($object))
+            {
+                $this->flow_entry_body_bb_code = $object->flow_entry_body_bb_code?? null;
+                $this->flow_entry_body_html = $object->flow_entry_body_html?? null;
+                $this->flow_entry_body_text = $object->flow_entry_body_text?? null;
+            }
+            elseif (is_array($object) )
+            {
+                $this->flow_entry_body_bb_code = $object['flow_entry_body_bb_code']?? null;
+                $this->flow_entry_body_html = $object['flow_entry_body_html']?? null;
+                $this->flow_entry_body_text = $object['flow_entry_body_text']?? null;
+            }
+        }
+
+        $this->set_body_bb_code($this->get_bb_code());
+
     }
 
 
@@ -99,9 +125,15 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
 
     /**
      * files not written until save called
-     * @param string $bb_code
+     * @param ?string $bb_code
      */
-    public function set_body_bb_code(string $bb_code) {
+    public function set_body_bb_code(?string $bb_code) {
+        if (empty($bb_code)) {
+            $this->flow_entry_body_bb_code = null;
+            $this->flow_entry_body_html = null;
+            $this->flow_entry_body_text = null;
+            return;
+        }
         $this->flow_entry_body_bb_code = $bb_code;
         $this->flow_entry_body_html = JsonHelper::html_from_bb_code($bb_code);
         $this->flow_entry_body_text = str_replace('&nbsp;',' ',strip_tags($this->flow_entry_body_html));
@@ -118,6 +150,23 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
         $ret = parent::clone_with_missing_data($project);
         $ret->set_body_bb_code($this->flow_entry_body_bb_code);
         return $ret;
+    }
+
+    public function save_entry(bool $b_do_transaction = false, bool $b_save_children = false): void
+    {
+        parent::save_entry($b_do_transaction,$b_save_children);
+        $this->set_body_bb_code($this->get_bb_code());
+        $db = static::get_connection();
+
+        $db->update('flow_entries',[
+                'flow_entry_body_bb_code'=> $this->get_bb_code(),
+                'flow_entry_body_text'=> $this->get_text()
+            ],
+            [
+                'id' => $this->get_id()
+            ]
+        );
+
     }
 
 

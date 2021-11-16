@@ -166,7 +166,7 @@ class EntryPages extends EntryBase
             }
 
             return $this->view->render($response, 'main.twig', [
-                'page_template_path' => 'project/new_entry.twig',
+                'page_template_path' => 'entry/new_entry.twig',
                 'page_title' => 'Make A New Entry',
                 'page_description' => 'New Entry Form',
                 'project' => $call->project,
@@ -254,7 +254,7 @@ class EntryPages extends EntryBase
         $call = null;
         try {
             $options = new FlowEntryCallData();
-            $options->note = "update_entry";
+            $options->note = "create_entry";
             $options->set_option(FlowEntryCallData::OPTION_VALIDATE_TOKEN);
             $options->set_option(FlowEntryCallData::OPTION_NO_CHILDREN_IN_SEARCH);
             if ($this->is_ajax_call($request)) {
@@ -262,7 +262,7 @@ class EntryPages extends EntryBase
             }
             $call = $this->validate_call($options,$request,null,$user_name,$project_name);
             $entry_to_insert =  FlowEntry::create_entry($call->project,$call->args);
-            $entry_to_insert->save(true,false);
+            $entry_to_insert->save_entry(true,false);
             $_SESSION[static::REM_NEW_ENTRY_WITH_ERROR_SESSION_KEY] = null;
 
             if ($call->is_ajax_call) {

@@ -8,9 +8,7 @@ use RuntimeException;
 
 abstract class FlowEntryArchiveFiles extends FlowEntryArchiveBase {
 
-    const BB_CODE_FILE_NAME = 'entry.bbcode';
-    const BLURB_FILE_NAME = 'flow_entry_blurb';
-    const TITLE_FILE_NAME = 'flow_entry_title';
+
 
     /**
      * @param array $put_issues_here OUTREF
@@ -53,7 +51,7 @@ abstract class FlowEntryArchiveFiles extends FlowEntryArchiveBase {
      * @throws
      */
     public function write_archive() : void {
-
+        parent::write_archive();
         $path = $this->get_entry()->get_entry_folder();
 
         $bb_code_path = $path. DIRECTORY_SEPARATOR . static::BB_CODE_FILE_NAME;

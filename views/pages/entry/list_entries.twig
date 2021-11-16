@@ -1,3 +1,31 @@
 {{ include('project/partials/project-breadcrumbs.twig') }}
 
-List Entries
+<div class="container container-xxl">
+    <div class="card col-12">
+        <div class="card-header">
+            <h4>
+                Entries
+
+                {% if project.get_current_user_permissions().can_edit %}
+                <a
+                    href="{{ url_for('new_entry',{
+                        user_name: project.get_admin_user().flow_user_name ,
+                        project_name: project.flow_project_title
+                    } )
+                    }}"
+                    class="btn btn-lg btn-primary float-end"
+                >
+                    <i class="bi bi-plus-circle pe-1"></i>
+                    New Entry
+                </a>
+                {% endif %}
+            </h4>
+        </div> <!-- /.card-header -->
+        <div class="card-body">
+            {% for entry in entries %}
+                {% include 'entry/partials/entry-list-line.twig' with {'entry': entry} %}
+            {% endfor %}
+
+        </div>
+    </div> <!-- /.card -->
+</div> <!-- .container -->

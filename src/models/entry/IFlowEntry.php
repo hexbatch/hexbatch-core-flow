@@ -10,6 +10,10 @@ Interface IFlowEntry {
 
     const LENGTH_ENTRY_TITLE = 40;
     const LENGTH_ENTRY_BLURB = 120;
+    const ENTRY_FOLDER_PREFIX = 'entry-';
+
+    public function get_max_title_length() : int;
+    public function get_max_blurb_length() : int;
 
     public function get_parent_guid() : ?string;
     public function get_parent_id() : ?int;
@@ -80,6 +84,7 @@ Interface IFlowEntry {
     public function set_parent_id(?int $what): void;
     public function set_parent_guid(?string $what): void;
     public function set_project_id(?int $what): void;
+    public function set_project_guid(?string $what): void;
 
     public function set_created_at_ts(?int $what) : void;
     public function set_updated_at_ts(?int $what) : void;
@@ -108,7 +113,7 @@ Interface IFlowEntry {
     public function fetch_this(FlowProject $project) : IFlowEntry ;
 
 
-    public function set_body_bb_code(string $bb_code);
+    public function set_body_bb_code(?string $bb_code);
 
     /**
      * called before a save, any child can do logic and throw an exception to stop the save

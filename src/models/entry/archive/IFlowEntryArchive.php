@@ -9,6 +9,10 @@ use Exception;
 
 Interface IFlowEntryArchive {
 
+    const BB_CODE_FILE_NAME = 'entry.bbcode';
+    const BLURB_FILE_NAME = 'flow_entry_blurb';
+    const TITLE_FILE_NAME = 'flow_entry_title';
+    const BASE_YAML_FILE_NAME = 'entry.yaml';
 
     public function get_entry() : IFlowEntry;
 

@@ -6,10 +6,12 @@ use app\hexlet\JsonHelper;
 use app\models\base\FlowBase;
 use app\models\project\FlowProject;
 use Carbon\Carbon;
+use Exception;
+use JsonSerializable;
 use PDO;
 use RuntimeException;
 
-class FlowEntrySummary extends FlowBase {
+class FlowEntrySummary extends FlowBase implements JsonSerializable{
     protected IFlowEntry $entry;
     /*
      * the guid and title and last modified timestamp, and sha1 of the folder
@@ -65,7 +67,12 @@ class FlowEntrySummary extends FlowBase {
             $guid = $row->guid;
             $blank->set_guid($guid);
             $row->entry_folder_path = $blank->get_entry_folder();
-            $ret[] = new static($row);
+            try {
+                $ret[] = new static($row);
+            } catch (Exception $whooo) {
+                static::get_logger()->warning("Could not calculate archive entry for record",['exception'=>$whooo]);
+                continue;
+            }
         }
         return $ret;
     }
@@ -103,5 +110,16 @@ class FlowEntrySummary extends FlowBase {
         $dir->close();
 
         return md5(implode('', $files));
+    }
+
+
+    public function jsonSerialize() : array
+    {
+        return [
+            'title' => $this->title,
+            'updated_at' => $this->updated_at,
+            'guid' => $this->guid,
+            'folder_hash' => $this->folder_hash
+        ];
     }
 }

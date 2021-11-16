@@ -118,7 +118,7 @@ abstract class FlowEntryChildren extends FlowEntryFiles  {
     /**
      * @throws Exception
      */
-    public function save(bool $b_do_transaction = false, bool $b_save_children = false) :void {
+    public function save_entry(bool $b_do_transaction = false, bool $b_save_children = false) :void {
 
         parent::save_entry($b_do_transaction,$b_save_children);
 
@@ -131,13 +131,13 @@ abstract class FlowEntryChildren extends FlowEntryFiles  {
                    WillFunctions::will_do_nothing($child_guid);
                    $child->save_entry();
                }
-               if ($b_do_transaction) {$db->commit();}
+               if ($b_do_transaction && $db->inTransaction()) {$db->commit();}
            }
 
 
         } catch (Exception $e) {
             static::get_logger()->alert("Entry Child model cannot save ",['exception'=>$e]);
-            if ($b_do_transaction && $db ) {$db->rollBack();}
+            if ($b_do_transaction && $db && $db->inTransaction() ) {$db->rollBack();}
             throw $e;
         }
     }

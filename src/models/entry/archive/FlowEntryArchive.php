@@ -2,6 +2,7 @@
 
 namespace app\models\entry\archive;
 
+use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\entry\FlowEntry;
 use app\models\entry\FlowEntrySearch;
@@ -42,7 +43,13 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
         $ret = [];
         $blank = FlowEntry::create_entry($project,null);
         foreach ($data_array as $data) {
-            $node = new FlowEntrySummary($data);
+            try {
+                $node = new FlowEntrySummary($data);
+            } catch (Exception $whooo) {
+                FlowEntryArchive::get_logger()->warning("Could not calculate archive entry for record",['exception'=>$whooo]);
+                continue;
+            }
+
             if ($node->guid) {
                 $blank->set_guid($node->guid);
                 $entry_folder_path = $blank->get_entry_folder();
@@ -64,7 +71,10 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
     public static function record_all_stored_entries(FlowProject $project) : void {
 
         $stuff = FlowEntrySummary::get_entry_summaries_for_project($project);
-        $stuff_yaml = Yaml::dump($stuff);
+        $pigs_in_space = JsonHelper::toString($stuff);
+        $stuff_serialized = JsonHelper::fromString($pigs_in_space);
+
+        $stuff_yaml = Yaml::dump($stuff_serialized);
         $b_already_created = false;
         $project_directory = $project->get_project_directory($b_already_created);
         $yaml_path = $project_directory. DIRECTORY_SEPARATOR . self::ALL_FILES_YAML_NAME;
