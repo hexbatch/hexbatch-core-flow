@@ -18,6 +18,8 @@ return function (App $app) {
 
         $group->get('/', ['homePages', 'root'])->setName('root');
 
+        $group->get('/link/{guid:[[:alnum:]\-]+}/show', ['homePages', 'link_show'])->setName('link_show');
+
         $group->group('/project', function (RouteCollectorProxy $group) {
 
             $group->get('/projects', ['projectPages', 'all_projects'])->setName('all_projects');
@@ -25,6 +27,7 @@ return function (App $app) {
             $group->group('', function (RouteCollectorProxy $group) {
                 $group->post('/create_project', ['projectPages', 'create_project'])->setName('create_project');
                 $group->get('/new_project', ['projectPages', 'new_project'])->setName('new_project');
+                $group->get('/clone_project', ['projectPages', 'clone_project'])->setName('clone_project');
             })->add('checkLoggedInMiddleware');
 
         });

@@ -22,9 +22,11 @@
             </h4>
         </div> <!-- /.card-header -->
         <div class="card-body">
-            {% for entry in entries %}
-                {% include 'entry/partials/entry-list-line.twig' with {'entry': entry} %}
-            {% endfor %}
+            <ul class="list-group">
+                {% for entry in entries %}
+                    {% include 'entry/partials/entry-list-line.twig' with {'entry': entry} %}
+                {% endfor %}
+            </ul>
 
         </div>
     </div> <!-- /.card -->

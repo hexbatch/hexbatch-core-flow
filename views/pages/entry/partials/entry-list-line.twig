@@ -1,2 +1,12 @@
-{{  entry.title }}
-{{ entry.blurb }}
+<li class="list-group-item flow-entry-listed">
+    <a
+            href="{{ url_for('show_entry',{
+                user_name: project.get_admin_user().flow_user_name ,
+                project_name: project.flow_project_title,
+                entry_name: entry.get_guid()
+            } )
+            }}"
+    >
+        {{  entry.title }} {{ entry.blurb }}
+    </a>
+</li>

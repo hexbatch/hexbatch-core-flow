@@ -1,2 +1,20 @@
-{{ include('project/partials/project-breadcrumbs.twig') }}
-Show entry
+{{ include('entry/partials/entry-breadcrumbs.twig') }}
+<div class="row">
+
+    <div class="card col-12 col-lg-9">
+
+        <div class="card-title">
+            <h4 class="pt-1">
+                {{ entry.get_title() }}
+            </h4>
+        </div>
+
+        <div class="card-header">
+            {{ entry.get_blurb() }}
+        </div>
+
+        <div class="card-body">
+            {{ entry.get_html() | raw }}
+        </div><!-- /.card-body -->
+    </div><!-- /.card.col -->
+</div> <!-- /.row  -->

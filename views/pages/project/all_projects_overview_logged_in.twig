@@ -1,8 +1,14 @@
 <h2> Projects Page for {{ user.flow_user_name}} </h2>
 
-<div class="flow-project-new-button">
+<div class="flow-project-new-button d-inline-block">
     <a  class="btn btn-outline-primary border border-light" role="button" href="{{ url_for('new_project') }}">
         Make a new project
+    </a>
+</div>
+
+<div class="flow-project-new-button d-inline-block ms-3">
+    <a  class="btn btn-outline-dark  border border-dark" role="button" href="{{ url_for('clone_project') }}">
+        Clone project
     </a>
 </div>
 

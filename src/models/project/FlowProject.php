@@ -1024,7 +1024,7 @@ class FlowProject extends FlowBase {
 
         $command = "pull import $this->import_repo_branch";
         try {
-            $git_ret =  $this->do_key_command_with_private_key($this->export_repo_key,$this->export_repo_url,$command);
+            $git_ret =  $this->do_key_command_with_private_key($this->import_repo_key,$this->import_repo_url,$command);
         } catch (Exception $e) {
             $maybe_changes = $this->do_git_command('diff');
             $message = $e->getMessage();

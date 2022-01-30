@@ -33,6 +33,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
 
     public ?string $flow_project_guid;
+    public ?string $flow_project_admin_user_guid;
     public ?string $parent_tag_guid;
 
     /**
@@ -78,6 +79,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 "flow_tag_guid" => $this->flow_tag_guid,
                 "parent_tag_guid" => $this->parent_tag_guid,
                 "flow_project_guid" => $this->flow_project_guid,
+                "flow_project_admin_user_guid" => $this->flow_project_admin_user_guid,
                 "created_at_ts" => $this->tag_created_at_ts,
                 "updated_at_ts" => $this->tag_updated_at_ts,
                 "flow_tag_name" => $this->flow_tag_name,
@@ -131,6 +133,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
         $this->flow_tag_guid = null ;
         $this->flow_tag_name = null ;
         $this->flow_project_guid = null ;
+        $this->flow_project_admin_user_guid = null ;
         $this->parent_tag_guid = null ;
         $this->flow_tag_parent = null;
         $this->children_list_as_string = null;
@@ -449,7 +452,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
                     HEX(t.flow_tag_guid)                    as flow_tag_guid,
                     HEX(parent_t.flow_tag_guid)             as parent_tag_guid,
                     HEX(project.flow_project_guid)          as flow_project_guid,
-                    HEX(admin_user.flow_user_guid)          as flow_user_guid,
+                    HEX(admin_user.flow_user_guid)          as flow_project_admin_user_guid,
        
                     attribute.id                            as flow_tag_attribute_id,
                     attribute.flow_applied_tag_id,

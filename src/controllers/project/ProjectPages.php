@@ -5,6 +5,7 @@ use app\controllers\base\BasePages;
 use app\controllers\user\UserPages;
 use app\hexlet\FlowAntiCSRF;
 use app\hexlet\GoodZipArchive;
+use app\hexlet\WillFunctions;
 use app\models\project\FlowGitFile;
 use app\models\project\FlowProject;
 use app\models\project\FlowProjectUser;
@@ -160,6 +161,21 @@ class ProjectPages extends BasePages
             $this->logger->error("Could not render new project page",['exception'=>$e]);
             throw $e;
         }
+    }
+
+    /**
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function clone_project( ResponseInterface $response) :ResponseInterface {
+        return $this->view->render($response, 'main.twig', [
+            'page_template_path' => 'project/clone_project.twig',
+            'page_title' => 'Clone Project',
+            'page_description' => 'Clone a project from a repo'
+
+        ]);
     }
 
 
@@ -671,10 +687,17 @@ class ProjectPages extends BasePages
             if (!$project) {
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");
             }
+
+            $tag_guid = null;
+            $args = $request->getQueryParams();
+            if (isset($args['tag_guid']) && WillFunctions::is_valid_guid_format($args['tag_guid'])) {
+                $tag_guid = $args['tag_guid'];
+            }
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/project_tags.twig',
                 'page_title' => "Edit Tags for Project $project_name",
                 'page_description' => 'Manage the tags set in this project',
+                'selected_tag_guid' => $tag_guid,
                 'project' => $project,
             ]);
         } catch (Exception $e) {
