@@ -16,6 +16,8 @@ class FlowTagCallData {
     const OPTION_MAKE_NEW_TOKEN = 'make_new_token';
     const OPTION_VALIDATE_TOKEN = 'validate_token';
     const OPTION_IS_AJAX = 'is_ajax';
+    const OPTION_GET_APPLIED = 'get_applied';
+    const OPTION_ALLOW_EMPTY_BODY = 'all_empty_body';
 
     /**
      * @var string[]
@@ -59,6 +61,8 @@ class FlowTagCallData {
             switch ($opt) {
                 case static::OPTION_MAKE_NEW_TOKEN:
                 case static::OPTION_VALIDATE_TOKEN:
+                case static::OPTION_GET_APPLIED:
+                case static::OPTION_ALLOW_EMPTY_BODY:
                 case static::OPTION_IS_AJAX:
                 {
                     $this->options[] = $opt;

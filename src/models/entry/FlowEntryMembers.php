@@ -84,7 +84,7 @@ abstract class FlowEntryMembers extends FlowEntryChildren  {
         } else {
 
 
-            if (is_object($object) && property_exists($object,'member_entries') && is_array($object->member_entries)) {
+            if (is_object($object) && property_exists($object,'member_entries') ) {
                 $members_to_copy = $object->member_entries;
             } elseif (is_array($object) && array_key_exists('member_entries',$object) && is_array($object['member_entries'])) {
                 $members_to_copy  = $object['member_entries'];

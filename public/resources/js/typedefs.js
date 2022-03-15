@@ -88,6 +88,7 @@
  * @property {?number} created_at_ts
  * @property {?number} updated_at_ts
  * @property {?boolean} is_standard_attribute
+ * @property {?string} standard_attribute_type
  * @property {?boolean} is_inherited
  * @property {?string} points_to_title
  * @property {?string} points_to_admin_guid
@@ -118,6 +119,7 @@
  * @property {number} updated_at_ts
  * @property {Object.<string, FlowTagAttribute>} attributes
  * @property {Object.<string, FlowTagStandardAttributes>} standard_attributes
+ * @property {Object.<string, string>} css
  * @property {?FlowTag} flow_tag_parent
  * @property {FlowTagApplied[]} applied
  */
@@ -202,8 +204,21 @@
  * @typedef {Object} GeneralSearchResult
  * @property {string} guid
  * @property {number} created_at_ts
+ * @property {number} updated_at_ts
  * @property {string} title
+ * @property {string} blurb
  * @property {string} type
+ * @property {string} url
+ * @property {boolean} is_public
+ * @property {Object} css_object
+ * @property {Array} tag_used_by
+ * @property {Array} allowed_readers
+ * @property {string} owning_project_guid
+ * @property {string} owning_user_guid
+ * @property {GeneralSearchResult[]} allowed_readers_results
+ * @property {GeneralSearchResult[]} tag_used_by_results
+ * @property {?GeneralSearchResult} owning_user_result
+ * @property {?GeneralSearchResult} owning_project_result
  * @property {number} [id]
  * @property {string} [text]
  */

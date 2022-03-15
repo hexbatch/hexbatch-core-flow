@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpUnused */
 declare(strict_types=1);
 
 
@@ -12,6 +12,7 @@ return function (App $app) {
     $container = $app->getContainer();
 
     $app->get('/phpinfo', ['homePages', 'php_info'])->setName('debug');
+    $app->get('/test', ['homePages', 'test'])->setName('test');
 
 
     $app->group('', function (RouteCollectorProxy $group) use($app)  {
@@ -87,6 +88,8 @@ return function (App $app) {
 
 
                 $group->group('/tag', function (RouteCollectorProxy $group) {
+
+                    $group->get('/{tag_name:[[:alnum:]\-]+}/show', ['tagPages', 'show_tag'])->setName('show_tag');
 
                     //tags in project , no matter how they are used or attached to
                     $group->get('/get', ['tagPages', 'get_tags'])->setName('get_tags_ajax');

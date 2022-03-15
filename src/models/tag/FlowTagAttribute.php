@@ -3,6 +3,7 @@
 namespace app\models\tag;
 
 use app\hexlet\JsonHelper;
+use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\tag\brief\BriefFlowTagAttribute;
 use Exception;
@@ -28,7 +29,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     public ?int $attribute_updated_at_ts;
     public ?string $flow_tag_attribute_guid;
     public ?string $tag_attribute_name;
-    public ?string$tag_attribute_long;
+    public ?string $tag_attribute_long;
     public ?string $tag_attribute_text;
 
     public ?string $flow_tag_guid;
@@ -38,6 +39,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     public ?string $points_to_flow_project_guid;
 
     public bool $is_standard_attribute;
+    public ?string $standard_attribute_type;
     public ?bool $is_inherited;
 
     public ?string $points_to_title;
@@ -71,6 +73,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
 
     public function __construct($object=null){
         $this->is_standard_attribute = false;
+        $this->standard_attribute_type = null;
         $this->flow_tag_attribute_id = null ;
         $this->flow_tag_id = null ;
         $this->flow_applied_tag_id = null ;
@@ -116,6 +119,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         if (empty($this->tag_attribute_text)) { $this->tag_attribute_text = null;}
 
         $this->is_standard_attribute = FlowTagStandardAttribute::is_standard_attribute($this);
+        $this->standard_attribute_type = FlowTagStandardAttribute::get_standard_attribute_type($this);
     }
 
 
@@ -125,6 +129,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         if (!$b_min_ok) {return false;}
         //no special punctuation
         if (preg_match('/[\'"<>`]/', $words, $output_array)) {
+            WillFunctions::will_do_nothing($output_array);
             return false;
         }
         return true;
@@ -301,6 +306,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                 "created_at_ts" => $this->attribute_created_at_ts,
                 "updated_at_ts" => $this->attribute_updated_at_ts,
                 "is_standard_attribute" => $this->is_standard_attribute,
+                "standard_attribute_type" => $this->standard_attribute_type,
                 "is_inherited" => $this->is_inherited,
                 "points_to_title" => $this->points_to_title,
                 "points_to_admin_guid" => $this->points_to_admin_guid,

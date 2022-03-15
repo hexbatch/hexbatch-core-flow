@@ -4,12 +4,12 @@ Sets up the organization and work flow for the core hexbatch library. Can be use
 The main use of this web app is to organize ideas, its useful for planning complex specifications
 
 ## Releases
-| Date  | Version | Name |
-| ------------- | ------------- | ------------- |
-| October 26, 2021  | 0.4.0  | Tags Oh My! |
-| September 2, 2021  | 0.3.0  | Import Export |
-| August 9, 2021  | 0.2.0  | Projects and Users Exist |
-| July 4, 2021  | 0.1.0  | First Commit |
+| Date              | Version | Name                     |
+|-------------------|---------|--------------------------|
+| October 26, 2021  | 0.4.0   | Tags Oh My!              |
+| September 2, 2021 | 0.3.0   | Import Export            |
+| August 9, 2021    | 0.2.0   | Projects and Users Exist |
+| July 4, 2021      | 0.1.0   | First Commit             |
 
 
 ### Tags Oh My!  ~ Released October 26, 2021

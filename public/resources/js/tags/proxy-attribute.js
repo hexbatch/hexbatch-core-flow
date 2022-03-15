@@ -14,6 +14,7 @@ function ProxyAttribute() {
     this.created_at_ts = null;
     this.updated_at_ts = null;
     this.is_standard_attribute = null;
+    this.standard_attribute_type = null;
     this.is_inherited = null;
     this.points_to_title = null;
     this.points_to_admin_guid = null;

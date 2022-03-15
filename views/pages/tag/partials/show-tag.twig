@@ -1,0 +1,32 @@
+<button id="flow-da-big-tag-button" class="btn btn-primary">Show Info</button>
+
+<script>
+
+
+    jQuery(function($) {
+
+
+        function show_tag() {
+            let b_view_only = true;
+            {% if project.get_current_user_permissions().can_write %}
+                b_view_only = false;
+            {% endif %}
+            get_tag_by_guid(
+                "{{ tag.flow_tag_guid }}",
+                function(found_tag) {
+                    flow_tag_show_editor(found_tag,null,null,b_view_only);
+                }
+            );
+        }
+
+
+        show_tag();
+
+        $("button#flow-da-big-tag-button").click(function() {
+           show_tag();
+        });
+
+
+
+    })
+</script>

@@ -1,6 +1,5 @@
 <?php
 
-use app\hexlet\DBSelector;
 use Symfony\Component\Yaml\Yaml;
 
 require_once 'top-constants.php';

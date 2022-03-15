@@ -6,11 +6,16 @@
  * @param {?FlowTagAttribute} passed_attribute
  * @param {?FlowTagAttributeEditCallback} [callback_after_update]
  * @param {?FlowTagAttributeEditCallback} [callback_after_delete]
+ * @param {?boolean} [b_view_only]
  */
 function flow_attribute_show_editor(tag,passed_attribute,
                                     callback_after_update,
-                                    callback_after_delete){
+                                    callback_after_delete,
+                                    b_view_only
+                                    ){
     let modal;
+    b_view_only = !!b_view_only;
+    let b_editing = !b_view_only;
 
     /**
      * @type {FlowTagAttribute}
@@ -36,6 +41,9 @@ function flow_attribute_show_editor(tag,passed_attribute,
     let attribute_text = editing_div.find('textarea.flow-edit-attribute-text-value');
     let tag_name_display = editing_div.find('.flow-edit-attribute-of-tag');
     let attribute_name_display = editing_div.find('.flow-edit-attribute-name-in-title');
+    let points_to_group = editing_div.find('.flow-things-points-to-group');
+
+    let b_is_saving = false;
 
     function update_attribute_display() {
         editing_div.data('attribute_guid',attribute.flow_tag_attribute_guid);
@@ -55,6 +63,14 @@ function flow_attribute_show_editor(tag,passed_attribute,
         attribute_text.val(attribute.tag_attribute_text?? '');
         attribute_integer_input.val(attribute.tag_attribute_long?? '');
         refresh_auto_formatted_times();
+
+        if (attribute.flow_tag_guid !== tag.flow_tag_guid) {
+            attribute_name_input.attr('disabled',true);
+            attribute_integer_input.attr('disabled',true);
+            attribute_text.attr('disabled',true);
+            points_to_group.hide();
+        }
+
     }
 
     update_attribute_display();
@@ -69,18 +85,24 @@ function flow_attribute_show_editor(tag,passed_attribute,
         cssClass: ['flow-attribute-edit-tingle'],
         onOpen: function() {
 
-            create_select_2_for_general_search(
-                bare_select_control,false,"Optionally select a parent", null);
+            if (b_editing && attribute.flow_tag_guid === tag.flow_tag_guid) {
+                create_select_2_for_general_search(
+                    bare_select_control, false, "Optionally select a parent", null);
+            }
 
             refresh_auto_formatted_times();
 
         },
         onClose: function() {
-            utterly_destroy_select2(bare_select_control);
+            if (b_editing && attribute.flow_tag_guid === tag.flow_tag_guid) {
+                utterly_destroy_select2(bare_select_control);
+            }
+
             this.destroy();
         },
         beforeClose: function() {
-            return true; // close the modal
+            return !b_is_saving;
+
             // return false; // nothing happens
         }
     });
@@ -106,134 +128,159 @@ function flow_attribute_show_editor(tag,passed_attribute,
     // add a button
     let footer_button_text = 'Create Attribute';
     if (attribute.flow_tag_attribute_guid) {
-        footer_button_text = 'Update Attribute';
-    }
-    modal.addFooterBtn(footer_button_text, 'tingle-btn tingle-btn--primary', function() {
+        if (b_editing && attribute.flow_tag_guid === tag.flow_tag_guid) {
+            footer_button_text = 'Update Attribute';
+        } else {
+            footer_button_text = 'Cannot Save Inherited Attribute';
+        }
 
-        if (attribute_points_to_search) {
-            switch (attribute_points_to_search.type) {
-                case 'user': {
-                    attribute.points_to_flow_user_guid = attribute_points_to_search.guid;
-                    break;
-                }
-                case 'entry': {
-                    attribute.points_to_flow_entry_guid = attribute_points_to_search.guid;
-                    break;
-                }
-                case 'project': {
-                    attribute.points_to_flow_project_guid = attribute_points_to_search.guid;
-                    break;
+    }
+    if (b_editing && attribute.flow_tag_guid === tag.flow_tag_guid) {
+        modal.addFooterBtn(footer_button_text, 'tingle-btn tingle-btn--primary', function () {
+
+            if (attribute_points_to_search) {
+                switch (attribute_points_to_search.type) {
+                    case 'user': {
+                        attribute.points_to_flow_user_guid = attribute_points_to_search.guid;
+                        break;
+                    }
+                    case 'entry': {
+                        attribute.points_to_flow_entry_guid = attribute_points_to_search.guid;
+                        break;
+                    }
+                    case 'project': {
+                        attribute.points_to_flow_project_guid = attribute_points_to_search.guid;
+                        break;
+                    }
                 }
             }
-        }
-        let dat_int = attribute.tag_attribute_long = attribute_integer_input.val();
-        if (dat_int === '') { attribute.tag_attribute_long = null;}
-        else { attribute.tag_attribute_long = parseInt(dat_int);}
+            let dat_int = attribute.tag_attribute_long = attribute_integer_input.val();
+            if (dat_int === '') {
+                attribute.tag_attribute_long = null;
+            } else {
+                attribute.tag_attribute_long = parseInt(dat_int);
+            }
 
-        attribute.tag_attribute_text = attribute_text.val();
-        if (attribute.tag_attribute_text === '') { attribute.tag_attribute_text = null;}
-        attribute.tag_attribute_name = attribute_name_input.val();
+            attribute.tag_attribute_text = attribute_text.val();
+            if (attribute.tag_attribute_text === '') {
+                attribute.tag_attribute_text = null;
+            }
+            attribute.tag_attribute_name = attribute_name_input.val();
 
-        if (attribute.tag_attribute_name && attribute.flow_tag_attribute_guid) {
-
-            edit_attribute(tag, attribute
-                ,
-                function(response) {
-                    console.log('updated attribute',response);
-                    if (callback_after_update) {
-                        callback_after_update(response.attribute);
-                    }
-                    my_swal.fire(
-                        'Updated Attribute',
-                        'Bask in your success',
-                        'success'
-                    )
-                    modal.close();
-                },
-                function(ret) {
-                    my_swal.fire(
-                        'Oh No!',
-                        'The attribute could not saved <br>\n' + ret.message,
-                        'error'
-                    )
-                });
-        } else if (attribute.tag_attribute_name && !attribute.flow_tag_attribute_guid) {
-
-            create_attribute(tag, attribute
-                ,
-                function(response) {
-                    console.log('created attribute',response);
-                    if (callback_after_update) {
-                        callback_after_update(response.attribute);
-                    }
-                    my_swal.fire(
-                        'Created Attribute',
-                        'A new journey begins',
-                        'success'
-                    )
-                    modal.close();
-                },
-                function(ret) {
-                    my_swal.fire(
-                        'Oh No!',
-                        'The attribute could not created <br>\n ' + ret.message,
-                        'error'
-                    )
-                });
-        }
-
-    });
-
-
-
-    editing_div.find('button.flow-edit-attribute-delete-action').click(function() {
-        let me = $(this);
-        my_swal.fire({
-            title: 'Are you sure?',
-            text: `Going to delete the attribute ${attribute.tag_attribute_name?? 'unnamed'}` ,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, delete it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                if (!attribute.flow_tag_attribute_guid) {
-                    modal.close();
-                    if (callback_after_delete) { callback_after_delete(attribute);}
-                    return;
-                }
-                toggle_action_spinner(me,'loading');
-
-                delete_attribute(tag, attribute,
-                    function() {
-
-                        modal.close();
-
-                        toggle_action_spinner(me,'normal');
-
+            if (attribute.tag_attribute_name && attribute.flow_tag_attribute_guid) {
+                b_is_saving = true;
+                edit_attribute(tag, attribute
+                    ,
+                    function (response) {
+                        console.log('updated attribute', response);
+                        b_is_saving = false;
+                        if (callback_after_update) {
+                            callback_after_update(response.attribute);
+                        }
                         my_swal.fire(
-                            'Attribute Deleted!',
-                            'Its no more..',
+                            'Updated Attribute',
+                            'Bask in your success',
                             'success'
-                        );
-
-                        if (callback_after_delete) { callback_after_delete(attribute);}
+                        )
+                        modal.close();
                     },
-                    function(ret) {
-                        toggle_action_spinner(me,'normal');
+                    function (ret) {
+                        b_is_saving = false;
                         my_swal.fire(
                             'Oh No!',
-                            'The Attribute could not be deleted <br>\n ' + ret.message,
+                            'The attribute could not saved <br>\n' + ret.message,
                             'error'
                         )
-                    })
+                    });
+            } else if (attribute.tag_attribute_name && !attribute.flow_tag_attribute_guid) {
 
-
+                create_attribute(tag, attribute
+                    ,
+                    function (response) {
+                        console.log('created attribute', response);
+                        if (callback_after_update) {
+                            callback_after_update(response.attribute);
+                        }
+                        my_swal.fire(
+                            'Created Attribute',
+                            'A new journey begins',
+                            'success'
+                        )
+                        modal.close();
+                    },
+                    function (ret) {
+                        my_swal.fire(
+                            'Oh No!',
+                            'The attribute could not created <br>\n ' + ret.message,
+                            'error'
+                        )
+                    });
             }
-        });
 
-    });
+        });
+    } else {
+        modal.addFooterBtn(footer_button_text, 'tingle-btn',function() {
+
+        });
+    }
+
+
+
+    if (b_editing) {
+        editing_div.find('button.flow-edit-attribute-delete-action').click(function() {
+            if (b_is_saving) {return;}
+            let me = $(this);
+            my_swal.fire({
+                title: 'Are you sure?',
+                text: `Going to delete the attribute ${attribute.tag_attribute_name?? 'unnamed'}` ,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if (!attribute.flow_tag_attribute_guid) {
+                        modal.close();
+                        if (callback_after_delete) { callback_after_delete(attribute);}
+                        return;
+                    }
+                    toggle_action_spinner(me,'loading');
+                    b_is_saving = true;
+                    delete_attribute(tag, attribute,
+                        function() {
+                            b_is_saving = false;
+                            modal.close();
+
+                            toggle_action_spinner(me,'normal');
+
+                            my_swal.fire(
+                                'Attribute Deleted!',
+                                'Its no more..',
+                                'success'
+                            );
+
+                            if (callback_after_delete) { callback_after_delete(attribute);}
+                        },
+                        function(ret) {
+                            toggle_action_spinner(me,'normal');
+                            b_is_saving = false;
+                            my_swal.fire(
+                                'Oh No!',
+                                'The Attribute could not be deleted <br>\n ' + ret.message,
+                                'error'
+                            )
+                        })
+
+
+                }
+            });
+
+        });
+    } else {
+        editing_div.find('button.flow-edit-attribute-delete-action').attr('disabled',true);
+    }
+
 
     // open modal
     modal.open();

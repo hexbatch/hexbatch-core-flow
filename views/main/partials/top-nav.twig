@@ -1,6 +1,6 @@
 <header>
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light hexbatch-top-nav-menu">
         <div class="container-fluid">
             <a class="navbar-brand" href="{{ url_for('root') }}">
                 Hexbatch-Flow
@@ -13,22 +13,30 @@
             </button>
 
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
 
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="{{ url_for('all_projects') }}">
+                <div class="navbar-nav d-flex mb-2 mb-lg-0 flex-grow-1">
+
+                    <div class="nav-item">
+                        <a class="nav-link" aria-current="page" href="{{ url_for('all_projects') }}">
                             {{  user.flow_user_id ? 'My Projects' : 'Public Projects' }}
                         </a>
-                    </li>
+                    </div>
 
-                    <li class="nav-item ms-lg-4">
-                        <form class="d-flex">
-                            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                            <button class="btn btn-outline-success" type="submit">Search</button>
-                        </form>
-                    </li>
-                </ul>
+                    <div class="nav-item d-flex flex-column flex-md-row flex-grow-1 ps-3 pe-3 pt-2">
+                        <select id="flow-select-top-bar-all" class="form-control flex-grow-1"   aria-label="Search">
+                        </select>
+
+                        <button id="flow-btn-top-bar-search"
+                                class="btn btn-outline-success ms-3 mt-2 mt-md-0"
+                                style="max-width: 5em"
+                                type="submit"
+                        >
+                            <span class="text-nowrap">Go To</span>
+                        </button>
+                    </div>
+                </div>
+
 
 
 
@@ -59,4 +67,57 @@
     </nav>
 
 </header>
+
+<script>
+
+        jQuery(function($) {
+
+            let action_button = $(`button#flow-btn-top-bar-search`);
+            let bare_select_control = $(`select#flow-select-top-bar-all`);
+            create_select_2_for_general_search(bare_select_control, false, "Search", null, 'all');
+
+            /**
+             * @type {?GeneralSearchResult}
+             */
+            let selected_result = null;
+            bare_select_control.on('select2:select', function () {
+                let data_array = bare_select_control.select2("data");
+                console.debug('selected project', selected_result);
+
+                if (data_array.length) {
+                    selected_result = data_array[0];
+                } else {
+                    selected_result = null;
+                }
+                display_selected(selected_result);
+                console.log(selected_result)
+            });
+
+            bare_select_control.on('select2:unselecting', function () {
+                selected_result = null;
+                console.debug('unselected project');
+                display_selected(selected_result);
+            });
+
+            /**
+             *
+             * @param {?GeneralSearchResult} what
+             */
+            function display_selected(what) {
+                console.debug("general search selected",what);
+                if (what) {
+                    action_button.prop('disabled',false);
+                    location.href = what.url;
+                } else {
+                    action_button.prop('disabled',true);
+                }
+            }
+
+            action_button.click(function(){
+                if (selected_result) {
+                    location.href = selected_result.url;
+                }
+            });
+        });
+</script>
 

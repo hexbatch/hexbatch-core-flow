@@ -47,7 +47,7 @@ abstract class FlowEntryChildren extends FlowEntryFiles  {
         } else {
 
 
-            if (is_object($object) && property_exists($object,'child_entries') && is_array($object->child_entries)) {
+            if (is_object($object) && property_exists($object,'child_entries') ) {
                 $children_to_copy = $object->child_entries;
             } elseif (is_array($object) && array_key_exists('child_entries',$object) && is_array($object['child_entries'])) {
                 $children_to_copy  = $object['child_entries'];

@@ -1,7 +1,11 @@
 <?php
 namespace app\controllers\home;
 
+use app\controllers\base\BasePages;
 use app\controllers\project\ProjectPages;
+use app\controllers\user\UserPages;
+use app\helpers\SQLHelper;
+use app\hexlet\JsonHelper;
 use app\models\entry\FlowEntrySearch;
 use app\models\entry\FlowEntrySearchParams;
 use app\models\multi\GeneralSearch;
@@ -9,51 +13,19 @@ use app\models\multi\GeneralSearchParams;
 use app\models\project\FlowProjectSearch;
 use app\models\tag\FlowTag;
 use app\models\tag\FlowTagSearchParams;
-use app\models\user\FlowUser;
-use Delight\Auth\Auth;
-use DI\Container;
-use DI\DependencyException;
-use DI\NotFoundException;
 use Exception;
-use Monolog\Logger;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use Slim\Exception\HttpNotFoundException;
 use Slim\Routing\RouteContext;
-use Slim\Views\Twig;
 
 
-class HomePages
+class HomePages extends BasePages
 {
 
-    protected Auth $auth;
-    protected Logger $logger;
-    /**
-     * @var Container $container
-     */
-    protected Container $container;
 
-    protected Twig $view;
 
-    protected object $user;
-
-    /**
-     * UserLogInPages constructor.
-     * @param Auth $auth
-     * @param Logger $logger
-     * @param Container $container
-     * @throws NotFoundException
-     * @throws DependencyException
-     */
-    public function __construct(Auth $auth, Logger $logger, Container $container)
-    {
-        $this->auth = $auth;
-        $this->logger = $logger;
-        $this->container = $container;
-        $this->view = $this->container->get('view');
-        $this->user = $this->container->get('user');
-    }
 
     /**
      * @param ResponseInterface $response
@@ -63,7 +35,6 @@ class HomePages
      */
     public function root( ResponseInterface $response) :ResponseInterface {
         try {
-            exec('cd /var/www/flow_projects/ && cat times.txt  2>&1',$output,$result_code);
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'root.twig',
                 'page_title' => 'Root',
@@ -93,9 +64,7 @@ class HomePages
      * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
-     * @throws DependencyException
      * @throws HttpNotFoundException
-     * @throws NotFoundException
      * @throws Exception
      * @noinspection PhpUnused
      */
@@ -144,21 +113,25 @@ class HomePages
                     }
 
 
-                    $route_to_go_to = $routeParser->urlFor('single_project_home',[
-                        "user_name" => $project->get_admin_user()->flow_user_guid,
-                        "project_name" => $project->flow_project_guid
-                    ]);
+                    $user_class = $project->get_admin_user();
+                    $user_name = '';
+                    if ($user_class) { $user_name = $user_class->flow_user_guid; }
+                    $project_name = $project->flow_project_guid;
 
+                    /**
+                     * @var ProjectPages $project_pages
+                     */
+                    $project_pages = $this->container->get('projectPages');
+                    return $project_pages->single_project_home($request,$response,$user_name,$project_name);
 
-                    break;
                 }
                 case GeneralSearch::TYPE_USER: {
 
-                    $route_to_go_to = $routeParser->urlFor('user_page',[
-                        "user_name" => $guid
-                    ]);
-
-                    break;
+                    /**
+                     * @var UserPages $user_pages
+                     */
+                    $user_pages = $this->container->get('userPages');
+                    return $user_pages->user_page($request,$response,$guid);
                 }
                 case GeneralSearch::TYPE_TAG: {
                     $tag_search = new FlowTagSearchParams();
@@ -168,9 +141,10 @@ class HomePages
                         throw new HttpNotFoundException($request,"Cannot find Tag ". $guid);
                     }
                     $tag = $tag_res[0];
-                    $route_to_go_to = $routeParser->urlFor('single_project_home',[
+                    $route_to_go_to = $routeParser->urlFor('show_tag',[
                         "user_name" => $tag->flow_project_admin_user_guid,
-                        "project_name" => $tag->flow_project_guid
+                        "project_name" => $tag->flow_project_guid,
+                        "tag_name" => $tag->flow_tag_guid,
                     ]);
 
                     break;
@@ -199,21 +173,22 @@ class HomePages
 
 
         $search = new GeneralSearchParams();
-
+        if ($this->auth->isLoggedIn()) {
+            $search->against_user_guid = $this->user->flow_user_guid;
+        } else {
+            $search->b_only_public = true;
+        }
         $root = $args;
         if (isset($args['search'])) { $root = $args['search'];}
 
         if (isset($root['term'])) {
-            $search->title = trim($root['term']);
+            $search->words = trim($root['term']);
         }
 
         if (isset($root['guid'])) {
             $search->guids[] = trim($root['guid']);
         }
 
-        if (isset($root['title'])) {
-            $search->title = trim($root['title']);
-        }
 
         if (isset($root['created_at_ts']) && intval($root['created_at_ts'])) {
             $search->created_at_ts = (int)($root['created_at_ts']);
@@ -254,6 +229,11 @@ class HomePages
             }
         }
 
+        $search->b_get_secondary = true;
+
+        if (isset($args['b_no_secondary']) && JsonHelper::var_to_boolean($args['b_no_secondary'])) {
+            $search->b_get_secondary = false;
+        }
 
         $matches = GeneralSearch::general_search($search,$page);
         $b_more = true;
@@ -261,7 +241,7 @@ class HomePages
             $b_more = false;
         }
         $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-        foreach ($matches as &$match) {
+        foreach ($matches as $match) {
             $match->url = $routeParser->urlFor('link_show',[
                 "guid" => $match->guid
             ]);
@@ -275,6 +255,24 @@ class HomePages
                 "page" => $page
             ]
         ];
+
+        $payload = json_encode($data);
+
+        $response->getBody()->write($payload);
+        return $response
+            ->withHeader('Content-Type', 'application/json');
+    }
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     * @noinspection PhpUnused
+     * @throws Exception
+     */
+    public function test( ServerRequestInterface $request,ResponseInterface $response) :ResponseInterface {
+
+        $data = SQLHelper::refresh_all_flow_things($request);
 
         $payload = json_encode($data);
 

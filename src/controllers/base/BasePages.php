@@ -8,7 +8,9 @@ use DI\Container;
 use DI\DependencyException;
 use DI\NotFoundException;
 
+use Exception;
 use Monolog\Logger;
+use ParagonIE\EasyDB\EasyDB;
 use Psr\Http\Message\ServerRequestInterface;
 
 use Slim\Views\Twig;
@@ -55,6 +57,18 @@ class BasePages
             return  false;
         } else {
             return true;
+        }
+    }
+
+    /**
+     * @return EasyDB
+     */
+    protected function get_connection() : EasyDB {
+        try {
+            return  $this->container->get('connection');
+        } catch (Exception $e) {
+            $this->logger->alert("User model cannot connect to the database",['exception'=>$e]);
+            die( static::class . " Cannot get connetion");
         }
     }
 

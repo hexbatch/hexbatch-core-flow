@@ -4,23 +4,32 @@
  *
  * @param {?FlowTagEditCallback} [callback_after_update]
  * @param {?FlowTagEditCallback} [callback_after_delete]
+ * @param {?boolean} [b_view_only]
  */
 function flow_tag_show_editor(tag,
                               callback_after_update,
-                              callback_after_delete) {
+                              callback_after_delete,
+                              b_view_only) {
     let modal;
     /**
      * @type {?FlowTag}
      */
     let parent_tag = null;
-
+    b_view_only = !!b_view_only;
+    let b_editing = !b_view_only;
     let editing_div = $("div#flow-edit-tag-template-holder > div.flow-edit-container ").clone();
     let editing_div_id = 'tag-editor-' + uuid.v4();
     editing_div.attr('id',editing_div_id);
 
     let bare_select_control = editing_div.find('select.flow-edit-tag-parent-list');
+    if (b_view_only) { bare_select_control.hide();}
     let tag_name_input = editing_div.find('input.flow-edit-tag-name');
     let tag_name_display = editing_div.find('.flow-edit-tag-name-in-title');
+    if (b_view_only) {
+        tag_name_input.attr('readonly',true);
+    }
+
+    let b_is_saving = false;
 
     function update_tag_display() {
         editing_div.data('tag_guid', tag.flow_tag_guid);
@@ -44,95 +53,105 @@ function flow_tag_show_editor(tag,
     create_tabs();
 
 
-    editing_div.find('button.flow-edit-tag-title-save').click(function () {
-        let me = $(this);
-        let new_name = tag_name_input.val();
-        if (new_name) {
-            toggle_action_spinner(me, 'loading');
-            tag.flow_tag_name = new_name;
-            edit_tag(tag,
-                function (ret) {
-                    tag = ret.tag;
-                    update_tag_display();
-                    update_tag_name_and_style_in_page(tag);
-                    toggle_action_spinner(me, 'normal');
-                    if (callback_after_update) {callback_after_update(tag)}
-                },
-                function () {
-                    toggle_action_spinner(me, 'normal');
-                })
-        }
-    });
-
-    editing_div.find('button.flow-edit-tag-delete-action').click(function () {
-        let me = $(this);
-        my_swal.fire({
-            title: 'Are you sure?',
-            text: `Going to delete the tag ${tag.flow_tag_name}`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, delete it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-
+    if (b_editing) {
+        editing_div.find('button.flow-edit-tag-title-save').click(function () {
+            let me = $(this);
+            let new_name = tag_name_input.val();
+            if (new_name) {
                 toggle_action_spinner(me, 'loading');
-
-                delete_tag(tag,
+                tag.flow_tag_name = new_name;
+                edit_tag(tag,
                     function (ret) {
                         tag = ret.tag;
-                        mark_tag_as_deleted_in_page(tag);
-                        modal.close();
-
+                        update_tag_display();
+                        update_tag_name_and_style_in_page(tag);
                         toggle_action_spinner(me, 'normal');
-
-                        my_swal.fire(
-                            'Deleted!',
-                            'That pesky tag is gone',
-                            'success'
-                        );
-
-                        if (callback_after_delete) {callback_after_delete(ret.tag);}
+                        if (callback_after_update) {callback_after_update(tag)}
                     },
-                    function (ret) {
+                    function () {
                         toggle_action_spinner(me, 'normal');
-                        my_swal.fire(
-                            'Oh No!',
-                            'The tag could not be deleted <br>\n ' + ret.message,
-                            'error'
-                        )
                     })
-
-
             }
         });
 
-    });
+        editing_div.find('button.flow-edit-tag-delete-action').click(function () {
+            let me = $(this);
+            my_swal.fire({
+                title: 'Are you sure?',
+                text: `Going to delete the tag ${tag.flow_tag_name}`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+
+                    toggle_action_spinner(me, 'loading');
+
+                    delete_tag(tag,
+                        function (ret) {
+                            tag = ret.tag;
+                            mark_tag_as_deleted_in_page(tag);
+                            modal.close();
+
+                            toggle_action_spinner(me, 'normal');
+
+                            my_swal.fire(
+                                'Deleted!',
+                                'That pesky tag is gone',
+                                'success'
+                            );
+
+                            if (callback_after_delete) {callback_after_delete(ret.tag);}
+                        },
+                        function (ret) {
+                            toggle_action_spinner(me, 'normal');
+                            my_swal.fire(
+                                'Oh No!',
+                                'The tag could not be deleted <br>\n ' + ret.message,
+                                'error'
+                            )
+                        })
 
 
-    editing_div.find('button.flow-edit-tag-parent-save').click(function () {
-        let me = $(this);
-        if (parent_tag) {
-            toggle_action_spinner(me, 'loading');
-            tag.parent_tag_guid = parent_tag.flow_tag_guid;
-            edit_tag(tag,
-                function (ret) {
-                    tag = ret.tag;
-                    update_tag_display();
-                    toggle_action_spinner(me, 'normal');
-                    if (callback_after_update) {callback_after_update(tag)}
-                },
-                function (ret) {
-                    toggle_action_spinner(me, 'normal');
-                    my_swal.fire(
-                        'Oh No!',
-                        'The tag could not be deleted \n<br> ' + ret.message,
-                        'error'
-                    )
-                })
-        }
-    });
+                }
+            });
+
+        });
+
+
+        editing_div.find('button.flow-edit-tag-parent-save').click(function () {
+            let me = $(this);
+            if (parent_tag) {
+                toggle_action_spinner(me, 'loading');
+                tag.parent_tag_guid = parent_tag.flow_tag_guid;
+                b_is_saving = true;
+                edit_tag(tag,
+                    function (ret) {
+                        b_is_saving = false;
+                        tag = ret.tag;
+                        update_tag_display();
+                        toggle_action_spinner(me, 'normal');
+                        if (callback_after_update) {callback_after_update(tag)}
+                    },
+                    function (ret) {
+                        b_is_saving = false;
+                        toggle_action_spinner(me, 'normal');
+                        my_swal.fire(
+                            'Oh No!',
+                            'The tag could not be deleted \n<br> ' + ret.message,
+                            'error'
+                        )
+                    })
+            }
+        });
+    } else {
+        editing_div.find('button.flow-edit-tag-title-save').attr('disabled',true);
+        editing_div.find('button.flow-edit-tag-delete-action').attr('disabled',true);
+        editing_div.find('button.flow-edit-tag-parent-save').attr('disabled',true);
+    }
+
 
 
     function generate_parent_nav_list() {
@@ -279,47 +298,54 @@ function flow_tag_show_editor(tag,
 
             ul_home.append(li);
 
-            li.find('button.flow-applied-delete-action').click(function () {
-                let me = $(this);
-                my_swal.fire({
-                    title: 'Are you sure?',
-                    text: `Going to delete the Applied ${applied.tagged_title}`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Yes, delete it!'
-                }).then((result) => {
-                    if (result.isConfirmed) {
+            if (b_editing) {
+                li.find('button.flow-applied-delete-action').click(function () {
+                    let me = $(this);
+                    my_swal.fire({
+                        title: 'Are you sure?',
+                        text: `Going to delete the Applied ${applied.tagged_title}`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, delete it!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            b_is_saving = true;
+                            toggle_action_spinner(me, 'loading');
+                            delete_applied(tag, applied,
+                                function (ret) {
+                                    b_is_saving = false;
+                                    tag = ret.tag;
+                                    li.remove();
+                                    let victims = $(`.flow-tag-applied-target-title[data-applied_guid="${applied.flow_applied_tag_guid}"]`);
+                                    victims.addClass('text-decoration-line-through');
+                                    toggle_action_spinner(me, 'normal');
 
-                        toggle_action_spinner(me, 'loading');
-                        delete_applied(tag, applied,
-                            function (ret) {
-                                tag = ret.tag;
-                                li.remove();
-                                let victims = $(`.flow-tag-applied-target-title[data-applied_guid="${applied.flow_applied_tag_guid}"]`);
-                                victims.addClass('text-decoration-line-through');
-                                toggle_action_spinner(me, 'normal');
-
-                                my_swal.fire(
-                                    'Un Applied !',
-                                    'Its a secret now what happened',
-                                    'success'
-                                )
-                            },
-                            function (ret) {
-                                toggle_action_spinner(me, 'normal');
-                                my_swal.fire(
-                                    'Oh No!',
-                                    'The applied could not be deleted ' + ret.message,
-                                    'error'
-                                )
-                            })
+                                    my_swal.fire(
+                                        'Un Applied !',
+                                        'Its a secret now what happened',
+                                        'success'
+                                    )
+                                },
+                                function (ret) {
+                                    toggle_action_spinner(me, 'normal');
+                                    b_is_saving = false;
+                                    my_swal.fire(
+                                        'Oh No!',
+                                        'The applied could not be deleted ' + ret.message,
+                                        'error'
+                                    )
+                                })
 
 
-                    }
+                        }
+                    });
                 });
-            });
+            } else {
+                li.find('button.flow-applied-delete-action').attr('disabled',true);
+            }
+
         }
     }
 
@@ -334,22 +360,27 @@ function flow_tag_show_editor(tag,
         onOpen: function () {
             //clear out older values
             tag_name_input.val();
-            create_select_2_for_tag_search(bare_select_control, false, "Optionally select a parent",
-                false, tag.flow_tag_guid,null,null);
+            if (b_editing) {
+                create_select_2_for_tag_search(bare_select_control, false, "Optionally select a parent",
+                    false, tag.flow_tag_guid,null,null);
+            }
+
 
             refresh_auto_formatted_times();
 
         },
         onClose: function () {
-            utterly_destroy_select2(bare_select_control);
+            if (b_editing) {
+                utterly_destroy_select2(bare_select_control);
+            }
+
             this.destroy();
             $('body').off("click", `div#${editing_div_id} .flow-attribute-show-edit-on-click`, edit_attribute);
             if (callback_after_update) {callback_after_update(tag);}
         },
 
         beforeClose: function () {
-            return true; // close the modal
-            // return false; // nothing happens
+            return !b_is_saving;
         }
     });
 
@@ -374,11 +405,16 @@ function flow_tag_show_editor(tag,
     // open modal
     modal.open();
 
-    editing_div.find('button.flow-edit-tag-parent-goto').click(function () {
-        if (parent_tag) {
-            flow_tag_show_editor(parent_tag);
-        }
-    });
+    if (b_editing) {
+        editing_div.find('button.flow-edit-tag-parent-goto').click(function () {
+            if (parent_tag) {
+                flow_tag_show_editor(parent_tag,null,null,b_view_only);
+            }
+        });
+    } else {
+        editing_div.find('button.flow-edit-tag-parent-goto').attr('disabled',true);
+    }
+
 
 
 
@@ -431,44 +467,51 @@ function flow_tag_show_editor(tag,
                         delete tag.attributes[found_deleted_attribute.tag_attribute_name];
                         fill_attribute_tab();
                     }
-                }
+                },
+                b_view_only
             );
         }
     }
 
+    if (b_editing) {
+        editing_div.find('button.flow-create-attribute-action').click(function () {
 
-    editing_div.find('button.flow-create-attribute-action').click(function () {
+            flow_attribute_show_editor(tag, null,
+                function (new_attribute) {
+                    //see if attribute is in the list, if not add
+                    let found_attribute =  find_attribute_by_guid(new_attribute.flow_tag_attribute_guid);
 
-        flow_attribute_show_editor(tag, null,
-            function (new_attribute) {
-                //see if attribute is in the list, if not add
-                let found_attribute =  find_attribute_by_guid(new_attribute.flow_tag_attribute_guid);
-
-                if (!found_attribute) {
-                    tag.attributes[new_attribute.tag_attribute_name] = new_attribute;
+                    if (!found_attribute) {
+                        tag.attributes[new_attribute.tag_attribute_name] = new_attribute;
+                    }
+                    fill_attribute_tab();
+                    console.debug("got new attribute of ", new_attribute);
                 }
-                fill_attribute_tab();
-                console.debug("got new attribute of ", new_attribute);
-            }
-        );
+            );
 
-    });
+        });
+    } else {
+        editing_div.find('button.flow-create-attribute-action').attr('disabled',true);
+    }
+
 
     $('body').on("click", `div#${editing_div_id} .flow-attribute-show-edit-on-click`, edit_attribute);
+
+    $('body').on("click",'.flow-tag-show-edit-on-click',function(){
+        let guid = $(this).data('tag_guid');
+        if (guid) {
+            get_tag_by_guid(
+                guid,
+                function(found_tag) {
+                    flow_tag_show_editor(found_tag,null, null,b_view_only);
+                }
+            );
+        }
+
+    }) ;
 }
 
 jQuery(function($) {
-   $('body').on("click",'.flow-tag-show-edit-on-click',function(){
-       let guid = $(this).data('tag_guid');
-       if (guid) {
-               get_tag_by_guid(
-                   guid,
-                   function(found_tag) {
-                        flow_tag_show_editor(found_tag);
-                   }
-               );
-       }
 
-   }) ;
 });
 

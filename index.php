@@ -51,6 +51,9 @@ $auth($container);
 AppFactory::setContainer($container);
 $app = Bridge::create($container);
 
+
+$container->set('app', function() use ($app) { return $app; });
+
 $views = require_once HEXLET_BASE_PATH . '/app/twig.php';
 $views($app);
 

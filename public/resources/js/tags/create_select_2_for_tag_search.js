@@ -22,7 +22,7 @@ function create_select_2_for_tag_search(bare_select_control,b_multi,
         if (!(tag.flow_tag_guid || tag.text)) {return '';}
         if (tag.flow_tag_guid) {
 
-            let tag_style_object = get_tag_style(tag,false);
+            let tag_style_object = get_tag_style(tag);
             let tag_style_array = [];
             for(let rule_name in tag_style_object) {
                 tag_style_array.push(`${rule_name}: ${tag_style_object[rule_name]}`)

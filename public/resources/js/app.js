@@ -178,8 +178,8 @@ function toggle_action_spinner(me,state) {
  * @param {*} out_data
  * @param  on_success_callback
  * @param  on_fail_callback
- * @param {string} success_title
- * @param {string} fail_title
+ * @param {string} [success_title]
+ * @param {string} [fail_title]
  */
 function do_flow_ajax_action(url,out_data,
                        on_success_callback,on_fail_callback,
@@ -221,6 +221,7 @@ jQuery(function() {
    // noinspection JSUnresolvedVariable
     my_swal = SweetAlert;
 
+    // noinspection TypeScriptUMDGlobal
     let clipboard = new ClipboardJS('.clipy-btn');
 
     clipboard.on('success', function(e) {

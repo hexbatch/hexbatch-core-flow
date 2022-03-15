@@ -66,7 +66,7 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
      * @throws Exception
      */
     public function get_entry_folder() : ?string{
-        if (!$this->project) {return null;}
+
         if (!$this->flow_entry_guid) {return null;}
         $project_dir = $this->project->get_project_directory();
         if (empty($project_dir)) {return null;}

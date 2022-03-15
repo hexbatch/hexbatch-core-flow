@@ -251,7 +251,13 @@ class ProjectPages extends BasePages
             throw new InvalidArgumentException("permission has to be read or write or admin");
         }
 
-        $project = FlowProject::find_one($project_name,$user_name);
+        $project = null;
+        try {
+            $project = FlowProject::find_one($project_name,$user_name);
+        } catch (InvalidArgumentException $not_found) {
+            throw new HttpNotFoundException($request,sprintf("Cannot Find User %s with Project %s",$user_name,$project));
+        }
+
 
         //return if public and nobody logged in
         if (empty($this->user->flow_user_id)) {
@@ -1189,7 +1195,7 @@ class ProjectPages extends BasePages
         } catch (Exception $e) {
             try {
 
-                $data = ['success'=>false,'message'=>$file_name??'' .': '.$e->getMessage()];
+                $data = ['success'=>false,'message'=>($file_name??'') .': '.$e->getMessage()];
                 $payload = json_encode($data);
 
                 $response->getBody()->write($payload);

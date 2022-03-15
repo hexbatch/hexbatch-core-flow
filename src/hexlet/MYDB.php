@@ -473,12 +473,10 @@ class MYDB
      *
      * </p>
      */
-    public function execSQL($sql, array $params=null, int $close=MYDB::RESULT_SET, string $lookupKey = null)
+    public function execSQL($sql, ?array $params=null, int $close=MYDB::RESULT_SET, string $lookupKey = null)
     {
 
-        if (! (is_array($params) || is_null($params) ) ) {
-            throw new SQLException("Params need to be an array or null");
-        }
+
         $parameters = [];
         $row = [];
         $mysqli = $this->mysqli;
@@ -523,9 +521,9 @@ class MYDB
 
 
         try {
-	        $i = 1;
+
             //make sure all the params are converted from php data types: arrays and booleans
-	        if ($params && is_array($params)) {
+	        if ($params ) {
 		        for($i = 1; $i < count($params); $i++) {
 			        $params[$i] = JsonHelper::toStringAgnostic($params[$i]);
 		        }
@@ -645,7 +643,7 @@ class MYDB
 	    $set =  implode(',',$update_parts);
 
         $flags .= 's';
-        array_push($values_data, $id);
+        $values_data[] = $id;
 
         array_unshift($values_data, $flags);
         $sql = "UPDATE $table SET $set WHERE $pk_name = ?";
@@ -665,7 +663,7 @@ class MYDB
      */
     public function insert(string $table, array $fields)
     {
-        if (!is_array($fields) || empty($fields)) { throw new SQLException("Insert Function in database class needs fields to be a populated array");}
+        if ( empty($fields)) { throw new SQLException("Insert Function in database class needs fields to be a populated array");}
 
         if (isset($fields[0]) && is_array($fields[0])) {
             $ret = [];
@@ -970,10 +968,7 @@ class MYDB
 
 
         if ($mysqli) {
-            $mem = mysqli_real_escape_string($mysqli, $s);
-            if (is_null($mem) && !is_null($s)) {
-                self:self::throwSQLError($mysqli,"Seems like no valid mysqli connection with sanitize string");
-            }
+            $s = mysqli_real_escape_string($mysqli, $s);
         }
         return $s;
 
@@ -1038,11 +1033,11 @@ class MYDB
 	/**
 	 * Will drop all triggers that have the param as part or all the name
 	 * @param string $trigger_like_this - part or whole of the trigger name
-	 *
+	 * @param bool $b_dry_run
 	 * @return array list of triggers dropped
 	 * @throws SQLException
 	 */
-	public function dropTriggersLike(string $trigger_like_this): array
+	public function dropTriggersLike(string $trigger_like_this, bool $b_dry_run = false): array
     {
 		$res = $this->execSQL('SELECT database() AS the_db;');
 		$schema = $res[0]->the_db;
@@ -1058,6 +1053,7 @@ class MYDB
 				$trigger_name = $row->TRIGGER_NAME;
 				if (empty($trigger_name)) {continue;}
 				$ret[] = $trigger_name;
+                if ($b_dry_run) {continue;}
 				$this->execute("DROP TRIGGER IF EXISTS $trigger_name;");
 			}
 		}
