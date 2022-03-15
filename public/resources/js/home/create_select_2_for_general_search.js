@@ -10,6 +10,8 @@ function create_select_2_for_general_search(bare_select_control,b_multi,
                                         placeholder,not_guid,search_types) {
 
     if (!search_types) { search_types = 'not-tags';}
+
+
     /**
      *
      * @param {GeneralSearchResult} general
@@ -27,19 +29,85 @@ function create_select_2_for_general_search(bare_select_control,b_multi,
                 icon = `<i class="bi-person-circle"></i>`;
             } else if (general.type === 'tag') {
                 icon = `<i class="bi bi-tag"></i>`;
+            } else if (general.type === 'entry') {
+                icon = `<i class="bi bi-columns"></i>`;
             }
-            let display = `${icon} <span class="${extra_class}">${general.title}</span>`;
-
-            return jQuery(display);
+            let display = `<span class="d-inline p-1">${icon} <span class="${extra_class}">${general.title}</span></span>`;
+            let tode = jQuery(display);
+            tode.css(general.css_object);
+            return tode;
         } else {
             let display = `<span class="${extra_class}">${general.text}</span>`;
             return jQuery(display);
         }
     }
 
-    function format_general_in_dropdown (attribute) {
-        return format_general(attribute);
+    /**
+     *
+     * @param {GeneralSearchResult} general
+     * @return {string}
+     */
+    function get_detail(general) {
+        switch (general.type) {
+            case 'project': {
+                let security;
+                let allowed_users = '';
 
+                if (general.is_public) {
+                    security = `<span class="text-success"><i class="fas fa-lock-open"></i></span><span class="text-success ms-1" >Public</i>  </span>`;
+                } else {
+                    security = `<span class="text-info"><i class="fas fa-lock "></i></span>`;
+                    allowed_users += `<span>`;
+                    for(let i = 0; i < general.allowed_readers_results.length; i++) {
+                        allowed_users += `<i class="text-black-50 ms-1"> ${general.allowed_readers_results[i].title} </i>`;
+                    }
+                    allowed_users += `</span>`;
+                }
+
+                return jQuery(`<span class="d-inline">
+                            ${security} ${allowed_users}
+                            <span class="d-block">
+                                ${general.blurb}
+                            </span>
+                        </span>`);
+
+            }
+            case 'entry': {
+                return jQuery(`<span class="d-inline">
+                            
+                            <span class="d-block">
+                                ${general.blurb}
+                            </span>
+                        </span>`);
+            }
+            case 'tag': {
+                let used_by = '';
+                used_by += `<span>`;
+                for(let i = 0; i < general.tag_used_by_results.length; i++) {
+                    used_by += `<i class="text-black-50 ms-1"> ${general.tag_used_by_results[i].title} </i>`;
+                }
+                used_by += `</span>`;
+                return jQuery(`<span class="d-inline">
+                            
+                            <span class="d-block">
+                                ${used_by}
+                            </span>
+                        </span>`);
+            }
+            default: {
+                return jQuery('');
+            }
+        }
+    }
+
+    function format_general_in_dropdown (attribute) {
+        let first_part =  format_general(attribute);
+        let second_part = get_detail(attribute);
+
+        let parent =  jQuery(`<span class="d-inline"></span>`);
+        parent.append(first_part);
+        parent.append(second_part);
+        return parent;
     }
 
     /**

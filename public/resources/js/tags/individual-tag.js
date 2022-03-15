@@ -1,37 +1,11 @@
 /**
  *
  * @param {FlowTag} tag
- * @param {boolean} js_css
  * @returns {Object}
  */
-function get_tag_style(tag,js_css) {
+function get_tag_style(tag) {
 
-    let per_attribute = {};
-
-    for(let attribute_key in tag.standard_attributes) {
-        let attribute_value = tag.standard_attributes[attribute_key];
-        switch (attribute_key) {
-            case 'background-color': {
-                if (attribute_value) {
-                    let rule = `${attribute_value}`;
-                    let rule_key = attribute_key;
-                    if (js_css) {
-                        rule_key = 'background-color';
-                    }
-                    per_attribute[rule_key] =  rule;
-                }
-                break;
-            }
-            case 'color': {
-                if (attribute_value) {
-                    let rule = `${attribute_value}`;
-                    per_attribute[attribute_key] =  rule;
-                }
-                break;
-            }
-        }
-    }
-    return per_attribute;
+    return tag.css;
 }
 
 /**
@@ -133,7 +107,7 @@ function add_tag_attributes_to_dom(tag_map,tags_here_jquery_or_string,b_allow_li
              * @type {FlowTag} tag
              */
             let tag = tag_map[tag_guid];
-            let tag_style = get_tag_style(tag,true);
+            let tag_style = get_tag_style(tag);
             let tag_classes = get_tag_classes(tag);
             let tag_data = get_tag_data(tag);
 

@@ -80,13 +80,8 @@ class JsonHelper {
 
         $phpArray['code'] = $status_code;
         $phpArray['valid'] = $b_valid;
-        $out = json_encode($phpArray);
-        if ($out) {
-            print $out;
-        } else {
-            $phpArray['json_error'] = json_last_error_msg();
-            print_r($out);
-        }
+        $out = static::toString($phpArray);
+        print $out;
         die($b_valid ? 0 : 1);
     }
 
@@ -118,7 +113,7 @@ class JsonHelper {
      * @return string
      * @throws JsonException if json error
      */
-    public static function toString($phpArray, int $options=0): string
+    public static function toString($phpArray, int $options=JSON_UNESCAPED_UNICODE): string
     {
         $out = json_encode($phpArray, $options );
         if ($out) {
@@ -286,7 +281,7 @@ class JsonHelper {
         //see if an number not = to 0
         if (is_numeric($var) && (intval($var) == floatval($var))) {
             $test = intval($var);
-            if ($test === 0) {
+            if ($test) {
                 return false;
             } else {
                 return true;
@@ -381,11 +376,7 @@ class JsonHelper {
                 }
 
             case 'text':
-                if (is_array($what)) {
-                    throw  new JsonException("Cannot convert array to $data_type");
-                } else {
-                    return $what;
-                }
+                return $what;
             case 'json':
                 return JsonHelper::fromString($what);
             case 'date_time' :
@@ -829,7 +820,8 @@ class JsonHelper {
             $dom = new Dom;
             $dom->loadStr( $post );
             $br_in_ul_array = $dom->find( 'ul br' );
-            foreach ( $br_in_ul_array as &$br ) {
+            /** @noinspection PhpParameterByRefIsNotUsedAsReferenceInspection */
+            foreach ($br_in_ul_array as &$br ) {
                 $br->delete();
                 unset( $br );
             }

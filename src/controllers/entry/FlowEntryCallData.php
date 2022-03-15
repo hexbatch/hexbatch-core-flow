@@ -2,7 +2,6 @@
 
 namespace app\controllers\entry;
 
-use app\models\entry\FlowEntry;
 use app\models\entry\FlowEntrySearchParams;
 use app\models\entry\IFlowEntry;
 use app\models\project\FlowProject;

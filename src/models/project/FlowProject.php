@@ -316,6 +316,7 @@ class FlowProject extends FlowBase {
         if (!static::minimum_check_valid_name($words,static::MAX_SIZE_TITLE)) {return false;}
 
         $b_match = preg_match('/^[[:alnum:]\-]+$/u',$words,$matches);
+        WillFunctions::will_do_nothing($matches);
         if ($b_match === false) {
             $error_preg = array_flip(array_filter(get_defined_constants(true)['pcre'], function ($value) {
                 return substr($value, -6) === '_ERROR';
@@ -825,6 +826,9 @@ class FlowProject extends FlowBase {
         $limit_projects = [];
         if (trim($project_title_guid_or_id)) {$limit_projects[] = trim($project_title_guid_or_id);}
         $what = FlowProjectSearch::find_projects($limit_projects,$user_name_guid_or_id);
+        if (empty($what)) {
+            throw new InvalidArgumentException("Project Not Found");
+        }
         return $what[0]??null;
     }
 
@@ -881,7 +885,7 @@ class FlowProject extends FlowBase {
             if (!$check) {
                 throw new RuntimeException("Could not create the directory of $repo_path");
             }
-            /** @noinspection PhpConditionAlreadyCheckedInspection */
+
             if (!is_readable($repo_path)) {
                 throw new RuntimeException("Could not make a readable directory of $repo_path");
             }

@@ -39,7 +39,7 @@ class GoodZipArchive extends ZipArchive
         $dir = opendir ($location);
         while ($file = readdir($dir))    {
             if ($file == '.' || $file == '..') continue;
-            // Rekursiv, If dir: GoodZipArchive::addDir(), else ::File();
+            // Recursive, If dir: GoodZipArchive::addDir(), else ::File();
             $do = (filetype( $location . $file) == 'dir') ? 'addDir' : 'addFile';
             $this->$do($location . $file, $name . $file);
         }

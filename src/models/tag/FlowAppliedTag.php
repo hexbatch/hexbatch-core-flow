@@ -63,9 +63,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable {
         foreach ($object as $key => $val) {
             if (property_exists($this,$key)) {
                 $careful_value = $val;
-                if (!(is_array($val) || is_object($val))) {
-                    if ($val === '') {$careful_value = null;}
-                }
+                if ($val === '') {$careful_value = null;}
                 $this->$key = $careful_value;
             }
         }

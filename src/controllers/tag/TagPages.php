@@ -22,6 +22,44 @@ use Slim\Routing\RouteContext;
 
 class TagPages extends BasePages
 {
+
+
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     * @param string $user_name
+     * @param string $project_name
+     * @param string $tag_name
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function show_tag( ServerRequestInterface $request,ResponseInterface $response,
+                              string $user_name, string $project_name,string $tag_name) :ResponseInterface
+    {
+        try {
+            $option = new FlowTagCallData([FlowTagCallData::OPTION_GET_APPLIED,FlowTagCallData::OPTION_ALLOW_EMPTY_BODY]);
+            $option->note = 'show_tag';
+
+            $call = $this->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
+            $call->tag->refresh_inherited_fields();
+
+
+            return $this->view->render($response, 'main.twig', [
+                'page_template_path' => 'project/show-tag.twig',
+                'page_title' => 'Tag ' . $call->tag->flow_tag_name,
+                'page_description' => 'Shows tag details',
+                'project' => $call->project,
+                'tag' => $call->tag,
+            ]);
+        } catch (Exception $e) {
+            $this->logger->error("Could not render show tag page",['exception'=>$e]);
+            throw $e;
+        }
+    }
+
+
     /**
      * @param ServerRequestInterface $request
      * @param ResponseInterface $response
@@ -171,6 +209,7 @@ class TagPages extends BasePages
 
             $tag->save(true);
             $saved_tag = $tag->clone_refresh();
+            $saved_tag->update_flow_things_with_css();
 
             $call->project->do_tag_save();
             $data = ['success'=>true,'message'=>'ok','tag'=>$saved_tag,'token'=> $call->new_token];
@@ -225,6 +264,7 @@ class TagPages extends BasePages
             }
             $tag->save();
             $saved_tag = $tag->clone_refresh();
+            $saved_tag->update_flow_things_with_css();
 
             $routeParser = RouteContext::fromRequest($request)->getRouteParser();
             foreach ( $saved_tag->applied as $mapp) {
@@ -314,7 +354,8 @@ class TagPages extends BasePages
      * @return FlowTagCallData
      * @throws
      */
-    protected function validate_ajax_call(FlowTagCallData $options, ServerRequestInterface $request, ?string $route_name, string $user_name,
+    protected function validate_ajax_call(FlowTagCallData $options, ServerRequestInterface $request,
+                                          ?string $route_name, string $user_name,
                                           string $project_name, ?string $tag_name = null ,
                                           ?string $attribute_name = null) : FlowTagCallData
     {
@@ -322,7 +363,10 @@ class TagPages extends BasePages
         $token = null;
         $args = $request->getParsedBody();
         if (empty($args)) {
-            throw new InvalidArgumentException("No data sent");
+            if (!$options->has_option(FlowTagCallData::OPTION_ALLOW_EMPTY_BODY)) {
+                throw new InvalidArgumentException("No data sent");
+            }
+
         }
 
         $csrf = null;
@@ -382,7 +426,7 @@ class TagPages extends BasePages
 
         $args_as_object = JsonHelper::fromString(JsonHelper::toString($args),true,false);
 
-        $tags = $project->get_all_owned_tags_in_project();
+        $tags = $project->get_all_owned_tags_in_project($options->has_option(FlowTagCallData::OPTION_GET_APPLIED));
 
         $ret = new  FlowTagCallData([],$args_as_object,$project,$token);
 
@@ -409,7 +453,7 @@ class TagPages extends BasePages
             }//end if attribute name
         } //end if tag name
 
-        if (property_exists($args_as_object,'applied')) {
+        if ($args_as_object && property_exists($args_as_object,'applied')) {
             $ret->applied = FlowAppliedTag::reconstitute($args_as_object->applied,$ret->tag);
         }
 

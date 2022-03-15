@@ -59,6 +59,17 @@ class FlowTag extends FlowBase implements JsonSerializable {
     public array $applied = [];
 
 
+    /**
+     * @var FlowTagAttribute[] $attributes
+     */
+    public array $inherited_attributes = [];
+
+    /**
+     * @var array<string,string> $css
+     */
+    public array $css = [];
+
+
     public function jsonSerialize(): array
     {
 
@@ -67,13 +78,9 @@ class FlowTag extends FlowBase implements JsonSerializable {
             $brief = new BriefFlowTag($this);
             return $brief->to_array();
         } else {
+            $this->refresh_inherited_fields();
             $standard = FlowTagStandardAttribute::find_standard_attributes($this);
 
-            $attributes = static::get_attribute_map($this);
-
-            foreach ($attributes as $attribute) {
-                $attribute->is_inherited = $attribute->flow_tag_guid !== $this->flow_tag_guid;
-            }
 
             return [
                 "flow_tag_guid" => $this->flow_tag_guid,
@@ -83,7 +90,8 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 "created_at_ts" => $this->tag_created_at_ts,
                 "updated_at_ts" => $this->tag_updated_at_ts,
                 "flow_tag_name" => $this->flow_tag_name,
-                "attributes" => $attributes,
+                "attributes" => $this->inherited_attributes,
+                "css" => $this->css,
                 "standard_attributes" => $standard,
                 "flow_tag_parent" => $this->flow_tag_parent,
                 "applied" => $this->applied
@@ -116,6 +124,9 @@ class FlowTag extends FlowBase implements JsonSerializable {
             $ret[$attribute->tag_attribute_name] = $new_attribute;
         }
 
+        foreach ($ret as $attribute) {
+            $attribute->is_inherited = $attribute->flow_tag_guid !== $tag->flow_tag_guid;
+        }
         return $ret;
     }
 
@@ -123,6 +134,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
     public function __construct($object=null){
         $this->attributes = [];
+        $this->css = [];
         $this->applied = [];
         $this->children_list = [];
         $this->flow_tag_id = null ;
@@ -196,6 +208,13 @@ class FlowTag extends FlowBase implements JsonSerializable {
             $this->children_list = explode(',',$this->children_list_as_string);
         }
 
+        $this->refresh_inherited_fields();
+
+    }
+
+    public function refresh_inherited_fields() {
+        $this->css = FlowTagStandardAttribute::generate_css_from_attributes($this);
+        $this->inherited_attributes = static::get_attribute_map($this);
     }
 
     /**
@@ -272,17 +291,14 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
                 if ($me_attribute->points_to_entry_id && !$this_attribute->points_to_flow_entry_guid) {
                     $me_attribute->points_to_entry_id = null;
-                    $me_attribute->points_to_flow_entry_guid = null;
                 }
 
                 if ($me_attribute->points_to_user_id && !$this_attribute->points_to_flow_user_guid) {
                     $me_attribute->points_to_user_id = null;
-                    $me_attribute->points_to_flow_user_guid = null;
                 }
 
                 if ($me_attribute->points_to_project_id && !$this_attribute->points_to_flow_project_guid) {
                     $me_attribute->points_to_project_id = null;
-                    $me_attribute->points_to_flow_project_guid = null;
                 }
 
                 $me_attribute->points_to_flow_entry_guid = empty($this_attribute->points_to_flow_entry_guid) ? null:  $this_attribute->points_to_flow_entry_guid ;
@@ -291,7 +307,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
                 $me_attribute->tag_attribute_name = $this_attribute->tag_attribute_name;
 
-                if ($this_attribute->tag_attribute_long !== 0 && $this_attribute->tag_attribute_long !== '0' && empty($this_attribute->tag_attribute_long)) {
+                if ( $this_attribute->tag_attribute_long !== '0' && empty($this_attribute->tag_attribute_long)) {
                     $this_attribute->tag_attribute_long =  null;
                 } else {
                     $me_attribute->tag_attribute_long =  intval($this_attribute->tag_attribute_long);
@@ -659,6 +675,9 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 }
                 $filtered = $applied_filter;
             }
+            foreach ($filtered as $b_tag) {
+                $b_tag->refresh_inherited_fields();
+            }
             return  $filtered;
         } catch (Exception $e) {
             static::get_logger()->alert("FlowTag model cannot get_tags ",['exception'=>$e]);
@@ -672,6 +691,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
         if (!$b_min_ok) {return false;}
         //no special punctuation
         if (preg_match('/[\'"<>`]/', $words, $output_array)) {
+            WillFunctions::will_do_nothing($output_array);
             return false;
         }
         return true;
@@ -812,8 +832,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
                     $app->save();
                 }
             }
-
-
+            $this->update_flow_things_with_css();
             if ($b_do_transaction) {$db->commit(); }
 
 
@@ -822,6 +841,18 @@ class FlowTag extends FlowBase implements JsonSerializable {
             static::get_logger()->alert("Tag model cannot save ",['exception'=>$e]);
             throw $e;
         }
+    }
+
+    public function update_flow_things_with_css() : int {
+        if (empty($this->css)) {return 0;}
+        $css_json = JsonHelper::toString( $this->css);
+        $count = static::get_connection()->safeQuery(
+            "UPDATE flow_things SET css_json =  CAST(? AS JSON) WHERE thing_guid = UNHEX(?);",
+            [$css_json, $this->flow_tag_guid],
+            PDO::FETCH_BOTH,
+            true
+        );
+        return $count;
     }
 
     public function delete_tag() {

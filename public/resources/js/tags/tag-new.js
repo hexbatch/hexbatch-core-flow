@@ -11,6 +11,8 @@ jQuery(function ($){
      */
     let parent_tag = null;
 
+    let b_is_saving = false;
+
 
 
     modal = new tingle.modal({
@@ -31,8 +33,7 @@ jQuery(function ($){
            utterly_destroy_select2(bare_select_control);
         },
         beforeClose: function() {
-            return true; // close the modal
-            // return false; // nothing happens
+            return !b_is_saving;
         }
     });
 
@@ -44,15 +45,19 @@ jQuery(function ($){
         if (parent_tag) { parent_guid = parent_tag.flow_tag_guid }
         let tag_name = tag_name_input.val();
         if (tag_name) {
+            b_is_saving = false;
+            // noinspection JSCheckFunctionSignatures
             create_tag({flow_tag_name: tag_name,parent_tag_guid:parent_guid}
                 ,
                 function(response) {
+                    b_is_saving = true;
                     console.log('created tag',response)
                     modal.close();
+                    // noinspection JSCheckFunctionSignatures
                     window.location.reload(true);
                 },
                 function() {
-                    //do nothing
+                    b_is_saving = false;
                 });
         }
 

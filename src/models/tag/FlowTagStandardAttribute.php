@@ -6,10 +6,18 @@ use JsonSerializable;
 
 class FlowTagStandardAttribute implements JsonSerializable {
 
+    const STD_ATTR_TYPE_CSS = 'css';
+
+
     const STD_ATTR_COLOR = 'color';
     const STD_ATTR_BACKGROUND_COLOR = 'background-color';
 
     const STANDARD_ATTRIBUTES = [
+        self::STD_ATTR_BACKGROUND_COLOR,
+        self::STD_ATTR_COLOR,
+    ];
+
+    const CSS_ATTRIBUTES = [
         self::STD_ATTR_BACKGROUND_COLOR,
         self::STD_ATTR_COLOR,
     ];
@@ -30,17 +38,26 @@ class FlowTagStandardAttribute implements JsonSerializable {
         return false;
     }
 
+    public static function get_standard_attribute_type(FlowTagAttribute $attribute): ?string
+    {
+        if (in_array($attribute->tag_attribute_name,static::CSS_ATTRIBUTES)) {
+            return static::STD_ATTR_TYPE_CSS;
+        }
+        return null;
+    }
+
     /**
      * Fills in standard tags recursively from base most parent, having each descendant able to overwrite
      * if standard attribute never defined, then that value is null
      * @param FlowTag|null $tag
+     * @param bool $b_add_empty default true
      * @return FlowTagStandardAttribute[]
      */
-    public static function find_standard_attributes(?FlowTag $tag) :array {
+    public static function find_standard_attributes(?FlowTag $tag, bool $b_add_empty = true) :array {
         $ret = [];
         if (empty($tag)) {return $ret;}
 
-        $ret = static::find_standard_attributes($tag->flow_tag_parent);
+        $ret = static::find_standard_attributes($tag->flow_tag_parent,$b_add_empty);
 
         foreach ($tag->attributes as $attribute) {
             if ($attribute->is_standard_attribute) {
@@ -63,12 +80,31 @@ class FlowTagStandardAttribute implements JsonSerializable {
             }
         }
 
-        foreach (static::STANDARD_ATTRIBUTES as $std) {
-            if (!array_key_exists($std,$ret)) {
-                $ret[$std] = null;
+        if ($b_add_empty) {
+            foreach (static::STANDARD_ATTRIBUTES as $std) {
+                if (!array_key_exists($std,$ret)) {
+                    $ret[$std] = null;
+                }
             }
         }
 
+
+        return $ret;
+
+    }
+
+    /**
+     * @param FlowTag|null $tag
+     * @return array
+     */
+    public static function generate_css_from_attributes(?FlowTag $tag) :array {
+        $attributes = static::find_standard_attributes($tag,false);
+        $ret = [];
+        foreach ($attributes as $attribute_name => $attribute_text) {
+            if (in_array($attribute_name,static::CSS_ATTRIBUTES)) {
+                $ret[$attribute_name] = $attribute_text;
+            }
+        }
         return $ret;
 
     }

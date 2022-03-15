@@ -2,8 +2,8 @@
 namespace app\models\project;
 
 
+use app\hexlet\WillFunctions;
 use app\models\entry\archive\IFlowEntryArchive;
-use app\models\entry\IFlowEntry;
 use Exception;
 
 class FlowGitFile {
@@ -64,6 +64,7 @@ class FlowGitFile {
     protected function is_valid_entry_file() : bool{
 
         $what = preg_match('/entry-.+\//', $this->file, $output_array);
+        WillFunctions::will_do_nothing($output_array);
         if ($what) {return true;}
         return false;
     }

@@ -3,6 +3,7 @@
 namespace app\models\multi;
 
 
+use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use PDO;
 
@@ -69,6 +70,7 @@ class GeneralSearch extends FlowBase{
 
             }
         }
+        WillFunctions::will_do_nothing($user_ids,$entry_ids,$project_ids);
     }
 
     /**
@@ -102,9 +104,10 @@ class GeneralSearch extends FlowBase{
             }
         }
 
-        if ($search->title) {
-            $where_array[] = "thing.thing_title like ?";
-            $args[] = $search->title . '%';
+        if ($search->words) {
+            $where_array[] = "( thing.thing_title like ? OR MATCH(thing.thing_blurb) AGAINST( ? IN BOOLEAN MODE) )";
+            $args[] = $search->words . '%';
+            $args[] = $search->words . '*';
         }
 
         if ($search->created_at_ts) {
@@ -125,6 +128,17 @@ class GeneralSearch extends FlowBase{
 
         }
 
+        if ($search->against_user_guid) {
+            $where_array[] = "( thing.is_public > 0 OR  JSON_SEARCH(thing.allowed_readers_json,'one',?) IS NOT NULL ".
+                "OR thing.owning_user_guid = UNHEX(?) ) ";
+            $args[] = $search->against_user_guid;
+            $args[] = $search->against_user_guid;
+        }
+
+        if ($search->b_only_public && empty($search->against_user_guid)) {
+            $where_array[] = "thing.is_public > 0 ";
+        }
+
 
 
         $where_conditions = 4;
@@ -140,8 +154,16 @@ class GeneralSearch extends FlowBase{
                             HEX(thing.thing_guid) as guid ,
                             thing.thing_id as id,
                             thing.thing_title as title,
+                            thing.thing_blurb as blurb,
                             thing.thing_type as type,
-                            UNIX_TIMESTAMP(thing.thing_created_at) as created_at_ts
+                            HEX(thing.owning_user_guid) as owning_user_guid,
+                            HEX(thing.owning_project_guid) as owning_project_guid,
+                            thing.allowed_readers_json,
+                            thing.tag_used_by_json,
+                            thing.css_json,
+                            UNIX_TIMESTAMP(thing.thing_created_at) as created_at_ts,
+                            UNIX_TIMESTAMP(thing.thing_updated_at) as updated_at_ts,
+                            thing.is_public
                         FROM flow_things thing 
                         WHERE 1 AND $where_conditions
                         ORDER BY title ASC
@@ -160,6 +182,57 @@ class GeneralSearch extends FlowBase{
         foreach ($res as $row) {
             $node = new GeneralSearchResult($row);
             $ret[] = $node;
+        }
+
+        if ($search->b_get_secondary) {
+            $secondary_search = new GeneralSearchParams();
+            $secondary_search->b_only_public = $search->b_only_public;
+            $secondary_search->against_user_guid = $search->against_user_guid;
+            foreach ($ret as $generalSearchResult) {
+                $secondary_search->guids = array_merge($secondary_search->guids,$generalSearchResult->tag_used_by);
+                $secondary_search->guids = array_merge($secondary_search->guids,$generalSearchResult->allowed_readers);
+
+                if ($generalSearchResult->owning_project_guid !== $generalSearchResult->guid) {
+                    $secondary_search->guids[] = $generalSearchResult->owning_project_guid;
+                }
+
+                if ($generalSearchResult->owning_user_guid !== $generalSearchResult->guid) {
+                    $secondary_search->guids[] = $generalSearchResult->owning_user_guid;
+                }
+
+                $secondary_search->guids = array_unique($secondary_search->guids);
+            }
+            $secondary_results = static::general_search($secondary_search,1,static::UNLIMITED_RESULTS_PER_PAGE);
+            $secondary_hash = [];
+            foreach ($secondary_results as $secondary_result) {
+                $secondary_hash[$secondary_result->guid] = $secondary_result;
+            }
+
+            foreach ($ret as $generalSearchResult) {
+                foreach ($generalSearchResult->allowed_readers as $allowed_reader_guid) {
+                    if (array_key_exists($allowed_reader_guid,$secondary_hash)) {
+                        $generalSearchResult->allowed_readers_results[] = $secondary_hash[$allowed_reader_guid];
+                    }
+                }
+
+                foreach ($generalSearchResult->tag_used_by as $used_by_guid) {
+                    if (array_key_exists($used_by_guid,$secondary_hash)) {
+                        $generalSearchResult->tag_used_by_results[] = $secondary_hash[$used_by_guid];
+                    }
+                }
+
+                if ($generalSearchResult->owning_project_guid !== $generalSearchResult->guid) {
+                    if (array_key_exists($generalSearchResult->owning_project_guid,$secondary_hash)) {
+                        $generalSearchResult->owning_project_result = $secondary_hash[$generalSearchResult->owning_project_guid];
+                    }
+                }
+
+                if ($generalSearchResult->owning_user_guid !== $generalSearchResult->guid) {
+                    if (array_key_exists($generalSearchResult->owning_user_guid,$secondary_hash)) {
+                        $generalSearchResult->owning_user_result = $secondary_hash[$generalSearchResult->owning_user_guid];
+                    }
+                }
+            }
         }
 
         return $ret;

@@ -8,3 +8,17 @@ footer {
     pointer-events: none;
     opacity: 0.4;
 }
+
+
+
+.hexbatch-top-nav-menu textarea.select2-search__field {
+    line-height: 18px;
+}
+
+.hexbatch-top-nav-menu .form-control.select2-selection {
+    padding: 0;
+}
+
+.hexbatch-top-nav-menu .select2-container {
+    /*display: inline-block;*/
+}

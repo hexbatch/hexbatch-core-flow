@@ -1,4 +1,5 @@
-<?php
+<?php /** @noinspection SpellCheckingInspection */
+
 namespace app\models\project;
 /*
  * git --no-pager log -n30000 --pretty=format:'{%n  "commit": "%H",%n  "abbreviated_commit": "%h",%n  "tree": "%T",%n  "abbreviated_tree": "%t",%n  "parent": "%P",%n  "abbreviated_parent": "%p",%n  "refs": "%D",%n  "encoding": "%e",%n  "subject": "%s",%n  "sanitized_subject_line": "%f",%n  "body": "%b",%n  "commit_notes": "%N",%n  "verification_flag": "%G?",%n  "signer": "%GS",%n  "signer_key": "%GK",%n  "author": {%n    "name": "%aN",%n    "email": "%aE",%n    "date": "%at"%n  },%n  "commiter": {%n    "name": "%cN",%n    "email": "%cE",%n    "date": "%ct"%n  }%n},'
@@ -87,7 +88,8 @@ class FlowGitHistory {
 
     public ?FlowUser $author_object;
 
-    public function get_author() {
+    public function get_author(): ?FlowUser
+    {
         if (empty($this->author_object)) {
             $this->author_object = new FlowUser();
         }

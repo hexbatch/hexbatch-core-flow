@@ -122,6 +122,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
         if (!$b_min_ok) {return false;}
         //no special punctuation
         if (preg_match('/[\'"<>`]/', $words, $output_array)) {
+            WillFunctions::will_do_nothing($output_array);
             return false;
         }
         return true;
@@ -235,7 +236,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                     $db->commit();
                 }
             } catch (Exception $e) {
-                if ($b_do_transaction && $db &&  $db->inTransaction()) { $db->rollBack(); }
+                if ($b_do_transaction &&   $db->inTransaction()) { $db->rollBack(); }
                 throw $e;
             }
 
