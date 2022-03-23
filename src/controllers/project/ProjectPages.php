@@ -3,8 +3,10 @@ namespace app\controllers\project;
 
 use app\controllers\base\BasePages;
 use app\controllers\user\UserPages;
+use app\helpers\ProjectHelper;
 use app\hexlet\FlowAntiCSRF;
 use app\hexlet\GoodZipArchive;
+use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\project\FlowGitFile;
 use app\models\project\FlowProject;
@@ -19,12 +21,11 @@ use LogicException;
 use ParagonIE\AntiCSRF\AntiCSRF;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
-use Slim\Exception\HttpBadRequestException;
 use Slim\Exception\HttpForbiddenException;
 use Slim\Exception\HttpInternalServerErrorException;
 use Slim\Exception\HttpNotFoundException;
+use Slim\Exception\HttpNotImplementedException;
 use Slim\Psr7\Stream;
 use Slim\Routing\RouteContext;
 
@@ -39,17 +40,19 @@ class ProjectPages extends BasePages
     const REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY = 'project_import_git_form_in_progress_has_error';
 
 
-
-
+    protected function get_project_helper() : ProjectHelper {
+        return ProjectHelper::get_project_helper();
+    }
     /**
+     * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
-     * @throws Exception
+     * @throws
      * @noinspection PhpUnused
      */
-    public function all_projects( ResponseInterface $response) :ResponseInterface {
+    public function all_projects(  ServerRequestInterface $request,ResponseInterface $response) :ResponseInterface {
         if ($this->user->flow_user_id) {
-            return $this->all_projects_overview_logged_in($response);
+            return $this->all_projects_overview_logged_in($request,$response);
         } else {
             return $this->all_projects_overview_for_anon($response);
         }
@@ -76,14 +79,14 @@ class ProjectPages extends BasePages
 
 
     /**
+     * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
-     * @throws Exception
-     * @noinspection PhpUnused
+     * @throws
      */
-    public function all_projects_overview_logged_in( ResponseInterface $response) :ResponseInterface {
+    public function all_projects_overview_logged_in( ServerRequestInterface $request,ResponseInterface $response) :ResponseInterface {
         try {
-            $my_projects= FlowProject::get_all_top_projects( FlowUser::get_logged_in_user()->flow_user_id);
+            $my_projects= $this->get_project_helper()->get_all_top_projects( $request,FlowUser::get_logged_in_user()->flow_user_id);
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/all_projects_overview_logged_in.twig',
                 'page_title' => 'Your Projects',
@@ -108,7 +111,7 @@ class ProjectPages extends BasePages
     public function single_project_home( ServerRequestInterface $request,ResponseInterface $response,
                                         string $user_name, string $project_name) :ResponseInterface {
         try {
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'read');
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'read');
 
             if (!$project) {
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");
@@ -178,6 +181,69 @@ class ProjectPages extends BasePages
         ]);
     }
 
+    /**
+     * makes new project and then redirects to new project page
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $guid
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function clone_project_from_local(ServerRequestInterface $request, ResponseInterface $response, string $guid) :ResponseInterface {
+        $project = null;
+        try {
+            $args = $request->getParsedBody();
+            $csrf = new FlowAntiCSRF($args,$_SESSION,FlowAntiCSRF::$fake_server);
+            if (!$csrf->validateRequest()) {
+                throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
+            }
+            $project = $this->get_project_helper()->copy_project_from_guid($request,$guid);
+
+            try {
+                UserPages::add_flash_message('success', "Created Project " . $project->flow_project_title);
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                $url = $routeParser->urlFor('single_project_home',[
+                    "user_name" => $project->get_admin_user()->flow_user_name,
+                    "project_name" => $project->flow_project_title
+                ]);
+                $response = $response->withStatus(302);
+                return $response->withHeader('Location', $url);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to project pageafter successful creation", ['exception' => $e]);
+                throw $e;
+            }
+        } catch (Exception $e) {
+            try {
+                UserPages::add_flash_message('warning', "Cannot clone project " . $e->getMessage());
+                $_SESSION[static::REM_NEW_PROJECT_WITH_ERROR_SESSION_KEY] = $project;
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                $url = $routeParser->urlFor('clone_project');
+                $response = $response->withStatus(302);
+                return $response->withHeader('Location', $url);
+            } catch (Exception $e) {
+                $this->logger->error("Could not redirect to create project after error", ['exception' => $e]);
+                throw $e;
+            }
+        }
+    }
+
+
+    /**
+     * makes new project and then redirects to new project page
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws HttpNotImplementedException
+     * @noinspection PhpUnused
+     */
+    public function clone_project_from_git(ServerRequestInterface $request, ResponseInterface $response, string $project_name) :ResponseInterface {
+        WillFunctions::will_do_nothing($response,$project_name);
+        //todo implement project from git
+        throw new HttpNotImplementedException($request,"clone_project_from_git not implemented yet");
+    }
+
 
     /**
      * @param ServerRequestInterface $request
@@ -236,75 +302,7 @@ class ProjectPages extends BasePages
     }
 
 
-    /**
-     * @param ServerRequestInterface $request
-     * @param string $user_name
-     * @param string $project_name
-     * @param string $permission read|write|admin
-     * @return FlowProject|null
-     * @throws Exception
-     */
-    public  function get_project_with_permissions(
-        ServerRequestInterface $request,string $user_name, string $project_name,string $permission) : ?FlowProject
-    {
-        if ($permission !== 'read' && $permission !== 'write' && $permission !== 'admin') {
-            throw new InvalidArgumentException("permission has to be read or write or admin");
-        }
 
-        $project = null;
-        try {
-            $project = FlowProject::find_one($project_name,$user_name);
-        } catch (InvalidArgumentException $not_found) {
-            throw new HttpNotFoundException($request,sprintf("Cannot Find User %s with Project %s",$user_name,$project));
-        }
-
-
-        //return if public and nobody logged in
-        if (empty($this->user->flow_user_id)) {
-            if ($permission === 'read') {
-                if ($project->is_public) {
-                    return $project;
-                }else {
-                    throw new HttpForbiddenException($request,"Project is not public");
-                }
-            } else {
-                throw new HttpForbiddenException($request,"Need to be logged in to edit this project");
-            }
-        }
-
-        $user_permissions = FlowUser::find_users_by_project(true,
-            $project->flow_project_guid,null,true,$this->user->flow_user_guid);
-
-        if (empty($user_permissions)) {
-            throw new InvalidArgumentException("No permissions set for this");
-        }
-        $permissions_array  = $user_permissions[0]->get_permissions();
-        if (empty($permissions_array)) {
-            throw new InvalidArgumentException("No permissions found, although in project");
-        }
-        $project_user = $permissions_array[0];
-
-        $project->set_current_user_permissions($project_user);
-
-        if ($permission === 'read') {
-            if ($project->is_public) {
-                return $project;
-            } elseif (!$project_user->can_read) {
-                throw new HttpForbiddenException($request,"Project cannot be viewed");
-            }
-        }
-        else if ($permission === 'admin') {
-            if ( ! $project_user->can_admin) {
-                throw new HttpForbiddenException($request,"Only the admin can edit this part of the project $project_name");
-            }
-        } else if ($permission === 'write') {
-            if ( ! $project_user->can_write) {
-                throw new HttpForbiddenException($request,"You can view but not edit this project");
-            }
-        }
-
-        return $project;
-    }
     /**
      * @param ServerRequestInterface $request
      * @param ResponseInterface $response
@@ -317,7 +315,7 @@ class ProjectPages extends BasePages
     public function edit_project( ServerRequestInterface $request,ResponseInterface $response,
                                          string $user_name, string $project_name) :ResponseInterface {
         try {
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'write');
 
             if (!$project) {
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");
@@ -365,7 +363,7 @@ class ProjectPages extends BasePages
         try {
             $csrf = new AntiCSRF;
 
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'write');
 
             $args = $request->getParsedBody();
 
@@ -439,24 +437,13 @@ class ProjectPages extends BasePages
     public function resources( ServerRequestInterface $request,ResponseInterface $response,
                                               string $user_name, string $project_name) :ResponseInterface {
         try {
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'write');
 
             if (!$project) {
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");
             }
 
-            $resource_files = $project->get_resource_file_paths();
-            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-            $base_project_url = $routeParser->urlFor('single_project_home',[
-                "user_name" => $project->get_admin_user()->flow_user_guid,
-                "project_name" => $project->flow_project_guid
-            ]);
-            $base_resource_file_path = $project->get_project_directory(); //no slash at end
-
-            $resource_urls = [];
-            foreach ($resource_files as $full_path_file) {
-                $resource_urls[] = str_replace($base_resource_file_path,$base_project_url,$full_path_file);
-            }
+            $resource_urls = $project->get_resource_urls();
 
 
             return $this->view->render($response, 'main.twig', [
@@ -485,7 +472,7 @@ class ProjectPages extends BasePages
     public function edit_project_permissions( ServerRequestInterface $request,ResponseInterface $response,
                                   string $user_name, string $project_name) :ResponseInterface {
         try {
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'admin');
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'admin');
 
             if (!$project) {
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");
@@ -552,7 +539,7 @@ class ProjectPages extends BasePages
                 throw new InvalidArgumentException("Need the X-Requested-With header");
             }
 
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'admin');
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'admin');
 
             $routeParser = RouteContext::fromRequest($request)->getRouteParser();
             $token_lock_to = $routeParser->urlFor('edit_permissions_ajax',[
@@ -653,7 +640,7 @@ class ProjectPages extends BasePages
                 }
             }
             $data = ['success'=>true,'message'=>'','data'=>$inner_data,'token'=> $token];
-            $payload = json_encode($data);
+            $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
             return $response
@@ -663,7 +650,7 @@ class ProjectPages extends BasePages
 
         } catch (Exception $e) {
             $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $token];
-            $payload = json_encode($data);
+            $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
             return $response
@@ -688,7 +675,7 @@ class ProjectPages extends BasePages
     public function edit_project_tags( ServerRequestInterface $request,ResponseInterface $response,
                                               string $user_name, string $project_name) :ResponseInterface {
         try {
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'read');
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'read');
 
             if (!$project) {
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");
@@ -726,13 +713,15 @@ class ProjectPages extends BasePages
     public function project_history( ServerRequestInterface $request,ResponseInterface $response,
                                        string $user_name, string $project_name,?int $page) :ResponseInterface {
         try {
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'write');
 
             if (!$project) {
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");
             }
 
             if (intval($page) < 1) {$page = 1;}
+
+            $status_array = $project->get_git_status();
 
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/project_history.twig',
@@ -741,6 +730,7 @@ class ProjectPages extends BasePages
                 'history_page_number' => $page,
                 'history_page_size' => 10,
                 'project' => $project,
+                'status' => $status_array
             ]);
 
         } catch (Exception $e) {
@@ -774,7 +764,7 @@ class ProjectPages extends BasePages
                 throw new InvalidArgumentException("Need the X-Requested-With header");
             }
 
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'write');
 
 
             $file_path = $args['file_path'] ?? '';
@@ -789,7 +779,7 @@ class ProjectPages extends BasePages
             $diff = $flow_file->show_diff($b_show_all);
 
             $data = ['success'=>true,'message'=>'','diff'=>$diff,'token'=> null];
-            $payload = json_encode($data);
+            $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
             return $response
@@ -799,7 +789,54 @@ class ProjectPages extends BasePages
 
         } catch (Exception $e) {
             $data = ['success'=>false,'message'=>$e->getMessage(),'diff'=>null,'token'=> null];
-            $payload = json_encode($data);
+            $payload = JsonHelper::toString($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(500);
+        }
+
+    }
+
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function destroy_project(ServerRequestInterface $request,ResponseInterface $response,
+                                    string $user_name, string $project_name) :ResponseInterface {
+
+
+        $token = null;
+        try {
+            $args = $request->getParsedBody();
+            $csrf = new FlowAntiCSRF($args,$_SESSION,FlowAntiCSRF::$fake_server);
+            if (!$csrf->validateRequest()) {
+                throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
+            }
+            $token = $csrf->getTokenArray();
+
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'admin');
+            $project->destroy_project();
+
+
+            $data = ['success'=>true,'message'=>'','flow_project_guid'=>$project->flow_project_guid,'token'=> $token];
+            $payload = JsonHelper::toString($data);
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(202);
+
+
+        } catch (Exception $e) {
+            $data = ['success'=>false,'message'=>$e->getMessage(),'flow_project_guid'=>$project_name,'token'=> $token];
+            $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
             return $response
@@ -823,7 +860,7 @@ class ProjectPages extends BasePages
     public function export_view( ServerRequestInterface $request,ResponseInterface $response,
                                      string $user_name, string $project_name) :ResponseInterface {
         try {
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'write');
 
             if (!$project) {
                 throw new HttpNotFoundException($request,"Project $project_name Not Found for export settings");
@@ -873,7 +910,7 @@ class ProjectPages extends BasePages
         try {
             $csrf = new AntiCSRF;
 
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'write');
 
             $args = $request->getParsedBody();
 
@@ -946,7 +983,7 @@ class ProjectPages extends BasePages
                                    string $user_name, string $project_name) :ResponseInterface {
 
         try {
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'write');
 
             if (!$project) {
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");
@@ -997,7 +1034,7 @@ class ProjectPages extends BasePages
 
 
         try {
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'admin');
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'admin');
 
             if (!$project) {
                 throw new HttpNotFoundException($request,"Project $project_name Not Found for export settings");
@@ -1049,7 +1086,7 @@ class ProjectPages extends BasePages
         try {
             $csrf = new AntiCSRF;
 
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'write');
 
             $args = $request->getParsedBody();
 
@@ -1108,40 +1145,7 @@ class ProjectPages extends BasePages
     }
 
 
-    /**
-     * @param ServerRequestInterface $request
-     * @param string $file_form_name
 
-     * @throws
-     * @return UploadedFileInterface
-     */
-    protected function find_and_move_uploaded_file(ServerRequestInterface $request,string $file_form_name) : UploadedFileInterface {
-        $uploadedFiles = $request->getUploadedFiles();
-        if (!array_key_exists($file_form_name,$uploadedFiles)) {
-            throw new HttpBadRequestException($request,"Need the file named $file_form_name");
-        }
-        // handle single input with single file upload
-        /**
-         * @var UploadedFileInterface $uploadedFile
-         */
-        $uploadedFile = $uploadedFiles[$file_form_name];
-        $file_name = $uploadedFile->getClientFilename();
-        if ($uploadedFile->getError() !== UPLOAD_ERR_OK) {
-            $phpFileUploadErrors = array(
-                0 => 'There is no error, the file uploaded with success',
-                1 => 'The uploaded file exceeds the upload_max_filesize directive in php.ini',
-                2 => 'The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form',
-                3 => 'The uploaded file was only partially uploaded',
-                4 => 'No file was uploaded',
-                6 => 'Missing a temporary folder',
-                7 => 'Failed to write file to disk.',
-                8 => 'A PHP extension stopped the file upload.',
-            );
-            throw new RuntimeException($request,"File Error $file_name : ". $phpFileUploadErrors[$uploadedFile->getError()] );
-        }
-
-        return $uploadedFile;
-    }
 
 
 
@@ -1160,7 +1164,7 @@ class ProjectPages extends BasePages
         $file_name = null;
         try {
             $csrf = new AntiCSRF;
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'write');
 
             if (!empty($_POST)) {
                 if (!$csrf->validateRequest()) {
@@ -1171,7 +1175,7 @@ class ProjectPages extends BasePages
 
 
             try {
-                $file_upload = static::find_and_move_uploaded_file($request,'flow_resource_file');
+                $file_upload = $this->get_project_helper()->find_and_move_uploaded_file($request,'flow_resource_file');
                 $file_resource_path = $project->get_project_directory().
                     DIRECTORY_SEPARATOR. FlowProject::REPO_RESOURCES_DIRECTORY.
                     DIRECTORY_SEPARATOR. $file_upload->getClientFilename();
@@ -1182,7 +1186,7 @@ class ProjectPages extends BasePages
                 $project->commit_changes("Added resource file $file_name\n\nFile path is $file_resource_path");
 
                 $data = ['success'=>true,'message'=>'ok file upload','file-name'=>$file_name,'new_file_path'=>$file_resource_path];
-                $payload = json_encode($data);
+                $payload = JsonHelper::toString($data);
 
                 $response->getBody()->write($payload);
                 return $response
@@ -1196,7 +1200,7 @@ class ProjectPages extends BasePages
             try {
 
                 $data = ['success'=>false,'message'=>($file_name??'') .': '.$e->getMessage()];
-                $payload = json_encode($data);
+                $payload = JsonHelper::toString($data);
 
                 $response->getBody()->write($payload);
                 return $response
@@ -1239,7 +1243,7 @@ class ProjectPages extends BasePages
                 throw new InvalidArgumentException("Need the X-Requested-With header");
             }
 
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'write');
             $token_lock_to = '';
             $token = $csrf->getTokenArray($token_lock_to);
 
@@ -1268,7 +1272,7 @@ class ProjectPages extends BasePages
             $project->commit_changes("Deleted the resource $file_part_path");
 
             $data = ['success'=>true,'message'=>'deleted file ','file_url'=>$file_url,'token'=> $token];
-            $payload = json_encode($data);
+            $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
             return $response
@@ -1278,7 +1282,7 @@ class ProjectPages extends BasePages
 
         } catch (Exception $e) {
             $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $token];
-            $payload = json_encode($data);
+            $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
             return $response
@@ -1305,7 +1309,7 @@ class ProjectPages extends BasePages
         try {
             $csrf = new AntiCSRF;
 
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'write');
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'write');
 
             if (!empty($_POST)) {
                 if (!$csrf->validateRequest()) {
@@ -1314,7 +1318,7 @@ class ProjectPages extends BasePages
             }
 
 
-            $file_upload = static::find_and_move_uploaded_file($request,'repo_or_patch_file');
+            $file_upload = $this->get_project_helper()->find_and_move_uploaded_file($request,'repo_or_patch_file');
             $file_name = $file_upload->getClientFilename();
             $success_message = "Nothing Done "  . $project->flow_project_title;
             $args = $request->getParsedBody();
@@ -1358,6 +1362,7 @@ class ProjectPages extends BasePages
     }
 
     /**
+     * Permission protected project files
     * @param ServerRequestInterface $request
     * @param ResponseInterface $response
     * @param string $user_name
@@ -1371,7 +1376,7 @@ class ProjectPages extends BasePages
                                       string $user_name, string $project_name,string $resource) :ResponseInterface {
 
         try {
-            $project = $this->get_project_with_permissions($request,$user_name,$project_name,'read');
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, 'read');
 
             if (!$project) {
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");

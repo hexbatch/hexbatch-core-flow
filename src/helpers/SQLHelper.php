@@ -3,12 +3,10 @@
 namespace app\helpers;
 
 use app\hexlet\DBSelector;
-use app\hexlet\JsonHelper;
 use app\hexlet\MYDB;
 use app\models\tag\FlowTag;
 use app\models\tag\FlowTagSearchParams;
 use Exception;
-use Psr\Http\Message\ServerRequestInterface;
 
 class SQLHelper {
     /**
@@ -60,42 +58,31 @@ class SQLHelper {
         return $count;
     }
 
+    public static function truncate_flow_things() :int  {
+        $sql_array = [
+            'TRUNCATE TABLE flow_things;',
+        ];
+
+        $mydb = DBSelector::getConnection();
+        $count = 0;
+        foreach ($sql_array as $sql) {
+            $count+= $mydb->execSQL($sql,null,MYDB::ROWS_AFFECTED);
+        }
+        return $count;
+    }
+
     /**
-     * @return array
+     * @return int
      * @throws Exception
      */
-    public static function refresh_flow_things_css() : array {
-        $ret = [];
+    public static function refresh_flow_things_css() : int {
+        $ret = 0;
         $search_params = new FlowTagSearchParams();
         $all_tags = FlowTag::get_tags($search_params, 1,1000000);
         foreach ($all_tags as $tag) {
-           $tag->update_flow_things_with_css();
+            $ret += $tag->update_flow_things_with_css();
         }
         return $ret;
     }
 
-    /**
-     * @param ServerRequestInterface $request
-     * @return array
-     * @noinspection PhpUnused
-     * @throws Exception
-     */
-    public static function refresh_all_flow_things(ServerRequestInterface $request) :array {
-
-        $args = $request->getQueryParams();
-        $data = [];
-        if (isset($args['triggers']) && JsonHelper::var_to_boolean($args['triggers'])) {
-            $data['triggers'] = SQLHelper::redo_all_triggers();
-        }
-
-        if (isset($args['refresh']) && JsonHelper::var_to_boolean($args['refresh'])) {
-            $data['update_count'] = SQLHelper::refresh_flow_things_except_css();
-        }
-
-        if (isset($args['css']) && JsonHelper::var_to_boolean($args['css'])) {
-            $data['css'] = SQLHelper::refresh_flow_things_css();
-        }
-
-       return $data;
-    }
 }

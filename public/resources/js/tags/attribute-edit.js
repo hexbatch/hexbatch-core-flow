@@ -26,6 +26,7 @@ function flow_attribute_show_editor(tag,passed_attribute,
         attribute = passed_attribute;
     } else {
         attribute = create_proxy_attribute();
+        attribute.flow_tag_guid = tag.flow_tag_guid
     }
     /**
      * @type {?GeneralSearchResult}
@@ -47,7 +48,7 @@ function flow_attribute_show_editor(tag,passed_attribute,
 
     function update_attribute_display() {
         editing_div.data('attribute_guid',attribute.flow_tag_attribute_guid);
-        editing_div.attr('data-attribute_guid',tag.flow_tag_guid);
+        editing_div.attr('data-attribute_guid',attribute.flow_tag_attribute_guid);
         attribute_name_input.val(attribute.tag_attribute_name);
         attribute_name_display.val(attribute.tag_attribute_name);
         tag_name_display.text(tag.flow_tag_name);
@@ -64,7 +65,7 @@ function flow_attribute_show_editor(tag,passed_attribute,
         attribute_integer_input.val(attribute.tag_attribute_long?? '');
         refresh_auto_formatted_times();
 
-        if (attribute.flow_tag_guid !== tag.flow_tag_guid) {
+        if (attribute.flow_tag_guid && attribute.flow_tag_guid !== tag.flow_tag_guid) {
             attribute_name_input.attr('disabled',true);
             attribute_integer_input.attr('disabled',true);
             attribute_text.attr('disabled',true);
@@ -84,8 +85,8 @@ function flow_attribute_show_editor(tag,passed_attribute,
         closeLabel: "Close",
         cssClass: ['flow-attribute-edit-tingle'],
         onOpen: function() {
+            if (b_editing && (attribute.flow_tag_guid === tag.flow_tag_guid)) {
 
-            if (b_editing && attribute.flow_tag_guid === tag.flow_tag_guid) {
                 create_select_2_for_general_search(
                     bare_select_control, false, "Optionally select a parent", null);
             }

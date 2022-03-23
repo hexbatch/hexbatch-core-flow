@@ -16,7 +16,7 @@
 
 <script src="{{ root_url }}/public/resources/js/tags/create_select_2_for_tag_search.js"></script>
 
-{% if project.get_current_user_permissions().can_edit %}
+{% if project.get_current_user_permissions().can_read %}
     {% include 'tag/partials/edit-a-tag.twig' %}
     {% include 'tag/partials/new-tag.twig' %}
     <script src="{{ root_url }}/public/resources/js/tags/proxy-attribute.js"></script>
@@ -25,7 +25,70 @@
     <script src="{{ root_url }}/public/resources/js/tags/tag-new.js"></script>
     <script src="{{ root_url }}/public/resources/js/tags/tag-edit.js"></script>
     <script src="{{ root_url }}/public/resources/js/tags/attribute-edit.js"></script>
+    <script src="{{ root_url }}/public/resources/js/tags/create-applied.js"></script>
     <script src="{{ root_url }}/public/resources/js/tags/applied_control.js"></script>
 
 
 {% endif %}
+
+<script>
+    $(`body`).on("click",' .flow-tag-show-edit-on-click',function(){
+
+        let b_view_only = true;
+        {% if project.get_current_user_permissions().can_edit() %}
+        b_view_only = false;
+        {% endif %}
+        let guid = $(this).data('tag_guid');
+        if (guid) {
+            get_tag_by_guid(
+                guid,
+                function(found_tag) {
+                    flow_tag_show_editor(found_tag,null, null,b_view_only);
+                }
+            );
+        }
+
+    }) ;
+
+
+    function update_tags_in_display(b_refresh) {
+        b_refresh = !!b_refresh;
+
+        /**
+         *
+         * @param {FlowTag[]} tag_array
+         */
+        function walk_with_tags(tag_array) {
+            let tags_here = $('.flow-tag-display');
+            if (!tags_here.length) {return;}
+
+            /**
+             *
+             * @type {Object.<string, FlowTag>} tag_map
+             */
+            let tag_map = {};
+            for(let i = 0; i < tag_array.length; i++) {
+                let node = tag_array[i];
+                tag_map[node.flow_tag_guid] = node;
+            }
+            // noinspection JSCheckFunctionSignatures
+            add_tag_attributes_to_dom(tag_map,tags_here,false);
+            tags_here.show();
+        }
+        /**
+         *
+         * @type {FlowTag[]}
+         */
+        let tags_in_project = ({{ project.get_all_owned_tags_in_project(true)|to_json_string }}) || null  ;
+
+        if (b_refresh) {
+            get_tags_in_project(function(found_tags) {
+                tags_in_project = found_tags;
+                walk_with_tags(found_tags);
+            });
+        } else {
+            walk_with_tags(tags_in_project);
+        }
+
+    }
+</script>

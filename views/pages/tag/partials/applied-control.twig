@@ -52,7 +52,7 @@
 
 <script>
     jQuery(function() {
-        let applied_array =  ({{ tags_of_applied|json_encode()|raw }}) || []  ;
+        let applied_array =  ({{ tags_of_applied|to_json_string }}) || []  ;
         applied_control("{{ applied_control_id }}",applied_array)
     });
 </script>

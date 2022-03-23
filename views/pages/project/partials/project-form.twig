@@ -58,13 +58,13 @@
 
                     <div class="col-12">
                         <input type="hidden" name="flow_project_readme_bb_code" id="flow_project_readme_bb_code"
-                               value="{{ project.flow_project_readme_bb_code }}">
+                               value="{{ project.get_read_me_bb_code_with_paths() }}">
 
                         <label for="flow_project_readme_textarea">Read Me / Description</label>
                         <textarea type="text" id="flow_project_readme_textarea"
                                   class="form-control" placeholder="Read Me" required autofocus
                                   rows="15"
-                        >{{ project.flow_project_readme_bb_code }}</textarea>
+                        >{{ project.get_read_me_bb_code_with_paths() }}</textarea>
                     </div>
 
                     <div class="col-12">

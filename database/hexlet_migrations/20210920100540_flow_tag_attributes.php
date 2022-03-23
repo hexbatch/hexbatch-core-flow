@@ -31,7 +31,6 @@ class FlowTagAttributes extends AbstractMigration
             CREATE TABLE flow_tag_attributes (
                 `id` INT NOT NULL AUTO_INCREMENT ,
                 `flow_tag_id` INT NULL DEFAULT NULL ,
-                `flow_applied_tag_id` INT NULL DEFAULT NULL ,
                 `created_at_ts` INT NULL DEFAULT NULL,
                 `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 `points_to_entry_id` INT NULL DEFAULT NULL,
@@ -56,16 +55,13 @@ class FlowTagAttributes extends AbstractMigration
 
 
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD CONSTRAINT `fk_flow_tag_attributes_has_pointee_entry_id` 
-            FOREIGN KEY (points_to_entry_id) REFERENCES `flow_entries`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
+            FOREIGN KEY (points_to_entry_id) REFERENCES `flow_entries`(`id`) ON DELETE SET NULL ON UPDATE CASCADE ;");
 
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD CONSTRAINT `fk_flow_tag_attributes_has_pointee_project_id` 
-            FOREIGN KEY (`points_to_project_id`) REFERENCES `flow_projects`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
+            FOREIGN KEY (`points_to_project_id`) REFERENCES `flow_projects`(`id`) ON DELETE SET NULL ON UPDATE CASCADE ;");
 
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD CONSTRAINT `fk_flow_tag_attributes_has_pointee_flow_user_id` 
-            FOREIGN KEY (`points_to_user_id`) REFERENCES `flow_users`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
-
-        $this->execute("ALTER TABLE `flow_tag_attributes` ADD CONSTRAINT `fk_flow_tag_attributes_has_applied_tag_id` 
-            FOREIGN KEY (`flow_applied_tag_id`) REFERENCES `flow_applied_tags`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
+            FOREIGN KEY (`points_to_user_id`) REFERENCES `flow_users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE ;");
 
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD CONSTRAINT `fk_flow_tag_attributes_has_tag_id` 
             FOREIGN KEY (`flow_tag_id`) REFERENCES `flow_tags`(`id`) ON DELETE CASCADE ON UPDATE CASCADE ;");

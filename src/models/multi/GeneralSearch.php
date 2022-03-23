@@ -105,8 +105,9 @@ class GeneralSearch extends FlowBase{
         }
 
         if ($search->words) {
-            $where_array[] = "( thing.thing_title like ? OR MATCH(thing.thing_blurb) AGAINST( ? IN BOOLEAN MODE) )";
+            $where_array[] = "( thing.thing_title like ? OR MATCH(thing.thing_blurb) AGAINST( ? IN BOOLEAN MODE) OR MATCH(parent.flow_project_title) AGAINST( ? IN BOOLEAN MODE))";
             $args[] = $search->words . '%';
+            $args[] = $search->words . '*';
             $args[] = $search->words . '*';
         }
 
@@ -165,6 +166,7 @@ class GeneralSearch extends FlowBase{
                             UNIX_TIMESTAMP(thing.thing_updated_at) as updated_at_ts,
                             thing.is_public
                         FROM flow_things thing 
+                        LEFT JOIN flow_projects parent ON parent.flow_project_guid = thing.owning_project_guid
                         WHERE 1 AND $where_conditions
                         ORDER BY title ASC
                         LIMIT $start_place, $page_size

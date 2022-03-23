@@ -87,7 +87,7 @@ function delete_attribute(tag,attribute,on_success_callback,on_fail_callback) {
 
 /**
  * @param {FlowTag} tag
- * @param {FlowTagApplied} applied
+ * @param {FlowTagApplied|ProxyApplied} applied
  * @param {FlowTagActionCallback} on_success_callback
  * @param {FlowTagActionCallback} on_fail_callback
  */
@@ -168,9 +168,46 @@ function get_tag_by_guid(tag_guid, on_success_callback,on_fail_callback) {
                 if (on_fail_callback) {on_fail_callback();}
             }
 
+        });
+}
 
 
+/**
+ *
+ *
+ * @param {FlowTagsSearchCallback} on_success_callback
+ */
+function get_tags_in_project( on_success_callback) {
+
+    $.ajax({
+        url: get_tags_ajax_url,
+        method: "GET",
+        dataType: 'json',
+        data : {
+            search: {
+                b_all_tags_in_project : true
+            }
+        }
+    })
+        .always(function( data ) {
+            /**
+             * @type {FlowTagSearchResponse}
+             * maybe basic if a failure
+             */
+
+            if ('results' in data && data.results.length) {
+                if (on_success_callback) {on_success_callback(data.results);}
+            } else {
+                let message = data.message || "Nothing found";
+                do_toast({
+                    title:"Error Tags In Project",
+                    subtitle:message,
+                    delay:20000,
+                    type:'error'
+                });
+                console.error('get_tags_in_project',data);
+
+            }
 
         });
-
 }

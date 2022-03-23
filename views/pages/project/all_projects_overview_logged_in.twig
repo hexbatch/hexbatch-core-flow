@@ -1,3 +1,5 @@
+<script src="{{ root_url }}/public/resources/js/project/project-list.js"></script>
+
 <h2> Projects Page for {{ user.flow_user_name}} </h2>
 
 <div class="flow-project-new-button d-inline-block">
@@ -12,38 +14,82 @@
     </a>
 </div>
 
-<dl class="row flow-project-list">
-{% for project in my_projects %}
-    <dt class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2" >
+<div class="flow-project-list">
 
-        <a href="{{ url_for('single_project_home',{
-            user_name: project.get_admin_user().flow_user_name ,
-            project_name: project.flow_project_title
-        } )
-        }}">
-            <span class="flow-project-title">
-                {{ project.flow_project_title }}
-            </span>
-        </a>
+    {% for project in my_projects %}
+    <div class="row flow-project-list-item  pt-1 pb-1 pt-md-3 pb-md-3">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2 col-xxl-2" >
 
-    </dt>
+            <a href="{{ url_for('single_project_home',{
+                user_name: project.get_admin_user().flow_user_name ,
+                project_name: project.flow_project_title
+            } )
+            }}">
+                <span class="flow-project-title">
+                    {{ project.flow_project_title }}
+                </span>
+            </a>
 
-    <dd class="col-12 col-sm-6 col-md-8 col-lg-9 col-xl-10">
-        <a href="{{ url_for('single_project_home',{
-            user_name: project.get_admin_user().flow_user_name ,
-            project_name: project.flow_project_title
-        } )
-        }}">
-            <span class="flow-project-blurb">
-                {{ project.flow_project_blurb }}
-            </span>
+        </div>
 
-        </a>
-    </dd>
+        <div class="col-8 col-sm-6 col-md-4 col-lg-5 col-xl-6 col-xxl-4">
+            <a href="{{ url_for('single_project_home',{
+                user_name: project.get_admin_user().flow_user_name ,
+                project_name: project.flow_project_title
+            } )
+            }}">
+                <span class="flow-project-blurb">
+                    {{ project.flow_project_blurb }}
+                </span>
 
+            </a>
+        </div>
 
-{% endfor %}
-</dl>
+        <div class="col-4 col-sm-12 col-md-4 col-lg-4 col-xl-4 col-xxl-6">
+
+            <div class="row">
+                <div class="col-4">
+                    <div class=" text-black-50">
+                        {% if project.get_current_user_permissions().can_admin %}
+                            <span class="p-1 fw-bold">A</span>
+
+                        {% elseif project.get_current_user_permissions().can_write %}
+                            <span class="p-1 fw-bold">W</span>
+
+                        {% elseif project.get_current_user_permissions().can_read %}
+                            <span class="p-1 fw-bold">R</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-4">
+                    <span class="flow-long-date-time" data-ts="{{ project.created_at_ts }}"></span>
+                </div>
+
+                <div class="col-4">
+                    {% if project.get_current_user_permissions().can_admin %}
+                        <button class="btn btn-danger btn-sm  flow-action flow-project-delete-action"
+                                data-guid="{{ project.flow_project_guid }}"
+                                data-title="{{ project.flow_project_title }}"
+                                data-url="{{ url_for('destroy_project_ajax',{
+                                    user_name: project.get_admin_user().flow_user_name ,
+                                    project_name: project.flow_project_title
+                                } )
+                                }}"
+                        >
+                            <i class="bi bi-trash  "></i>
+                            <i class="fas fa-spinner fa-pulse flow-spinner"  style="display: none"></i>
+                        </button>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+</div> <!-- flow-project-list -->
+
 
 
 

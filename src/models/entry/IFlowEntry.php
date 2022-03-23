@@ -97,13 +97,13 @@ Interface IFlowEntry {
     public function remove_child(IFlowEntry $what): void;
 
 
-
     /**
      * @param FlowProject $project
+     * @param FlowProject|null $new_project
      * @return IFlowEntry
      * @throws Exception
      */
-    public function clone_with_missing_data(FlowProject $project) : IFlowEntry;
+    public function clone_with_missing_data(FlowProject $project,?FlowProject $new_project = null) : IFlowEntry;
 
     /**
      * @param FlowProject $project

@@ -48,6 +48,23 @@
 
         }}
 
+        <div class="card-header">
+           <h4>Status For {{ project.flow_project_title }}</h4>
+        </div>
+        <div class="card-body">
+            <ul class="list-group d-inline">
+                {% for line in status  %}
+                    {% if  line %}
+                        <li class="list-group-item d-inline">
+                            {{ line }}
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+
+        </div>
+
+
     </div>
 
 

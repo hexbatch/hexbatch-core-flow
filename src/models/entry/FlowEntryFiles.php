@@ -142,12 +142,13 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
 
     /**
      * @param FlowProject $project
+     * @param FlowProject|null $new_project
      * @return IFlowEntry
      * @throws Exception
      */
-    public function clone_with_missing_data(FlowProject $project ) : IFlowEntry {
+    public function clone_with_missing_data(FlowProject $project,?FlowProject $new_project = null ) : IFlowEntry {
 
-        $ret = parent::clone_with_missing_data($project);
+        $ret = parent::clone_with_missing_data($project,$new_project);
         $ret->set_body_bb_code($this->flow_entry_body_bb_code);
         return $ret;
     }

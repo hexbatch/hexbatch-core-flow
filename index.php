@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use app\controllers\user\UserPages;
+use app\helpers\AdminHelper;
 use Delight\Cookie\Session;
 use DI\Bridge\Slim\Bridge;
 use DI\Container;
@@ -80,9 +81,11 @@ $routes($app);
         }
         $container->get('view')->getEnvironment()->addGlobal('user', $user);
         $container->get('view')->getEnvironment()->addGlobal('flash_messages', $flash_messages);
+
     } catch (NotFoundException|RuntimeException $e) {
         throw new HttpInternalServerErrorException(null,"cannot initialize twig global variables: " . $e->getMessage());
     }
 })();
 
 $app->run();
+

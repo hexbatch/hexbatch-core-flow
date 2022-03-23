@@ -2,9 +2,10 @@
 namespace app\controllers\tag;
 
 use app\controllers\base\BasePages;
-use app\controllers\project\ProjectPages;
+use app\helpers\ProjectHelper;
 use app\hexlet\FlowAntiCSRF;
 use app\hexlet\JsonHelper;
+use app\models\multi\GeneralSearch;
 use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
 use app\models\tag\FlowTagAttribute;
@@ -73,16 +74,14 @@ class TagPages extends BasePages
                               string $user_name, string $project_name) :ResponseInterface {
 
         try {
-            /**
-             * @var ProjectPages $project_pages
-             */
-            $project_pages = $this->container->get('projectPages');
+            $project_helper = ProjectHelper::get_project_helper();
 
-            $project = $project_pages->get_project_with_permissions($request, $user_name, $project_name, 'read');
+            $project = $project_helper->get_project_with_permissions($request,$user_name, $project_name, 'read');
 
             if (!$project) {
                 throw new HttpNotFoundException($request, "Project $project_name Not Found");
             }
+            $page_size = GeneralSearch::DEFAULT_PAGE_SIZE;
             $args = $request->getQueryParams();
             $search_params = new FlowTagSearchParams();
             $search_params->owning_project_guid = $project->flow_project_guid;
@@ -115,6 +114,11 @@ class TagPages extends BasePages
                     }
                 }
 
+                if (isset($args['search']['b_all_tags_in_project']) && $args['search']['b_all_tags_in_project']) {
+                    $search_params->owning_project_guid = $project->flow_project_guid;
+                    $page_size = GeneralSearch::UNLIMITED_RESULTS_PER_PAGE;
+                }
+
             }
 
             $search_params->flag_get_applied = true;
@@ -126,7 +130,7 @@ class TagPages extends BasePages
                 }
             }
 
-            $matches = FlowTag::get_tags($search_params, $page);
+            $matches = FlowTag::get_tags($search_params, $page,$page_size);
             $routeParser = RouteContext::fromRequest($request)->getRouteParser();
             foreach ($matches as $mtag) {
                 foreach ($mtag->applied as $mapp) {
@@ -152,7 +156,7 @@ class TagPages extends BasePages
                 ]
             ];
 
-            $payload = json_encode($data);
+            $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
             return $response
@@ -394,12 +398,9 @@ class TagPages extends BasePages
         }
 
 
-        /**
-         * @var ProjectPages $project_pages
-         */
-        $project_pages = $this->container->get('projectPages');
+        $project_helper = ProjectHelper::get_project_helper();
 
-        $project = $project_pages->get_project_with_permissions($request,$user_name,$project_name,'write');
+        $project = $project_helper->get_project_with_permissions($request,$user_name, $project_name, 'write');
         if (!$project) {
             throw new HttpNotFoundException($request,"Project $project_name Not Found");
         }
@@ -670,20 +671,21 @@ class TagPages extends BasePages
             $new_applied->flow_tag_id = $call->tag->flow_tag_id;
             $new_applied->save();
             $applied_to_return = FlowAppliedTag::reconstitute($new_applied->id,$call->tag);
-            $call->tag->applied[] = $new_applied;
+
+            $tag = $call->tag->clone_refresh();
 
             $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-            foreach ( $call->tag->applied as $mapp) {
+            foreach ( $tag->applied as $mapp) {
                 $mapp->set_link_for_tagged($routeParser);
             }
 
-            foreach ( $call->tag->attributes as $matt) {
+            foreach ( $tag->attributes as $matt) {
                 $matt->set_link_for_pointee($routeParser);
             }
 
             $call->project->do_tag_save();
             $data = [
-                'success'=>true,'message'=>'ok','tag'=>$call->tag,'attribute'=>null,'applied'=>$applied_to_return,
+                'success'=>true,'message'=>'ok','tag'=>$tag,'attribute'=>null,'applied'=>$applied_to_return,
                 'token'=> $call->new_token
             ];
             $payload = JsonHelper::toString($data);
@@ -729,19 +731,21 @@ class TagPages extends BasePages
             $applied_to_be_deleted = FlowAppliedTag::reconstitute($applied_that_was_given,$call->tag);
             $applied_to_be_deleted->delete_applied();
 
+            $call->project->do_tag_save();
+
+            $tag = $call->tag->clone_refresh();
+
             $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-            foreach ( $call->tag->applied as $mapp) {
+            foreach ( $tag->applied as $mapp) {
                 $mapp->set_link_for_tagged($routeParser);
             }
 
-            foreach ( $call->tag->attributes as $matt) {
+            foreach ( $tag->attributes as $matt) {
                 $matt->set_link_for_pointee($routeParser);
             }
 
-            $call->project->do_tag_save();
-
             $data = [
-                'success'=>true,'message'=>'ok','tag'=>$call->tag,'attribute'=>null,'applied'=>$call->applied,
+                'success'=>true,'message'=>'ok','tag'=>$tag,'attribute'=>null,'applied'=>$call->applied,
                 'token'=> $call->new_token
             ];
             $payload = JsonHelper::toString($data);

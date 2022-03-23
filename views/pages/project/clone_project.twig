@@ -44,21 +44,48 @@
                             </select>
                         </div>
 
-                        <div class="mt-4 col-12 col-md-6 col-xxl-auto">
-                            <span id="flow-selected_project-name"></span>
-                            <code id="flow-selected_project-guid"></code>
-                            <button class="btn btn-outline-secondary btn-sm clipy-btn invisible flow-import-project-button"
-                                    type="button"
-                                    data-clipboard-target="#flow-selected_project-guid"
-                                    data-popover_on_success="Copied!"
-                                    data-popover_on_fail="Use Control-C"
+                        <fieldset class="mt-4 col-12 col-md-6 col-xxl-auto">
+
+                            <form
+                                method="post"
+                                action=`{{-  url_for('clone_project_from_local',{guid: '::guid::'}) -}}`
+                                id="flow-form-clone-from-project"
+                                class="invisible"
                             >
-                                Copy
-                            </button>
-                            <br>
-                            <button class="btn btn-primary invisible flow-import-project-button mt-2" id="flow-action-clone-from-project">
-                                Clone
-                            </button>
+                                {{ form_token(  csrf_token_set_to_root ) }}
+                                <fieldset>
+                                    <span id="flow-selected_project-name"></span>
+                                    <code id="flow-selected_project-guid"></code>
+                                    <button class="btn btn-outline-secondary btn-sm clipy-btn flow-import-project-button"
+                                            type="button"
+                                            data-clipboard-target="#flow-selected_project-guid"
+                                            data-popover_on_success="Copied!"
+                                            data-popover_on_fail="Use Control-C"
+                                    >
+                                        Copy GUID string
+                                    </button>
+                                </fieldset>
+
+                                <fieldset>
+                                    <label for="flow_project_title">
+                                        Project Title
+                                    </label>
+                                    <input type="text" id="flow_project_title" name="flow_project_title"
+                                           class="form-control"
+                                           placeholder="Title"
+                                           required
+                                           maxlength="{{ constant('app\\models\\project\\FlowProject::MAX_SIZE_TITLE') }}"
+                                           value=""
+                                    >
+                                    <button
+                                            class="btn btn-primary flow-import-project-button mt-2"
+                                            type="submit"
+                                    >
+                                        Clone
+                                    </button>
+                                </fieldset>
+                            </form>
+
                         </div>
                     </div>
 
@@ -79,7 +106,11 @@
 <script>
     jQuery(function($) {
 
-       let bare_select_control = $(`select#flow-select-project`);
+        {% set guid_stub = '123456789abcde123456789abcde1234' %}
+        let guid_stub = `{{ guid_stub }}`;
+        let clone_from_local_url_template = `{{-  url_for('clone_project_from_local',{guid: guid_stub}) -}}`;
+
+        let bare_select_control = $(`select#flow-select-project`);
         create_select_2_for_general_search(bare_select_control,false,"Choose a project",null,'project');
 
         /**
@@ -110,17 +141,27 @@
          * @param {?GeneralSearchResult} what
          */
         function display_selected(what) {
+            let form = $(`form#flow-form-clone-from-project`);
+            let title_input = form.find('input#flow_project_title');
             if (what) {
                 $(`#flow-selected_project-name`).text(what.title);
                 $(`#flow-selected_project-guid`).text(what.guid);
-                $(`.flow-import-project-button`).removeClass('invisible');
+                form.removeClass('invisible');
+                let filled_action = clone_from_local_url_template.replace(guid_stub,what.guid)
+                form.attr('action',filled_action);
+                title_input.val(what.title);
             } else {
                 $(`#flow-selected_project-name`).text('');
                 $(`#flow-selected_project-guid`).text('');
-                $(`.flow-import-project-button`).addClass('invisible');
+                form.addClass('invisible');
+                form.attr('action','');
             }
 
+
+
+
         }
+
     });
 
 </script>

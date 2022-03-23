@@ -36,6 +36,7 @@ class AddFlowProjects extends AbstractMigration
                 `export_repo_do_auto_push` TINYINT NOT NULL DEFAULT 0,
                 `flow_project_guid` BINARY(16) NOT NULL ,
                 `flow_project_type` VARCHAR(10) NULL DEFAULT NULL ,
+                `flow_project_special_flag` VARCHAR(10) DEFAULT NULL,
                 `flow_project_title` VARCHAR(40) NULL DEFAULT NULL ,
                 `flow_project_blurb` VARCHAR(120) NULL DEFAULT NULL ,
                 `export_repo_url` VARCHAR(200) NULL DEFAULT NULL ,
@@ -46,10 +47,12 @@ class AddFlowProjects extends AbstractMigration
                 `import_repo_key` TEXT NULL DEFAULT NULL ,
                 `flow_project_readme` MEDIUMTEXT NULL DEFAULT NULL ,
                 `flow_project_readme_bb_code` MEDIUMTEXT NULL DEFAULT NULL ,
-                PRIMARY KEY (`id`)
+                PRIMARY KEY (`id`),
+                UNIQUE KEY udx_flow_project_special_flag (flow_project_special_flag)
            ) ENGINE = InnoDB COMMENT = 'defines the top most organization made in a flow';
 
        ");
+
 
         $this->execute("ALTER TABLE `flow_projects` ADD INDEX `idx_admin_flow_user_id`   (`admin_flow_user_id`);");
         $this->execute("ALTER TABLE `flow_projects` ADD INDEX `idx_flow_project_type`   (`flow_project_type`);");

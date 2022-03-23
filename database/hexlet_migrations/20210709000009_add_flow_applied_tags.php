@@ -61,13 +61,13 @@ class AddFlowAppliedTags extends AbstractMigration
 
 
         $this->execute("ALTER TABLE `flow_applied_tags` ADD CONSTRAINT `fk_flow_applied_tags_has_tagged_entry_id` 
-            FOREIGN KEY (`tagged_flow_entry_id`) REFERENCES `flow_entries`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
+            FOREIGN KEY (`tagged_flow_entry_id`) REFERENCES `flow_entries`(`id`) ON DELETE CASCADE ON UPDATE CASCADE ;");
 
         $this->execute("ALTER TABLE `flow_applied_tags` ADD CONSTRAINT `fk_flow_applied_tags_has_tagged_project_id` 
-            FOREIGN KEY (`tagged_flow_project_id`) REFERENCES `flow_projects`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
+            FOREIGN KEY (`tagged_flow_project_id`) REFERENCES `flow_projects`(`id`) ON DELETE CASCADE ON UPDATE CASCADE ;");
 
         $this->execute("ALTER TABLE `flow_applied_tags` ADD CONSTRAINT `fk_flow_applied_tags_has_tagged_flow_user_id` 
-            FOREIGN KEY (`tagged_flow_user_id`) REFERENCES `flow_users`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
+            FOREIGN KEY (`tagged_flow_user_id`) REFERENCES `flow_users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE ;");
 
 
 
