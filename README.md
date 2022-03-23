@@ -135,7 +135,7 @@ swiper at https://swiperjs.com/ for nice looking media display
 dropzone at https://docs.dropzone.dev/ for uploading files
 
 ### installation uses npm
- Run `nmp i` to install js dependencies that are not saved in the repo
+ Run `npm i` to install js dependencies that are not saved in the repo
  
 
 ## Environmental Notes

@@ -78,7 +78,6 @@
  * @property {string} [text]
  * @property {?string} flow_tag_attribute_guid
  * @property {?string} flow_tag_guid
- * @property {?string} flow_applied_tag_guid
  * @property {?string} points_to_flow_entry_guid
  * @property {?string} points_to_flow_user_guid
  * @property {?string} points_to_flow_project_guid
@@ -168,6 +167,13 @@
  * @param {FlowTagAttribute} data
  */
 
+
+/**
+ *
+ * @callback FlowTagAppliedCreateCallback
+ * @param {FlowTag} data
+ */
+
 /**
  *
  * @callback FlowTagEditCallback
@@ -197,6 +203,12 @@
  *
  * @callback FlowTagSearchCallback
  * @param {FlowTag} tag
+ */
+
+/**
+ *
+ * @callback FlowTagsSearchCallback
+ * @param {FlowTag[]} tags
  */
 
 

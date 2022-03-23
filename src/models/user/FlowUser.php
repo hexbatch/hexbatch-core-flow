@@ -218,7 +218,9 @@ class FlowUser extends FlowBase implements JsonSerializable {
 
 
         } catch (Exception $e) {
-            $db AND $db->rollBack();
+            if ($db && $db->inTransaction()) {
+                $db->rollBack();
+            }
             static::get_logger()->alert("User model cannot save ",['exception'=>$e]);
             throw $e;
         }
@@ -318,10 +320,11 @@ class FlowUser extends FlowBase implements JsonSerializable {
      * @param ?string $role_in_project
      * @param ?bool $b_is_user_guid
      * @param ?string $user_name_search_or_guid
-     * @param int $page,
-     * @param int $page_size,
+     * @param int $page ,
+     * @param int $page_size ,
      * @return FlowUser[]
-     * @throws Exception
+     *
+     * @throws
      */
     public static function find_users_by_project(
         bool    $b_in_project ,

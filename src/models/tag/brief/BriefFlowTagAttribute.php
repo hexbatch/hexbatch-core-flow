@@ -13,7 +13,6 @@ class BriefFlowTagAttribute  implements JsonSerializable {
 
     public string $flow_tag_attribute_guid ;
     public ?string $flow_tag_guid ;
-    public ?string $flow_applied_tag_guid ;
     public ?string $points_to_flow_entry_guid ;
     public ?string $points_to_flow_user_guid ;
     public ?string $points_to_flow_project_guid ;
@@ -36,7 +35,6 @@ class BriefFlowTagAttribute  implements JsonSerializable {
         $this->new_name = null;
         $this->flow_tag_attribute_guid = $att->flow_tag_attribute_guid;
         $this->flow_tag_guid = $att->flow_tag_guid;
-        $this->flow_applied_tag_guid = $att->flow_applied_tag_guid;
         $this->points_to_flow_entry_guid = $att->points_to_flow_entry_guid;
         $this->points_to_flow_user_guid = $att->points_to_flow_user_guid;
         $this->points_to_flow_project_guid = $att->points_to_flow_project_guid;
@@ -56,7 +54,6 @@ class BriefFlowTagAttribute  implements JsonSerializable {
         return [
             "flow_tag_attribute_guid" => $this->flow_tag_attribute_guid,
             "flow_tag_guid" => $this->flow_tag_guid,
-            "flow_applied_tag_guid" => $this->flow_applied_tag_guid,
             "points_to_flow_entry_guid" => $this->points_to_flow_entry_guid,
             "points_to_flow_user_guid" => $this->points_to_flow_user_guid,
             "points_to_flow_project_guid" => $this->points_to_flow_project_guid,

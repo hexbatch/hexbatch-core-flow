@@ -538,7 +538,7 @@ class MYDB
         if (!empty($params)) {
             if (!call_user_func_array(array($stmt, 'bind_param'), $this->refValues($params))) {
 
-                self::throwSQLStatement("Could not bind param ", $stmt,$sql . " " . json_encode($params));
+                self::throwSQLStatement("Could not bind param ", $stmt,$sql . " " . JsonHelper::toString($params));
             }
         }
 

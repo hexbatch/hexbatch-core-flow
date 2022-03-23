@@ -12,9 +12,6 @@ BEGIN
         SET number_parents = number_parents + 1;
     END IF;
 
-    IF NEW.flow_applied_tag_id THEN
-        SET number_parents = number_parents + 1;
-    END IF;
 
     IF number_parents <> 1  THEN
         SET msg := CONCAT('Tag Attributes must have one parent of tag or applied tag: ',number_parents);

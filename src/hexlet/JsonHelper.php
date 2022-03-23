@@ -282,9 +282,9 @@ class JsonHelper {
         if (is_numeric($var) && (intval($var) == floatval($var))) {
             $test = intval($var);
             if ($test) {
-                return false;
-            } else {
                 return true;
+            } else {
+                return false;
             }
         }
 

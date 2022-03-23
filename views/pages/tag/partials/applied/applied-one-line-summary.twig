@@ -1,17 +1,4 @@
 
-{#/**
-/**
- * @typedef {Object} FlowTagApplied
- * @property {?string} flow_applied_tag_guid
- * @property {?string} flow_tag_guid
- * @property {string} tagged_flow_entry_guid
- * @property {string} tagged_flow_user_guid
- * @property {string} tagged_flow_project_guid
- * @property {?string} tagged_url
- * @property {string} [tagged_title]
- * @property {number} [created_at_ts]
- */
-*/#}
 
 
 <li class="list-group-item flow-applied-summary-line">
@@ -20,6 +7,7 @@
             <span class="flow-applied-type-icon-holder me-1">
                 <i class="bi-person-circle flow-applied-icon-user" style="display: none"></i>
                 <i class="bi bi-box flow-applied-icon-project" style="display: none"></i>
+                <i class="bi bi-columns flow-applied-icon-entry" style="display: none"></i>
             </span>
 
             <span class="flow-applied-type"></span>
@@ -40,10 +28,10 @@
         </div>
 
         <div class="col-2 col-xl-1">
-            <button class="btn btn-danger btn-sm  flow-action flow-applied-delete-action">
-                <i class="bi bi-trash  "></i>
+            <button class="btn btn-danger btn-sm  flow-applied-delete-action">
+                <i class="bi bi-trash  flow-action"></i>
                 <i class="fas fa-spinner fa-pulse flow-spinner"  style="display: none"></i>
-                Delete
+
             </button>
         </div>
 

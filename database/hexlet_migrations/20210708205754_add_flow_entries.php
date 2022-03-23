@@ -54,10 +54,10 @@ class AddFlowEntries extends AbstractMigration
         $this->execute("CREATE UNIQUE INDEX udx_unique_title_in_project ON flow_entries (flow_project_id, flow_entry_title);");
 
         $this->execute("ALTER TABLE `flow_entries` ADD CONSTRAINT `fk_flow_entries_has_flow_project_id` 
-            FOREIGN KEY (`flow_project_id`) REFERENCES `flow_projects`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
+            FOREIGN KEY (`flow_project_id`) REFERENCES `flow_projects`(`id`) ON DELETE CASCADE ON UPDATE CASCADE ;");
 
         $this->execute("ALTER TABLE `flow_entries` ADD CONSTRAINT `fk_flow_entries_has_flow_entry_id` 
-            FOREIGN KEY (flow_entry_parent_id) REFERENCES `flow_entries`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
+            FOREIGN KEY (flow_entry_parent_id) REFERENCES `flow_entries`(`id`) ON DELETE CASCADE ON UPDATE CASCADE ;");
 
         //NOW UPDATE THE TRIGGERS !
         $files = MYDB::recursive_search_sql_files(static::TRIGGER_DIR);

@@ -100,7 +100,7 @@ function add_tag_attributes_to_dom(tag_map,tags_here_jquery_or_string,b_allow_li
     tags_here.each(function() {
         let tag_dom = $(this);
         let tag_guid = tag_dom.data('tag_guid');
-        if (!tag_guid) {console.warn("No tag guid found for ",tag_dom); return;}
+        if (!tag_guid) {return;}
         if (tag_guid in tag_map) {
 
             /**

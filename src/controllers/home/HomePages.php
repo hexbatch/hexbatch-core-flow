@@ -4,6 +4,7 @@ namespace app\controllers\home;
 use app\controllers\base\BasePages;
 use app\controllers\project\ProjectPages;
 use app\controllers\user\UserPages;
+use app\helpers\AdminHelper;
 use app\helpers\SQLHelper;
 use app\hexlet\JsonHelper;
 use app\models\entry\FlowEntrySearch;
@@ -24,9 +25,6 @@ use Slim\Routing\RouteContext;
 class HomePages extends BasePages
 {
 
-
-
-
     /**
      * @param ResponseInterface $response
      * @return ResponseInterface
@@ -44,19 +42,6 @@ class HomePages extends BasePages
             $this->logger->error("Could not render root page",['exception'=>$e]);
             throw $e;
         }
-    }
-
-    /**
-     * @param ResponseInterface $response
-     * @return ResponseInterface
-     * @noinspection PhpUnused
-     */
-    public function php_info( ResponseInterface $response) :ResponseInterface {
-        ob_start();
-        phpinfo();
-        $info = ob_get_clean();
-        $response->getBody()->write($info);
-        return $response;
     }
 
     /**
@@ -256,28 +241,11 @@ class HomePages extends BasePages
             ]
         ];
 
-        $payload = json_encode($data);
+        $payload = JsonHelper::toString($data);
 
         $response->getBody()->write($payload);
         return $response
             ->withHeader('Content-Type', 'application/json');
     }
 
-    /**
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @return ResponseInterface
-     * @noinspection PhpUnused
-     * @throws Exception
-     */
-    public function test( ServerRequestInterface $request,ResponseInterface $response) :ResponseInterface {
-
-        $data = SQLHelper::refresh_all_flow_things($request);
-
-        $payload = json_encode($data);
-
-        $response->getBody()->write($payload);
-        return $response
-            ->withHeader('Content-Type', 'application/json');
-    }
 }

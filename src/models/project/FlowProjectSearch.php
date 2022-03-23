@@ -1,6 +1,7 @@
 <?php
 namespace app\models\project;
 
+use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use Exception;
 use InvalidArgumentException;
@@ -15,6 +16,7 @@ class FlowProjectSearch extends FlowBase {
      * @param array $project_title_guid_or_id_list
      * @param ?string $user_name_guid_or_id
      * @return FlowProject[]
+     *
      * @throws Exception
      */
     public static function find_projects(array $project_title_guid_or_id_list, ?string $user_name_guid_or_id = null): array
@@ -26,16 +28,20 @@ class FlowProjectSearch extends FlowBase {
 
         foreach ($project_title_guid_or_id_list as $project_title_guid_or_id) {
             if (empty($project_title_guid_or_id)) { throw new InvalidArgumentException("Project name or guid supplied is empty");}
+
             if (trim($project_title_guid_or_id) && trim($user_name_guid_or_id)) {
                 $where_conditions[] = " ( u.flow_user_name = ? OR u.flow_user_guid = UNHEX(?) ) AND ".
                     " (  p.flow_project_title = ? or p.flow_project_guid = UNHEX(?))";
                 $args = [$user_name_guid_or_id,$user_name_guid_or_id,
                     $project_title_guid_or_id,$project_title_guid_or_id];
             } else if (trim($project_title_guid_or_id) ) {
-                if (ctype_digit($project_title_guid_or_id) && (intval($project_title_guid_or_id) < (PHP_INT_MAX/2))) {
+                if (WillFunctions::is_valid_guid_format($project_title_guid_or_id)) {
+                    $where_conditions[] = " (p.flow_project_guid = UNHEX(?) )";
+                }
+                else if (ctype_digit($project_title_guid_or_id) && (intval($project_title_guid_or_id) < (PHP_INT_MAX/2))) {
                     $where_conditions[] = " (p.id = ? )";
                 } else {
-                    $where_conditions[] = " (p.flow_project_guid = UNHEX(?) )";
+                    $where_conditions[] = " (p.flow_project_title = ? )";
                 }
                 $args = [$project_title_guid_or_id];
 

@@ -3,6 +3,7 @@
 namespace app\models\entry;
 
 
+use app\helpers\ProjectHelper;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\IFlowEntryArchive;
@@ -126,28 +127,39 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
     /**
      * files not written until save called
      * @param ?string $bb_code
+     * @throws
      */
-    public function set_body_bb_code(?string $bb_code) {
+    public function set_body_bb_code(?string $bb_code) : void {
         if (empty($bb_code)) {
             $this->flow_entry_body_bb_code = null;
             $this->flow_entry_body_html = null;
             $this->flow_entry_body_text = null;
             return;
         }
-        $this->flow_entry_body_bb_code = $bb_code;
-        $this->flow_entry_body_html = JsonHelper::html_from_bb_code($bb_code);
+
+        $bb_code = JsonHelper::to_utf8($bb_code);
+        $origonal_bb_code = $bb_code;
+
+        $this->flow_entry_body_bb_code = ProjectHelper::get_project_helper()->bb_code_from_file_paths($this->get_project(),$bb_code);
+
+
+        //may need to convert from the stubs back to the full paths for the html !
+        $nu_read_me = ProjectHelper::get_project_helper()->bb_code_to_file_paths($this->get_project(),$origonal_bb_code);
+        $this->flow_entry_body_html = JsonHelper::html_from_bb_code($nu_read_me);
         $this->flow_entry_body_text = str_replace('&nbsp;',' ',strip_tags($this->flow_entry_body_html));
+
     }
 
 
     /**
      * @param FlowProject $project
+     * @param FlowProject|null $new_project
      * @return IFlowEntry
      * @throws Exception
      */
-    public function clone_with_missing_data(FlowProject $project ) : IFlowEntry {
+    public function clone_with_missing_data(FlowProject $project,?FlowProject $new_project = null ) : IFlowEntry {
 
-        $ret = parent::clone_with_missing_data($project);
+        $ret = parent::clone_with_missing_data($project,$new_project);
         $ret->set_body_bb_code($this->flow_entry_body_bb_code);
         return $ret;
     }

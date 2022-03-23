@@ -49,10 +49,10 @@ class AddFlowTags extends AbstractMigration
 
 
         $this->execute("ALTER TABLE `flow_tags` ADD CONSTRAINT `fk_flow_tags_has_project_id` 
-            FOREIGN KEY (`flow_project_id`) REFERENCES `flow_projects`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
+            FOREIGN KEY (`flow_project_id`) REFERENCES `flow_projects`(`id`) on update cascade on delete cascade ;");
 
         $this->execute("ALTER TABLE `flow_tags` ADD CONSTRAINT `fk_flow_tags_has_parent_id` 
-            FOREIGN KEY (`parent_tag_id`) REFERENCES `flow_tags`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT ;");
+            FOREIGN KEY (`parent_tag_id`) REFERENCES `flow_tags`(`id`) on update cascade on delete set null ;");
 
         //NOW UPDATE THE TRIGGERS !
         $files = MYDB::recursive_search_sql_files(static::TRIGGER_DIR);

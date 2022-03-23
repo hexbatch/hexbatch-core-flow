@@ -2,7 +2,7 @@
 namespace app\controllers\entry;
 
 use app\controllers\base\BasePages;
-use app\controllers\project\ProjectPages;
+use app\helpers\ProjectHelper;
 use app\hexlet\FlowAntiCSRF;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
@@ -74,12 +74,10 @@ class EntryBase extends BasePages
         }
 
 
-        /**
-         * @var ProjectPages $project_pages
-         */
-        $project_pages = $this->container->get('projectPages');
 
-        $project = $project_pages->get_project_with_permissions($request,$user_name,$project_name,$project_permissions_needed);
+        $project_helper = ProjectHelper::get_project_helper();
+
+        $project = $project_helper->get_project_with_permissions($request,$user_name, $project_name, $project_permissions_needed);
         if (!$project) {
             throw new HttpNotFoundException($request,"Project $project_name Not Found");
         }

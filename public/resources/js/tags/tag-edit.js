@@ -179,7 +179,7 @@ function flow_tag_show_editor(tag,
             }
             let parent_name_thing =
                 `<li class="breadcrumb-item ">
-                <span   class="flow-tag-list-name flow-tag-display flow-tag-show-edit-on-click"
+                <span   class="flow-tag-list-name flow-tag-display flow-tag-show-edit-on-click "
                         data-tag_guid="${parent_here.flow_tag_guid}">${parent_here.flow_tag_name}</span>
             </li>`
             parent_display_breadcumbs.append(parent_name_thing);
@@ -286,8 +286,8 @@ function flow_tag_show_editor(tag,
             }
             li.find('.flow-applied-type').text(applied_type);
 
-
             li.find('a.flow-applied-link').attr('href', applied.tagged_url);
+
             li.find('.flow-tag-applied-target-title').text(applied.tagged_title).attr('applied_guid', applied.flow_applied_tag_guid);
 
             let last_ts = applied.created_at_ts;
@@ -317,7 +317,7 @@ function flow_tag_show_editor(tag,
                                 function (ret) {
                                     b_is_saving = false;
                                     tag = ret.tag;
-                                    li.remove();
+                                    fill_applied_tab();
                                     let victims = $(`.flow-tag-applied-target-title[data-applied_guid="${applied.flow_applied_tag_guid}"]`);
                                     victims.addClass('text-decoration-line-through');
                                     toggle_action_spinner(me, 'normal');
@@ -377,6 +377,7 @@ function flow_tag_show_editor(tag,
             this.destroy();
             $('body').off("click", `div#${editing_div_id} .flow-attribute-show-edit-on-click`, edit_attribute);
             if (callback_after_update) {callback_after_update(tag);}
+            update_tags_in_display(true)
         },
 
         beforeClose: function () {
@@ -458,11 +459,14 @@ function flow_tag_show_editor(tag,
                     } else {
                         tag.attributes[updated_attribute.tag_attribute_name] = updated_attribute;
                     }
+                    update_tags_in_display(true);
                     fill_attribute_tab();
                     console.debug("got updated attribute of ", updated_attribute);
+
                 },
                 function(deleted_attribute) {
                     let found_deleted_attribute = find_attribute_by_guid(deleted_attribute.flow_tag_attribute_guid);
+                    update_tags_in_display(true);
                     if (found_deleted_attribute) {
                         delete tag.attributes[found_deleted_attribute.tag_attribute_name];
                         fill_attribute_tab();
@@ -475,7 +479,6 @@ function flow_tag_show_editor(tag,
 
     if (b_editing) {
         editing_div.find('button.flow-create-attribute-action').click(function () {
-
             flow_attribute_show_editor(tag, null,
                 function (new_attribute) {
                     //see if attribute is in the list, if not add
@@ -486,32 +489,35 @@ function flow_tag_show_editor(tag,
                     }
                     fill_attribute_tab();
                     console.debug("got new attribute of ", new_attribute);
-                }
+                    update_tags_in_display(true)
+                },
+                function() {
+                    update_tags_in_display(true)
+                },
+                b_view_only
+            );
+
+        });
+
+        editing_div.find('button.flow-create-applied-action').click(function () {
+            flow_create_applied_show_editor(tag,
+                function (new_tag) {
+                    tag = new_tag;
+                    fill_applied_tab();
+                    console.debug("got new tag of ", new_tag);
+                },
+                b_view_only
             );
 
         });
     } else {
         editing_div.find('button.flow-create-attribute-action').attr('disabled',true);
+        editing_div.find('button.flow-create-attribute-action').attr('disabled',true);
     }
 
+    let qj_body = $('body');
+    qj_body.on("click", `div#${editing_div_id} .flow-attribute-show-edit-on-click`, edit_attribute);
 
-    $('body').on("click", `div#${editing_div_id} .flow-attribute-show-edit-on-click`, edit_attribute);
-
-    $('body').on("click",'.flow-tag-show-edit-on-click',function(){
-        let guid = $(this).data('tag_guid');
-        if (guid) {
-            get_tag_by_guid(
-                guid,
-                function(found_tag) {
-                    flow_tag_show_editor(found_tag,null, null,b_view_only);
-                }
-            );
-        }
-
-    }) ;
 }
 
-jQuery(function($) {
-
-});
 

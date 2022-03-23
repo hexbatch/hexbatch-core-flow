@@ -69,7 +69,7 @@
 </div> <!-- /.card -->
 
 
-
+{% if resource_urls|length > 0 %}
 <script>
     jQuery(function($) {
         const swiper = new Swiper('.swiper', {
@@ -105,8 +105,7 @@
             }
 
             if (url)  {
-                let full_url = `{{ root_url }}${url}`;
-                $("#flow-resource-url-selected").text(full_url)
+                $("#flow-resource-url-selected").text(url)
             }
 
 
@@ -172,3 +171,4 @@
         }) ;
     });
 </script>
+{% endif %}

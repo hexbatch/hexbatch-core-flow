@@ -4,7 +4,6 @@ function ProxyAttribute() {
 
     this.flow_tag_attribute_guid = null;
     this.flow_tag_guid = null;
-    this.flow_applied_tag_guid = null;
     this.points_to_flow_entry_guid = null;
     this.points_to_flow_user_guid = null;
     this.points_to_flow_project_guid = null;

@@ -2,54 +2,13 @@
 namespace app\controllers\base;
 
 
-use app\models\user\FlowUser;
-use Delight\Auth\Auth;
-use DI\Container;
-use DI\DependencyException;
-use DI\NotFoundException;
-
-use Exception;
-use Monolog\Logger;
-use ParagonIE\EasyDB\EasyDB;
+use app\common\BaseConnection;
 use Psr\Http\Message\ServerRequestInterface;
 
-use Slim\Views\Twig;
 
-
-class BasePages
+class BasePages extends BaseConnection
 {
 
-
-    protected Auth $auth;
-    protected Logger $logger;
-    /**
-     * @var Container $container
-     */
-    protected Container $container;
-
-    protected Twig $view;
-
-    /**
-     * @var FlowUser $user
-     */
-    protected FlowUser $user;
-
-    /**
-     * UserLogInPages constructor.
-     * @param Auth $auth
-     * @param Logger $logger
-     * @param Container $container
-     * @throws NotFoundException
-     * @throws DependencyException
-     */
-    public function __construct(Auth $auth, Logger $logger, Container $container)
-    {
-        $this->auth = $auth;
-        $this->logger = $logger;
-        $this->container = $container;
-        $this->view = $this->container->get('view');
-        $this->user = $this->container->get('user');
-    }
 
     protected function is_ajax_call(ServerRequestInterface $request) : bool {
         $x_header = $request->getHeader('X-Requested-With') ?? [];
@@ -57,18 +16,6 @@ class BasePages
             return  false;
         } else {
             return true;
-        }
-    }
-
-    /**
-     * @return EasyDB
-     */
-    protected function get_connection() : EasyDB {
-        try {
-            return  $this->container->get('connection');
-        } catch (Exception $e) {
-            $this->logger->alert("User model cannot connect to the database",['exception'=>$e]);
-            die( static::class . " Cannot get connetion");
         }
     }
 

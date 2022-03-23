@@ -1,8 +1,15 @@
 {% if applied.tagged_flow_project_guid %}
     {{-  url_for('single_project_home',{
-        user_name: applied.tagged_flow_project_owner_user_name ,
-        project_name: applied.tagged_title
+        user_name: applied.flow_applied_tag_owner_user_guid ,
+        project_name: applied.flow_project_guid
     } ) -}}
 {% elseif applied.tagged_flow_user_guid %}
     {{-  url_for('user_page', {user_name: applied.tagged_title})  -}}
+{% elseif applied.tagged_flow_entry_guid %}
+    {{-  url_for('show_entry', {
+        user_name: applied.flow_applied_tag_owner_user_guid ,
+        project_name: applied.flow_project_guid,
+        entry_name: applied.tagged_flow_entry_guid
+
+    })  -}}
 {% endif %}

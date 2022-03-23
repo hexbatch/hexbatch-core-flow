@@ -2,6 +2,8 @@
 namespace app\controllers\user;
 
 use app\controllers\base\BasePages;
+use app\helpers\ProjectHelper;
+use app\hexlet\JsonHelper;
 use app\models\project\FlowProject;
 use app\models\user\FlowUser;
 use Delight\Auth\AuthError;
@@ -462,9 +464,17 @@ class UserPages extends BasePages {
                 $page = $page_number;
             }
         }
-        $project_guid = null;
+
         if (isset($args['project_guid'])) {
             $project_guid = trim($args['project_guid']);
+        } else {
+            throw new HttpInternalServerErrorException($request,"Need project guid to find users");
+        }
+        $allowed_in_project = ProjectHelper::get_project_helper()->get_project_with_permissions(
+            $request,null, $project_guid, 'read');
+
+        if (!$allowed_in_project) {
+            throw new HttpForbiddenException($request,"You do not have at least read permission to see this project ");
         }
 
         $in_project = true;
@@ -491,7 +501,7 @@ class UserPages extends BasePages {
             ]
         ];
 
-        $payload = json_encode($data);
+        $payload = JsonHelper::toString($data);
 
         $response->getBody()->write($payload);
         return $response

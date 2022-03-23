@@ -1,6 +1,7 @@
 <?php
 namespace app\handlers;
 
+use app\hexlet\JsonHelper;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -129,7 +130,7 @@ class HttpErrorHandler extends ErrorHandler
             ],
         ];
 
-        $payload = json_encode($error, JSON_PRETTY_PRINT);
+        $payload = JsonHelper::toString($error, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
         $response->getBody()->write($payload);
         return $response;

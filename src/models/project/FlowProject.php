@@ -2,6 +2,7 @@
 
 namespace app\models\project;
 
+use app\helpers\ProjectHelper;
 use app\hexlet\JsonHelper;
 use app\hexlet\RecursiveClasses;
 use app\hexlet\WillFunctions;
@@ -14,17 +15,22 @@ use app\models\tag\brief\BriefUpdateFromYaml;
 use app\models\tag\FlowTagSearchParams;
 use app\models\user\FlowUser;
 use app\models\tag\FlowTag;
+use Carbon\Carbon;
 use Exception;
 use InvalidArgumentException;
 use LogicException;
-use PDO;
 use Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
 
+/**
+ * views
+ * @uses \app\models\project\FlowProject::get_read_me_bb_code_with_paths()
+ */
 class FlowProject extends FlowBase {
 
+    const TABLE_NAME = 'flow_projects';
     const FLOW_PROJECT_TYPE_TOP = 'top';
     const MAX_SIZE_TITLE = 40;
     const MAX_SIZE_BLURB = 120;
@@ -40,6 +46,9 @@ class FlowProject extends FlowBase {
       'jpg',
       'pdf'
     ];
+
+    const RESOURCE_PATH_STUB = '@resource@';
+    const FILES_PATH_STUB = '@file@';
 
     public ?int $id;
     public ?int $created_at_ts;
@@ -103,7 +112,6 @@ class FlowProject extends FlowBase {
     protected ?array $owned_tags = null;
 
     protected bool $b_did_applied_for_owned_tags = false;
-
 
     /**
      * @param bool $b_get_applied  if true will also get the applied in the set of tags found
@@ -263,6 +271,44 @@ class FlowProject extends FlowBase {
         return $ret;
     }
 
+    /**
+     * @return void
+     * @throws Exception
+     */
+    public function delete_project_directory() : void {
+        $folder_to_remove = $this->get_project_directory();
+        if ($folder_to_remove) {
+            RecursiveClasses::rrmdir($folder_to_remove);
+        }
+    }
+
+    public function destroy_project(bool $b_do_transaction = true){
+        $db = static::get_connection();
+        try {
+            $db->beginTransaction();
+            $db->delete(static::TABLE_NAME,[
+                'id' => $this->id
+            ]);
+            $this->id = null;
+            $this->flow_project_guid = null;
+            $this->admin_flow_user_id = null;
+            $this->admin_user = null;
+
+           $this->delete_project_directory();
+
+            if ($b_do_transaction) {
+                if ($db->inTransaction()) {
+                    $db->commit();
+                }
+            }
+        } catch (Exception $e) {
+            if ($b_do_transaction) {
+                if ($db->inTransaction()) {
+                    $db->rollBack();
+                }
+            }
+        }
+    }
 
     /**
      * @param null|array|object $object
@@ -361,7 +407,7 @@ class FlowProject extends FlowBase {
 
 
             $db = static::get_connection();
-            $db->update('flow_projects', [
+            $db->update(static::TABLE_NAME, [
                 'export_repo_do_auto_push' => $this->export_repo_do_auto_push,
                 'export_repo_url' => $this->export_repo_url,
                 'export_repo_branch' => $this->export_repo_branch,
@@ -480,7 +526,7 @@ class FlowProject extends FlowBase {
      * @throws Exception
      */
     public function save_tags_to_yaml_in_project_directory()  {
-        $tags = $this->get_all_owned_tags_in_project(true);
+        $tags = $this->get_all_owned_tags_in_project(true,true);
 
         foreach ($tags as $tag) {
             $tag->set_brief_json_flag(true);
@@ -546,7 +592,13 @@ class FlowProject extends FlowBase {
         $brief_changes = new BriefDiffFromYaml($this); //compare current changes to older saved in yaml
 
         $this->save_tags_to_yaml_in_project_directory();
-
+        if (!$brief_changes->does_yaml_exist() || !$brief_changes->count_changes()) { //todo start testing here
+            //reload because now we have yaml (or should)
+            $brief_changes = new BriefDiffFromYaml($this);
+            if (!$brief_changes->does_yaml_exist()) {
+                throw new RuntimeException("[save_tag_yaml_and_commit] cannot write or read yaml file");
+            }
+        }
         $number_tag_changes = $brief_changes->count_changes();
         $commit_message = null;
         if ($number_tag_changes) {
@@ -610,10 +662,11 @@ class FlowProject extends FlowBase {
     }
 
     /**
+     * @param bool $b_do_transaction default true
      * @throws Exception
      * @return bool true if committed, false if nothing to commit
      */
-    public function save() :bool {
+    public function save(bool $b_do_transaction = true) :bool {
         $db = null;
         try {
             if (empty($this->flow_project_title)) {
@@ -640,7 +693,10 @@ class FlowProject extends FlowBase {
             $b_did_readme_bb_change = ($this->flow_project_readme_bb_code !== $this->old_flow_project_readme_bb_code);
 
             $db = static::get_connection();
-            $db->beginTransaction();
+            if ($b_do_transaction) {
+                $db->beginTransaction();
+            }
+
             if ($this->flow_project_guid) {
                 $db->update('flow_projects',[
                     'admin_flow_user_id' => $this->admin_flow_user_id,
@@ -697,7 +753,10 @@ class FlowProject extends FlowBase {
 
             $yaml_array = [
               'timestamp' => time(),
-              'flow_project_guid' => $this->flow_project_guid
+              'flow_project_guid' => $this->flow_project_guid,
+              'title' => $this->flow_project_title,
+              'author' => $this->get_admin_user()->flow_user_name,
+              'human_date_time' => Carbon::now()->toIso8601String()
             ];
 
             $yaml = Yaml::dump($yaml_array);
@@ -763,12 +822,15 @@ class FlowProject extends FlowBase {
                 $this->do_git_command("commit --amend --author='$user_info' --no-edit");
             }
 
-
-            $db->commit();
+            if ($b_do_transaction && $db->inTransaction()) {
+                $db->commit();
+            }
 
 
         } catch (Exception $e) {
-            $db AND $db->rollBack();
+            if ($db && $db->inTransaction()) {
+                $db->rollBack();
+            }
             static::get_logger()->alert("Project model cannot save ",['exception'=>$e]);
             throw $e;
         }
@@ -780,65 +842,37 @@ class FlowProject extends FlowBase {
         return "Saved";
     }
 
-    /**
-     * @param int $flow_user_id
-     * @return FlowProject[]
-     * @throws Exception
-     */
-    public static function get_all_top_projects(int $flow_user_id) : array {
-        $db = static::get_connection();
-        $sql = "SELECT DISTINCT p.id, p.created_at_ts FROM flow_projects p 
-                WHERE p.admin_flow_user_id = ? and p.flow_project_type = ?
-                ORDER BY  p.created_at_ts DESC ";
-
-        try {
-            $what = $db->safeQuery($sql, [$flow_user_id,static::FLOW_PROJECT_TYPE_TOP], PDO::FETCH_OBJ);
-            if (empty($what)) {
-                return [];
-            }
-            /**
-             * @var FlowProject[] $ret;
-             */
-            $ret = [];
-            foreach ($what as $row) {
-                $node = static::find_one($row->id);
-                if ($node) {
-                    $ret[] = $node;
-                }
-            }
-            return $ret;
-        } catch (Exception $e) {
-            static::get_logger()->alert("Project model cannot find_one ",['exception'=>$e]);
-            throw $e;
-        }
-    }
 
     /**
-     * get a project without a user if supply an id or guid
-     * or get a project based on any number of guid, and name combinations for project and user
-     * @param ?string $project_title_guid_or_id
-     * @param ?string $user_name_guid_or_id
-     * @return FlowProject|null
+     * @return string
      * @throws Exception
      */
-    public static function find_one(?string $project_title_guid_or_id, ?string $user_name_guid_or_id = null): ?FlowProject
-    {
-        $limit_projects = [];
-        if (trim($project_title_guid_or_id)) {$limit_projects[] = trim($project_title_guid_or_id);}
-        $what = FlowProjectSearch::find_projects($limit_projects,$user_name_guid_or_id);
-        if (empty($what)) {
-            throw new InvalidArgumentException("Project Not Found");
-        }
-        return $what[0]??null;
+    public function get_read_me_bb_code_with_paths(): string {
+
+        $resource_url = $this->get_resource_url().'/';
+        $read_me_full = str_replace(static::RESOURCE_PATH_STUB,$resource_url,$this->flow_project_readme_bb_code);
+
+        $file_url = $this->get_files_url().'/';
+        $read_me_full = str_replace(static::FILES_PATH_STUB,$file_url,$read_me_full);
+
+        return $read_me_full;
     }
 
     /**
      * files not written until save called
-     * @param string $read_me
+     * @param string $bb_code
+     * @throws Exception
      */
-    public function set_read_me(string $read_me) {
-        $this->flow_project_readme_bb_code = $read_me;
-        $this->flow_project_readme_html = JsonHelper::html_from_bb_code($read_me);
+    public function set_read_me(string $bb_code) {
+        $bb_code = JsonHelper::to_utf8($bb_code);
+        $origonal_bb_code = $bb_code;
+
+        $this->flow_project_readme_bb_code = ProjectHelper::get_project_helper()->bb_code_from_file_paths($this,$bb_code);
+
+
+        //may need to convert from the stubs back to the full paths for the html !
+        $nu_read_me = ProjectHelper::get_project_helper()->bb_code_to_file_paths($this,$origonal_bb_code);
+        $this->flow_project_readme_html = JsonHelper::html_from_bb_code($nu_read_me);
         $this->flow_project_readme = str_replace('&nbsp;',' ',strip_tags($this->flow_project_readme_html));
     }
 
@@ -909,6 +943,15 @@ class FlowProject extends FlowBase {
             throw new RuntimeException("Project Directory is not created yet");
         }
         return FlowGitHistory::do_git_command($dir,$command,$b_include_git_word,$pre_command);
+    }
+
+    /**
+     * @return array
+     * @throws Exception
+     */
+    public function get_git_status(): array  {
+        $what =  $this->do_git_command("status");
+        return explode("\n",$what);
     }
 
     /**
@@ -1117,11 +1160,36 @@ class FlowProject extends FlowBase {
 
 
         } catch (Exception $e) {
-            $db AND $db->rollBack();
+            if ($db && $db->inTransaction()) {
+                $db->rollBack();
+            }
             static::get_logger()->alert("Project model cannot update from file stete ",['exception'=>$e]);
             throw $e;
         }
 
+    }
+
+
+    /**
+     * @return string|null
+     * @throws Exception
+     */
+    public function get_files_directory() : ?string {
+        $project_directory = $this->get_project_directory();
+        if (!$project_directory) {return null;}
+        $resource_directory = $project_directory.DIRECTORY_SEPARATOR. static::REPO_FILES_DIRECTORY;
+        $real = realpath($resource_directory);
+        if (!$real) {
+            $b_made = mkdir($resource_directory);
+            if (!$b_made) {
+                throw new RuntimeException("Cannot make files directory at $real");
+            }
+            $real = realpath($resource_directory);
+        }
+        if (!is_readable($real)) {
+            throw new RuntimeException("Files directory is not readable at $real");
+        }
+        return $real;
     }
 
     /**
@@ -1147,12 +1215,40 @@ class FlowProject extends FlowBase {
     }
 
     /**
-     * returns array of full file paths of any resources found that is sharable (png,jpg,jpeg,pdf)
+     * @return string
+     * @throws Exception
+     */
+    public function get_resource_url() : string {
+        $base_resource_directory = '/' . $this->get_admin_user()->flow_user_guid .
+            '/' . $this->flow_project_guid . '/' . static::REPO_RESOURCES_DIRECTORY ; //no slash at end
+        $root = ProjectHelper::get_project_helper()->get_root_url();
+        return $root. $base_resource_directory;
+    }
+
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    public function get_files_url() : string {
+        $base_resource_directory = '/' . $this->get_admin_user()->flow_user_guid .
+            '/' . $this->flow_project_guid . '/' . static::REPO_FILES_DIRECTORY ; //no slash at end
+        $root = ProjectHelper::get_project_helper()->get_root_url();
+        return $root. $base_resource_directory;
+    }
+
+    /**
+     * returns array of full file paths of any resources (or protected files) found that is sharable (png,jpg,jpeg,pdf)
      * @return string[]
      * @throws
      */
-    public function get_resource_file_paths(): array{
-        $resource_directory = $this->get_resource_directory();
+    public function get_resource_file_paths(bool $b_get_protected_files_instead = false): array{
+        if ($b_get_protected_files_instead) {
+            $resource_directory = $this->get_files_directory();
+        } else {
+            $resource_directory = $this->get_resource_directory();
+        }
+
         if (empty($resource_directory)) {return [];}
         $types_piped = implode('|',static::REPO_RESOURCES_VALID_TYPES);
         $pattern = "/.+($types_piped)\$/";
@@ -1168,6 +1264,26 @@ class FlowProject extends FlowBase {
             if ($what && is_readable($path)) {$ret[] = $what;}
         }
         return $ret;
+    }
+
+
+
+    /**
+     * returns array of full url paths of any resources found that is sharable (png,jpg,jpeg,pdf)
+     * @return string[]
+     * @throws
+     */
+    public function get_resource_urls(): array{
+        $resource_files = $this->get_resource_file_paths();
+
+        $base_resource_file_path = $this->get_resource_directory(); //no slash at end
+        $base_project_url = $this->get_resource_url();
+        $resource_urls = [];
+        foreach ($resource_files as $full_path_file) {
+            $full_url = str_replace($base_resource_file_path,$base_project_url,$full_path_file);
+            $resource_urls[] = $full_url;
+        }
+        return $resource_urls;
     }
 
 

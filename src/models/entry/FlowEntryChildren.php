@@ -137,7 +137,11 @@ abstract class FlowEntryChildren extends FlowEntryFiles  {
 
         } catch (Exception $e) {
             static::get_logger()->alert("Entry Child model cannot save ",['exception'=>$e]);
-            if ($b_do_transaction && $db && $db->inTransaction() ) {$db->rollBack();}
+            if ($b_do_transaction && $db && $db->inTransaction() ) {
+                if ($db->inTransaction()) {
+                    $db->rollBack();
+                }
+            }
             throw $e;
         }
     }

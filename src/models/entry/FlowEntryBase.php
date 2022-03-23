@@ -225,6 +225,9 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                 $this->set_updated_at_ts($update_info['updated_at_ts']);
 
                 if ($b_save_children) {
+                    /**
+                     * @var IFlowEntry $child_entry
+                     */
                     foreach ($this->child_entries as $child_entry) {
                         $child_entry->set_parent_id($this->flow_entry_id);
                         $child_entry->save_entry();
@@ -236,7 +239,11 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                     $db->commit();
                 }
             } catch (Exception $e) {
-                if ($b_do_transaction &&   $db->inTransaction()) { $db->rollBack(); }
+                if ($b_do_transaction &&   $db->inTransaction()) {
+                    if ($db->inTransaction()) {
+                        $db->rollBack();
+                    }
+                }
                 throw $e;
             }
 
@@ -278,10 +285,11 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
 
     /**
      * @param FlowProject $project
+     * @param FlowProject|null $new_project
      * @return IFlowEntry
      * @throws Exception
      */
-    public function clone_with_missing_data(FlowProject $project) : IFlowEntry
+    public function clone_with_missing_data(FlowProject $project,?FlowProject $new_project = null) : IFlowEntry
     {
         $me = $this->fetch_this($project);
         if (empty($me->get_id()) && empty($me->get_guid())) {
@@ -302,6 +310,14 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
         $me->set_title($this->get_title());
         $me->set_blurb($this->get_blurb()) ;
         $me->set_body_bb_code($this->get_bb_code()) ;
+
+        if ($new_project) {
+            $me->project = $new_project;
+            $me->set_project_guid($new_project->flow_project_guid);
+            $me->set_project_id($new_project->id) ;
+            $me->set_id(null);
+            $me->set_guid(null);
+        }
 
         return $me;
     }

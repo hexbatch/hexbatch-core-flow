@@ -54,7 +54,7 @@ function create_select_2_for_general_search(bare_select_control,b_multi,
                 let allowed_users = '';
 
                 if (general.is_public) {
-                    security = `<span class="text-success"><i class="fas fa-lock-open"></i></span><span class="text-success ms-1" >Public</i>  </span>`;
+                    security = `<span class="text-success"><i class="fas fa-lock-open"></i></span><span class="text-success ms-1" >Public  </span>`;
                 } else {
                     security = `<span class="text-info"><i class="fas fa-lock "></i></span>`;
                     allowed_users += `<span>`;
@@ -73,14 +73,33 @@ function create_select_2_for_general_search(bare_select_control,b_multi,
 
             }
             case 'entry': {
+
+                let security;
+                if (general.is_public) {
+                    security = `<span class="text-success"><i class="fas fa-lock-open"></i></span>`;
+                } else {
+                    security = `<span class="text-info"><i class="fas fa-lock "></i></span>`;
+                }
+
                 return jQuery(`<span class="d-inline">
                             
                             <span class="d-block">
+                                <span class="fw-bold d-inline me-1">Entry</span>
                                 ${general.blurb}
+                                <span class="d-block ms-1">
+                                    ${security} ${general.owning_project_result.title}
+                                </span>
                             </span>
                         </span>`);
             }
             case 'tag': {
+                let security;
+                if (general.is_public) {
+                    security = `<span class="text-success"><i class="fas fa-lock-open"></i></span>`;
+                } else {
+                    security = `<span class="text-info"><i class="fas fa-lock "></i></span>`;
+                }
+
                 let used_by = '';
                 used_by += `<span>`;
                 for(let i = 0; i < general.tag_used_by_results.length; i++) {
@@ -91,6 +110,9 @@ function create_select_2_for_general_search(bare_select_control,b_multi,
                             
                             <span class="d-block">
                                 ${used_by}
+                            </span>
+                             <span class="d-block ms-1">
+                                    ${security} ${general.owning_project_result.title}
                             </span>
                         </span>`);
             }

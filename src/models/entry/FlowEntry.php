@@ -42,7 +42,11 @@ final class FlowEntry extends FlowEntryMembers  {
             }
             $this->get_project()->commit_changes("$action Entry $title");
         } catch (Exception $e) {
-            if ($b_do_transaction && $db) { $db->rollBack(); }
+            if ($b_do_transaction && $db) {
+                if ($db->inTransaction()) {
+                    $db->rollBack();
+                }
+            }
             if ($this->get_project()) {
                 $this->get_project()->reset_local_files();
             }

@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use app\helpers\ProjectHelper;
 use app\hexlet\FlowAntiCSRF;
+use app\hexlet\JsonHelper;
 use Ramsey\Uuid\Uuid;
 use Slim\App;
 use Slim\Views\Twig;
@@ -12,17 +14,24 @@ use Twig\Extension\DebugExtension;
 use Twig\Extension\GlobalsInterface;
 use Twig\Loader\FilesystemLoader;
 use DI\Container;
+use Twig\TwigFilter;
 use Twig\TwigFunction;
 
 class Hexlet_Twig_Extension extends AbstractExtension implements GlobalsInterface
 {
     public function getGlobals(): array
     {
-        $root = (!empty($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] ;
+        $root = ProjectHelper::get_project_helper()->get_root_url();
         return [
             'root_url' => $root,
             'csrf_token_set_to_root' => FlowAntiCSRF::SET_LOCK_TO_ANY_PAGE
         ];
+    }
+
+    public function getFilters() : array
+    {
+        $better_json = new TwigFilter('to_json_string', 'app\\hexlet\\JsonHelper::toString',['is_safe' => ['html']]);
+        return [$better_json];
     }
 
     public function getFunctions(): array
@@ -84,7 +93,7 @@ return function (App $app) {
         $loader = new FilesystemLoader([HEXLET_TWIG_TEMPLATE_PATH, HEXLET_TWIG_PAGES_PATH],
             HEXLET_TWIG_TEMPLATE_PATH);
 
-        $settings_as_array = json_decode(json_encode($settings),true);
+        $settings_as_array = JsonHelper::fromString(JsonHelper::toString($settings),true,true);
         $twig =  new Twig($loader, $settings_as_array);
         $twig->addExtension(new Hexlet_Twig_Extension());
 

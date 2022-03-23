@@ -4,21 +4,19 @@ div.flow-project-new-button {
     margin-top: 1em;
 }
 
-dl.flow-project-list {
+div.flow-project-list {
     margin-top: 2em;
 }
 
-dl.flow-project-list dd,  dl.flow-project-list dt {
-    margin-top: 1em;
-}
 
-dl.flow-project-list dt span.flow-project-title {
+
+div.flow-project-list-item  span.flow-project-title {
     font-weight: bold;
 }
 
-dl.flow-project-list dd span.flow-project-blurb {
+div.flow-project-list-item  span.flow-project-blurb {
     font-style: italic;
-    background-color: rgba(0,0,0, 0.05);
+    background-color: rgba(0,0,0, 0.04);
     padding: 0.2em 1em ;
 }
 
@@ -44,4 +42,13 @@ div#flow-history-area ul.flow-history-file-list li span.flow-commit-body {
     white-space: pre;
     display: block;
 }
+
+.row.flow-project-list-item {
+    background: #fff;
+}
+.row.flow-project-list-item:nth-child(2n) {
+    background: #eeefff;
+}
+
+
 

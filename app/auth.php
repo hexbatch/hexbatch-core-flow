@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use app\controllers\user\CheckAdminMiddleware;
 use app\controllers\user\PingUserMiddleware;
 use app\models\user\FlowUser;
 use app\controllers\user\CheckLoggedInMiddleware;
@@ -43,6 +44,10 @@ return function (Container $container) {
         $auth = $container->get('auth');
         return new CheckLoggedInMiddleware($auth);
 
+    });
+
+    $container->set('checkAdminMiddleware', function() use ($container) {
+        return new CheckAdminMiddleware();
     });
 
     $container->set('pingUserMiddleware', function() use ($container) {

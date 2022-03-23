@@ -131,7 +131,6 @@ class FlowTag extends FlowBase implements JsonSerializable {
     }
 
 
-
     public function __construct($object=null){
         $this->attributes = [];
         $this->css = [];
@@ -157,10 +156,14 @@ class FlowTag extends FlowBase implements JsonSerializable {
         foreach ($object as $key => $val) {
             if ($key === 'attributes') {continue;}
             if ($key === 'applied') {continue;}
-            if (property_exists($this,$key)) {
+            if ($key === 'css') {
+                $this->css = JsonHelper::fromString(JsonHelper::toString($val));
+            } else if (property_exists($this,$key)) {
                 $this->$key = $val;
             }
         }
+
+
 
         if (is_object($object) && property_exists($object,'attributes') && is_array($object->attributes)) {
             $attributes_to_copy = $object->attributes;
@@ -218,10 +221,29 @@ class FlowTag extends FlowBase implements JsonSerializable {
     }
 
     /**
+     * @param array<string,string> $guid_map_old_to_new
+     * @param bool $b_do_transaction default false
+     * @return FlowTag
+     * @throws Exception
+     */
+    public function clone_change_project(array $guid_map_old_to_new ,bool $b_do_transaction = false) : FlowTag {
+        $me = new FlowTag($this); //new to db
+        $me->flow_tag_id = null;
+        $me->flow_tag_guid = null;
+        $me->flow_project_id = null;
+        $me->flow_project_guid = $guid_map_old_to_new[$this->flow_project_guid]??null;
+        if (!$me->flow_project_guid) {throw new InvalidArgumentException("[clone_change_project] Project guid was not supplied");}
+        $me->parent_tag_guid = $guid_map_old_to_new[$this->parent_tag_guid]??null;
+        $me->parent_tag_id = null;
+
+        $me->save($b_do_transaction,true,$guid_map_old_to_new);
+        return $me;
+    }
+    /**
      * @return $this
      * @throws Exception
      */
-    public function clone_refresh() : FlowTag {
+    public function clone_refresh(bool $b_get_applied=true) : FlowTag {
         if (empty($this->flow_tag_id) && empty($this->flow_tag_guid)) {
             $me = new FlowTag($this); //new to db
             return $me;
@@ -232,6 +254,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
         } elseif ($this->flow_tag_id) {
             $search->tag_ids[] = $this->flow_tag_id;
         }
+        $search->flag_get_applied = $b_get_applied;
 
         $me_array = static::get_tags($search);
         if (empty($me_array)) {
@@ -471,8 +494,6 @@ class FlowTag extends FlowBase implements JsonSerializable {
                     HEX(admin_user.flow_user_guid)          as flow_project_admin_user_guid,
        
                     attribute.id                            as flow_tag_attribute_id,
-                    attribute.flow_applied_tag_id,
-                    applied.flow_applied_tag_guid,
                     attribute.points_to_entry_id,
                     attribute.points_to_user_id,
                     attribute.points_to_project_id,
@@ -537,7 +558,6 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 INNER JOIN flow_projects project ON project.id = t.flow_project_id 
                 INNER JOIN flow_users admin_user ON admin_user.id = project.admin_flow_user_id 
                 LEFT JOIN flow_tag_attributes attribute on attribute.flow_tag_id = t.id
-                LEFT JOIN flow_applied_tags applied on attribute.flow_applied_tag_id = applied.id
                 LEFT JOIN flow_entries point_entry on attribute.points_to_entry_id = point_entry.id
                 LEFT JOIN flow_users point_user on attribute.points_to_user_id = point_user.id 
                 LEFT JOIN flow_projects point_project on attribute.points_to_project_id = point_project.id 
@@ -726,9 +746,13 @@ class FlowTag extends FlowBase implements JsonSerializable {
     }
 
     /**
+     * @param bool $b_do_transaction
+     * @param bool $b_save_children
+     * @param array<string,string> $guid_map_old_to_new
+     *      if not empty , then saves applied and attributes as new under the current project id
      * @throws Exception
      */
-    public function save(bool $b_do_transaction = false, bool $b_save_children = false) :void {
+    public function save(bool $b_do_transaction = false, bool $b_save_children = false,array $guid_map_old_to_new = []) :void {
         $db = null;
 
         try {
@@ -822,13 +846,51 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
             if ($b_save_children) {
                 foreach ($this->attributes as $attribute) {
+
                     $attribute->flow_tag_id = $this->flow_tag_id;
-                    $attribute->flow_applied_tag_id = null;
+                    if (count($guid_map_old_to_new)) {
+                        $attribute->flow_tag_attribute_id = null;
+                        $attribute->flow_tag_attribute_guid = null;
+
+                        if (isset($guid_map_old_to_new[$attribute->points_to_flow_project_guid])) {
+                            $attribute->points_to_flow_project_guid = $guid_map_old_to_new[$attribute->points_to_flow_project_guid];
+                            $attribute->points_to_project_id = null;
+                        }
+
+                        if (isset($guid_map_old_to_new[$attribute->points_to_flow_entry_guid])) {
+                            $attribute->points_to_flow_entry_guid = $guid_map_old_to_new[$attribute->points_to_flow_entry_guid];
+                            $attribute->points_to_entry_id = null;
+                        }
+
+                        if (isset($guid_map_old_to_new[$attribute->points_to_flow_user_guid])) {
+                            $attribute->points_to_flow_user_guid = $guid_map_old_to_new[$attribute->points_to_flow_user_guid];
+                            $attribute->points_to_user_id = null;
+                        }
+
+                    }
                     $attribute->save();
                 }
 
                 foreach ($this->applied as $app) {
                     $app->flow_tag_id = $this->flow_tag_id;
+                    if (count($guid_map_old_to_new)) {
+                        $app->id = null;
+                        $app->flow_applied_tag_guid = null;
+                        if (isset($guid_map_old_to_new[$app->tagged_flow_project_guid])) {
+                            $app->tagged_flow_project_guid = $guid_map_old_to_new[$app->tagged_flow_project_guid];
+                            $app->tagged_flow_project_id = null;
+                        }
+
+                        if (isset($guid_map_old_to_new[$app->tagged_flow_entry_guid])) {
+                            $app->tagged_flow_entry_guid = $guid_map_old_to_new[$app->tagged_flow_entry_guid];
+                            $app->tagged_flow_entry_id = null;
+                        }
+
+                        if (isset($guid_map_old_to_new[$app->tagged_flow_user_guid])) {
+                            $app->tagged_flow_user_guid = $guid_map_old_to_new[$app->tagged_flow_user_guid];
+                            $app->tagged_flow_user_id = null;
+                        }
+                    }
                     $app->save();
                 }
             }
@@ -837,7 +899,11 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
 
         } catch (Exception $e) {
-            if ($b_do_transaction && $db) { $db->rollBack(); }
+            if ($b_do_transaction && $db) {
+                if ($db->inTransaction()) {
+                    $db->rollBack();
+                }
+            }
             static::get_logger()->alert("Tag model cannot save ",['exception'=>$e]);
             throw $e;
         }
