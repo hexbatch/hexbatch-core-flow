@@ -221,23 +221,22 @@ class FlowTag extends FlowBase implements JsonSerializable {
     }
 
     /**
-     * @param int $project_id
-     * @param string|null $new_parent_guid
+     * @param array<string,string> $guid_map_old_to_new
      * @param bool $b_do_transaction default false
      * @return FlowTag
      * @throws Exception
      */
-    public function clone_change_project(int $project_id,?string $new_parent_guid ,bool $b_do_transaction = false) : FlowTag {
+    public function clone_change_project(array $guid_map_old_to_new ,bool $b_do_transaction = false) : FlowTag {
         $me = new FlowTag($this); //new to db
         $me->flow_tag_id = null;
         $me->flow_tag_guid = null;
-        $me->flow_project_id = $project_id;
-        $me->flow_project_guid = null;
-        $me->parent_tag_guid = $new_parent_guid;
+        $me->flow_project_id = null;
+        $me->flow_project_guid = $guid_map_old_to_new[$this->flow_project_guid]??null;
+        if (!$me->flow_project_guid) {throw new InvalidArgumentException("[clone_change_project] Project guid was not supplied");}
+        $me->parent_tag_guid = $guid_map_old_to_new[$this->parent_tag_guid]??null;
         $me->parent_tag_id = null;
-        //get all applied
 
-        $me->save($b_do_transaction,true,$this->flow_project_id);
+        $me->save($b_do_transaction,true,$guid_map_old_to_new);
         return $me;
     }
     /**
@@ -749,10 +748,11 @@ class FlowTag extends FlowBase implements JsonSerializable {
     /**
      * @param bool $b_do_transaction
      * @param bool $b_save_children
-     * @param int|null $n_old_project_id if not null, then saves applied and attributes as new under the current project id
+     * @param array<string,string> $guid_map_old_to_new
+     *      if not empty , then saves applied and attributes as new under the current project id
      * @throws Exception
      */
-    public function save(bool $b_do_transaction = false, bool $b_save_children = false,?int $n_old_project_id=null) :void {
+    public function save(bool $b_do_transaction = false, bool $b_save_children = false,array $guid_map_old_to_new = []) :void {
         $db = null;
 
         try {
@@ -848,25 +848,47 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 foreach ($this->attributes as $attribute) {
 
                     $attribute->flow_tag_id = $this->flow_tag_id;
-                    if ($n_old_project_id) {
-                        $attribute->id = null;
+                    if (count($guid_map_old_to_new)) {
+                        $attribute->flow_tag_attribute_id = null;
                         $attribute->flow_tag_attribute_guid = null;
-                        if ($attribute->points_to_project_id === $n_old_project_id) {
-                            $attribute->points_to_project_id = $this->flow_project_id;
-                            $attribute->points_to_flow_project_guid = null;
+
+                        if (isset($guid_map_old_to_new[$attribute->points_to_flow_project_guid])) {
+                            $attribute->points_to_flow_project_guid = $guid_map_old_to_new[$attribute->points_to_flow_project_guid];
+                            $attribute->points_to_project_id = null;
                         }
+
+                        if (isset($guid_map_old_to_new[$attribute->points_to_flow_entry_guid])) {
+                            $attribute->points_to_flow_entry_guid = $guid_map_old_to_new[$attribute->points_to_flow_entry_guid];
+                            $attribute->points_to_entry_id = null;
+                        }
+
+                        if (isset($guid_map_old_to_new[$attribute->points_to_flow_user_guid])) {
+                            $attribute->points_to_flow_user_guid = $guid_map_old_to_new[$attribute->points_to_flow_user_guid];
+                            $attribute->points_to_user_id = null;
+                        }
+
                     }
                     $attribute->save();
                 }
 
                 foreach ($this->applied as $app) {
                     $app->flow_tag_id = $this->flow_tag_id;
-                    if ($n_old_project_id) {
+                    if (count($guid_map_old_to_new)) {
                         $app->id = null;
                         $app->flow_applied_tag_guid = null;
-                        if ($app->tagged_flow_project_id === $n_old_project_id) {
-                            $app->tagged_flow_project_id = $this->flow_project_id;
-                            $app->tagged_flow_project_guid = null;
+                        if (isset($guid_map_old_to_new[$app->tagged_flow_project_guid])) {
+                            $app->tagged_flow_project_guid = $guid_map_old_to_new[$app->tagged_flow_project_guid];
+                            $app->tagged_flow_project_id = null;
+                        }
+
+                        if (isset($guid_map_old_to_new[$app->tagged_flow_entry_guid])) {
+                            $app->tagged_flow_entry_guid = $guid_map_old_to_new[$app->tagged_flow_entry_guid];
+                            $app->tagged_flow_entry_id = null;
+                        }
+
+                        if (isset($guid_map_old_to_new[$app->tagged_flow_user_guid])) {
+                            $app->tagged_flow_user_guid = $guid_map_old_to_new[$app->tagged_flow_user_guid];
+                            $app->tagged_flow_user_id = null;
                         }
                     }
                     $app->save();

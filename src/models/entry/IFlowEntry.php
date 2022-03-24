@@ -113,7 +113,12 @@ Interface IFlowEntry {
     public function fetch_this(FlowProject $project) : IFlowEntry ;
 
 
-    public function set_body_bb_code(?string $bb_code);
+    /**
+     * @param string|null $bb_code
+     * @return void
+     * @throws
+     */
+    public function set_body_bb_code(?string $bb_code) : void;
 
     /**
      * called before a save, any child can do logic and throw an exception to stop the save

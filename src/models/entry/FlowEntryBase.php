@@ -312,7 +312,11 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
         $me->set_body_bb_code($this->get_bb_code()) ;
 
         if ($new_project) {
-            $this->project = $new_project;
+            $me->project = $new_project;
+            $me->set_project_guid($new_project->flow_project_guid);
+            $me->set_project_id($new_project->id) ;
+            $me->set_id(null);
+            $me->set_guid(null);
         }
 
         return $me;

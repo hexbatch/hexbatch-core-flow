@@ -19,20 +19,23 @@
     {% for project in my_projects %}
     <div class="row flow-project-list-item  pt-1 pb-1 pt-md-3 pb-md-3">
         <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2 col-xxl-2" >
+                <div class="d-inline">
+                    <a href="{{ url_for('single_project_home',{
+                        user_name: project.get_admin_user().flow_user_name ,
+                        project_name: project.flow_project_title
+                    } )
+                    }}">
+                        <span class="flow-project-title ">
+                            {{ project.flow_project_title }}
+                        </span>
+                    </a>
+                </div> <!-- / inline -->
 
-            <a href="{{ url_for('single_project_home',{
-                user_name: project.get_admin_user().flow_user_name ,
-                project_name: project.flow_project_title
-            } )
-            }}">
-                <span class="flow-project-title">
-                    {{ project.flow_project_title }}
-                </span>
-            </a>
+
 
         </div>
 
-        <div class="col-8 col-sm-6 col-md-4 col-lg-5 col-xl-6 col-xxl-4">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-5 col-xl-6 col-xxl-4">
             <a href="{{ url_for('single_project_home',{
                 user_name: project.get_admin_user().flow_user_name ,
                 project_name: project.flow_project_title
@@ -43,12 +46,13 @@
                 </span>
 
             </a>
+
         </div>
 
-        <div class="col-4 col-sm-12 col-md-4 col-lg-4 col-xl-4 col-xxl-6">
+        <div class="col-12 col-sm-12 col-md-4 col-lg-4 col-xl-4 col-xxl-6">
 
             <div class="row">
-                <div class="col-4">
+                <div class="col-1">
                     <div class=" text-black-50">
                         {% if project.get_current_user_permissions().can_admin %}
                             <span class="p-1 fw-bold">A</span>
@@ -62,11 +66,27 @@
                     </div>
                 </div>
 
+                <div class="col-5">
+                    <div class="text-black-50 small" style="text-decoration: none">
+                        <code class="small text-black-50" style="text-decoration: initial !important;">
+                            {{ project.flow_project_guid }}
+                        </code>
+                        <button class="btn btn-outline-secondary btn-sm clipy-btn small"
+                                type="button"
+                                data-clipboard-text="{{ project.flow_project_guid }}"
+                                data-popover_on_success="Copied!"
+                                data-popover_on_fail="Use Control-C"
+                        >
+                            Copy
+                        </button>
+                    </div>
+                </div>
+
                 <div class="col-4">
                     <span class="flow-long-date-time" data-ts="{{ project.created_at_ts }}"></span>
                 </div>
 
-                <div class="col-4">
+                <div class="col-2">
                     {% if project.get_current_user_permissions().can_admin %}
                         <button class="btn btn-danger btn-sm  flow-action flow-project-delete-action"
                                 data-guid="{{ project.flow_project_guid }}"

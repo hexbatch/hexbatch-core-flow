@@ -182,7 +182,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
             if (empty($this->tag_attribute_text)) {
                 $this->tag_attribute_text = null;
             } else {
-                $this->tag_attribute_text = htmlentities(JsonHelper::to_utf8($this->tag_attribute_text));
+                $this->tag_attribute_text = htmlspecialchars(JsonHelper::to_utf8($this->tag_attribute_text),ENT_QUOTES | ENT_SUBSTITUTE,'UTF-8',false);
             }
 
 

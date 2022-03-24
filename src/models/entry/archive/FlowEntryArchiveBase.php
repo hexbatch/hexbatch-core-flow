@@ -7,6 +7,7 @@ use app\hexlet\RecursiveClasses;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\entry\IFlowEntry;
+use Carbon\Carbon;
 use JsonSerializable;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
@@ -132,6 +133,8 @@ abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable
 
 
         $stuff = $this->to_array();
+        $stuff['entry_name'] = $this->get_entry()->get_title();
+        $stuff['human_date_time'] = Carbon::now()->toIso8601String();
         $stuff_yaml = Yaml::dump($stuff);
 
         $yaml_path = $path. DIRECTORY_SEPARATOR . static::BASE_YAML_FILE_NAME;

@@ -71,6 +71,10 @@ class BriefDiffFromYaml {
      */
     public $from_yaml_as_brief_tag_map = [];
 
+    protected bool $b_yaml_file_exists = false;
+
+    public function does_yaml_exist() : bool { return $this->b_yaml_file_exists;}
+
     public function count_changes() : int {
         $total_count =
             count($this->changed_tags) +
@@ -243,16 +247,20 @@ class BriefDiffFromYaml {
         $this->removed_applied = [];
         $this->brief_tag_map = [];
         $this->from_yaml_as_brief_tag_map = [];
+        $this->b_yaml_file_exists = false;
 
-        $current_tags = $this->project->get_all_owned_tags_in_project(true);
+        $current_tags = $this->project->get_all_owned_tags_in_project(true,true);
         if (empty($yaml_file)) {
             $yaml_file = $this->project->get_tag_yaml_path();
         }
 
-        if (!is_readable($yaml_file)) {
-            return;
+        if (is_readable($yaml_file)) {
+            $this->b_yaml_file_exists = true;
+            $saved = Yaml::parseFile($yaml_file);
+        } else {
+            $saved = [];
         }
-        $saved = Yaml::parseFile($yaml_file);
+
 
 
         /**

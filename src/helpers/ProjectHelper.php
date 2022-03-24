@@ -147,6 +147,7 @@ class ProjectHelper extends BaseHelper {
         }
         $args = $request->getParsedBody();
 
+        $new_project = null;
         try {
             $this->get_connection()->beginTransaction();
             $new_project = new FlowProject();
@@ -157,25 +158,16 @@ class ProjectHelper extends BaseHelper {
             $new_project->flow_project_title = $args['flow_project_title']?? $origonal_project->flow_project_title;
             $new_project->flow_project_blurb = $origonal_project->flow_project_blurb;
             $new_project->is_public = $origonal_project->is_public;
+            $new_project->save(false); //save first to get the directory ok
             $new_project->set_read_me($origonal_project->flow_project_readme_bb_code);
 
             $new_project->save(false);
-            //copy tags
-            $tags = $origonal_project->get_all_owned_tags_in_project(true,true);
-            $tag_parent_hash = [];
-            foreach ($tags as $tag) {
-                $new_parent_guid = null;
-                if ($tag->parent_tag_guid) {
-                    if (!array_key_exists($tag->parent_tag_guid,$tag_parent_hash)) {
-                        throw new LogicException(sprintf("Parent tag of %s does not have a new guid",$tag->parent_tag_guid));
-                    }
-                    $new_parent_guid = $tag_parent_hash[$tag->parent_tag_guid];
-                }
 
-                $new_tag = $tag->clone_change_project($new_project->id,$new_parent_guid);
-                $tag_parent_hash[$tag->flow_tag_guid] = $new_tag->flow_tag_guid;
-            }
-            $new_project->save_tag_yaml_and_commit(true);
+            /**
+             * @var array<string,string>
+             */
+            $guid_map = [];
+            $guid_map[$origonal_project->flow_project_guid] = $new_project->flow_project_guid;
 
             //copy entries
             $entry_search_params = new FlowEntrySearchParams();
@@ -185,7 +177,29 @@ class ProjectHelper extends BaseHelper {
             foreach ($entries as $entry) {
                 $new_entry = $entry->clone_with_missing_data($origonal_project,$new_project);
                 $new_entry->save_entry();
+                $guid_map[$entry->get_guid()] = $new_entry->get_guid();
             }
+
+            if ($this->get_current_user()->flow_user_guid !== $origonal_project->get_admin_user()->flow_user_guid) {
+                $guid_map[$origonal_project->get_admin_user()->flow_user_guid] = $this->get_current_user()->flow_user_guid;
+            }
+
+
+            //copy tags
+            $tags = $origonal_project->get_all_owned_tags_in_project(true,true);
+            foreach ($tags as $tag) {
+                if ($tag->parent_tag_guid) {
+                    if (!array_key_exists($tag->parent_tag_guid,$guid_map)) {
+                        throw new LogicException(sprintf("Parent tag of %s does not have a new guid",$tag->parent_tag_guid));
+                    }
+                }
+
+                $new_tag = $tag->clone_change_project($guid_map);
+                $guid_map[$tag->flow_tag_guid] = $new_tag->flow_tag_guid;
+            }
+            $new_project->save_tag_yaml_and_commit(true);
+
+
 
             //copy resource folder
             $original_file_resource_path = $origonal_project->get_resource_directory();
@@ -198,19 +212,20 @@ class ProjectHelper extends BaseHelper {
             }
 
             //copy files folder
-            $original_file_resource_path = $origonal_project->get_resource_directory();
-            $new_file_resource_path = $new_project->get_resource_directory();
+            $original_file_resource_path = $origonal_project->get_files_directory();
+            $new_file_resource_path = $new_project->get_files_directory();
             //cp -rT src target
             $this->do_command("cp -rT $original_file_resource_path $new_file_resource_path");
-            $find_files = $new_project->get_resource_file_paths();
+            $find_files = $new_project->get_resource_file_paths(true);
             if (count($find_files)) {
-                $new_project->commit_changes("Added resources from original project");
+                $new_project->commit_changes("Added protected files from original project");
             }
             if ($this->get_connection()->inTransaction()) {
                 $this->get_connection()->commit();
             }
             return $new_project;
         } catch (Exception $e ) {
+            if ($new_project) {$new_project->delete_project_directory();}
             if ($this->get_connection()->inTransaction()) {
                 $this->get_connection()->rollBack();
             }
@@ -309,6 +324,44 @@ class ProjectHelper extends BaseHelper {
             static::get_logger()->alert("[get_all_top_projects] error ",['exception'=>$e]);
             throw $e;
         }
+
+
+    }
+
+    /**
+     * @param FlowProject $project
+     * @param string|null $bb_code
+     * @return string|null
+     * @throws Exception
+     */
+    public function bb_code_from_file_paths(FlowProject $project,string $bb_code) : string {
+        if (!$bb_code) {return $bb_code;}
+        $start_of_resources_url = $project->get_resource_url() . '/';
+
+        $bb_code =
+            str_replace($start_of_resources_url,FlowProject::RESOURCE_PATH_STUB,$bb_code);
+
+
+        $start_of_files_url = $project->get_files_url() . '/';
+        $bb_code =
+            str_replace($start_of_files_url,FlowProject::FILES_PATH_STUB,$bb_code);
+        return $bb_code;
+
+    }
+
+    /**
+     * @param FlowProject $project
+     * @param string|null $bb_code
+     * @return string|null
+     * @throws Exception
+     */
+    public function bb_code_to_file_paths(FlowProject $project,string $bb_code) : string {
+        if (!$bb_code) {return $bb_code;}
+        $start_of_resources_url = $project->get_resource_url() . '/';
+        $start_of_files_url = $project->get_files_url() . '/';
+        $bb_code = str_replace(FlowProject::RESOURCE_PATH_STUB,$start_of_resources_url,$bb_code);
+        $bb_code = str_replace(FlowProject::FILES_PATH_STUB,$start_of_files_url,$bb_code);
+        return $bb_code;
 
 
     }
