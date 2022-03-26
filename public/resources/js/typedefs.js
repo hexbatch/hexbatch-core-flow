@@ -164,7 +164,7 @@
 /**
  *
  * @callback FlowTagAttributeEditCallback
- * @param {FlowTagAttribute} data
+ * @param {FlowTag} data
  */
 
 

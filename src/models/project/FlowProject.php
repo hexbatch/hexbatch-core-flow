@@ -592,7 +592,7 @@ class FlowProject extends FlowBase {
         $brief_changes = new BriefDiffFromYaml($this); //compare current changes to older saved in yaml
 
         $this->save_tags_to_yaml_in_project_directory();
-        if (!$brief_changes->does_yaml_exist() || !$brief_changes->count_changes()) { //todo start testing here
+        if (!$brief_changes->does_yaml_exist() || !$brief_changes->count_changes()) {
             //reload because now we have yaml (or should)
             $brief_changes = new BriefDiffFromYaml($this);
             if (!$brief_changes->does_yaml_exist()) {

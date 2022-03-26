@@ -213,7 +213,7 @@ class TagPages extends BasePages
 
             $tag->save(true);
             $saved_tag = $tag->clone_refresh();
-            $saved_tag->update_flow_things_with_css();
+            $saved_tag->update_flow_things_with_standard_attibutes();
 
             $call->project->do_tag_save();
             $data = ['success'=>true,'message'=>'ok','tag'=>$saved_tag,'token'=> $call->new_token];
@@ -268,7 +268,7 @@ class TagPages extends BasePages
             }
             $tag->save();
             $saved_tag = $tag->clone_refresh();
-            $saved_tag->update_flow_things_with_css();
+            $saved_tag->update_flow_things_with_standard_attibutes();
 
             $routeParser = RouteContext::fromRequest($request)->getRouteParser();
             foreach ( $saved_tag->applied as $mapp) {
@@ -444,8 +444,8 @@ class TagPages extends BasePages
 
             if ($attribute_name) {
                 foreach ($ret->tag->attributes as $look_at) { //clever name!!
-                    if ($look_at->flow_tag_attribute_guid === $attribute_name) { $ret->attribute = $look_at; break;}
-                    if ($look_at->tag_attribute_name === $attribute_name) { $ret->attribute = $look_at; break;}
+                    if ($look_at->getFlowTagAttributeGuid() === $attribute_name) { $ret->attribute = $look_at; break;}
+                    if ($look_at->getTagAttributeName() === $attribute_name) { $ret->attribute = $look_at; break;}
                 }
 
                 if (!$ret->attribute) {
@@ -483,17 +483,17 @@ class TagPages extends BasePages
             $call = $this->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
             $attribute_data = $call->args ?? null;
             $attribute_to_add = new FlowTagAttribute($attribute_data);
-            $attribute_to_add->flow_tag_id = $call->tag->flow_tag_id;
+            $attribute_to_add->setFlowTagId($call->tag->flow_tag_id)  ;
             if (!$attribute_to_add->has_enough_data_set()) {
                 throw new InvalidArgumentException("Need mo' data for attribute");
             }
             foreach ($call->tag->attributes as $look_at) {
-                if ($look_at->tag_attribute_name === $attribute_to_add->tag_attribute_name) {
-                    throw new InvalidArgumentException("The attribute name of $look_at->tag_attribute_name is already used in the tag");
+                if ($look_at->getTagAttributeName() === $attribute_to_add->getTagAttributeName()) {
+                    throw new InvalidArgumentException("The attribute name of ".$look_at->getTagAttributeName()." is already used in the tag");
                 }
             }
             $call->tag->attributes[] = $attribute_to_add;
-            $altered_tag = $call->tag->save_tag_return_clones($attribute_to_add->tag_attribute_name,$new_attribute);
+            $altered_tag = $call->tag->save_tag_return_clones($attribute_to_add->getTagAttributeName(),$new_attribute);
 
             $routeParser = RouteContext::fromRequest($request)->getRouteParser();
             foreach ( $altered_tag->applied as $mapp) {
@@ -549,13 +549,13 @@ class TagPages extends BasePages
             $call = $this->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name,$attribute_name);
             $attribute_data = $call->args ?? null;
             $attribute_to_edit = new FlowTagAttribute($attribute_data);
-            $attribute_to_edit->flow_tag_id = $call->tag->flow_tag_id;
+            $attribute_to_edit->setFlowTagId($call->tag->flow_tag_id);
             if (!$attribute_to_edit->has_enough_data_set()) {
                 throw new InvalidArgumentException("Edited attribute does not have enough data set");
             }
 
             $call->attribute->update_fields_with_public_data($attribute_to_edit);
-            $altered_tag = $call->tag->save_tag_return_clones($attribute_to_edit->tag_attribute_name,$new_attribute);
+            $altered_tag = $call->tag->save_tag_return_clones($attribute_to_edit->getTagAttributeName(),$new_attribute);
 
             $routeParser = RouteContext::fromRequest($request)->getRouteParser();
             foreach ( $altered_tag->applied as $mapp) {
@@ -612,6 +612,15 @@ class TagPages extends BasePages
             $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'delete_attribute';
             $call = $this->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name,$attribute_name);
+
+
+            //remove attribute from tag object
+            $new_attribute_list = [];
+            foreach ($call->tag->attributes as $byby) {
+                if ($byby->getFlowTagAttributeGuid() === $call->attribute->getFlowTagAttributeGuid()) { continue;}
+                $new_attribute_list[] = $byby;
+            }
+            $call->tag->attributes = $new_attribute_list;
 
             $call->attribute->delete_attribute();
 

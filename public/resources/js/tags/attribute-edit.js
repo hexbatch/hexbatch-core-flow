@@ -176,7 +176,7 @@ function flow_attribute_show_editor(tag,passed_attribute,
                         console.log('updated attribute', response);
                         b_is_saving = false;
                         if (callback_after_update) {
-                            callback_after_update(response.attribute);
+                            callback_after_update(response.tag);
                         }
                         my_swal.fire(
                             'Updated Attribute',
@@ -200,7 +200,7 @@ function flow_attribute_show_editor(tag,passed_attribute,
                     function (response) {
                         console.log('created attribute', response);
                         if (callback_after_update) {
-                            callback_after_update(response.attribute);
+                            callback_after_update(response.tag);
                         }
                         my_swal.fire(
                             'Created Attribute',
@@ -243,13 +243,13 @@ function flow_attribute_show_editor(tag,passed_attribute,
                 if (result.isConfirmed) {
                     if (!attribute.flow_tag_attribute_guid) {
                         modal.close();
-                        if (callback_after_delete) { callback_after_delete(attribute);}
+                        if (callback_after_delete) { callback_after_delete(tag);}
                         return;
                     }
                     toggle_action_spinner(me,'loading');
                     b_is_saving = true;
                     delete_attribute(tag, attribute,
-                        function() {
+                        function(ret) {
                             b_is_saving = false;
                             modal.close();
 
@@ -261,7 +261,7 @@ function flow_attribute_show_editor(tag,passed_attribute,
                                 'success'
                             );
 
-                            if (callback_after_delete) { callback_after_delete(attribute);}
+                            if (callback_after_delete) { callback_after_delete(ret.tag);}
                         },
                         function(ret) {
                             toggle_action_spinner(me,'normal');

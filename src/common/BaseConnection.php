@@ -2,17 +2,14 @@
 
 namespace app\common;
 
-use app\helpers\ProjectHelper;
 use app\models\user\FlowUser;
 use Delight\Auth\Auth;
 use DI\Container;
 use DI\DependencyException;
 use DI\NotFoundException;
 use Exception;
-use LogicException;
 use Monolog\Logger;
 use ParagonIE\EasyDB\EasyDB;
-use Psr\Http\Message\ServerRequestInterface;
 use Slim\Views\Twig;
 
 class BaseConnection {

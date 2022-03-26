@@ -59,8 +59,8 @@ class AdminHelper extends BaseHelper {
     }
 
 
-
     /**
+     * @param Container|null $container
      * @return AdminHelper
      * @throws DependencyException
      * @throws NotFoundException
@@ -102,6 +102,11 @@ class AdminHelper extends BaseHelper {
         }
     }
 
+    /**
+     * @param ServerRequestInterface $request
+     * @return array
+     * @throws Exception
+     */
     public  function admin_test(ServerRequestInterface $request) : array  {
         WillFunctions::will_do_nothing($request);
         $project = ProjectHelper::get_project_helper()->find_one($this->get_admin_project_guid());

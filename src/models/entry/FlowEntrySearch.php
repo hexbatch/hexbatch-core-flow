@@ -85,7 +85,7 @@ class FlowEntrySearch extends FlowBase {
            }
        }
 
-       //todo search sql: fill in the values for flow_entry_ancestor_guid_list
+       //todo search sql: fill in the values for flow_entry_ancestor_guid_list, see tag union
        $sql = /** @lang MySQL */
            "
             SELECT  

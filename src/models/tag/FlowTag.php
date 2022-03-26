@@ -116,16 +116,16 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
 
         foreach ($tag->attributes as $attribute) {
-            if (array_key_exists($attribute->tag_attribute_name,$ret)) {
-                $new_attribute = FlowTagAttribute::merge_attribute($attribute,$ret[$attribute->tag_attribute_name]);
+            if (array_key_exists($attribute->getTagAttributeName(),$ret)) {
+                $new_attribute = FlowTagAttribute::merge_attribute($attribute,$ret[$attribute->getTagAttributeName()]);
             } else {
                 $new_attribute = FlowTagAttribute::merge_attribute($attribute,null);
             }
-            $ret[$attribute->tag_attribute_name] = $new_attribute;
+            $ret[$attribute->getTagAttributeName()] = $new_attribute;
         }
 
         foreach ($ret as $attribute) {
-            $attribute->is_inherited = $attribute->flow_tag_guid !== $tag->flow_tag_guid;
+            $attribute->setIsInherited($attribute->getFlowTagGuid() !== $tag->flow_tag_guid);
         }
         return $ret;
     }
@@ -208,7 +208,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
         }
 
         if ($this->children_list_as_string) {
-            $this->children_list = explode(',',$this->children_list_as_string);
+            $this->children_list = array_map(function($x){return (int)$x;},explode(',',$this->children_list_as_string));
         }
 
         $this->refresh_inherited_fields();
@@ -295,51 +295,63 @@ class FlowTag extends FlowBase implements JsonSerializable {
         $this_attribute_map = [];
 
         foreach ($this->attributes as $attribute) {
-            if ($attribute->flow_tag_attribute_guid) {
-                $this_attribute_map[$attribute->flow_tag_attribute_guid] = $attribute;
+            if ($attribute->getFlowTagAttributeGuid()) {
+                $this_attribute_map[$attribute->getFlowTagAttributeGuid()] = $attribute;
             }
         }
 
         $me_attributes_filtered = [];
         //for each attribute in the $me, that is not in the $this, delete it
         foreach ($me->attributes as  $me_attribute) {
-            if (array_key_exists($me_attribute->flow_tag_attribute_guid,$this_attribute_map)) {
+            if (array_key_exists($me_attribute->getFlowTagAttributeGuid(),$this_attribute_map)) {
                 //clear out the settable ids in the $me::attribute, if not set in this::attribute
                 //set new data for $me::attribute, overwriting the old
 
                 /**
                  * @var FlowTagAttribute $this_attribute
                  */
-                $this_attribute = $this_attribute_map[$me_attribute->flow_tag_attribute_guid];
+                $this_attribute = $this_attribute_map[$me_attribute->getFlowTagAttributeGuid()];
 
-                if ($me_attribute->points_to_entry_id && !$this_attribute->points_to_flow_entry_guid) {
-                    $me_attribute->points_to_entry_id = null;
+                if ($me_attribute->getPointsToEntryId() && !$this_attribute->getPointsToFlowEntryGuid()) {
+                    $me_attribute->setPointsToEntryId(null);
                 }
 
-                if ($me_attribute->points_to_user_id && !$this_attribute->points_to_flow_user_guid) {
-                    $me_attribute->points_to_user_id = null;
+                if ($me_attribute->getPointsToUserId() && !$this_attribute->getPointsToFlowUserGuid()) {
+                    $me_attribute->setPointsToUserId(null);
                 }
 
-                if ($me_attribute->points_to_project_id && !$this_attribute->points_to_flow_project_guid) {
-                    $me_attribute->points_to_project_id = null;
+                if ($me_attribute->getPointsToProjectId() && !$this_attribute->getPointsToFlowProjectGuid()) {
+                    $me_attribute->setPointsToProjectId(null);
                 }
 
-                $me_attribute->points_to_flow_entry_guid = empty($this_attribute->points_to_flow_entry_guid) ? null:  $this_attribute->points_to_flow_entry_guid ;
-                $me_attribute->points_to_flow_user_guid = empty($this_attribute->points_to_flow_user_guid)? null : $this_attribute->points_to_flow_user_guid;
-                $me_attribute->points_to_flow_project_guid = empty($this_attribute->points_to_flow_project_guid)? null : $this_attribute->points_to_flow_project_guid ;
+                $me_attribute->setPointsToFlowEntryGuid(
+                    empty($this_attribute->getPointsToFlowEntryGuid())
+                        ? null:  $this_attribute->getPointsToFlowEntryGuid()
+                ) ;
+                $me_attribute->soints_to_flow_user_guid(
+                    empty($this_attribute->getPointsToFlowUserGuid())?
+                        null : $this_attribute->getPointsToFlowUserGuid()
+                );
+                $me_attribute->setPointsToFlowProjectGuid(
+                    empty($this_attribute->getPointsToFlowProjectGuid())?
+                        null : $this_attribute->getPointsToFlowProjectGuid() );
 
-                $me_attribute->tag_attribute_name = $this_attribute->tag_attribute_name;
+                $me_attribute->setTagAttributeName($this_attribute->getTagAttributeName());
 
-                if ( $this_attribute->tag_attribute_long !== '0' && empty($this_attribute->tag_attribute_long)) {
-                    $this_attribute->tag_attribute_long =  null;
+                if ( $this_attribute->getTagAttributeLong() !== '0' && empty($this_attribute->getTagAttributeLong())) {
+                    $this_attribute->setTagAttributeLong(null) ;
                 } else {
-                    $me_attribute->tag_attribute_long =  intval($this_attribute->tag_attribute_long);
+                    $me_attribute->setTagAttributeLong(intval($this_attribute->getTagAttributeLong()));
                 }
 
-                $me_attribute->tag_attribute_text = empty($this_attribute->tag_attribute_text)? null : $this_attribute->tag_attribute_text;
+                $me_attribute->setTagAttributeText(
+                    empty($this_attribute->getTagAttributeText())?
+                                                null :
+                                                $this_attribute->getTagAttributeText()
+                );
 
                 $me_attributes_filtered[] = $me_attribute;
-                unset($this_attribute_map[$me_attribute->flow_tag_attribute_guid]);
+                unset($this_attribute_map[$me_attribute->getFlowTagAttributeGuid()]);
             }
         }
 
@@ -351,7 +363,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
         //add in new attributes with no guid
         foreach ($this->attributes as $attribute) {
-            if (!$attribute->flow_tag_attribute_guid) {
+            if (!$attribute->getFlowTagAttributeGuid()) {
                 $me_attributes_filtered[] = $attribute;
             }
         }
@@ -526,7 +538,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
                     
                     WITH RECURSIVE cte AS (
                         (
-                            SELECT driver_tag.id as flow_tag_id , driver_tag.parent_tag_id, cast(null as SIGNED ) as child_tag_id
+                            SELECT 0 as depth, driver_tag.id as flow_tag_id , driver_tag.parent_tag_id, cast(null as SIGNED ) as child_tag_id
                             FROM flow_tags driver_tag
                             INNER JOIN flow_projects driver_project ON driver_project.id = driver_tag.flow_project_id
                             $maybe_join_inner_driver_applied
@@ -543,12 +555,19 @@ class FlowTag extends FlowBase implements JsonSerializable {
                         UNION
                         DISTINCT
                         (
-                            SELECT parent_tag.id as flow_tag_id, parent_tag.parent_tag_id, c.flow_tag_id as child_tag_id
+                            SELECT  1, parent_tag.id as flow_tag_id, parent_tag.parent_tag_id, c.flow_tag_id as child_tag_id
                             FROM cte c
                             INNER JOIN flow_tags parent_tag ON parent_tag.id = c.parent_tag_id
                         )
+                        UNION
+                        DISTINCT
+                        (
+                            SELECT 2 , child_tag.id as flow_tag_id,  c.flow_tag_id as parent_tag_id, null as child_tag_id
+                            FROM cte c
+                                     INNER JOIN flow_tags child_tag ON child_tag.parent_tag_id = c.flow_tag_id
+                        )
                     )
-                    SELECT cte.flow_tag_id, cte.parent_tag_id, group_concat(cte.child_tag_id) as children_list
+                    SELECT group_concat(depth) as depth ,cte.flow_tag_id, cte.parent_tag_id, group_concat(cte.child_tag_id) as children_list
                     FROM cte
                     GROUP BY cte.flow_tag_id, cte.parent_tag_id
                     
@@ -595,7 +614,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 }
 
                 $attribute_node = new FlowTagAttribute($row);
-                if ($attribute_node->flow_tag_attribute_id) {
+                if ($attribute_node->getFlowTagAttributeId()) {
                     $tag_node->attributes[] = $attribute_node;
                 }
 
@@ -731,7 +750,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
         if ($attribute_name) {
             $attribute = null;
             foreach ($altered_tag->attributes as $look_at) {
-                if ($look_at->tag_attribute_name === $attribute_name) {
+                if ($look_at->getTagAttributeName() === $attribute_name) {
                     $attribute = $look_at;
                     break;
                 }
@@ -847,24 +866,24 @@ class FlowTag extends FlowBase implements JsonSerializable {
             if ($b_save_children) {
                 foreach ($this->attributes as $attribute) {
 
-                    $attribute->flow_tag_id = $this->flow_tag_id;
+                    $attribute->setFlowTagId($this->flow_tag_id) ;
                     if (count($guid_map_old_to_new)) {
-                        $attribute->flow_tag_attribute_id = null;
-                        $attribute->flow_tag_attribute_guid = null;
+                        $attribute->setFlowTagAttributeId(null) ;
+                        $attribute->setFlowTagAttributeGuid(null) ;
 
-                        if (isset($guid_map_old_to_new[$attribute->points_to_flow_project_guid])) {
-                            $attribute->points_to_flow_project_guid = $guid_map_old_to_new[$attribute->points_to_flow_project_guid];
-                            $attribute->points_to_project_id = null;
+                        if (isset($guid_map_old_to_new[$attribute->getPointsToFlowProjectGuid()])) {
+                            $attribute->setPointsToFlowProjectGuid($guid_map_old_to_new[$attribute->getPointsToFlowProjectGuid()]);
+                            $attribute->setPointsToProjectId(null) ;
                         }
 
-                        if (isset($guid_map_old_to_new[$attribute->points_to_flow_entry_guid])) {
-                            $attribute->points_to_flow_entry_guid = $guid_map_old_to_new[$attribute->points_to_flow_entry_guid];
-                            $attribute->points_to_entry_id = null;
+                        if (isset($guid_map_old_to_new[$attribute->getPointsToFlowEntryGuid()])) {
+                            $attribute->setPointsToFlowEntryGuid( $guid_map_old_to_new[$attribute->getPointsToFlowEntryGuid()]);
+                            $attribute->setPointsToEntryId(null);
                         }
 
-                        if (isset($guid_map_old_to_new[$attribute->points_to_flow_user_guid])) {
-                            $attribute->points_to_flow_user_guid = $guid_map_old_to_new[$attribute->points_to_flow_user_guid];
-                            $attribute->points_to_user_id = null;
+                        if (isset($guid_map_old_to_new[$attribute->getPointsToFlowUserGuid()])) {
+                            $attribute->setPointsToFlowUserGuid( $guid_map_old_to_new[$attribute->getPointsToFlowUserGuid()]);
+                            $attribute->setPointsToUserId(null);
                         }
 
                     }
@@ -894,7 +913,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
                     $app->save();
                 }
             }
-            $this->update_flow_things_with_css();
+            $this->update_flow_things_with_standard_attibutes(true);
             if ($b_do_transaction) {$db->commit(); }
 
 
@@ -909,15 +928,23 @@ class FlowTag extends FlowBase implements JsonSerializable {
         }
     }
 
-    public function update_flow_things_with_css() : int {
-        if (empty($this->css)) {return 0;}
-        $css_json = JsonHelper::toString( $this->css);
-        $count = static::get_connection()->safeQuery(
-            "UPDATE flow_things SET css_json =  CAST(? AS JSON) WHERE thing_guid = UNHEX(?);",
-            [$css_json, $this->flow_tag_guid],
-            PDO::FETCH_BOTH,
-            true
-        );
+    /**
+     * Standard attributes can change some non tag db fields, for parent and children. Can also change some tag php members
+     * @param bool $b_recurse_children
+     * @return int
+     * @throws Exception
+     */
+    public function update_flow_things_with_standard_attibutes(bool $b_recurse_children = false) : int {
+        $count = FlowTagStandardAttribute::post_save_update_with_standard_attributes($this);
+        if ($b_recurse_children && !empty($this->children_list)) {
+            $params = new FlowTagSearchParams();
+            $params->tag_ids = $this->children_list;
+            $children = static::get_tags($params,1,GeneralSearch::UNLIMITED_RESULTS_PER_PAGE);
+            foreach ($children as $child) {
+                $child->update_flow_things_with_standard_attibutes($b_recurse_children);
+            }
+        }
+
         return $count;
     }
 
