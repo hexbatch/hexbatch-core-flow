@@ -75,12 +75,12 @@ class SQLHelper {
      * @return int
      * @throws Exception
      */
-    public static function refresh_flow_things_css() : int {
+    public static function refresh_flow_things() : int {
         $ret = 0;
         $search_params = new FlowTagSearchParams();
         $all_tags = FlowTag::get_tags($search_params, 1,1000000);
         foreach ($all_tags as $tag) {
-            $ret += $tag->update_flow_things_with_css();
+            $ret += $tag->update_flow_things_with_standard_attibutes();
         }
         return $ret;
     }

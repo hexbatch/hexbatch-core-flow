@@ -87,7 +87,7 @@ class AdminPages extends BasePages
         }
 
         if (isset($args['css']) && JsonHelper::var_to_boolean($args['css'])) {
-            $data['css'] = SQLHelper::refresh_flow_things_css();
+            $data['css'] = SQLHelper::refresh_flow_things();
         }
 
 

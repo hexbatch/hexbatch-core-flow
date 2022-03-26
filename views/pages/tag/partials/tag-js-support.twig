@@ -50,7 +50,11 @@
 
     }) ;
 
-
+    const FLOW_TAG_SUPPORTED_CSS_STYLES = [
+        {% for style in constant('app\\models\\tag\\FlowTagStandardAttribute::CSS_KEYS')  %}
+            "{{ style }}"{% if loop.index != constant('app\\models\\tag\\FlowTagStandardAttribute::CSS_KEYS')|length %},{% endif %}
+        {% endfor %}
+    ];
     function update_tags_in_display(b_refresh) {
         b_refresh = !!b_refresh;
 

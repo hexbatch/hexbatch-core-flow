@@ -135,8 +135,9 @@ class BriefUpdateFromYaml extends FlowBase {
                 $att->fill_ids_from_guids($guid_map_to_ids);
                 if (count($att->get_needed_guids_for_empty_ids())) {
                     throw new RuntimeException(
-                        "[BriefUpdateFromYaml] Missing some filled guids for attribute ".
-                        "$att->flow_tag_attribute_guid  $att->tag_attribute_name");
+                        sprintf("[BriefUpdateFromYaml] Missing some filled guids for attribute %s %s ",
+                        $att->getFlowTagAttributeGuid() , $att->getTagAttributeName())
+                    );
                 }
             }
 

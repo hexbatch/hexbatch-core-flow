@@ -19,31 +19,279 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     const LENGTH_ATTRIBUTE_NAME = 40;
 
 
-    public ?int $flow_tag_attribute_id;
-    public ?int $flow_tag_id;
-    public ?int $points_to_entry_id;
-    public ?int $points_to_user_id;
-    public ?int $points_to_project_id;
-    public ?int $attribute_created_at_ts;
-    public ?int $attribute_updated_at_ts;
-    public ?string $flow_tag_attribute_guid;
-    public ?string $tag_attribute_name;
-    public ?string $tag_attribute_long;
-    public ?string $tag_attribute_text;
+    protected ?int $flow_tag_attribute_id;
+    protected ?int $flow_tag_id;
+    protected ?int $points_to_entry_id;
+    protected ?int $points_to_user_id;
+    protected ?int $points_to_project_id;
+    protected ?int $attribute_created_at_ts;
+    protected ?int $attribute_updated_at_ts;
 
-    public ?string $flow_tag_guid;
-    public ?string $points_to_flow_entry_guid;
-    public ?string $points_to_flow_user_guid;
-    public ?string $points_to_flow_project_guid;
+    protected ?string $flow_tag_attribute_guid;
+    protected ?string $tag_attribute_name;
+    protected ?int $tag_attribute_long;
+    protected ?string $tag_attribute_text;
 
-    public bool $is_standard_attribute;
-    public ?string $standard_attribute_type;
-    public ?bool $is_inherited;
+    protected ?string $flow_tag_guid;
+    protected ?string $points_to_flow_entry_guid;
+    protected ?string $points_to_flow_user_guid;
+    protected ?string $points_to_flow_project_guid;
 
-    public ?string $points_to_title;
-    public ?string $points_to_admin_name;
-    public ?string $points_to_admin_guid;
-    public ?string $points_to_url;
+    protected bool $is_standard_attribute;
+    protected ?string $standard_attribute_type;
+    protected ?bool $is_inherited;
+
+    protected ?string $points_to_title;
+    protected ?string $points_to_admin_name;
+    protected ?string $points_to_admin_guid;
+    protected ?string $points_to_url;
+
+    /**
+     * @param bool|null $is_inherited
+     */
+    public function setIsInherited(?bool $is_inherited): void
+    {
+        $this->is_inherited = $is_inherited;
+    }
+
+    /**
+     * @param string|null $points_to_flow_entry_guid
+     */
+    public function setPointsToFlowEntryGuid(?string $points_to_flow_entry_guid): void
+    {
+        $this->points_to_flow_entry_guid = $points_to_flow_entry_guid;
+    }
+
+    /**
+     * @param string|null $points_to_flow_user_guid
+     */
+    public function setPointsToFlowUserGuid(?string $points_to_flow_user_guid): void
+    {
+        $this->points_to_flow_user_guid = $points_to_flow_user_guid;
+    }
+
+    /**
+     * @param string|null $points_to_flow_project_guid
+     */
+    public function setPointsToFlowProjectGuid(?string $points_to_flow_project_guid): void
+    {
+        $this->points_to_flow_project_guid = $points_to_flow_project_guid;
+    }
+
+
+    /**
+     * @param int|null $tag_attribute_long
+     */
+    public function setTagAttributeLong(?int $tag_attribute_long): void
+    {
+        $this->tag_attribute_text = FlowTagStandardAttribute::format($this->getStandardAttributeType(),
+            $this->tag_attribute_text,$tag_attribute_long);
+
+        $this->tag_attribute_long = $tag_attribute_long;
+    }
+
+    /**
+     * @param string|null $tag_attribute_text
+     */
+    public function setTagAttributeText(?string $tag_attribute_text): void
+    {
+        $this->tag_attribute_text = FlowTagStandardAttribute::format($this->getStandardAttributeType(),
+            $tag_attribute_text,$this->tag_attribute_long);
+    }
+
+    /**
+     * @param string|null $tag_attribute_name
+     */
+    public function setTagAttributeName(?string $tag_attribute_name): void
+    {
+        $this->tag_attribute_name = $tag_attribute_name;
+    }
+
+    /**
+     * @param string|null $flow_tag_attribute_guid
+     */
+    public function setFlowTagAttributeGuid(?string $flow_tag_attribute_guid): void
+    {
+        $this->flow_tag_attribute_guid = $flow_tag_attribute_guid;
+    }
+
+    /**
+     * @param int|null $points_to_entry_id
+     */
+    public function setPointsToEntryId(?int $points_to_entry_id): void
+    {
+        $this->points_to_entry_id = $points_to_entry_id;
+    }
+
+    /**
+     * @param int|null $points_to_user_id
+     */
+    public function setPointsToUserId(?int $points_to_user_id): void
+    {
+        $this->points_to_user_id = $points_to_user_id;
+    }
+
+    /**
+     * @param int|null $points_to_project_id
+     */
+    public function setPointsToProjectId(?int $points_to_project_id): void
+    {
+        $this->points_to_project_id = $points_to_project_id;
+    }
+
+
+
+    /**
+     * @param int|null $flow_tag_id
+     */
+    public function setFlowTagId(?int $flow_tag_id): void
+    {
+        $this->flow_tag_id = $flow_tag_id;
+    }
+
+
+    /**
+     * @param int|null $flow_tag_attribute_id
+     */
+    public function setFlowTagAttributeId(?int $flow_tag_attribute_id): void
+    {
+        $this->flow_tag_attribute_id = $flow_tag_attribute_id;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getFlowTagAttributeId(): ?int
+    {
+        return $this->flow_tag_attribute_id;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isStandardAttribute(): bool
+    {
+        return $this->is_standard_attribute;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getStandardAttributeType(): ?string
+    {
+        return $this->standard_attribute_type;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getAttributeCreatedAtTs(): ?int
+    {
+        return $this->attribute_created_at_ts;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getAttributeUpdatedAtTs(): ?int
+    {
+        return $this->attribute_updated_at_ts;
+    }
+
+
+
+    /**
+     * @return int|null
+     */
+    public function getPointsToEntryId(): ?int
+    {
+        return $this->points_to_entry_id;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getPointsToUserId(): ?int
+    {
+        return $this->points_to_user_id;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getPointsToProjectId(): ?int
+    {
+        return $this->points_to_project_id;
+    }
+
+
+
+
+    /**
+     * @return string|null
+     */
+    public function getFlowTagAttributeGuid(): ?string
+    {
+        return $this->flow_tag_attribute_guid;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getTagAttributeName(): ?string
+    {
+        return $this->tag_attribute_name;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getTagAttributeLong(): ?string
+    {
+        return $this->tag_attribute_long;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getTagAttributeText(): ?string
+    {
+        return $this->tag_attribute_text;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getFlowTagGuid(): ?string
+    {
+        return $this->flow_tag_guid;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getPointsToFlowEntryGuid(): ?string
+    {
+        return $this->points_to_flow_entry_guid;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getPointsToFlowUserGuid(): ?string
+    {
+        return $this->points_to_flow_user_guid;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getPointsToFlowProjectGuid(): ?string
+    {
+        return $this->points_to_flow_project_guid;
+    }
+
+
 
     public function has_enough_data_set() :bool {
         if (!$this->flow_tag_id) {return false;}
@@ -54,8 +302,8 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     public function update_fields_with_public_data(FlowTagAttribute $attribute) {
         $this->tag_attribute_name = $attribute->tag_attribute_name ;
 
-        $this->tag_attribute_long = $attribute->tag_attribute_long ;
-        $this->tag_attribute_text = $attribute->tag_attribute_text ;
+        $this->setTagAttributeLong($attribute->getTagAttributeLong()) ;
+        $this->setTagAttributeText($attribute->getTagAttributeText()) ;
 
         $this->points_to_flow_entry_guid = $attribute->points_to_flow_entry_guid ;
         $this->points_to_flow_user_guid = $attribute->points_to_flow_user_guid ;
@@ -100,6 +348,9 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
 
         foreach ($object as $key => $val) {
             if (property_exists($this,$key)) {
+                if ($key === 'tag_attribute_long') {
+                    if ($val==='' || is_null($val)) { $val = null;} else {$val = (int)$val;}
+                }
                 $this->$key = $val;
             }
         }
@@ -110,11 +361,14 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         if (empty($this->points_to_flow_project_guid)) { $this->points_to_flow_project_guid = null;}
         if (empty($this->points_to_flow_entry_guid)) { $this->points_to_flow_entry_guid = null;}
         if (empty($this->points_to_admin_guid)) { $this->points_to_admin_guid = null;}
-        if (empty($this->tag_attribute_long)) { $this->tag_attribute_long = null;}
-        if (empty($this->tag_attribute_text)) { $this->tag_attribute_text = null;}
-
         $this->is_standard_attribute = FlowTagStandardAttribute::is_standard_attribute($this);
         $this->standard_attribute_type = FlowTagStandardAttribute::get_standard_attribute_type($this);
+
+        $this->setTagAttributeLong($this->getTagAttributeLong());
+        $this->setTagAttributeText($this->getTagAttributeText());
+
+
+
     }
 
 
@@ -179,10 +433,10 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                     $this->points_to_flow_user_guid);
             }
 
-            if (empty($this->tag_attribute_text)) {
-                $this->tag_attribute_text = null;
+            if (empty($this->getTagAttributeText())) {
+                $this->setTagAttributeText(null);
             } else {
-                $this->tag_attribute_text = htmlspecialchars(JsonHelper::to_utf8($this->tag_attribute_text),ENT_QUOTES | ENT_SUBSTITUTE,'UTF-8',false);
+                $this->setTagAttributeText($this->getTagAttributeText());
             }
 
 
@@ -192,8 +446,8 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                 'points_to_user_id' => $this->points_to_user_id ,
                 'points_to_project_id' => $this->points_to_project_id ,
                 'tag_attribute_name' => $this->tag_attribute_name ,
-                'tag_attribute_long' => $this->tag_attribute_long ,
-                'tag_attribute_text' => $this->tag_attribute_text
+                'tag_attribute_long' => $this->getTagAttributeLong() ,
+                'tag_attribute_text' => $this->getTagAttributeText()
             ];
 
             if ($this->flow_tag_attribute_id && $this->flow_tag_attribute_guid) {
@@ -226,8 +480,8 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                     $this->points_to_project_id,
                     $this->flow_tag_attribute_guid,
                     $this->tag_attribute_name,
-                    $this->tag_attribute_long,
-                    $this->tag_attribute_text
+                    $this->getTagAttributeLong(),
+                    $this->getTagAttributeText()
 
                 ];
                 $db->safeQuery($insert_sql, $insert_params, PDO::FETCH_BOTH, true);
@@ -292,11 +546,11 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                 "points_to_flow_user_guid" => $this->points_to_flow_user_guid,
                 "points_to_flow_project_guid" => $this->points_to_flow_project_guid,
                 "tag_attribute_name" => $this->tag_attribute_name,
-                "tag_attribute_long" => $this->tag_attribute_long,
-                "tag_attribute_text" => $this->tag_attribute_text,
+                "tag_attribute_long" => $this->getTagAttributeLong(),
+                "tag_attribute_text" => $this->getTagAttributeText(),
                 "created_at_ts" => $this->attribute_created_at_ts,
                 "updated_at_ts" => $this->attribute_updated_at_ts,
-                "is_standard_attribute" => $this->is_standard_attribute,
+                "is_standard_attribute" => $this->isStandardAttribute(),
                 "standard_attribute_type" => $this->standard_attribute_type,
                 "is_inherited" => $this->is_inherited,
                 "points_to_title" => $this->points_to_title,

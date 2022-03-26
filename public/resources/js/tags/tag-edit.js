@@ -318,6 +318,7 @@ function flow_tag_show_editor(tag,
                                     b_is_saving = false;
                                     tag = ret.tag;
                                     fill_applied_tab();
+                                    update_tags_in_display(true);
                                     let victims = $(`.flow-tag-applied-target-title[data-applied_guid="${applied.flow_applied_tag_guid}"]`);
                                     victims.addClass('text-decoration-line-through');
                                     toggle_action_spinner(me, 'normal');
@@ -445,32 +446,18 @@ function flow_tag_show_editor(tag,
         if (guid_found) {
             //find attribute
             let found_attribute = find_attribute_by_guid(guid_found);
-            let older_name = found_attribute.tag_attribute_name;
             flow_attribute_show_editor(tag, found_attribute,
-                function (updated_attribute) {
-                    let older_attribute = find_attribute_by_guid(updated_attribute.flow_tag_attribute_guid);
-                    if (older_attribute) {
-                        if (older_name === updated_attribute.tag_attribute_name) {
-                            tag.attributes[updated_attribute.tag_attribute_name] = updated_attribute;
-                        } else {
-                            delete tag.attributes[older_name];
-                            tag.attributes[updated_attribute.tag_attribute_name] = updated_attribute;
-                        }
-                    } else {
-                        tag.attributes[updated_attribute.tag_attribute_name] = updated_attribute;
-                    }
+                function (new_tag) {
+                    tag = new_tag;
                     update_tags_in_display(true);
                     fill_attribute_tab();
-                    console.debug("got updated attribute of ", updated_attribute);
 
                 },
-                function(deleted_attribute) {
-                    let found_deleted_attribute = find_attribute_by_guid(deleted_attribute.flow_tag_attribute_guid);
+                function(new_tag) {
+                    tag = new_tag;
                     update_tags_in_display(true);
-                    if (found_deleted_attribute) {
-                        delete tag.attributes[found_deleted_attribute.tag_attribute_name];
-                        fill_attribute_tab();
-                    }
+                    fill_attribute_tab();
+
                 },
                 b_view_only
             );
@@ -480,19 +467,16 @@ function flow_tag_show_editor(tag,
     if (b_editing) {
         editing_div.find('button.flow-create-attribute-action').click(function () {
             flow_attribute_show_editor(tag, null,
-                function (new_attribute) {
-                    //see if attribute is in the list, if not add
-                    let found_attribute =  find_attribute_by_guid(new_attribute.flow_tag_attribute_guid);
-
-                    if (!found_attribute) {
-                        tag.attributes[new_attribute.tag_attribute_name] = new_attribute;
-                    }
+                function (new_tag) {
+                    tag = new_tag;
                     fill_attribute_tab();
-                    console.debug("got new attribute of ", new_attribute);
+                    console.debug("got new tag of ", new_tag);
                     update_tags_in_display(true)
                 },
-                function() {
-                    update_tags_in_display(true)
+                function(new_tag) {
+                    tag = new_tag;
+                    update_tags_in_display(true);
+                    fill_attribute_tab();
                 },
                 b_view_only
             );

@@ -5,7 +5,7 @@ namespace app\hexlet;
 use Exception;
 use Highlight\Highlighter;
 use PHPHtmlParser\Dom;
-use app\hexlet\hexlet_exceptions\JsonException;
+use app\hexlet\hexlet_exceptions\JsonHelperException;
 use ForceUTF8\Encoding;
 use JBBCode\CodeDefinition;
 use JBBCode\CodeDefinitionBuilder;
@@ -35,7 +35,7 @@ class JsonHelper {
      * Helper function to output json format and exit
      * @param array $phpArray
      * @param int $http_code the code to return in the output as well as to die with
-     * @throws JsonException if cannot parse array to json
+     * @throws JsonHelperException if cannot parse array to json
      * @noinspection PhpUnused
      */
     public static function sendJSONAndDie(array $phpArray=[], int $http_code=200) {
@@ -111,7 +111,7 @@ class JsonHelper {
      * @param $phpArray mixed
      * @param $options integer - any options to pass to json_encode
      * @return string
-     * @throws JsonException if json error
+     * @throws JsonHelperException if json error
      */
     public static function toString($phpArray, int $options=JSON_UNESCAPED_UNICODE): string
     {
@@ -120,7 +120,7 @@ class JsonHelper {
             return $out;
         } else {
             $oops =  json_last_error_msg();
-            throw  new JsonException($oops);
+            throw  new JsonHelperException($oops);
         }
     }
 
@@ -136,7 +136,7 @@ class JsonHelper {
      * </p>
      * @param bool $b_association - default true (which is the reverse of normal)
      * @return array|mixed|null
-     * @throws JsonException if json error
+     * @throws JsonHelperException if json error
      */
     public static function fromString($what, bool $b_exception=true, bool $b_association=true) {
         if (is_null($what) ) { return null;}
@@ -148,6 +148,7 @@ class JsonHelper {
             }
 
         }
+        $original_what = $what;
         $what = strval($what);
         if ( strcasecmp($what,'null') == 0) {return null;}
         $out = json_decode(strval($what), $b_association);
@@ -155,9 +156,9 @@ class JsonHelper {
             if ($b_exception) {
                 $oops =  json_last_error_msg();
                 $oops .= "\n Data: \n". $what;
-                throw  new JsonException($oops);
+                throw  new JsonHelperException($oops);
             }else {
-                return $what;
+                return $original_what;
             }
 
         } else {
@@ -190,7 +191,7 @@ class JsonHelper {
      *
      * </p>
      * @return string
-     * @throws JsonException
+     * @throws JsonHelperException
      * @since 0.1
      * @version 0.4.0 empty arrays do not cast as null any more
      */
@@ -347,7 +348,7 @@ class JsonHelper {
      *                       else needs to be a string and is assumed to be in the UTC timezone,returned as integer
      *                  </p>
      *
-     *@throws JsonException if not a recognized name, if json what is not an array
+     *@throws JsonHelperException if not a recognized name, if json what is not an array
      * @noinspection PhpUnused
      */
     public static function dataFromString(?string $data_type, ?string $what) {
@@ -365,14 +366,14 @@ class JsonHelper {
                 if (is_numeric($what)) {
                     return intval($what);
                 } else {
-                    throw  new JsonException("[$what] is not numeric so cannot convert to integer");
+                    throw  new JsonHelperException("[$what] is not numeric so cannot convert to integer");
                 }
 
             case 'float':
                 if (is_numeric($what)) {
                     return floatval($what);
                 } else {
-                    throw  new JsonException("[$what] is not numeric so cannot convert to float");
+                    throw  new JsonHelperException("[$what] is not numeric so cannot convert to float");
                 }
 
             case 'text':
@@ -391,10 +392,10 @@ class JsonHelper {
                 if ($test) {
                     return $test;
                 } else {
-                    throw  new JsonException("Cannot convert [$what] to UTC time");
+                    throw  new JsonHelperException("Cannot convert [$what] to UTC time");
                 }
             default:
-                throw new JsonException("[$data_type] not recognized as a data type")   ;
+                throw new JsonHelperException("[$data_type] not recognized as a data type")   ;
 
         }
     }
@@ -427,7 +428,7 @@ class JsonHelper {
      * @return string <p>
      *  returns a string whose value depends on the data_type given above
      * </p>
-     * @throws JsonException if not a recognized $category, and if the data is not following the rules described in the param section
+     * @throws JsonHelperException if not a recognized $category, and if the data is not following the rules described in the param section
      * @noinspection PhpUnused
      */
     public static function dataToString(string $data_type, $what): string
@@ -451,7 +452,7 @@ class JsonHelper {
                 if (is_float($what) || is_integer($what)) {
                     return strval($what);
                 } else {
-                    throw  new JsonException("[$what] is not a float or an int or a string so cannot convert to integer");
+                    throw  new JsonHelperException("[$what] is not a float or an int or a string so cannot convert to integer");
                 }
             case 'float':
                 if (is_string($what)) {
@@ -461,11 +462,11 @@ class JsonHelper {
                 if (is_float($what) || is_integer($what)) {
                     return strval($what);
                 } else {
-                    throw  new JsonException("[$what] is not a float or an int or a string so cannot convert to float");
+                    throw  new JsonHelperException("[$what] is not a float or an int or a string so cannot convert to float");
                 }
             case 'text':
                 if (is_array($what)) {
-                    throw  new JsonException("Cannot convert array to $data_type");
+                    throw  new JsonHelperException("Cannot convert array to $data_type");
                 } else {
                     return trim(strval($what));
                 }
@@ -480,7 +481,7 @@ class JsonHelper {
                         }
                     }
 
-                    throw  new JsonException("$data_type must use array, null,number,boolean or convertable string");
+                    throw  new JsonHelperException("$data_type must use array, null,number,boolean or convertable string");
                 }
             case 'date_time' :
                 if (!$what) {
@@ -494,7 +495,7 @@ class JsonHelper {
 
                     $what = strtotime($what." UTC");
                     if (!$what) {
-                        throw  new JsonException("Cannot convert [$what] to UTC time");
+                        throw  new JsonHelperException("Cannot convert [$what] to UTC time");
                     }
                 } else {
                     $what = intval($what);
@@ -503,7 +504,7 @@ class JsonHelper {
                 $haha =  gmdate('Y-m-d G:i:s',$what);
                 return $haha;
             default:
-                throw new JsonException("[$data_type] not recognized as a data type")   ;
+                throw new JsonHelperException("[$data_type] not recognized as a data type")   ;
 
         }
     }
@@ -577,13 +578,13 @@ class JsonHelper {
      * Outputs information about a class. Sometimes it helps to see data objects this way
      * Not really json like, but it goes with print nice as a set of debug functions
      * @param $object
-     * @throws JsonException
+     * @throws JsonHelperException
      * @noinspection PhpUnused
      */
     public static function TO($object){ //Test Object
         try {
             if (!is_object($object)) {
-                throw new JsonException("This is not a Object");
+                throw new JsonHelperException("This is not a Object");
             }
             if (class_exists(get_class($object), true)) echo "<pre>CLASS NAME = " . get_class($object);
             $reflection = new ReflectionClass(get_class($object));
@@ -605,7 +606,7 @@ class JsonHelper {
             }
             echo "</pre>";
         } /** @noinspection PhpRedundantCatchClauseInspection */ catch ( ReflectionException $r) {
-            throw new JsonException($r->getMessage(),0,$r);
+            throw new JsonHelperException($r->getMessage(),0,$r);
         }
     }
 
@@ -847,20 +848,20 @@ class JsonHelper {
                 $preg_ret = preg_match_all('/#lang#(?P<language>.+)#lang#/', $my_text, $output_array);
                 if ($preg_ret === false) {
                     $preg_error = array_flip(get_defined_constants(true)['pcre'])[preg_last_error()];
-                    throw new JsonException("[html_from_bb_code] error finding language for code block".$preg_error);
+                    throw new JsonHelperException("[html_from_bb_code] error finding language for code block".$preg_error);
                 }
                 if (array_key_exists('language',$output_array) && count($output_array['language'])) {
                     $lang = $output_array['language'][0];
                     $my_text = preg_replace('/#lang#(.+)#lang#/', '', $my_text);
                     if ($my_text === null) {
                         $preg_error = array_flip(get_defined_constants(true)['pcre'])[preg_last_error()];
-                        throw new JsonException("[html_from_bb_code] error removing language from code block".$preg_error);
+                        throw new JsonHelperException("[html_from_bb_code] error removing language from code block".$preg_error);
                     }
                     $my_text = trim($my_text);
                     try {
                         $highlighted = $hl->highlight($lang, $my_text);
                     } catch (Exception $e) {
-                        throw new JsonException("[html_from_bb_code] error highlighting language". $e->getMessage(),$e->getCode(),$e);
+                        throw new JsonHelperException("[html_from_bb_code] error highlighting language". $e->getMessage(),$e->getCode(),$e);
                     }
 
                 } else {
@@ -869,7 +870,7 @@ class JsonHelper {
                     try {
                         $highlighted = $hl->highlightAuto($my_text);
                     } catch (Exception $e) {
-                        throw new JsonException("[html_from_bb_code] error auto highlighting language". $e->getMessage(),$e->getCode(),$e);
+                        throw new JsonHelperException("[html_from_bb_code] error auto highlighting language". $e->getMessage(),$e->getCode(),$e);
                     }
 
                 }
@@ -899,7 +900,7 @@ class JsonHelper {
             $return = $fixed_up_string;
         } catch (ChildNotFoundException|CircularException|StrictException|NotLoadedException|ContentLengthException|LogicalException|
                     UnknownChildTypeException $e) {
-            throw new JsonException($e->getMessage(),$e->getCode(),$e);
+            throw new JsonHelperException($e->getMessage(),$e->getCode(),$e);
         }
 
 
@@ -933,7 +934,7 @@ class JsonHelper {
      *
      * @param bool $b_remove_existing_newlines, if true (by default) will remove all existing newlines first
      * @return string
-     * @throws JsonException  if one of the operations fail
+     * @throws JsonHelperException  if one of the operations fail
      */
     public static function tags_to_n(string $string, $replace_nobreak_space= false, bool $b_remove_existing_newlines = true): string
     {
@@ -955,7 +956,7 @@ class JsonHelper {
             //this is a unicode NO-BREAK in the quotes
 
             if ($string === false) {
-                throw new JsonException("Error in mb_ereg_replace in tags_to_n");
+                throw new JsonHelperException("Error in mb_ereg_replace in tags_to_n");
             }
         }
 
@@ -974,26 +975,26 @@ class JsonHelper {
         $string = preg_replace(/** @lang text */
             '#<br */? *>\s*#i', "\n", $string);
         if ($string === null) {
-            throw new JsonException("Error in mb_ereg_replace in tags_to_n");
+            throw new JsonHelperException("Error in mb_ereg_replace in tags_to_n");
         }
 
         // replace </p>  and all whitespace variants with /n
 
         $string = preg_replace('#</p *>#i', "\n", $string);
         if ($string === null) {
-            throw new JsonException("Error in mb_ereg_replace in tags_to_n");
+            throw new JsonHelperException("Error in mb_ereg_replace in tags_to_n");
         }
 
         // strip out <p> and all newline variants
         $string = preg_replace(/** @lang text */'#<p *>#i', "", $string);
         if ($string === null) {
-            throw new JsonException("Error in mb_ereg_replace in tags_to_n");
+            throw new JsonHelperException("Error in mb_ereg_replace in tags_to_n");
         }
 
         //remove whitespace between two newlines
         $string = preg_replace('#\n +\n#im', "\n\n", $string);
         if ($string === null) {
-            throw new JsonException("Error in mb_ereg_replace in tags_to_n");
+            throw new JsonHelperException("Error in mb_ereg_replace in tags_to_n");
         }
 
         return $string;

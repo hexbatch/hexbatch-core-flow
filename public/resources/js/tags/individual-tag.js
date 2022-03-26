@@ -111,6 +111,7 @@ function add_tag_attributes_to_dom(tag_map,tags_here_jquery_or_string,b_allow_li
             let tag_classes = get_tag_classes(tag);
             let tag_data = get_tag_data(tag);
 
+            tag_dom.attr('style','');
             tag_dom.css(tag_style);
 
             tag_dom.addClass(tag_classes.join(' '));

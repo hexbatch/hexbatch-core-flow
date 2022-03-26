@@ -324,7 +324,7 @@ class BriefDiffFromYaml {
             }
 
             foreach ($tag->attributes as $att) {
-                $attribute_map[$att->flow_tag_attribute_guid] = $att;
+                $attribute_map[$att->getFlowTagAttributeGuid()] = $att;
             }
 
             foreach ($tag->applied as $app) {
@@ -365,12 +365,12 @@ class BriefDiffFromYaml {
             if (array_key_exists($attribute_guid,$attribute_map)) {
                 $attribute = $attribute_map[$attribute_guid];
                 if (
-                    $attribute->points_to_flow_entry_guid !== $battribute->points_to_flow_entry_guid ||
-                    $attribute->points_to_flow_user_guid !== $battribute->points_to_flow_user_guid ||
-                    $attribute->points_to_flow_project_guid !== $battribute->points_to_flow_project_guid ||
-                    $attribute->tag_attribute_text !== $battribute->tag_attribute_text ||
-                    $attribute->tag_attribute_long !== $battribute->tag_attribute_long ||
-                    $attribute->tag_attribute_name !== $battribute->tag_attribute_name
+                    $attribute->getPointsToFlowEntryGuid() !== $battribute->points_to_flow_entry_guid ||
+                    $attribute->getPointsToFlowUserGuid() !== $battribute->points_to_flow_user_guid ||
+                    $attribute->getPointsToFlowProjectGuid() !== $battribute->points_to_flow_project_guid ||
+                    $attribute->getTagAttributeText() !== $battribute->tag_attribute_text ||
+                    $attribute->getTagAttributeLong() !== $battribute->tag_attribute_long ||
+                    $attribute->getTagAttributeName() !== $battribute->tag_attribute_name
                 ) {
                     if ($b_changed_is_set_from_file) {
                         $this->changed_attributes[] = $battribute;
@@ -380,8 +380,8 @@ class BriefDiffFromYaml {
 
                 }
 
-                if ($attribute->tag_attribute_name !== $battribute->tag_attribute_name) {
-                    $battribute->new_name = $attribute->tag_attribute_name;
+                if ($attribute->getTagAttributeName() !== $battribute->tag_attribute_name) {
+                    $battribute->new_name = $attribute->getTagAttributeName();
                 }
             } else {
                 $this->removed_attributes[] = $battribute;
