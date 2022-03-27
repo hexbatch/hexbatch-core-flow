@@ -7,6 +7,7 @@ use app\hexlet\JsonHelper;
 
 use app\models\entry\FlowEntry;
 use app\models\entry\FlowEntrySearchParams;
+use app\models\project\FlowProjectUser;
 use Exception;
 use InvalidArgumentException;
 use Psr\Http\Message\ServerRequestInterface;
@@ -39,7 +40,7 @@ class EntryPages extends EntryBase
             $search_params = new FlowEntrySearchParams();
             $search_params->set_page($page??1);
             $call = $this->validate_call($options,$request,null,$user_name,$project_name,
-                null,'read',$search_params,$page);
+                null,FlowProjectUser::PERMISSION_COLUMN_READ,$search_params,$page);
 
             if ($call->is_ajax_call) {
                 $data = [
@@ -92,7 +93,8 @@ class EntryPages extends EntryBase
         try {
             $options = new FlowEntryCallData();
             $options->note = "show_entry";
-            $call = $this->validate_call($options,$request,null,$user_name,$project_name, $entry_name);
+            $call = $this->validate_call($options,$request,null,$user_name,$project_name, $entry_name,
+                FlowProjectUser::PERMISSION_COLUMN_READ);
             $entry_to_show =  $call->entry_array[0]??null;
             if (!$entry_to_show) {
                 throw new InvalidArgumentException("[show_entry] Could not find entry $entry_name for project $project_name");

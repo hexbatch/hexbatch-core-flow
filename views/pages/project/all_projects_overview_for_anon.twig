@@ -1,3 +1,106 @@
-<h1> Home Page for anon </h1>
+<script src="{{ root_url }}/public/resources/js/project/project-list.js"></script>
 
-graph all projects here
+<h2> Public Projects </h2>
+
+
+
+<div class="flow-project-list">
+
+    {% for project in my_projects %}
+        <div class="row flow-project-list-item  pt-1 pb-1 pt-md-3 pb-md-3">
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2 col-xxl-2" >
+                <div class="d-inline">
+                    <a href="{{ url_for('single_project_home',{
+                        user_name: project.get_admin_user().flow_user_name ,
+                        project_name: project.flow_project_title
+                    } )
+                    }}">
+                        <span class="flow-project-title ">
+                            {{ project.flow_project_title }}
+                        </span>
+                    </a>
+                </div> <!-- / inline -->
+
+
+
+            </div>
+
+            <div class="col-12 col-sm-6 col-md-4 col-lg-5 col-xl-6 col-xxl-4">
+                <a href="{{ url_for('single_project_home',{
+                    user_name: project.get_admin_user().flow_user_name ,
+                    project_name: project.flow_project_title
+                } )
+                }}">
+                <span class="flow-project-blurb">
+                    {{ project.flow_project_blurb }}
+                </span>
+
+                </a>
+
+            </div>
+
+            <div class="col-12 col-sm-12 col-md-4 col-lg-4 col-xl-4 col-xxl-6">
+
+                <div class="row">
+                    <div class="col-1">
+                        <div class=" text-black-50">
+                            {% if project.get_current_user_permissions().can_admin %}
+                                <span class="p-1 fw-bold">A</span>
+
+                            {% elseif project.get_current_user_permissions().can_write %}
+                                <span class="p-1 fw-bold">W</span>
+
+                            {% elseif project.get_current_user_permissions().can_read %}
+                                <span class="p-1 fw-bold">R</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-5">
+                        <div class="text-black-50 small" style="text-decoration: none">
+                            <code class="small text-black-50" style="text-decoration: initial !important;">
+                                {{ project.flow_project_guid }}
+                            </code>
+                            <button class="btn btn-outline-secondary btn-sm clipy-btn small"
+                                    type="button"
+                                    data-clipboard-text="{{ project.flow_project_guid }}"
+                                    data-popover_on_success="Copied!"
+                                    data-popover_on_fail="Use Control-C"
+                            >
+                                Copy
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="col-4">
+                        <span class="flow-long-date-time" data-ts="{{ project.created_at_ts }}"></span>
+                    </div>
+
+                    <div class="col-2">
+                        {% if project.get_current_user_permissions().can_admin %}
+                            <button class="btn btn-danger btn-sm  flow-action flow-project-delete-action"
+                                    data-guid="{{ project.flow_project_guid }}"
+                                    data-title="{{ project.flow_project_title }}"
+                                    data-url="{{ url_for('destroy_project_ajax',{
+                                        user_name: project.get_admin_user().flow_user_name ,
+                                        project_name: project.flow_project_title
+                                    } )
+                                    }}"
+                            >
+                                <i class="bi bi-trash  "></i>
+                                <i class="fas fa-spinner fa-pulse flow-spinner"  style="display: none"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+</div> <!-- flow-project-list -->
+
+
+
+
+

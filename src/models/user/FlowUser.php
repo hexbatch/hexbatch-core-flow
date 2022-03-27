@@ -2,7 +2,6 @@
 
 namespace app\models\user;
 use app\models\base\FlowBase;
-use app\models\project\FlowProject;
 use app\models\project\FlowProjectUser;
 use Delight\Auth\EmailNotVerifiedException;
 use Delight\Auth\InvalidEmailException;
@@ -158,7 +157,7 @@ class FlowUser extends FlowBase implements JsonSerializable {
     public function save() {
         $db = null;
 
-        $b_match = FlowProject::check_valid_title($this->flow_user_name);
+        $b_match = static::check_valid_title($this->flow_user_name);
         if (!$b_match) {
             throw new InvalidArgumentException(
                 "User Name needs to be all alpha numeric or dash only. ".

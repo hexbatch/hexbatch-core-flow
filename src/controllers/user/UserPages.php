@@ -4,7 +4,7 @@ namespace app\controllers\user;
 use app\controllers\base\BasePages;
 use app\helpers\ProjectHelper;
 use app\hexlet\JsonHelper;
-use app\models\project\FlowProject;
+use app\models\base\FlowBase;
 use app\models\user\FlowUser;
 use Delight\Auth\AuthError;
 use Delight\Auth\EmailNotVerifiedException;
@@ -13,6 +13,7 @@ use Delight\Auth\InvalidPasswordException;
 use Delight\Auth\InvalidSelectorTokenPairException;
 use Delight\Auth\TokenExpiredException;
 use Delight\Auth\TooManyRequestsException;
+use Delight\Auth\UnknownUsernameException;
 use Delight\Auth\UserAlreadyExistsException;
 use Exception;
 use InvalidArgumentException;
@@ -21,6 +22,7 @@ use ParagonIE\AntiCSRF\AntiCSRF;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
+use Slim\Exception\HttpBadRequestException;
 use Slim\Exception\HttpForbiddenException;
 use Slim\Exception\HttpInternalServerErrorException;
 use Slim\Exception\HttpNotFoundException;
@@ -154,21 +156,42 @@ class UserPages extends BasePages {
                 }
             }
 
-            if(filter_var($email_or_username, FILTER_VALIDATE_EMAIL)) {
+
+            if (filter_var($email_or_username, FILTER_VALIDATE_EMAIL)) {
                 // valid address
-                $this->auth->login($email_or_username, $password, $remember_me);
-            }
-            else {
+                try {
+                    $this->auth->login($email_or_username, $password, $remember_me);
+                } catch (InvalidEmailException $unknown) {
+                    throw new HttpNotFoundException($request,"Email $email_or_username Not Found");
+                }
+                catch (InvalidPasswordException $bad_password) {
+                    throw new HttpNotFoundException($request,"Wrong Password");
+                }
+                catch (TooManyRequestsException $too_many) {
+                    throw new HttpBadRequestException($request,"You are doing this too many times in a row");
+                }
+
+            } else {
                 // invalid address
-                $this->auth->loginWithUsername($email_or_username, $password, $remember_me);
+                try {
+                    $this->auth->loginWithUsername($email_or_username, $password, $remember_me);
+                } catch (UnknownUsernameException $unknown) {
+                    throw new HttpNotFoundException($request,"User $email_or_username Not Found");
+                }
+                catch (TooManyRequestsException $too_many) {
+                    throw new HttpBadRequestException($request,"You are doing this too many times in a row");
+                }
+
             }
+
 
             try {
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
                 $url = $routeParser->urlFor('user_home');
                 $response = $response->withStatus(302);
                 return $response->withHeader('Location', $url);
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
                 $this->logger->error("Could not redirect to user home after successful log in",['exception'=>$e]);
                 throw $e;
             }
@@ -242,7 +265,7 @@ class UserPages extends BasePages {
                 throw new InvalidArgumentException('Password cannot have invisible characters;  and be between 4 and 29 characters ; and match the confirmation password');
             }
 
-            $b_match = FlowProject::check_valid_title($user_name);
+            $b_match = FlowBase::check_valid_title($user_name);
             if (!$b_match) {
                 throw new InvalidArgumentException(
                     "User Name needs to be all alpha numeric or dash only. ".

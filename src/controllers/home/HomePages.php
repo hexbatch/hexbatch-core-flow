@@ -10,6 +10,7 @@ use app\models\entry\FlowEntrySearchParams;
 use app\models\multi\GeneralSearch;
 use app\models\multi\GeneralSearchParams;
 use app\models\project\FlowProjectSearch;
+use app\models\project\FlowProjectSearchParams;
 use app\models\tag\FlowTag;
 use app\models\tag\FlowTagSearchParams;
 use Exception;
@@ -86,7 +87,9 @@ class HomePages extends BasePages
                 case GeneralSearch::TYPE_PROJECT: {
 
                     $project = null;
-                    $projects_found = FlowProjectSearch::find_projects([$guid]);
+                    $params = new FlowProjectSearchParams();
+                    $params->addProjectTitleGuidOrId($guid);
+                    $projects_found = FlowProjectSearch::find_projects($params);
                     foreach ($projects_found as $found_project) {
                         $project =  $found_project;
                         break;

@@ -1,18 +1,15 @@
 <?php
-namespace app\controllers\user;
+namespace app\controllers\home;
 
 use app\helpers\AdminHelper;
 use app\models\base\FlowBase;
 use DI\DependencyException;
 use DI\NotFoundException;
-use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
-use Slim\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
-
 use Psr\Http\Message\ServerRequestInterface as RequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Slim\Exception\HttpForbiddenException;
-use Psr\Http\Server\RequestHandlerInterface ;
-
+use Slim\Psr7\Response;
 
 
 class CheckAdminMiddleware extends FlowBase
@@ -20,7 +17,7 @@ class CheckAdminMiddleware extends FlowBase
     /**
      *
      * @param RequestInterface $request PSR-7 request
-     * @param RequestHandler $handler PSR-15 request handler
+     * @param RequestHandlerInterface $handler PSR-15 request handler
      *
      *
      * @return Response

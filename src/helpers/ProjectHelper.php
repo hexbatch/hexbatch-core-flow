@@ -6,18 +6,18 @@ use app\models\entry\FlowEntrySearch;
 use app\models\entry\FlowEntrySearchParams;
 use app\models\project\FlowProject;
 use app\models\project\FlowProjectSearch;
+use app\models\project\FlowProjectSearchParams;
+use app\models\project\FlowProjectUser;
 use app\models\user\FlowUser;
 use DI\DependencyException;
 use DI\NotFoundException;
 use Exception;
 use InvalidArgumentException;
 use LogicException;
-use PDO;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
 use Slim\Exception\HttpBadRequestException;
-use Slim\Exception\HttpForbiddenException;
 use Slim\Exception\HttpNotFoundException;
 
 class ProjectHelper extends BaseHelper {
@@ -52,61 +52,29 @@ class ProjectHelper extends BaseHelper {
     public  function get_project_with_permissions (
         ServerRequestInterface $request,?string $user_name_or_guid, string $project_name, string $permission) : ?FlowProject
     {
-        if ($permission !== 'read' && $permission !== 'write' && $permission !== 'admin') {
-            throw new InvalidArgumentException("permission has to be read or write or admin");
-        }
 
-        $project = null;
         try {
-            $project = $this->find_one($project_name,$user_name_or_guid);
+            $project = $this->find_one($project_name,$user_name_or_guid,$permission,$this->user->flow_user_id);
         } catch (InvalidArgumentException $not_found) {
-            throw new HttpNotFoundException($request,sprintf("Cannot Find Project %s",$project));
+            throw new HttpNotFoundException($request,sprintf("Cannot Find Project %s",$project_name));
         }
 
+        if ($this->user->flow_user_id) {
+            $user_permissions = FlowUser::find_users_by_project(true,
+                $project->flow_project_guid, null, true, $this->user->flow_user_guid);
 
-        //return if public and nobody logged in
-        if (empty($this->user->flow_user_id)) {
-            if ($permission === 'read') {
-                if ($project->is_public) {
-                    return $project;
-                }else {
-                    throw new HttpForbiddenException($request,"Project is not public");
-                }
-            } else {
-                throw new HttpForbiddenException($request,"Need to be logged in to edit this project");
+            if (empty($user_permissions)) {
+                throw new InvalidArgumentException("No permissions set for this");
             }
-        }
-
-        $user_permissions = FlowUser::find_users_by_project(true,
-            $project->flow_project_guid,null,true,$this->user->flow_user_guid);
-
-        if (empty($user_permissions)) {
-            throw new InvalidArgumentException("No permissions set for this");
-        }
-        $permissions_array  = $user_permissions[0]->get_permissions();
-        if (empty($permissions_array)) {
-            throw new InvalidArgumentException("No permissions found, although in project");
-        }
-        $project_user = $permissions_array[0];
-
-        $project->set_current_user_permissions($project_user);
-
-        if ($permission === 'read') {
-            if ($project->is_public) {
-                return $project;
-            } elseif (!$project_user->can_read) {
-                throw new HttpForbiddenException($request,"Project cannot be viewed");
+            $permissions_array = $user_permissions[0]->get_permissions();
+            if (empty($permissions_array)) {
+                throw new InvalidArgumentException("No permissions found, although in project");
             }
+            $project_user = $permissions_array[0];
+
+            $project->set_current_user_permissions($project_user);
         }
-        else if ($permission === 'admin') {
-            if ( ! $project_user->can_admin) {
-                throw new HttpForbiddenException($request,"Only the admin can edit this part of the project $project_name");
-            }
-        } else if ($permission === 'write') {
-            if ( ! $project_user->can_write) {
-                throw new HttpForbiddenException($request,"You can view but not edit this project");
-            }
-        }
+
 
         return $project;
     }
@@ -116,14 +84,39 @@ class ProjectHelper extends BaseHelper {
      * or get a project based on any number of guid, and name combinations for project and user
      * @param ?string $project_title_guid_or_id
      * @param ?string $user_name_guid_or_id
+     * @param string|null $permission_type
+     * @param null $permission_user_check
      * @return FlowProject|null
-     * @throws
+     * @throws Exception
      */
-    public function find_one(?string $project_title_guid_or_id, ?string $user_name_guid_or_id = null): ?FlowProject
+    public function find_one(?string $project_title_guid_or_id, ?string $user_name_guid_or_id = null,
+                             ?string$permission_type=null, $permission_user_check = null ): ?FlowProject
     {
-        $limit_projects = [];
-        if (trim($project_title_guid_or_id)) {$limit_projects[] = trim($project_title_guid_or_id);}
-        $what = FlowProjectSearch::find_projects($limit_projects,$user_name_guid_or_id);
+        if (!in_array($permission_type,FlowProjectUser::PERMISSION_COLUMNS)) {
+            throw new LogicException("Wrong permission type here ".$permission_type);
+        }
+        $params = new FlowProjectSearchParams();
+        switch ($permission_type) {
+            case FlowProjectUser::PERMISSION_COLUMN_READ: {
+                $params->setCanRead(true);
+                break;
+            }
+            case FlowProjectUser::PERMISSION_COLUMN_WRITE: {
+                $params->setCanWrite(true);
+                break;
+            }
+            case FlowProjectUser::PERMISSION_COLUMN_ADMIN: {
+                $params->setCanAdmin(true);
+                break;
+            }
+        }
+        if ($permission_type) {
+            $params->setPermissionUserNameOrGuidOrId($permission_user_check);
+        }
+
+        $params->addProjectTitleGuidOrId($project_title_guid_or_id);
+        $params->setOwnerUserNameOrGuidOrId($user_name_guid_or_id);
+        $what = FlowProjectSearch::find_projects($params);
         if (empty($what)) {
             throw new InvalidArgumentException("Project Not Found");
         }
@@ -134,13 +127,12 @@ class ProjectHelper extends BaseHelper {
      * @param ServerRequestInterface $request
      * @param string $project_guid
      * @return FlowProject
-     * @throws HttpForbiddenException
      * @throws HttpNotFoundException
      * @throws Exception
      */
     public function copy_project_from_guid(ServerRequestInterface $request,string $project_guid) : FlowProject {
 
-        $origonal_project = $this->get_project_with_permissions($request,null, $project_guid, 'read');
+        $origonal_project = $this->get_project_with_permissions($request,null, $project_guid, FlowProjectUser::PERMISSION_COLUMN_READ);
 
         if (!$origonal_project) {
             throw new HttpNotFoundException($request,"Project $project_guid Not Found");
@@ -285,38 +277,37 @@ class ProjectHelper extends BaseHelper {
 
 
     /**
-     * @param ServerRequestInterface $request
-     * @param int $flow_user_id
+     * @param int|null $flow_user_id
      * @return FlowProject[]
-     * @throws HttpForbiddenException
-     * @throws HttpNotFoundException
+     * @throws
      */
-    public function get_all_top_projects(ServerRequestInterface $request,int $flow_user_id) : array {
-        $db = $this->get_connection();
-        $sql = "SELECT DISTINCT 
-                    p.id, p.created_at_ts , HEX(u.flow_user_guid) as flow_user_guid, HEX(p.flow_project_guid) as flow_project_guid
-                FROM flow_project_users perm 
-                INNER JOIN flow_projects p ON p.id = perm.flow_project_id 
-                INNER JOIN flow_users u ON u.id = perm.flow_user_id 
-                WHERE perm.flow_user_id = ? 
-                  AND perm.can_read > 0 
-                  AND p.flow_project_type = ?
-                ORDER BY  p.created_at_ts DESC ";
+    public function get_all_top_projects(?int $flow_user_id) : array {
+
 
         try {
-            $args =  [$flow_user_id,FlowProject::FLOW_PROJECT_TYPE_TOP];
-            $what = $db->safeQuery($sql,$args, PDO::FETCH_OBJ);
-            if (empty($what)) {
-                return [];
-            }
-            /**
-             * @var FlowProject[] $ret;
-             */
-            $ret = [];
-            foreach ($what as $row) {
-                $node = $this->get_project_with_permissions($request,null, $row->flow_project_guid, 'read');
-                if ($node) {
-                    $ret[] = $node;
+            $params = new FlowProjectSearchParams();
+            $params->setFlowProjectType(FlowProject::FLOW_PROJECT_TYPE_TOP);
+            $params->setPermissionUserNameOrGuidOrId($flow_user_id);
+            $params->setCanRead(true);
+            $params->setPage(1);
+            $params->setPageSize(FlowProjectSearchParams::UNLIMITED_RESULTS_PER_PAGE);
+            $ret = FlowProjectSearch::find_projects($params);
+
+            if ($this->user->flow_user_id) {
+                foreach ($ret as $project) {
+                    $user_permissions = FlowUser::find_users_by_project(true,
+                        $project->flow_project_guid, null, true, $this->user->flow_user_guid);
+                    if (empty($user_permissions)) {
+                        throw new InvalidArgumentException("No permissions set for this");
+                    }
+                    $permissions_array = $user_permissions[0]->get_permissions();
+                    if (empty($permissions_array)) {
+                        throw new InvalidArgumentException("No permissions found, although in project");
+                    }
+                    $project_user = $permissions_array[0];
+
+                    $project->set_current_user_permissions($project_user);
+
                 }
             }
             return $ret;

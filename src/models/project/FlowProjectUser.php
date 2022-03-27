@@ -25,7 +25,10 @@ class FlowProjectUser extends FlowBase implements JsonSerializable {
     public ?string $flow_project_title;
     public ?string $flow_project_type;
 
-
+    const PERMISSION_COLUMN_READ = 'can_read';
+    const PERMISSION_COLUMN_WRITE = 'can_write';
+    const PERMISSION_COLUMN_ADMIN = 'can_admin';
+    const PERMISSION_COLUMNS = [self::PERMISSION_COLUMN_READ,self::PERMISSION_COLUMN_WRITE,self::PERMISSION_COLUMN_ADMIN];
 
 
 
