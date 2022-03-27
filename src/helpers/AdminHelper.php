@@ -5,6 +5,8 @@ namespace app\helpers;
 
 use app\hexlet\WillFunctions;
 use app\models\project\FlowProject;
+use app\models\project\FlowProjectSearch;
+use app\models\project\FlowProjectSearchParams;
 use DI\Container;
 use DI\DependencyException;
 use DI\NotFoundException;
@@ -18,42 +20,34 @@ class AdminHelper extends BaseHelper {
     const ADMIN_USER_ID = 1;
 
 
-    const SPECIAL_FLAG_ADMIN = 'full_admin';
-
+    /**
+     * @return bool
+     * @throws Exception
+     */
     public  function is_current_user_admin() : bool  {
 
         if (!$this->get_current_user()->flow_user_id) {return false;}
 
-        $db = static::get_connection();
-        $sql = "SELECT p.flow_project_guid 
-                FROM flow_projects p 
-                INNER JOIN flow_project_users perm on p.id = perm.flow_project_id
-                WHERE p.flow_project_special_flag = ? AND 
-                      perm.can_admin = 1 AND perm.flow_user_id = ?
-                ";
+        $params = new FlowProjectSearchParams();
+        $params->setFlowProjectSpecialFlag(FlowProject::SPECIAL_FLAG_ADMIN);
+        $params->setPermissionUserNameOrGuidOrId($this->get_current_user()->flow_user_id);
+        $params->setCanAdmin(true);
+        $res = FlowProjectSearch::find_projects($params);
 
-        $args = [
-            static::SPECIAL_FLAG_ADMIN,
-            $this->get_current_user()->flow_user_id
-        ];
-
-        $res = $db->safeQuery($sql,$args,PDO::FETCH_OBJ);
         if (empty($res)) {return false;}
         return true;
     }
 
+    /**
+     * @return string|null
+     * @throws Exception
+     */
     public function get_admin_project_guid() : ?string {
-        $db = static::get_connection();
-        $sql = "SELECT HEX(p.flow_project_guid) as  flow_project_guid
-                FROM flow_projects p 
-                WHERE p.flow_project_special_flag = ? 
-                ";
 
-        $args = [
-            static::SPECIAL_FLAG_ADMIN
-        ];
+        $params = new FlowProjectSearchParams();
+        $params->setFlowProjectSpecialFlag(FlowProject::SPECIAL_FLAG_ADMIN);
+        $res = FlowProjectSearch::find_projects($params);
 
-        $res = $db->safeQuery($sql,$args,PDO::FETCH_OBJ);
         if (empty($res)) {return null;}
         return $res[0]->flow_project_guid;
     }
@@ -76,7 +70,7 @@ class AdminHelper extends BaseHelper {
         try {
             $db = $this->get_connection();
             $sql = "SELECT id FROM flow_projects WHERE flow_project_special_flag = ?";
-            $args = [AdminHelper::SPECIAL_FLAG_ADMIN];
+            $args = [FlowProject::SPECIAL_FLAG_ADMIN];
             $res = $db->safeQuery($sql, $args, PDO::FETCH_OBJ);
             if (empty($res)) {
                 $admin_project = new FlowProject();
@@ -91,7 +85,7 @@ class AdminHelper extends BaseHelper {
                 $admin_project->save();
                 $id =  $admin_project->id;
                 $sql = "UPDATE flow_projects p SET p.flow_project_special_flag = ? WHERE p.id = ? ";
-                $args = [AdminHelper::SPECIAL_FLAG_ADMIN,$id];
+                $args = [FlowProject::SPECIAL_FLAG_ADMIN,$id];
                 $db->safeQuery($sql, $args, PDO::FETCH_OBJ,true);
                 return $id;
             }

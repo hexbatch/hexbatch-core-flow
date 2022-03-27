@@ -7,6 +7,7 @@ use app\models\base\FlowBase;
 use app\models\entry\public_json\FlowEntryJson;
 use app\models\project\FlowProject;
 use app\models\project\FlowProjectSearch;
+use app\models\project\FlowProjectSearchParams;
 use Exception;
 use LogicException;
 use PDO;
@@ -123,7 +124,7 @@ class FlowEntrySearch extends FlowBase {
                             AND $where_project  
                             AND $where_user  
                             AND $where_entry_guid
-                        
+                            ORDER BY driver_entry.id 
                             LIMIT $start_place , $page_size
                     )
                     UNION
@@ -182,7 +183,9 @@ class FlowEntrySearch extends FlowBase {
            //get the projects
            $project_guids = array_keys($projects);
            if (count($project_guids)) {
-               $projects_found = FlowProjectSearch::find_projects($project_guids);
+               $params = new FlowProjectSearchParams();
+               $params->addProjectTitleGuidOrId($project_guids);
+               $projects_found = FlowProjectSearch::find_projects($params);
                foreach ($projects_found as $found_project) {
                    if (!array_key_exists($found_project->flow_project_guid, $projects)) {
                        throw new LogicException("Could not find the project after a select");

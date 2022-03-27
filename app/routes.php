@@ -90,7 +90,6 @@ return function (App $app) {
                     $group->post('/destroy_ajax', ['projectPages', 'destroy_project'])->setName('destroy_project_ajax');
                     $group->post('/edit_permissions_ajax', ['projectPages', 'change_project_permissions'])->setName('edit_permissions_ajax');
                     $group->get('/permissions', ['projectPages', 'edit_project_permissions'])->setName('project_permissions');
-                    $group->get('/tags', ['projectPages', 'edit_project_tags'])->setName('project_tags');
                     $group->get('/history[/page/{page:[1-9]+[0-9]*}]', ['projectPages', 'project_history'])->setName('project_history');
                     $group->post('/file_change_ajax', ['projectPages', 'get_file_change'])->setName('get_file_change_ajax');
                     $group->get('/export', ['projectPages', 'export_view'])->setName('project_export');
@@ -104,6 +103,7 @@ return function (App $app) {
                     $group->post('/resources_delete', ['projectPages', 'delete_resource_file'])->setName('project_delete_resource_file');
                 })->add('checkLoggedInMiddleware');
 
+                $group->get('/tags', ['projectPages', 'edit_project_tags'])->setName('project_tags');
 
                 $group->get('/files/{resource}', ['projectPages', 'get_resource_file'])->setName('project_files');
 

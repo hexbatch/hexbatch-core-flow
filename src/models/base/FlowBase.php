@@ -2,13 +2,18 @@
 
 namespace app\models\base;
 
+use app\hexlet\WillFunctions;
 use DI\Container;
 use Exception;
 use InvalidArgumentException;
 use ParagonIE\EasyDB\EasyDB;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 class FlowBase  {
+
+    const MAX_SIZE_TITLE = 40;
+    const MAX_SIZE_BLURB = 120;
 
     /**
      * @var Container $container
@@ -103,5 +108,20 @@ class FlowBase  {
         throw new InvalidArgumentException("$varName not supported");
     }
 
+    public static function check_valid_title($words) : bool  {
+
+        if (!static::minimum_check_valid_name($words,static::MAX_SIZE_TITLE)) {return false;}
+
+        $b_match = preg_match('/^[[:alnum:]\-]+$/u',$words,$matches);
+        WillFunctions::will_do_nothing($matches);
+        if ($b_match === false) {
+            $error_preg = array_flip(array_filter(get_defined_constants(true)['pcre'], function ($value) {
+                return substr($value, -6) === '_ERROR';
+            }, ARRAY_FILTER_USE_KEY))[preg_last_error()];
+            throw new RuntimeException($error_preg);
+        }
+        return (bool)$b_match;
+
+    }
 
 }

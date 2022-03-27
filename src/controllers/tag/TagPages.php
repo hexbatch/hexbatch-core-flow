@@ -6,6 +6,7 @@ use app\helpers\ProjectHelper;
 use app\hexlet\FlowAntiCSRF;
 use app\hexlet\JsonHelper;
 use app\models\multi\GeneralSearch;
+use app\models\project\FlowProjectUser;
 use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
 use app\models\tag\FlowTagAttribute;
@@ -76,7 +77,7 @@ class TagPages extends BasePages
         try {
             $project_helper = ProjectHelper::get_project_helper();
 
-            $project = $project_helper->get_project_with_permissions($request,$user_name, $project_name, 'read');
+            $project = $project_helper->get_project_with_permissions($request,$user_name, $project_name, FlowProjectUser::PERMISSION_COLUMN_READ);
 
             if (!$project) {
                 throw new HttpNotFoundException($request, "Project $project_name Not Found");
@@ -400,7 +401,7 @@ class TagPages extends BasePages
 
         $project_helper = ProjectHelper::get_project_helper();
 
-        $project = $project_helper->get_project_with_permissions($request,$user_name, $project_name, 'write');
+        $project = $project_helper->get_project_with_permissions($request,$user_name, $project_name, FlowProjectUser::PERMISSION_COLUMN_WRITE);
         if (!$project) {
             throw new HttpNotFoundException($request,"Project $project_name Not Found");
         }

@@ -31,9 +31,15 @@ use Symfony\Component\Yaml\Yaml;
 class FlowProject extends FlowBase {
 
     const TABLE_NAME = 'flow_projects';
+
+
     const FLOW_PROJECT_TYPE_TOP = 'top';
-    const MAX_SIZE_TITLE = 40;
-    const MAX_SIZE_BLURB = 120;
+    const FLOW_PROJECT_TYPE_USER_PAGE = 'user-page';
+
+    const SPECIAL_FLAG_ADMIN = 'full_admin';
+
+
+
     const MAX_SIZE_EXPORT_URL = 200;
 
     const MAX_SIZE_READ_ME_IN_CHARACTERS = 4000000;
@@ -357,21 +363,7 @@ class FlowProject extends FlowBase {
         $this->old_flow_project_title = $this->flow_project_title;
     }
 
-    public static function check_valid_title($words) : bool  {
 
-        if (!static::minimum_check_valid_name($words,static::MAX_SIZE_TITLE)) {return false;}
-
-        $b_match = preg_match('/^[[:alnum:]\-]+$/u',$words,$matches);
-        WillFunctions::will_do_nothing($matches);
-        if ($b_match === false) {
-            $error_preg = array_flip(array_filter(get_defined_constants(true)['pcre'], function ($value) {
-                return substr($value, -6) === '_ERROR';
-            }, ARRAY_FILTER_USE_KEY))[preg_last_error()];
-            throw new RuntimeException($error_preg);
-        }
-        return (bool)$b_match;
-
-    }
 
 
     /**
@@ -1115,7 +1107,7 @@ class FlowProject extends FlowBase {
         $this->do_project_directory_command('stat flow_project_title');
         $this->do_project_directory_command('stat flow_project_readme_bb_code.bbcode');
         $title = $this->do_project_directory_command('cat flow_project_title');
-        $this->check_valid_title($title);
+        static::check_valid_title($title);
         $blurb = $this->do_project_directory_command('cat flow_project_blurb');
         if (mb_strlen($blurb) > static::MAX_SIZE_BLURB) {
             throw new InvalidArgumentException("Project Blurb cannot be more than ".static::MAX_SIZE_BLURB." characters");

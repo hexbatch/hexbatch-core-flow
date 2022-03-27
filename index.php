@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use app\controllers\user\UserPages;
-use app\helpers\AdminHelper;
 use Delight\Cookie\Session;
 use DI\Bridge\Slim\Bridge;
 use DI\Container;
@@ -55,11 +54,13 @@ $app = Bridge::create($container);
 
 $container->set('app', function() use ($app) { return $app; });
 
-$views = require_once HEXLET_BASE_PATH . '/app/twig.php';
-$views($app);
+
 
 $pages = require_once HEXLET_BASE_PATH . '/app/pages.php';
 $pages($app);
+
+$views = require_once HEXLET_BASE_PATH . '/app/twig.php';
+$views($app);
 
 $middleware = require_once HEXLET_BASE_PATH . '/app/middleware.php';
 $middleware($app);
@@ -71,6 +72,7 @@ $routes($app);
 (function()  use ($container) {
     try {
         $user = $container->get('user');
+        $container->get('projectHelper'); //call ignoring return, need to initialize early by doing this
         $flash_messages = [];
         $settings = $container->get('settings');
         $flash_key = $settings->session->flash_key;

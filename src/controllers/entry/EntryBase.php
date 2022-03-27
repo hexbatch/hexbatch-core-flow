@@ -8,6 +8,7 @@ use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\entry\FlowEntrySearch;
 use app\models\entry\FlowEntrySearchParams;
+use app\models\project\FlowProjectUser;
 use InvalidArgumentException;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Exception\HttpForbiddenException;
@@ -37,7 +38,7 @@ class EntryBase extends BasePages
     protected function validate_call(FlowEntryCallData $options, ServerRequestInterface $request,
                                           ?string $route_name, string $user_name,
                                           string $project_name, ?string $entry_name = null,
-                                          string $project_permissions_needed  = 'write',
+                                          string $project_permissions_needed  = FlowProjectUser::PERMISSION_COLUMN_WRITE,
                                           ?FlowEntrySearchParams $search = null,
                                           ?int $page = null
                                         ) : FlowEntryCallData

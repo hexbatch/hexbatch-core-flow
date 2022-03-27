@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use app\controllers\user\CheckAdminMiddleware;
+use app\controllers\home\CheckAdminMiddleware;
+use app\controllers\user\CheckLoggedInMiddleware;
 use app\controllers\user\PingUserMiddleware;
 use app\models\user\FlowUser;
-use app\controllers\user\CheckLoggedInMiddleware;
 use Delight\Auth\Auth;
 use Delight\Auth\AuthError;
 use DI\Container;

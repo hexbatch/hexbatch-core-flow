@@ -99,8 +99,13 @@ class JsonHelper {
         self::printStatusJSONAndDie($message,$http_code, false,$status_in_json);
     }
 
+    /**
+     * @param mixed $string
+     * @return bool
+     */
     public static function isJson($string): bool
     {
+        if (!is_string($string)) {return false;}
         json_decode($string);
         return (json_last_error() == JSON_ERROR_NONE);
     }

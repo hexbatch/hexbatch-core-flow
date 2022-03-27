@@ -65,7 +65,7 @@ class BaseConnection {
             return  $this->container->get('connection');
         } catch (Exception $e) {
             $this->logger->alert("User model cannot connect to the database",['exception'=>$e]);
-            die( static::class . " Cannot get connetion");
+            die( static::class . " Cannot get connection");
         }
     }
 
