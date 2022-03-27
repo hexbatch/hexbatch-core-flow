@@ -1,0 +1,21 @@
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{  url_for('user_home')  }}">{{ user.flow_user_name }} Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Profile Settings</li>
+    </ol>
+</nav>
+
+
+<div class="row">
+
+    <div class="col ">
+        {{ include('user/partials/settings-form.twig') }}
+    </div><!-- /.col -->
+
+</div> <!-- /.row -->
+
+
+
+
+

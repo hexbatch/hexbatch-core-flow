@@ -34,7 +34,7 @@ class FlowProject extends FlowBase {
 
 
     const FLOW_PROJECT_TYPE_TOP = 'top';
-    const FLOW_PROJECT_TYPE_USER_PAGE = 'user-page';
+    const FLOW_PROJECT_TYPE_USER_HOME = 'user-page';
 
     const SPECIAL_FLAG_ADMIN = 'full_admin';
 

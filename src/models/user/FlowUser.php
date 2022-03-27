@@ -236,7 +236,7 @@ class FlowUser extends FlowBase implements JsonSerializable {
 
 
         if (ctype_digit($user_name_or_guid_or_base_user_id)) {
-            $where_condition = " u.base_user_id = ?";
+            $where_condition = " u.id = ?";
             $args = [(int)$user_name_or_guid_or_base_user_id];
         } else {
             $where_condition = " ( u.flow_user_name = ? OR u.flow_user_guid = UNHEX(?) )";

@@ -47,6 +47,7 @@ return function (App $app) {
         $group->group('/user', function (RouteCollectorProxy $group) {
 
             $group->get('/home', ['userPages', 'user_home'])->setName('user_home');
+            $group->get('/profile', ['userPages', 'user_settings'])->setName('user_settings');
 
             $group->get('/logout', ['userPages', 'do_logout'])->setName('logout');
 
@@ -60,7 +61,7 @@ return function (App $app) {
         });
 
         $group->group('/user', function (RouteCollectorProxy $group) {
-            $group->post('/update_profile', ['userPages', 'update_profile'])->setName('update_profile');
+            $group->post('/update_settings', ['userPages', 'update_settings'])->setName('update_settings');
         })->add('checkLoggedInMiddleware');
 
         $group->group('', function (RouteCollectorProxy $group) {
