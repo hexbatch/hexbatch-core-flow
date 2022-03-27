@@ -1,1 +1,24 @@
-{{ dat_user.flow_user_guid }} About
+<div class="col-12 col-xxl-6 ">
+    <div class="container p-0 m-1">
+
+        <div class="card" >
+
+            <div class="card-header">
+                <h4 class="">
+                     {{ dat_user.flow_user_name }}
+                </h4>
+            </div>
+
+            <div class="card-body">
+                <h5 class="card-title">
+                    {{ user_home_project.flow_project_blurb }}
+                </h5>
+
+                <div class="flow-user_home_project-readme-display">
+                    {{ user_home_project.flow_project_readme_html| raw }}
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div><!-- /.col -->

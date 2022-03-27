@@ -3,6 +3,7 @@ namespace app\controllers\user;
 
 use app\controllers\base\BasePages;
 use app\helpers\ProjectHelper;
+use app\helpers\UserHelper;
 use app\hexlet\JsonHelper;
 use app\models\base\FlowBase;
 use app\models\user\FlowUser;
@@ -33,6 +34,10 @@ use Slim\Routing\RouteContext;
 class UserPages extends BasePages {
 
     const REM_USER_SETTINGS_WITH_ERROR_SESSION_KEY = 'user_settings_form_in_progress_has_error';
+
+    protected function get_user_helper() : UserHelper {
+        return UserHelper::get_user_helper();
+    }
 
 
     protected static string $flash_key_in_session;
@@ -196,15 +201,11 @@ class UserPages extends BasePages {
                 throw $e;
             }
 
-        } catch (InvalidEmailException $e) {
-            $message = ('Wrong email address');
         } catch (InvalidPasswordException $e) {
             $message = ('Wrong password');
         } catch (EmailNotVerifiedException $e) {
             $message = ('Email not verified');
-        } catch (TooManyRequestsException $e) {
-            $message = ('Too many requests');
-        } catch (Exception $e) {
+        }  catch (Exception $e) {
             $this->logger->error('some sort of error in user login',['exception'=>$e]);
             throw $e;
         }
@@ -359,6 +360,23 @@ class UserPages extends BasePages {
      * @noinspection PhpUnused
      */
     public function user_home( ResponseInterface $response) :ResponseInterface {
+        $user_home = $this->get_user_helper()->get_user_home();
+
+        return $this->view->render($response, 'main.twig', [
+            'page_template_path' => 'user/user_home.twig',
+            'page_title' => 'User Home',
+            'page_description' => 'No Place Like Home',
+            'user_home_project' => $user_home
+        ]);
+    }
+
+    /**
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     * @throws Exception
+     * @noinspection PhpUnused
+     */
+    public function user_settings( ResponseInterface $response) :ResponseInterface {
         try {
 
             $edit_user = FlowUser::find_one($this->user->flow_user_guid);
@@ -379,11 +397,14 @@ class UserPages extends BasePages {
                 $form_in_progress = $edit_user;
             }
 
+            $user_home = $this->get_user_helper()->get_user_home();
+
             return $this->view->render($response, 'main.twig', [
-                'page_template_path' => 'user/user_home.twig',
+                'page_template_path' => 'user/user_settings.twig',
                 'page_title' => 'User Home',
                 'page_description' => 'No Place Like Home',
-                'edit_user' => $form_in_progress
+                'edit_user' => $form_in_progress,
+                'user_home_project' => $user_home
             ]);
         } catch (Exception $e) {
             $this->logger->error("Could not render user_home",['exception'=>$e]);
@@ -401,7 +422,7 @@ class UserPages extends BasePages {
      * @throws Exception
      * @noinspection PhpUnused
      */
-    public function update_profile(ServerRequestInterface $request,ResponseInterface $response) :ResponseInterface {
+    public function update_settings(ServerRequestInterface $request,ResponseInterface $response) :ResponseInterface {
 
 
         $edit_user = FlowUser::find_one($this->user->flow_user_guid);
@@ -455,7 +476,7 @@ class UserPages extends BasePages {
                 UserPages::add_flash_message('warning', "Cannot update settings " . $e->getMessage());
                 $_SESSION[static::REM_USER_SETTINGS_WITH_ERROR_SESSION_KEY] = $edit_user;
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-                $url = $routeParser->urlFor('user_home');
+                $url = $routeParser->urlFor('user_settings');
                 $response = $response->withStatus(302);
                 return $response->withHeader('Location', $url);
             } catch (Exception $e) {
@@ -531,61 +552,8 @@ class UserPages extends BasePages {
             ->withHeader('Content-Type', 'application/json');
     }
 
-    /**
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param string $user_name
-     * @return ResponseInterface
-     * @throws Exception
-     * @noinspection PhpUnused
-     */
-    public function user_page( ServerRequestInterface $request,ResponseInterface $response, string $user_name) :ResponseInterface {
-
-        $for_user = FlowUser::find_one($user_name);
-        if ($for_user) {
-            if ($this->user->flow_user_id === $for_user->flow_user_id) {
-                return $this->user_page_for_self( $request,$response,$user_name);
-            } else {
-                return $this->user_page_for_others( $request,$response,$user_name);
-            }
-        }
-        throw new HttpNotFoundException($request,"Could not find user $user_name");
-
-    }
 
 
-
-    /**
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param string $user_name
-     * @return ResponseInterface
-     * @throws Exception
-     * @noinspection PhpUnused
-     */
-    public function user_page_for_self(ServerRequestInterface $request, ResponseInterface $response, string $user_name) :ResponseInterface {
-        try {
-
-            //if logged is  not username throw error
-            $found_user = FlowUser::find_one($user_name);
-            if (!$found_user) {
-                throw new LogicException("Should always match the same logged in user here. Username not found from url");
-            }
-
-            if ($found_user->flow_user_name !== $this->user->flow_user_name) {
-                throw new HttpForbiddenException($request,"Cannot view the settings page for someone else");
-            }
-
-            return $this->view->render($response, 'main.twig', [
-                'page_template_path' => 'user/user_page_for_self.twig',
-                'page_title' => 'User Page',
-                'page_description' => 'No Place Like Home'
-            ]);
-        } catch (Exception $e) {
-            $this->logger->error("Could not render user_page_for_self",['exception'=>$e]);
-            throw $e;
-        }
-    }
 
 
 
@@ -600,17 +568,20 @@ class UserPages extends BasePages {
      * @throws Exception
      * @noinspection PhpUnused
      */
-    public function user_page_for_others( ServerRequestInterface $request,ResponseInterface $response, string $user_name) :ResponseInterface {
+    public function user_page( ServerRequestInterface $request,ResponseInterface $response, string $user_name) :ResponseInterface {
         try {
             $dat_user = FlowUser::find_one($user_name);
             if (empty($dat_user)) {
                 throw new HttpNotFoundException($request,"Cannot find this user");
             }
+            $user_home = $this->get_user_helper()->get_user_home($dat_user->flow_user_guid);
+            $user_home->get_admin_user();
             return $this->view->render($response, 'main.twig', [
-                'page_template_path' => 'user/user_page_for_others.twig',
+                'page_template_path' => 'user/user_page.twig',
                 'page_title' => 'User Page',
-                'page_description' => 'No Place Like Home',
-                'dat_user' => $dat_user
+                'page_description' => 'Public Profile',
+                'dat_user' => $dat_user,
+                'user_home_project' => $user_home
             ]);
         } catch (Exception $e) {
             $this->logger->error("Could not render user_page_for_others",['exception'=>$e]);

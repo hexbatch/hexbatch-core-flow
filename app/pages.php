@@ -10,6 +10,7 @@ use app\controllers\tag\TagPages;
 use app\controllers\user\UserPages;
 use app\helpers\AdminHelper;
 use app\helpers\ProjectHelper;
+use app\helpers\UserHelper;
 use Psr\Log\LoggerInterface;
 use Slim\App;
 use DI\Container;
@@ -50,6 +51,10 @@ return function (App $app) {
 
     $container->set('adminHelper', function() use ($app, $container) {
         return new AdminHelper($container->get('auth'),$container->get(LoggerInterface::class),$container);
+    });
+
+    $container->set('userHelper', function() use ($app, $container) {
+        return new UserHelper($container->get('auth'),$container->get(LoggerInterface::class),$container);
     });
 
 };
