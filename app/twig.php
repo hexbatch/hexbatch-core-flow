@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use app\helpers\ProjectHelper;
+use app\helpers\Utilities;
 use app\hexlet\FlowAntiCSRF;
 use app\hexlet\JsonHelper;
 use Ramsey\Uuid\Uuid;
@@ -24,7 +25,8 @@ class Hexlet_Twig_Extension extends AbstractExtension implements GlobalsInterfac
         $root = ProjectHelper::get_project_helper()->get_root_url();
         return [
             'root_url' => $root,
-            'csrf_token_set_to_root' => FlowAntiCSRF::SET_LOCK_TO_ANY_PAGE
+            'csrf_token_set_to_root' => FlowAntiCSRF::SET_LOCK_TO_ANY_PAGE,
+            'program_version' => Utilities::get_utilities()->get_version_string()
         ];
     }
 

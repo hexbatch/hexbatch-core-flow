@@ -7,11 +7,13 @@ use app\hexlet\JsonHelper;
 use app\hexlet\RecursiveClasses;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
+use app\models\base\SearchParamBase;
 use app\models\entry\archive\FlowEntryArchive;
 use app\models\multi\GeneralSearch;
 use app\models\tag\brief\BriefCheckValidYaml;
 use app\models\tag\brief\BriefDiffFromYaml;
 use app\models\tag\brief\BriefUpdateFromYaml;
+use app\models\tag\FlowTagSearch;
 use app\models\tag\FlowTagSearchParams;
 use app\models\user\FlowUser;
 use app\models\tag\FlowTag;
@@ -135,9 +137,9 @@ class FlowProject extends FlowBase {
         $search_params = new FlowTagSearchParams();
         $search_params->flag_get_applied = $b_get_applied;
         $search_params->owning_project_guid = $this->flow_project_guid;
-        $unsorted_array = FlowTag::get_tags($search_params,1,GeneralSearch::UNLIMITED_RESULTS_PER_PAGE);
+        $unsorted_array = FlowTagSearch::get_tags($search_params,1,SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
 
-        $this->owned_tags = FlowTag::sort_tag_array_by_parent($unsorted_array);
+        $this->owned_tags = FlowTagSearch::sort_tag_array_by_parent($unsorted_array);
 
         if ($b_get_applied) {
             $this->b_did_applied_for_owned_tags = true;
@@ -166,7 +168,7 @@ class FlowProject extends FlowBase {
         $search_params->flag_get_applied = true;
         $search_params->owning_project_guid = $this->flow_project_guid;
         $search_params->only_applied_to_guids[] = $this->flow_project_guid;
-        $this->tags_applied_to_this = FlowTag::get_tags($search_params,1,GeneralSearch::UNLIMITED_RESULTS_PER_PAGE);
+        $this->tags_applied_to_this = FlowTagSearch::get_tags($search_params,1,SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
         return $this->tags_applied_to_this;
     }
 

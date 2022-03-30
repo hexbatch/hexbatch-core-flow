@@ -2,7 +2,9 @@
 
 namespace app\models\multi;
 
-class GeneralSearchParams   {
+use app\models\base\SearchParamBase;
+
+class GeneralSearchParams   extends SearchParamBase  {
 
 
     public ?string $words;

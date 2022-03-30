@@ -10,8 +10,12 @@ session:
   session_name: hexbatch_flow_session
   flash_key : hexbatch_flow_flash
 twig:
-    cache: false
+    cache: true
     strict_variables: true
-    debug: true
+    debug: true,
+    auto_reload: true
 project:
     parent_directory: /var/www/flow_projects
+program:
+    version: 0.5.0
+    timezone: 'America/Chicago'

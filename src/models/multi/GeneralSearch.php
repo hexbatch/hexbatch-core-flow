@@ -5,12 +5,12 @@ namespace app\models\multi;
 
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
+use app\models\base\SearchParamBase;
 use PDO;
 
-class GeneralSearch extends FlowBase{
+class GeneralSearch extends FlowBase {
 
     const DEFAULT_PAGE_SIZE = 20;
-    const UNLIMITED_RESULTS_PER_PAGE = 100000;
 
     const TYPE_USER = 'user';
     const TYPE_PROJECT = 'project';
@@ -86,7 +86,7 @@ class GeneralSearch extends FlowBase{
         $args = [];
         $where_array = [];
 
-        if ($page_size === self::UNLIMITED_RESULTS_PER_PAGE) {
+        if ($page_size === SearchParamBase::UNLIMITED_RESULTS_PER_PAGE) {
             $page = 1;
         }
 
@@ -204,7 +204,7 @@ class GeneralSearch extends FlowBase{
 
                 $secondary_search->guids = array_unique($secondary_search->guids);
             }
-            $secondary_results = static::general_search($secondary_search,1,static::UNLIMITED_RESULTS_PER_PAGE);
+            $secondary_results = static::general_search($secondary_search,1,SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
             $secondary_hash = [];
             foreach ($secondary_results as $secondary_result) {
                 $secondary_hash[$secondary_result->guid] = $secondary_result;

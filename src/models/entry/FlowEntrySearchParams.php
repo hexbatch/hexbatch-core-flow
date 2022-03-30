@@ -3,11 +3,11 @@
 namespace app\models\entry;
 
 use app\hexlet\JsonHelper;
+use app\models\base\SearchParamBase;
 
-class FlowEntrySearchParams {
+class FlowEntrySearchParams extends SearchParamBase {
 
     const DEFAULT_PAGE_SIZE = 30;
-    const UNLIMITED_RESULTS_PER_PAGE = 100000;
 
     public ?string $owning_project_guid;
     public ?string $owning_user_guid;

@@ -12,6 +12,7 @@ use app\models\multi\GeneralSearchParams;
 use app\models\project\FlowProjectSearch;
 use app\models\project\FlowProjectSearchParams;
 use app\models\tag\FlowTag;
+use app\models\tag\FlowTagSearch;
 use app\models\tag\FlowTagSearchParams;
 use Exception;
 use Psr\Http\Message\ResponseInterface;
@@ -122,7 +123,7 @@ class HomePages extends BasePages
                 case GeneralSearch::TYPE_TAG: {
                     $tag_search = new FlowTagSearchParams();
                     $tag_search->tag_guids[] = $guid;
-                    $tag_res = FlowTag::get_tags($tag_search);
+                    $tag_res = FlowTagSearch::get_tags($tag_search);
                     if (empty($tag_res)) {
                         throw new HttpNotFoundException($request,"Cannot find Tag ". $guid);
                     }

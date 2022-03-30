@@ -11,6 +11,7 @@ use app\controllers\user\UserPages;
 use app\helpers\AdminHelper;
 use app\helpers\ProjectHelper;
 use app\helpers\UserHelper;
+use app\helpers\Utilities;
 use Psr\Log\LoggerInterface;
 use Slim\App;
 use DI\Container;
@@ -55,6 +56,10 @@ return function (App $app) {
 
     $container->set('userHelper', function() use ($app, $container) {
         return new UserHelper($container->get('auth'),$container->get(LoggerInterface::class),$container);
+    });
+
+    $container->set('utilities', function() use ($app, $container) {
+        return new Utilities($container->get('auth'),$container->get(LoggerInterface::class),$container);
     });
 
 };

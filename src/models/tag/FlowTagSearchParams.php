@@ -2,7 +2,9 @@
 
 namespace app\models\tag;
 
-class FlowTagSearchParams {
+use app\models\base\SearchParamBase;
+
+class FlowTagSearchParams  extends SearchParamBase {
 
     public ?string $owning_project_guid;
     public ?string $tag_name_term;
