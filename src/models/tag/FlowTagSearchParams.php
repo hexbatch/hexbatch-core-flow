@@ -2,7 +2,9 @@
 
 namespace app\models\tag;
 
-class FlowTagSearchParams {
+use app\models\base\SearchParamBase;
+
+class FlowTagSearchParams  extends SearchParamBase {
 
     public ?string $owning_project_guid;
     public ?string $tag_name_term;
@@ -27,6 +29,7 @@ class FlowTagSearchParams {
     public array $not_applied_to_guids = [];
 
     function __construct(){
+        parent::__construct();
         $this->owning_project_guid = null;
         $this->tag_name_term = null;
         $this->tag_guids = [];

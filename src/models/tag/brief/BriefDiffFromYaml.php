@@ -2,6 +2,7 @@
 
 namespace app\models\tag\brief;
 
+use app\models\base\SearchParamBase;
 use app\models\multi\GeneralSearch;
 use app\models\multi\GeneralSearchParams;
 use app\models\multi\GeneralSearchResult;
@@ -180,7 +181,9 @@ class BriefDiffFromYaml {
 
         $search = new GeneralSearchParams();
         $search->guids = $guids_to_get;
-        $targets = GeneralSearch::general_search($search,1,GeneralSearch::UNLIMITED_RESULTS_PER_PAGE);
+        $search->setPage(1);
+        $search->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
+        $targets = GeneralSearch::general_search($search);
 
         /**
          * @var array<string,GeneralSearchResult> $target_map

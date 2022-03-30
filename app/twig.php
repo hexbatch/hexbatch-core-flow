@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use app\helpers\ProjectHelper;
+use app\helpers\Utilities;
 use app\hexlet\FlowAntiCSRF;
 use app\hexlet\JsonHelper;
+use app\models\standard\FlowTagStandardAttribute;
 use Ramsey\Uuid\Uuid;
 use Slim\App;
 use Slim\Views\Twig;
@@ -24,7 +26,8 @@ class Hexlet_Twig_Extension extends AbstractExtension implements GlobalsInterfac
         $root = ProjectHelper::get_project_helper()->get_root_url();
         return [
             'root_url' => $root,
-            'csrf_token_set_to_root' => FlowAntiCSRF::SET_LOCK_TO_ANY_PAGE
+            'csrf_token_set_to_root' => FlowAntiCSRF::SET_LOCK_TO_ANY_PAGE,
+            'program_version' => Utilities::get_utilities()->get_version_string()
         ];
     }
 
@@ -74,7 +77,16 @@ class Hexlet_Twig_Extension extends AbstractExtension implements GlobalsInterfac
             ['is_safe' => ['html']]
         );
 
-        return [$csrf,$session_dump,$generate_uuid];
+
+        $standard_keys = new TwigFunction(
+            'standard_keys',
+            function(string $key_name) : array {
+                return FlowTagStandardAttribute::getStandardAttributeKeys($key_name);
+            },
+            []
+        );
+
+        return [$csrf,$session_dump,$generate_uuid,$standard_keys];
     }
 
 }

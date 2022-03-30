@@ -360,7 +360,7 @@ class UserPages extends BasePages {
      * @noinspection PhpUnused
      */
     public function user_home( ResponseInterface $response) :ResponseInterface {
-        $user_home = $this->get_user_helper()->get_user_home();
+        $user_home = $this->get_user_helper()->get_user_home_project();
 
         return $this->view->render($response, 'main.twig', [
             'page_template_path' => 'user/user_home.twig',
@@ -397,7 +397,7 @@ class UserPages extends BasePages {
                 $form_in_progress = $edit_user;
             }
 
-            $user_home = $this->get_user_helper()->get_user_home();
+            $user_home = $this->get_user_helper()->get_user_home_project();
 
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'user/user_settings.twig',
@@ -574,7 +574,7 @@ class UserPages extends BasePages {
             if (empty($dat_user)) {
                 throw new HttpNotFoundException($request,"Cannot find this user");
             }
-            $user_home = $this->get_user_helper()->get_user_home($dat_user->flow_user_guid);
+            $user_home = $this->get_user_helper()->get_user_home_project($dat_user->flow_user_guid);
             $user_home->get_admin_user();
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'user/user_page.twig',

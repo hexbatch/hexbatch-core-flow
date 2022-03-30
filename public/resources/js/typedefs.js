@@ -86,8 +86,6 @@
  * @property {?string} tag_attribute_text
  * @property {?number} created_at_ts
  * @property {?number} updated_at_ts
- * @property {?boolean} is_standard_attribute
- * @property {?string} standard_attribute_type
  * @property {?boolean} is_inherited
  * @property {?string} points_to_title
  * @property {?string} points_to_admin_guid
@@ -98,11 +96,16 @@
 
 /**
  *
- * @typedef {Object} FlowTagStandardAttributes
- * @property {string?} color
- * @property {string?} background_color
+ * @typedef {Object} FlowStandardAttributes
+ * @property {string?} standard_name
+ * @property {Object?} standard_value
+ * @property {int?} standard_updated_ts
+ * @property {string?} tag_guid
+ * @property {string?} project_guid
+ * @property {string?} standard_guid
 
  */
+
 
 
 /**
@@ -117,7 +120,7 @@
  * @property {number} created_at_ts
  * @property {number} updated_at_ts
  * @property {Object.<string, FlowTagAttribute>} attributes
- * @property {Object.<string, FlowTagStandardAttributes>} standard_attributes
+ * @property {Object.<string, FlowStandardAttributes>} standard_attributes
  * @property {Object.<string, string>} css
  * @property {?FlowTag} flow_tag_parent
  * @property {FlowTagApplied[]} applied

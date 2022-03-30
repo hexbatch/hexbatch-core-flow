@@ -11,6 +11,7 @@ use Exception;
 use Monolog\Logger;
 use ParagonIE\EasyDB\EasyDB;
 use Slim\Views\Twig;
+use stdClass;
 
 class BaseConnection {
     protected Auth $auth;
@@ -66,6 +67,19 @@ class BaseConnection {
         } catch (Exception $e) {
             $this->logger->alert("User model cannot connect to the database",['exception'=>$e]);
             die( static::class . " Cannot get connection");
+        }
+    }
+
+
+    /**
+     * @return stdClass
+     */
+    protected function get_settings() : stdClass  {
+        try {
+            return  $this->container->get('settings');
+        } catch (Exception $e) {
+            $this->logger->alert("cannot get settings",['exception'=>$e]);
+            die( static::class . " Cannot get settings");
         }
     }
 

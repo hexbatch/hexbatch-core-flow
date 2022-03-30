@@ -62,6 +62,22 @@ class AdminPages extends BasePages
             ->withHeader('Content-Type', 'application/json');
     }
 
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     * @noinspection PhpUnused
+     * @throws Exception
+     */
+    public function redo_triggers( ResponseInterface $response) :ResponseInterface {
+        $data = [];
+        $data['triggers'] = SQLHelper::redo_all_triggers();
+        $payload = JsonHelper::toString($data);
+
+        $response->getBody()->write($payload);
+        return $response
+            ->withHeader('Content-Type', 'application/json');
+    }
 
     /**
      * @param ServerRequestInterface $request
@@ -74,9 +90,7 @@ class AdminPages extends BasePages
 
         $args = $request->getQueryParams();
         $data = [];
-        if (isset($args['triggers']) && JsonHelper::var_to_boolean($args['triggers'])) {
-            $data['triggers'] = SQLHelper::redo_all_triggers();
-        }
+
 
         if (isset($args['truncate']) && JsonHelper::var_to_boolean($args['truncate'])) {
             $data['truncate'] = SQLHelper::truncate_flow_things();

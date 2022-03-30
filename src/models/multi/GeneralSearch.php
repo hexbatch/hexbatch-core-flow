@@ -5,12 +5,12 @@ namespace app\models\multi;
 
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
+use app\models\base\SearchParamBase;
 use PDO;
 
-class GeneralSearch extends FlowBase{
+class GeneralSearch extends FlowBase {
 
     const DEFAULT_PAGE_SIZE = 20;
-    const UNLIMITED_RESULTS_PER_PAGE = 100000;
 
     const TYPE_USER = 'user';
     const TYPE_PROJECT = 'project';
@@ -75,20 +75,14 @@ class GeneralSearch extends FlowBase{
 
     /**
      * @param GeneralSearchParams $search
-     * @param int $page
-     * @param int $page_size
      * @return GeneralSearchResult[]
      */
-    public static function general_search(GeneralSearchParams $search,
-                                          int     $page = 1,
-                                          int     $page_size =  self::DEFAULT_PAGE_SIZE): array {
+    public static function general_search(GeneralSearchParams $search): array {
 
         $args = [];
         $where_array = [];
 
-        if ($page_size === self::UNLIMITED_RESULTS_PER_PAGE) {
-            $page = 1;
-        }
+
 
         if (count($search->guids)) {
             $in_question_array = [];
@@ -147,7 +141,8 @@ class GeneralSearch extends FlowBase{
             $where_conditions = implode(" AND ",$where_array);
         }
 
-        $start_place = ($page - 1) * $page_size;
+        $page_size = $search->getPageSize();
+        $start_place = ($search->getPage() - 1) * $page_size;
 
 
 
@@ -204,7 +199,8 @@ class GeneralSearch extends FlowBase{
 
                 $secondary_search->guids = array_unique($secondary_search->guids);
             }
-            $secondary_results = static::general_search($secondary_search,1,static::UNLIMITED_RESULTS_PER_PAGE);
+            $secondary_search->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
+            $secondary_results = static::general_search($secondary_search);
             $secondary_hash = [];
             foreach ($secondary_results as $secondary_result) {
                 $secondary_hash[$secondary_result->guid] = $secondary_result;

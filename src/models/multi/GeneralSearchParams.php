@@ -2,7 +2,9 @@
 
 namespace app\models\multi;
 
-class GeneralSearchParams   {
+use app\models\base\SearchParamBase;
+
+class GeneralSearchParams   extends SearchParamBase  {
 
 
     public ?string $words;
@@ -27,6 +29,7 @@ class GeneralSearchParams   {
 
 
     function __construct(){
+        parent::__construct();
         $this->words = null;
         $this->guids = [];
         $this->types  = [];

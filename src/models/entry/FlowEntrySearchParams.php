@@ -3,11 +3,11 @@
 namespace app\models\entry;
 
 use app\hexlet\JsonHelper;
+use app\models\base\SearchParamBase;
 
-class FlowEntrySearchParams {
+class FlowEntrySearchParams extends SearchParamBase {
 
     const DEFAULT_PAGE_SIZE = 30;
-    const UNLIMITED_RESULTS_PER_PAGE = 100000;
 
     public ?string $owning_project_guid;
     public ?string $owning_user_guid;
@@ -46,25 +46,12 @@ class FlowEntrySearchParams {
     public array $entry_ids = [];
 
 
-    protected int     $page = 1;
-    protected int     $page_size =  self::DEFAULT_PAGE_SIZE;
 
-    public function get_page() :int  {return $this->page;}
-    public function get_page_size() :int  {return $this->page_size;}
-
-    public function set_page(int $what) {
-        $this->page = intval($what);
-        if ($this->page < 1) {$this->page = 1;}
-    }
-
-    public function set_page_size( int $what) {
-        $this->page_size = intval($what);
-        if ($this->page_size < 1) { $this->page_size = 1;}
-    }
 
 
 
     function __construct($object=null){
+        parent::__construct();
         $this->owning_project_guid = null;
         $this->owning_user_guid = null;
         $this->full_text_term = null;
@@ -75,8 +62,7 @@ class FlowEntrySearchParams {
         $this->entry_ids = [];
         $this->flag_full_text_natural_languages = false;
         $this->flag_top_entries_only = false;
-        $this->page = 1;
-        $this->page_size = self::DEFAULT_PAGE_SIZE;
+
 
         if (empty($object)) {
             return;

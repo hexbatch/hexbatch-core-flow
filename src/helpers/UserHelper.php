@@ -30,7 +30,7 @@ class UserHelper extends BaseHelper {
      * @return FlowProject|null
      * @throws Exception
      */
-   public function get_user_home(?string $user_guid = null) : ?FlowProject {
+   public function get_user_home_project(?string $user_guid = null) : ?FlowProject {
 
         if (!$user_guid) {
             $user_guid = $this->user->flow_user_guid;
