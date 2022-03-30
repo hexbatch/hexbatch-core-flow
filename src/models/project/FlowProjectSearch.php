@@ -2,6 +2,7 @@
 namespace app\models\project;
 
 use app\models\base\FlowBase;
+use app\models\base\SearchParamBase;
 use Exception;
 use LogicException;
 use PDO;
@@ -33,19 +34,19 @@ class FlowProjectSearch extends FlowBase {
         $project_owner_clause = '';
         if ($params->getOwnerUserNameOrGuidOrid()) {
             switch ($params->getTypeOwner()) {
-                case FlowProjectSearchParams::ARG_IS_NAME : {
+                case SearchParamBase::ARG_IS_NAME : {
                     $project_owner_clause = " AND  u.flow_user_name = ? ";
                     break;
                 }
-                case FlowProjectSearchParams::ARG_IS_HEX : {
+                case SearchParamBase::ARG_IS_HEX : {
                     $project_owner_clause = " AND  u.flow_user_guid = UNHEX(?) ";
                     break;
                 }
-                case FlowProjectSearchParams::ARG_IS_EMAIL : {
+                case SearchParamBase::ARG_IS_EMAIL : {
                     $project_owner_clause = " AND  u.flow_user_email = ? ";
                     break;
                 }
-                case FlowProjectSearchParams::ARG_IS_INT : {
+                case SearchParamBase::ARG_IS_INT : {
                     $project_owner_clause = " AND  u.id = ? ";
                     break;
                 }
@@ -59,15 +60,15 @@ class FlowProjectSearch extends FlowBase {
         foreach ($params->getProjectTitleGuidOrIdList() as $project_title_guid_or_id) {
             $type_project = FlowProjectSearchParams::find_type_of_arg($project_title_guid_or_id);
             switch ($type_project) {
-                case FlowProjectSearchParams::ARG_IS_NAME : {
+                case SearchParamBase::ARG_IS_NAME : {
                     $or_where_conditions[] = " ( p.flow_project_title = ?  $project_owner_clause ) ";
                     break;
                 }
-                case FlowProjectSearchParams::ARG_IS_HEX : {
+                case SearchParamBase::ARG_IS_HEX : {
                     $or_where_conditions[] = " ( p.flow_project_guid = UNHEX(?) $project_owner_clause )";
                     break;
                 }
-                case FlowProjectSearchParams::ARG_IS_INT : {
+                case SearchParamBase::ARG_IS_INT : {
                     $or_where_conditions[] = " ( p.id = ? $project_owner_clause ) ";
                     break;
                 }
@@ -138,19 +139,19 @@ class FlowProjectSearch extends FlowBase {
                 throw new LogicException("Need a permssion user set when checking read,write,admin");
             }
             switch ($params->getTypePermissionUser()) {
-                case FlowProjectSearchParams::ARG_IS_NAME : {
+                case SearchParamBase::ARG_IS_NAME : {
                     $and_where_conditions[] = " ( (perm.$check_column $check_operation 0  $public_ok) AND perm_user.flow_user_name = ? )";
                     break;
                 }
-                case FlowProjectSearchParams::ARG_IS_HEX : {
+                case SearchParamBase::ARG_IS_HEX : {
                     $and_where_conditions[] = " ( (perm.$check_column $check_operation 0 $public_ok) AND perm_user.flow_user_guid = UNHEX(?) )";
                     break;
                 }
-                case FlowProjectSearchParams::ARG_IS_EMAIL : {
+                case SearchParamBase::ARG_IS_EMAIL : {
                     $and_where_conditions[] = " ( ( perm.$check_column $check_operation 0 $public_ok)  AND perm_user.flow_user_email = ? )";
                     break;
                 }
-                case FlowProjectSearchParams::ARG_IS_INT : {
+                case SearchParamBase::ARG_IS_INT : {
                     $and_where_conditions[] = " ( ( perm.$check_column $check_operation 0 $public_ok) AND perm.flow_user_id = ?) ";
                     break;
                 }

@@ -19,7 +19,7 @@ function get_tag_classes(tag) {
 
     for(let attribute_key in tag.standard_attributes) {
         switch (attribute_key) {
-            case 'link': {
+            case 'link': { //todo link should be standard attribute ?
                 if (attribute_key) {
                     per_attribute.push('fl-tag-link') ;
                 }
@@ -41,7 +41,7 @@ function get_tag_data(tag) {
 
     for(let attribute_key in tag.standard_attributes) {
         let attribute_value = tag.standard_attributes[attribute_key];
-        switch (attribute_key) {
+        switch (attribute_key) { //todo link should be standard attribute ?
             case 'link': {
                 if (attribute_key) {
                     per_attribute['tag_link_url'] =  `${attribute_value}`;

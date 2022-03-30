@@ -37,8 +37,6 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     protected ?string $points_to_flow_user_guid;
     protected ?string $points_to_flow_project_guid;
 
-    protected bool $is_standard_attribute;
-    protected ?string $standard_attribute_type;
     protected ?bool $is_inherited;
 
     protected ?string $points_to_title;
@@ -84,9 +82,6 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
      */
     public function setTagAttributeLong(?int $tag_attribute_long): void
     {
-        $this->tag_attribute_text = FlowTagStandardAttribute::format($this->getStandardAttributeType(),
-            $this->tag_attribute_text,$tag_attribute_long);
-
         $this->tag_attribute_long = $tag_attribute_long;
     }
 
@@ -95,8 +90,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
      */
     public function setTagAttributeText(?string $tag_attribute_text): void
     {
-        $this->tag_attribute_text = FlowTagStandardAttribute::format($this->getStandardAttributeType(),
-            $tag_attribute_text,$this->tag_attribute_long);
+        $this->tag_attribute_text = $tag_attribute_text;
     }
 
     /**
@@ -166,21 +160,6 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         return $this->flow_tag_attribute_id;
     }
 
-    /**
-     * @return bool
-     */
-    public function isStandardAttribute(): bool
-    {
-        return $this->is_standard_attribute;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getStandardAttributeType(): ?string
-    {
-        return $this->standard_attribute_type;
-    }
 
     /**
      * @return int|null
@@ -318,8 +297,6 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
 
 
     public function __construct($object=null){
-        $this->is_standard_attribute = false;
-        $this->standard_attribute_type = null;
         $this->flow_tag_attribute_id = null ;
         $this->flow_tag_id = null ;
         $this->points_to_entry_id = null ;
@@ -361,8 +338,6 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         if (empty($this->points_to_flow_project_guid)) { $this->points_to_flow_project_guid = null;}
         if (empty($this->points_to_flow_entry_guid)) { $this->points_to_flow_entry_guid = null;}
         if (empty($this->points_to_admin_guid)) { $this->points_to_admin_guid = null;}
-        $this->is_standard_attribute = FlowTagStandardAttribute::is_standard_attribute($this);
-        $this->standard_attribute_type = FlowTagStandardAttribute::get_standard_attribute_type($this);
 
         $this->setTagAttributeLong($this->getTagAttributeLong());
         $this->setTagAttributeText($this->getTagAttributeText());
@@ -550,8 +525,6 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                 "tag_attribute_text" => $this->getTagAttributeText(),
                 "created_at_ts" => $this->attribute_created_at_ts,
                 "updated_at_ts" => $this->attribute_updated_at_ts,
-                "is_standard_attribute" => $this->isStandardAttribute(),
-                "standard_attribute_type" => $this->standard_attribute_type,
                 "is_inherited" => $this->is_inherited,
                 "points_to_title" => $this->points_to_title,
                 "points_to_admin_guid" => $this->points_to_admin_guid,

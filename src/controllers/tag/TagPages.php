@@ -5,12 +5,14 @@ use app\controllers\base\BasePages;
 use app\helpers\ProjectHelper;
 use app\hexlet\FlowAntiCSRF;
 use app\hexlet\JsonHelper;
+use app\models\base\SearchParamBase;
 use app\models\multi\GeneralSearch;
 use app\models\project\FlowProjectUser;
 use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
 use app\models\tag\FlowTagAttribute;
 use app\models\tag\FlowTagCallData;
+use app\models\tag\FlowTagSearch;
 use app\models\tag\FlowTagSearchParams;
 use app\models\user\FlowUser;
 use Exception;
@@ -117,7 +119,7 @@ class TagPages extends BasePages
 
                 if (isset($args['search']['b_all_tags_in_project']) && $args['search']['b_all_tags_in_project']) {
                     $search_params->owning_project_guid = $project->flow_project_guid;
-                    $page_size = GeneralSearch::UNLIMITED_RESULTS_PER_PAGE;
+                    $page_size = SearchParamBase::UNLIMITED_RESULTS_PER_PAGE;
                 }
 
             }
@@ -131,7 +133,9 @@ class TagPages extends BasePages
                 }
             }
 
-            $matches = FlowTag::get_tags($search_params, $page,$page_size);
+            $search_params->setPage($page);
+            $search_params->setPageSize($page_size);
+            $matches = FlowTagSearch::get_tags($search_params);
             $routeParser = RouteContext::fromRequest($request)->getRouteParser();
             foreach ($matches as $mtag) {
                 foreach ($mtag->applied as $mapp) {
@@ -214,7 +218,6 @@ class TagPages extends BasePages
 
             $tag->save(true);
             $saved_tag = $tag->clone_refresh();
-            $saved_tag->update_flow_things_with_standard_attibutes();
 
             $call->project->do_tag_save();
             $data = ['success'=>true,'message'=>'ok','tag'=>$saved_tag,'token'=> $call->new_token];
@@ -269,7 +272,6 @@ class TagPages extends BasePages
             }
             $tag->save();
             $saved_tag = $tag->clone_refresh();
-            $saved_tag->update_flow_things_with_standard_attibutes();
 
             $routeParser = RouteContext::fromRequest($request)->getRouteParser();
             foreach ( $saved_tag->applied as $mapp) {

@@ -4,12 +4,13 @@ namespace app\models\project;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
+use app\models\base\SearchParamBase;
 use InvalidArgumentException;
 
-class FlowProjectSearchParams {
+class FlowProjectSearchParams extends SearchParamBase {
 
     const DEFAULT_PAGE_SIZE = 30;
-    const UNLIMITED_RESULTS_PER_PAGE = 100000;
+
 
     /**
      * @var string[] $project_title_guid_or_id_list
@@ -22,8 +23,6 @@ class FlowProjectSearchParams {
     protected ?string $flow_project_type;
     protected ?string $flow_project_special_flag;
 
-    protected int     $page = 1;
-    protected int     $page_size =  self::DEFAULT_PAGE_SIZE;
 
     protected ?bool $can_read = null;
     protected ?bool $can_write = null;
@@ -33,12 +32,12 @@ class FlowProjectSearchParams {
 
 
     function __construct(){
+        parent::__construct();
         $this->flow_project_special_flag = null;
         $this->flow_project_type = false;
         $this->owner_user_name_or_guid_or_id = null;
         $this->project_title_guid_or_id_list = [];
-        $this->page = 1;
-        $this->page_size = static::DEFAULT_PAGE_SIZE;
+
     }
 
     /**
@@ -104,34 +103,7 @@ class FlowProjectSearchParams {
         $this->owner_user_name_or_guid_or_id = strval($owner_user_name_or_guid_or_id);
     }
 
-    const ARG_IS_INT = 'arg-is-int';
-    const ARG_IS_HEX = 'arg-is-hex';
-    const ARG_IS_NAME = 'arg-is-string';
-    const ARG_IS_EMAIL = 'arg-is-email';
-    const ARG_IS_INVALID = 'arg-is-invalid';
 
-    public static function find_type_of_arg($what) : string {
-        if (is_string($what) && trim($what)) {
-            if (ctype_digit($what) && (intval($what) < (PHP_INT_MAX/2))) {
-                $n_thing = (int)$what;
-                if ($n_thing >= 1) { return static::ARG_IS_INT;}
-                else {return static::ARG_IS_INVALID;}
-            } else {
-                if (WillFunctions::is_valid_guid_format($what)) {
-                    return static::ARG_IS_HEX;
-                } else if (mb_strpos($what,'@') !== false) {
-                    return static::ARG_IS_EMAIL;
-                } else if(FlowBase::check_valid_title($what)){
-                    return static::ARG_IS_NAME;
-                } else {
-                    return static::ARG_IS_INVALID;
-                }
-            }
-        } elseif (is_int($what) && $what) {
-            return static::ARG_IS_INT;
-        }
-        return static::ARG_IS_INVALID;
-    }
 
     /**
      * @return false|string|null
@@ -167,18 +139,6 @@ class FlowProjectSearchParams {
 
 
 
-    public function getPage() :int  {return $this->page;}
-    public function getPageSize() :int  {return $this->page_size;}
-
-    public function setPage(int $what) {
-        $this->page = $what;
-        if ($this->page < 1) {$this->page = 1;}
-    }
-
-    public function setPageSize( int $what) {
-        $this->page_size = $what;
-        if ($this->page_size < 1) { $this->page_size = 1;}
-    }
 
     /**
      * @return bool|null

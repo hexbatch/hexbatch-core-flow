@@ -90,7 +90,6 @@ class FlowTagAttributes extends AbstractMigration
         }
 
         $this->execute("ALTER TABLE `flow_tag_attributes` DROP FOREIGN KEY `fk_flow_tag_attributes_has_tag_id`");
-        $this->execute("ALTER TABLE `flow_tag_attributes` DROP FOREIGN KEY `fk_flow_tag_attributes_has_applied_tag_id`");
         $this->execute("ALTER TABLE `flow_tag_attributes` DROP FOREIGN KEY `fk_flow_tag_attributes_has_pointee_flow_user_id`");
         $this->execute("ALTER TABLE `flow_tag_attributes` DROP FOREIGN KEY `fk_flow_tag_attributes_has_pointee_project_id`");
         $this->execute("ALTER TABLE `flow_tag_attributes` DROP FOREIGN KEY `fk_flow_tag_attributes_has_pointee_entry_id`");

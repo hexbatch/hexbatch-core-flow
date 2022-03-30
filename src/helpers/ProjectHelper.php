@@ -164,7 +164,7 @@ class ProjectHelper extends BaseHelper {
             //copy entries
             $entry_search_params = new FlowEntrySearchParams();
             $entry_search_params->owning_project_guid = $origonal_project->flow_project_guid;
-            $entry_search_params->set_page_size(FlowEntrySearchParams::UNLIMITED_RESULTS_PER_PAGE);
+            $entry_search_params->setPageSize(FlowEntrySearchParams::UNLIMITED_RESULTS_PER_PAGE);
             $entries = FlowEntrySearch::search($entry_search_params);
             foreach ($entries as $entry) {
                 $new_entry = $entry->clone_with_missing_data($origonal_project,$new_project);

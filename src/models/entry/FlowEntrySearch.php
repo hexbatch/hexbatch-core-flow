@@ -52,8 +52,8 @@ class FlowEntrySearch extends FlowBase {
        protected ?string $child_id_list_as_string;
         */
 
-       $start_place = ($params->get_page() - 1) * $params->get_page_size();
-       $page_size = $params->get_page_size();
+       $start_place = ($params->getPage() - 1) * $params->getPageSize();
+       $page_size = $params->getPageSize();
 
        $db = static::get_connection();
        $args = [];

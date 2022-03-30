@@ -132,7 +132,7 @@ class EntryBase extends BasePages
 
         if ($ret->search_used) {
             if ($page) {
-                $ret->search_used->set_page($page) ;
+                $ret->search_used->setPage($page) ;
             }
             $ret->entry_array = FlowEntrySearch::search($ret->search_used);
         }
