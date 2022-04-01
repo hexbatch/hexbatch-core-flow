@@ -6,9 +6,9 @@ namespace app\models\tag;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
+use app\models\standard\FlowTagStandardAttribute;
+use app\models\standard\IFlowTagStandardAttribute;
 use app\models\tag\brief\BriefFlowTag;
-use app\models\tag\standard\FlowTagStandardAttribute;
-use app\models\tag\standard\IFlowTagStandardAttribute;
 use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
@@ -64,7 +64,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
     public array $inherited_attributes = [];
 
     /**
-     * @var IFlowTagStandardAttribute[] $standard_attributes
+     * @var \app\models\standard\IFlowTagStandardAttribute[] $standard_attributes
      */
     protected array $standard_attributes = [];
 
@@ -591,9 +591,9 @@ class FlowTag extends FlowBase implements JsonSerializable {
         $resolved_attributes = FlowTagStandardAttribute::read_standard_attributes([$this]);
         $count = 0;
         foreach ($resolved_attributes[$this->flow_tag_guid] as $standard_attribute) {
-            if (property_exists($this,$standard_attribute->get_standard_name())) {
-                $key = $standard_attribute->get_standard_name();
-                $this->$key = $standard_attribute->get_standard_value();
+            if (property_exists($this,$standard_attribute->getStandardName())) {
+                $key = $standard_attribute->getStandardName();
+                $this->$key = $standard_attribute->getStandardValue();
                 $count++;
             }
         }

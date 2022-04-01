@@ -1,9 +1,8 @@
 <?php
 
-namespace app\models\tag\standard;
+namespace app\models\standard;
 
 use app\models\tag\FlowTag;
-use app\models\tag\FlowTagAttribute;
 
 /**
  * standard attributes are json formed from tag attributes of certain names that may or may not be inherited
@@ -14,17 +13,18 @@ use app\models\tag\FlowTagAttribute;
  * A standard attribute may require more than one key to be present and non empty before being labeled and saved
  *  when saving to the standard attributes table, unchanged standards in children are ignored
  *
- * each key in a standard attribute can optionally be  volatile, and/or required
+ * each key in a standard attribute can optionally be  volatile, and/or required and/or no-serialization
  *  volatile keys apply to children making changes to these keys, changes here are not counted when deciding to save to table
- *  required keys need to be existing and non empty for the standard attribute to be defined for the tag
+ *
+ * required keys need to be existing and non empty for the standard attribute to be defined for the tag
  *  keys that have neither of these can be missing if a standard attribute has more than one key,
  *          and if changed in child counts to being different and saved to table
  *
- * a constant key is one added by the code,
+ * no serialization keys are not saved to json
+ *
+ * a default key is one added by the code if the key or the key value is missing,
  *   once its added it will not change even if the code adds a different value for this in children or other tags
- *      The constant keys are only added making a new standard attribute or saving a standard attribute that is missing it
- *  Thus, constant keys are not provided by the attributes, even if they have the same name
- *  constant keys can optionally be volatile and ignored
+ *  default keys can optionally be volatile and required
  *
  * defaults for missing key values can be provided by the code, but it does not change the behavior or overwriting of the keys later
  *  if an attribute is saved with the key name, or has json with the key name, then that default is tossed out and the new one used
@@ -42,10 +42,15 @@ Interface IFlowTagStandardAttribute {
 
     # ------------- DEFINE key modifiers
     const OPTION_VOLATILE = 'volatile';
-    const OPTION_REQUIRED = 'required';
-    const OPTION_CONSTANT = 'constant';
+    const OPTION_REQUIRED = 'required'; //if required has a default, then put that first in the key attributes array
 
-    const KEY_DEFAULT = 'default';
+    const OPTION_DEFAULT = 'default';
+
+    const OPTION_NO_SERIALIZATION = 'no-serialization';
+
+    # ------------- DEFINE copy types
+
+    const COPY_TYPE_DB_UPDATE_VALUE = 'db_update_value';
 
 
 
@@ -63,37 +68,46 @@ Interface IFlowTagStandardAttribute {
 
     const STD_ATTR_TYPE_GIT = [
         'keys' => [
-            self::GIT_KEY_BRANCH => [self::OPTION_REQUIRED, self::KEY_DEFAULT => 'master'],
-            self::GIT_KEY_REPO_URL => [self::OPTION_REQUIRED],
-            self::GIT_KEY_SSH_KEY => [],
+            self::GIT_KEY_BRANCH => [
+                self::OPTION_DEFAULT => 'master',
+                self::OPTION_REQUIRED => true,
+
+            ],
+            self::GIT_KEY_REPO_URL => [
+                self::OPTION_REQUIRED => true
+            ],
+            self::GIT_KEY_SSH_KEY => [
+                self::OPTION_NO_SERIALIZATION => true
+            ],
             self::GIT_SITE => [],
         ],
         'name' => self::STD_ATTR_NAME_GIT,
-
-        'copy' => ['flow_things','css_json']
+        'converter' => ['app\models\standard\converters\Git','convert'],
+        'copy' => [
+            'type'=> self::COPY_TYPE_DB_UPDATE_VALUE,
+            'table'=>'flow_things',
+            'id_column' => 'thing_guid',
+            'id_value' => 'tag_guid',
+            'target_column' => 'css_json'
+        ]
     ];
 
 
     # ------------- CSS
 
     const STD_ATTR_NAME_CSS = 'css';
+
     const CSS_KEY_COLOR = 'color';
     const CSS_KEY_BACKGROUND_COLOR = 'background-color';
 
-    /**
-     * @used in template
-     */
-    const CSS_KEY_NAME_LIST = [
-        self::CSS_KEY_BACKGROUND_COLOR  ,
-        self::CSS_KEY_COLOR  ,
-    ];
 
     const STD_ATTR_TYPE_CSS = [
         'keys' => [
             self::CSS_KEY_BACKGROUND_COLOR => [] ,
             self::CSS_KEY_COLOR => [] ,
         ],
-        'name' => self::STD_ATTR_NAME_CSS
+        'name' => self::STD_ATTR_NAME_CSS,
+        'converter' => ['app\models\standard\converters\Css','convert']
     ];
 
     # ------------ META
@@ -106,38 +120,43 @@ Interface IFlowTagStandardAttribute {
 
     const STD_ATTR_TYPE_META = [
         'keys' => [
-            self::META_KEY_VERSION => [self::OPTION_REQUIRED, self::KEY_DEFAULT => ['app\helpers\Utilities','get_version_float']] ,
-            self::META_KEY_DATETIME => [
-                self::OPTION_CONSTANT=>['app\helpers\Utilities','generate_iso_time_stamp'],
-                self::OPTION_VOLATILE
+            self::META_KEY_VERSION => [
+                self::OPTION_DEFAULT => ['app\helpers\Utilities','get_version_float'],
+                self::OPTION_REQUIRED => true,
             ] ,
-            self::META_KEY_AUTHOR => [] ,
+            self::META_KEY_DATETIME => [
+                self::OPTION_DEFAULT=>['app\helpers\Utilities','generate_iso_time_stamp'],
+            ] ,
+            self::META_KEY_AUTHOR => [
+                self::OPTION_VOLATILE => true
+            ] ,
         ],
-        'name' => self::STD_ATTR_NAME_META
-    ];
-
-    const STANDARD_ATTRIBUTE_NAMES = [
-        self::STD_ATTR_NAME_META,
-        self::STD_ATTR_NAME_CSS,
-        self::STD_ATTR_NAME_GIT
-
-    ];
-
-    const STANDARD_ATTRIBUTES = [ //todo references to this needs work
-        self::STD_ATTR_TYPE_META ,
-        self::STD_ATTR_TYPE_CSS ,
-        self::STD_ATTR_TYPE_GIT
+        'name' => self::STD_ATTR_NAME_META,
+        'converter' => ['app\models\standard\converters\Meta','convert']
     ];
 
 
 
-    public function get_standard_value() : object ;
-    public function get_standard_name() : string;
-    public function get_last_updated_ts() : int;
-    public function get_tag_guid() : string ;
+    const STANDARD_ATTRIBUTES = [
+        self::STD_ATTR_NAME_META => self::STD_ATTR_TYPE_META ,
+        self::STD_ATTR_NAME_CSS => self::STD_ATTR_TYPE_CSS ,
+        self::STD_ATTR_NAME_GIT => self::STD_ATTR_TYPE_GIT
+    ];
 
-    public function get_standard_value_to_array() : array;
 
+
+    public function getStandardValue() : object ;
+    public function getStandardName() : string;
+    public function getLastUpdatedTs() : int;
+    public function getTagGuid() : string ;
+    public function getTagId() : int ;
+    public function getStandardGuid() : string;
+    public function getStandardId() : int ;
+
+    public function getStandardValueToArray() : array;
+
+    public static function getStandardAttributeKeys(string $name) : array;
+    public static function getStandardAttributeNames() : array;
 
     /**
      * gets hash with guid of tag as key, and array of standard attributes as value
@@ -150,9 +169,9 @@ Interface IFlowTagStandardAttribute {
     /**
      * Writes standard attributes to db
      * @param FlowTag[] $flow_tags
-     * @return int returns number of rows written or updated
+     * @return array returns the standard attributes written
      */
-    public  static function write_standard_attributes(array $flow_tags) : int;
+    public  static function write_standard_attributes(array $flow_tags) : array;
 
 
 }

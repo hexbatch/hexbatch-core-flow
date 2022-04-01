@@ -1,6 +1,6 @@
 <?php
 
-namespace app\models\tag\standard;
+namespace app\models\standard;
 
 class StandardAttributeSearch  {
 

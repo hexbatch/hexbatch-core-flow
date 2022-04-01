@@ -15,6 +15,8 @@ class SearchParamBase {
     const ARG_IS_EMAIL = 'arg-is-email';
     const ARG_IS_INVALID = 'arg-is-invalid';
 
+
+
     public static function find_type_of_arg($what) : string {
         if (is_string($what) && trim($what)) {
             if (ctype_digit($what) && (intval($what) < (PHP_INT_MAX/2))) {
@@ -37,4 +39,34 @@ class SearchParamBase {
         }
         return static::ARG_IS_INVALID;
     }
+
+
+    protected int     $page = 1;
+    protected int     $page_size =  self::DEFAULT_PAGE_SIZE;
+
+    public function getPage() :int  {
+        return $this->page;
+    }
+    public function getPageSize() :int  {return $this->page_size;}
+
+    public function setPage(int $what) {
+        $this->page = intval($what);
+        if ($this->page < 1) {$this->page = 1;}
+    }
+
+    public function setPageSize(int $what) {
+        $this->page_size = intval($what);
+        if ($this->page_size < 1) { $this->page_size = 1;}
+        if ($this->page_size === SearchParamBase::UNLIMITED_RESULTS_PER_PAGE) {
+            $this->page = 1;
+        }
+    }
+
+    public function __construct()
+    {
+        $this->page = 1;
+        $this->page_size = static::DEFAULT_PAGE_SIZE;
+    }
+
+
 }

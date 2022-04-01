@@ -4,10 +4,10 @@ namespace app\helpers;
 
 use app\hexlet\DBSelector;
 use app\hexlet\MYDB;
-use app\models\tag\FlowTag;
+use app\models\base\SearchParamBase;
+use app\models\standard\StandardAttributeWrite;
 use app\models\tag\FlowTagSearch;
 use app\models\tag\FlowTagSearchParams;
-use app\models\tag\standard\StandardAttributeWrite;
 use Exception;
 
 class SQLHelper {
@@ -79,7 +79,9 @@ class SQLHelper {
      */
     public static function refresh_flow_things() : int {
         $search_params = new FlowTagSearchParams();
-        $all_tags = FlowTagSearch::get_tags($search_params, 1,1000000);
+        $search_params->setPage(1);
+        $search_params->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
+        $all_tags = FlowTagSearch::get_tags($search_params);
         $writer = new StandardAttributeWrite($all_tags);
         $ret = $writer->write();
         return $ret;

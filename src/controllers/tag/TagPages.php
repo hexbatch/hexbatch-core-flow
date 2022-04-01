@@ -133,7 +133,9 @@ class TagPages extends BasePages
                 }
             }
 
-            $matches = FlowTagSearch::get_tags($search_params, $page,$page_size);
+            $search_params->setPage($page);
+            $search_params->setPageSize($page_size);
+            $matches = FlowTagSearch::get_tags($search_params);
             $routeParser = RouteContext::fromRequest($request)->getRouteParser();
             foreach ($matches as $mtag) {
                 foreach ($mtag->applied as $mapp) {

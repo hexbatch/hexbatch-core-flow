@@ -181,7 +181,9 @@ class BriefDiffFromYaml {
 
         $search = new GeneralSearchParams();
         $search->guids = $guids_to_get;
-        $targets = GeneralSearch::general_search($search,1,SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
+        $search->setPage(1);
+        $search->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
+        $targets = GeneralSearch::general_search($search);
 
         /**
          * @var array<string,GeneralSearchResult> $target_map

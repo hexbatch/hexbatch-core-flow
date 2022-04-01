@@ -7,7 +7,7 @@ use app\models\base\FlowBase;
 use app\models\base\SearchParamBase;
 use app\models\multi\GeneralSearch;
 use app\models\multi\GeneralSearchParams;
-use app\models\tag\standard\FlowTagStandardAttribute;
+use app\models\standard\FlowTagStandardAttribute;
 use BlueM\Tree;
 use Exception;
 use InvalidArgumentException;
@@ -16,14 +16,11 @@ use PDO;
 
 class FlowTagSearch  extends FlowBase{
 
-    const DEFAULT_TAG_PAGE_SIZE = 25;
     /**
      * @return FlowTag[]
      * @throws
      */
-    public static function get_tags(FlowTagSearchParams $search,
-                                    int     $page = 1,
-                                    int     $page_size =  self::DEFAULT_TAG_PAGE_SIZE): array
+    public static function get_tags(FlowTagSearchParams $search): array
     {
 
         $args = [];
@@ -72,7 +69,9 @@ class FlowTagSearch  extends FlowBase{
         if (count($search->only_applied_to_guids)) {
             $general_search = new GeneralSearchParams();
             $general_search->guids = $search->only_applied_to_guids;
-            $gmatches = GeneralSearch::general_search($general_search,1,SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
+            $search->setPage(1);
+            $search->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
+            $gmatches = GeneralSearch::general_search($general_search);
             $applied_project_ids=[];
             $applied_user_ids = [];
             $applied_entry_ids = [];
@@ -105,7 +104,9 @@ class FlowTagSearch  extends FlowBase{
         if (count($search->not_applied_to_guids)) {
             $general_search = new GeneralSearchParams();
             $general_search->guids = $search->not_applied_to_guids;
-            $gmatches = GeneralSearch::general_search($general_search,1,SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
+            $search->setPage(1);
+            $search->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
+            $gmatches = GeneralSearch::general_search($general_search);
             $applied_project_ids=[];
             $applied_user_ids = [];
             $applied_entry_ids = [];
@@ -132,7 +133,8 @@ class FlowTagSearch  extends FlowBase{
 
         }
 
-        $start_place = ($page - 1) * $page_size;
+        $page_size = $search->getPageSize();
+        $start_place = ($search->getPage() - 1) * $page_size;
 
 
         $db = static::get_connection();

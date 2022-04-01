@@ -38,7 +38,7 @@ class EntryPages extends EntryBase
             $options->note = "list_entries";
             $options->set_option(FlowEntryCallData::OPTION_LIMIT_SEARCH_TO_PROJECT);
             $search_params = new FlowEntrySearchParams();
-            $search_params->set_page($page??1);
+            $search_params->setPage($page??1);
             $call = $this->validate_call($options,$request,null,$user_name,$project_name,
                 null,FlowProjectUser::PERMISSION_COLUMN_READ,$search_params,$page);
 
@@ -47,8 +47,8 @@ class EntryPages extends EntryBase
                     'success'=>true,
                     'message'=>'ok',
                     'data'=>$call->entry_array,
-                    'page' => $call->search_used->get_page(),
-                    'page_size' => $call->search_used->get_page_size(),
+                    'page' => $call->search_used->getPage(),
+                    'page_size' => $call->search_used->getPageSize(),
                     'token'=> $call->new_token
                 ];
                 $payload = JsonHelper::toString($data);
@@ -62,8 +62,8 @@ class EntryPages extends EntryBase
                     'page_template_path' => 'entry/list_entries.twig',
                     'page_title' => "Entries for Project $project_name",
                     'page_description' => 'Entry List',
-                    'page_number' => $call->search_used->get_page(),
-                    'page_size' => $call->search_used->get_page_size(),
+                    'page_number' => $call->search_used->getPage(),
+                    'page_size' => $call->search_used->getPageSize(),
                     'project' => $call->project,
                     'entries' => $call->entry_array,
                 ]);

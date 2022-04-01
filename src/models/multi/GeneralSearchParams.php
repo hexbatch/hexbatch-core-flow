@@ -29,6 +29,7 @@ class GeneralSearchParams   extends SearchParamBase  {
 
 
     function __construct(){
+        parent::__construct();
         $this->words = null;
         $this->guids = [];
         $this->types  = [];

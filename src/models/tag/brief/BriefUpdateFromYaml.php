@@ -106,7 +106,10 @@ class BriefUpdateFromYaml extends FlowBase {
         if (count($guids_needed)) {
             $search_params = new GeneralSearchParams();
             $search_params->guids = array_keys($guids_needed);
-            $things = GeneralSearch::general_search($search_params,1,SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
+
+            $search_params->setPage(1);
+            $search_params->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
+            $things = GeneralSearch::general_search($search_params);
 
             /**
              * @type array<string,int> $guid_map_to_ids

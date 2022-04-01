@@ -23,8 +23,6 @@ class FlowProjectSearchParams extends SearchParamBase {
     protected ?string $flow_project_type;
     protected ?string $flow_project_special_flag;
 
-    protected int     $page = 1;
-    protected int     $page_size =  self::DEFAULT_PAGE_SIZE;
 
     protected ?bool $can_read = null;
     protected ?bool $can_write = null;
@@ -34,12 +32,12 @@ class FlowProjectSearchParams extends SearchParamBase {
 
 
     function __construct(){
+        parent::__construct();
         $this->flow_project_special_flag = null;
         $this->flow_project_type = false;
         $this->owner_user_name_or_guid_or_id = null;
         $this->project_title_guid_or_id_list = [];
-        $this->page = 1;
-        $this->page_size = static::DEFAULT_PAGE_SIZE;
+
     }
 
     /**
@@ -141,18 +139,6 @@ class FlowProjectSearchParams extends SearchParamBase {
 
 
 
-    public function getPage() :int  {return $this->page;}
-    public function getPageSize() :int  {return $this->page_size;}
-
-    public function setPage(int $what) {
-        $this->page = $what;
-        if ($this->page < 1) {$this->page = 1;}
-    }
-
-    public function setPageSize( int $what) {
-        $this->page_size = $what;
-        if ($this->page_size < 1) { $this->page_size = 1;}
-    }
 
     /**
      * @return bool|null

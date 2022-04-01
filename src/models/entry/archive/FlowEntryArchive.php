@@ -124,7 +124,7 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
         $entries_in_files_flat_array = FlowEntry::load($project); //sorted by parent, with parent first
         $search = new FlowEntrySearchParams();
         $search->owning_project_guid = $project->flow_project_guid;
-        $search->set_page_size(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
+        $search->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
         $entries_in_db_flat_array = FlowEntrySearch::search($search);
 
 
@@ -185,7 +185,9 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
         if (count($guids_needed)) {
             $search_params = new GeneralSearchParams();
             $search_params->guids = array_keys($guids_needed);
-            $things = GeneralSearch::general_search($search_params, 1, SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
+            $search->setPage(1);
+            $search->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
+            $things = GeneralSearch::general_search($search_params );
 
             /**
              * @type array<string,int> $guid_map_to_ids

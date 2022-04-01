@@ -137,7 +137,10 @@ class FlowProject extends FlowBase {
         $search_params = new FlowTagSearchParams();
         $search_params->flag_get_applied = $b_get_applied;
         $search_params->owning_project_guid = $this->flow_project_guid;
-        $unsorted_array = FlowTagSearch::get_tags($search_params,1,SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
+
+        $search_params->setPage(1);
+        $search_params->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
+        $unsorted_array = FlowTagSearch::get_tags($search_params);
 
         $this->owned_tags = FlowTagSearch::sort_tag_array_by_parent($unsorted_array);
 
@@ -168,7 +171,10 @@ class FlowProject extends FlowBase {
         $search_params->flag_get_applied = true;
         $search_params->owning_project_guid = $this->flow_project_guid;
         $search_params->only_applied_to_guids[] = $this->flow_project_guid;
-        $this->tags_applied_to_this = FlowTagSearch::get_tags($search_params,1,SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
+
+        $search_params->setPage(1);
+        $search_params->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
+        $this->tags_applied_to_this = FlowTagSearch::get_tags($search_params);
         return $this->tags_applied_to_this;
     }
 

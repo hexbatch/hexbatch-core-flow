@@ -221,8 +221,8 @@ class HomePages extends BasePages
         if (isset($args['b_no_secondary']) && JsonHelper::var_to_boolean($args['b_no_secondary'])) {
             $search->b_get_secondary = false;
         }
-
-        $matches = GeneralSearch::general_search($search,$page);
+        $search->setPage($page);
+        $matches = GeneralSearch::general_search($search);
         $b_more = true;
         if (count($matches) < GeneralSearch::DEFAULT_PAGE_SIZE) {
             $b_more = false;

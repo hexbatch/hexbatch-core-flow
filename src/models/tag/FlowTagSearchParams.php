@@ -29,6 +29,7 @@ class FlowTagSearchParams  extends SearchParamBase {
     public array $not_applied_to_guids = [];
 
     function __construct(){
+        parent::__construct();
         $this->owning_project_guid = null;
         $this->tag_name_term = null;
         $this->tag_guids = [];
