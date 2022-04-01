@@ -4,6 +4,7 @@ namespace app\models\standard;
 
 use app\hexlet\JsonHelper;
 use app\models\base\FlowBase;
+use app\models\standard\converters\BaseConverter;
 use app\models\tag\FlowTag;
 use JsonSerializable;
 use LogicException;
@@ -50,8 +51,17 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
     }
 
     protected function call_converter() : object {
-        $callable = IFlowTagStandardAttribute::STANDARD_ATTRIBUTES[$this->standard_attribute_name]['converter'];
-        return call_user_func($callable,$this->raw_array);
+        $callable = IFlowTagStandardAttribute::STANDARD_ATTRIBUTES[$this->standard_attribute_name]['converter']??[];
+        if (empty($callable) || count($callable) !== 2) {
+            throw new LogicException(
+                "Converter for standard does not have good form or is missing: ". $this->standard_attribute_name);
+        }
+        $converter_class = $callable[0];
+        /**
+         * @var BaseConverter $converter
+         */
+        $converter = new $converter_class($this->raw_array);
+        return $converter->convert();
     }
 
     protected function maybe_copy() : void {
@@ -62,7 +72,7 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
         }
         switch ($copy_args_array['type']) {
             case IFlowTagStandardAttribute::COPY_TYPE_DB_UPDATE_VALUE : {
-                $expected_keys = ['table','id_column','id_value','target_column'];
+                $expected_keys = ['table','id_column','id_value','target_column','target_cast'];
                 foreach ($expected_keys as $need_key) {
                     if (!isset($copy_args_array[$need_key])) {
                         throw new LogicException(
@@ -75,6 +85,7 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
                 $table = $copy_args_array['table'];
                 $id_column = $copy_args_array['id_column'];
                 $id_value_begin = $copy_args_array['id_value'] ;
+                $target_cast = $copy_args_array['target_cast'] ;
                 if (property_exists($this,$id_value_begin)) {
                     $id_value = $this->$id_value_begin;
                 } else {
@@ -83,7 +94,7 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
                 $target_column = $copy_args_array['target_column'] ;
                 $json = JsonHelper::toString($this->standard_attribute_value);
                 $sql = /** @lang text */
-                    "UPDATE $table SET $target_column = ? WHERE $id_column = ?";
+                    "UPDATE $table SET $target_column =  CAST(? AS $target_cast) WHERE $id_column = ?";
                 $args = [$json,$id_value];
                 $db = static::get_connection();
                 $db->safeQuery($sql,$args,PDO::FETCH_BOTH,true);

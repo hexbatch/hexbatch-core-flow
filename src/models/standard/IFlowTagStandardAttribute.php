@@ -22,6 +22,9 @@ use app\models\tag\FlowTag;
  *
  * no serialization keys are not saved to json
  *
+ * no enumeration keys are not used on the front end
+ *      (for example the css key for the css standard attribute, only colors are shown in value)
+ *
  * a default key is one added by the code if the key or the key value is missing,
  *   once its added it will not change even if the code adds a different value for this in children or other tags
  *  default keys can optionally be volatile and required
@@ -47,6 +50,7 @@ Interface IFlowTagStandardAttribute {
     const OPTION_DEFAULT = 'default';
 
     const OPTION_NO_SERIALIZATION = 'no-serialization';
+    const OPTION_NO_ENUMERATION = 'no-enumeration';
 
     # ------------- DEFINE copy types
 
@@ -82,13 +86,14 @@ Interface IFlowTagStandardAttribute {
             self::GIT_SITE => [],
         ],
         'name' => self::STD_ATTR_NAME_GIT,
-        'converter' => ['app\models\standard\converters\Git','convert'],
+        'converter' => ['app\models\standard\converters\GitConverter','convert'],
         'copy' => [
             'type'=> self::COPY_TYPE_DB_UPDATE_VALUE,
             'table'=>'flow_things',
             'id_column' => 'thing_guid',
             'id_value' => 'tag_guid',
-            'target_column' => 'css_json'
+            'target_column' => 'css_json',
+            'target_cast' => 'JSON'
         ]
     ];
 
@@ -99,15 +104,17 @@ Interface IFlowTagStandardAttribute {
 
     const CSS_KEY_COLOR = 'color';
     const CSS_KEY_BACKGROUND_COLOR = 'background-color';
+    const CSS_KEY_CSS_OVERALL = 'css';
 
 
     const STD_ATTR_TYPE_CSS = [
         'keys' => [
             self::CSS_KEY_BACKGROUND_COLOR => [] ,
             self::CSS_KEY_COLOR => [] ,
+            self::CSS_KEY_CSS_OVERALL => [self::OPTION_NO_ENUMERATION] ,
         ],
         'name' => self::STD_ATTR_NAME_CSS,
-        'converter' => ['app\models\standard\converters\Css','convert']
+        'converter' => ['app\models\standard\converters\CssConverter','convert']
     ];
 
     # ------------ META
@@ -132,7 +139,7 @@ Interface IFlowTagStandardAttribute {
             ] ,
         ],
         'name' => self::STD_ATTR_NAME_META,
-        'converter' => ['app\models\standard\converters\Meta','convert']
+        'converter' => ['app\models\standard\converters\MetaConverter','convert']
     ];
 
 
@@ -155,7 +162,7 @@ Interface IFlowTagStandardAttribute {
 
     public function getStandardValueToArray() : array;
 
-    public static function getStandardAttributeKeys(string $name) : array;
+    public static function getStandardAttributeKeys(string $name, bool $b_ignore_non_enumerated = true) : array;
     public static function getStandardAttributeNames() : array;
 
     /**

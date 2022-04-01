@@ -2,6 +2,7 @@
 
 namespace app\helpers;
 
+use app\hexlet\JsonHelper;
 use Carbon\Carbon;
 use DI\DependencyException;
 use DI\NotFoundException;
@@ -64,5 +65,11 @@ class Utilities extends BaseHelper {
         $tz = $me->get_program_timezone();
         $now = Carbon::now($tz);
         return $now->toIso8601String();
+    }
+
+    public static function convert_to_object(?array $what) : ?object {
+        if (is_null($what)) { return null;}
+        $json = JsonHelper::toString($what);
+        return JsonHelper::fromString($json,true,false);
     }
 }
