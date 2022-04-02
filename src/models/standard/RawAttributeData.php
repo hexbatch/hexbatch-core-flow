@@ -16,6 +16,9 @@ class RawAttributeData implements \JsonSerializable {
     protected ?string $parent_attribute_guid;
     protected ?int $parent_attribute_id;
 
+    protected ?string $parent_tag_guid;
+    protected ?int $parent_tag_id;
+
 
     public function __construct($object=null) {
         $this->text_val = null;
@@ -27,6 +30,8 @@ class RawAttributeData implements \JsonSerializable {
         $this->tag_id = null;
         $this->parent_attribute_id = null;
         $this->attribute_id = null;
+        $this->parent_tag_id = null;
+        $this->parent_tag_guid = null;
 
 
 
@@ -46,6 +51,8 @@ class RawAttributeData implements \JsonSerializable {
         return [
             'tag_id'=> $this->tag_id ,
             'tag_guid'=> $this->tag_guid ,
+            'parent_tag_id'=> $this->parent_tag_id ,
+            'parent_tag_guid'=> $this->parent_tag_guid ,
             'attribute_guid'=> $this->attribute_guid ,
             'parent_attribute_guid'=> $this->parent_attribute_guid ,
             'text_val'=> $this->text_val ,
@@ -53,6 +60,7 @@ class RawAttributeData implements \JsonSerializable {
             'attribute_name'=> $this->attribute_name ,
             'parent_attribute_id'=> $this->parent_attribute_id ,
             'attribute_id'=> $this->attribute_name ,
+
 
         ];
     }
@@ -77,6 +85,14 @@ class RawAttributeData implements \JsonSerializable {
             throw new RuntimeException("Tag ID is not set");
         }
         return $this->tag_id;
+    }
+
+    public function getParentTagGuid() : ?string {
+        return $this->parent_tag_guid;
+    }
+
+    public function getParentTagID() : ?int {
+        return $this->parent_tag_id;
     }
 
     public function getParentAttributeGuid() : ?string {
@@ -111,8 +127,17 @@ class RawAttributeData implements \JsonSerializable {
         $this->long_val = $long_val;
     }
 
-    public function get_attribute_name() : ?string {
+    public function getAttributeName() : ?string {
         return $this->text_val;
+    }
+
+
+    public function setParentAttributeGuid(?string $what)  {
+        $this->parent_attribute_guid = $what;
+    }
+
+    public function setParentAttributeID(?int $what)   {
+        $this->parent_attribute_id = $what;
     }
 
 

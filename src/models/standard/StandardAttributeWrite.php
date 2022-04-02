@@ -144,8 +144,8 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
                 $attribute_map_by_tag[$raw_attribute->getTagGuid()] = [];
             }
             $attribute_map_by_tag[$raw_attribute->getTagGuid()][] = [];
-            if (!$attribute_map_by_tag[$raw_attribute->getTagGuid()][$raw_attribute->get_attribute_name()]??null) {
-                $attribute_map_by_tag[$raw_attribute->getTagGuid()][$raw_attribute->get_attribute_name()][] = $raw_attribute;
+            if (!$attribute_map_by_tag[$raw_attribute->getTagGuid()][$raw_attribute->getAttributeName()]??null) {
+                $attribute_map_by_tag[$raw_attribute->getTagGuid()][$raw_attribute->getAttributeName()][] = $raw_attribute;
             }
         }
 

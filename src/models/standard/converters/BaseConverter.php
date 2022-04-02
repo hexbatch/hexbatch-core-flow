@@ -22,8 +22,8 @@ abstract class BaseConverter implements IAttributeConverter {
     {
         $map = [];
         foreach ($raw_data as $raw) {
-            if (!isset($map[$raw->get_attribute_name()])) { $map[$raw->get_attribute_name()] = [];}
-            $map[$raw->get_attribute_name()][] = $raw;
+            if (!isset($map[$raw->getAttributeName()])) { $map[$raw->getAttributeName()] = [];}
+            $map[$raw->getAttributeName()][] = $raw;
         }
         $this->ordered_data = [];
         foreach ($map as $attribute_name => $row_array) {
