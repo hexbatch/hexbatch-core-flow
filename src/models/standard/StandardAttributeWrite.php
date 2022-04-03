@@ -114,10 +114,10 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
      */
     public function write() : int  {
 
-        $sql = "INSERT INTO flow_tag_standard_attributes (flow_tag_id,tag_attribute_name, tag_attribute_json)
+        $sql = "INSERT INTO flow_standard_attributes (flow_tag_id,standard_name, standard_json)
                 VALUES(?,?,?)
                 ON DUPLICATE KEY UPDATE 
-                   tag_attribute_json = ? ";
+                   standard_json = ? ";
         $db = static::get_connection();
         $json = JsonHelper::toString($this->standard_attribute_value);
         $args = [$this->tag_id,$this->standard_attribute_name,$json,$json];
@@ -181,11 +181,11 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
             }
             if (count($in_question_array)) {
                 $comma_delimited_question = implode(",",$in_question_array);
-                $where_not = "a.tag_id = ? AND a.tag_attribute_name not in ($comma_delimited_question) ";
+                $where_not = "a.tag_id = ? AND a.standard_name not in ($comma_delimited_question) ";
             } else {
                 continue;
             }
-            $sql = "DELETE FROM flow_tag_standard_attributes WHERE 1 AND $where_not";
+            $sql = "DELETE FROM flow_standard_attributes WHERE 1 AND $where_not";
             $array[$tag_guid]['number_deleted'] = $db->safeQuery($sql,$args,PDO::FETCH_BOTH,true);
         }
     }

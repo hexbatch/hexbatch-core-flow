@@ -3,14 +3,13 @@
 namespace app\models\standard;
 
 use app\models\base\FlowBase;
-use app\models\tag\FlowTag;
 use BlueM\Tree;
 use InvalidArgumentException;
 use ParagonIE\EasyDB\Exception\QueryError;
 use PDO;
 use TypeError;
 
-//todo use with raw attribute search
+
 class RawAttributeSearch extends FlowBase {
 
     /**
@@ -19,7 +18,6 @@ class RawAttributeSearch extends FlowBase {
      */
     public static function search(RawAttributeSearchParams $params) : array {
 
-        $ret = [];
         $args = [];
         $where_and = [];
 
@@ -203,7 +201,7 @@ class RawAttributeSearch extends FlowBase {
             throw $e;
         }
 
-        //order parents first
+
         return $ret;
     }
 

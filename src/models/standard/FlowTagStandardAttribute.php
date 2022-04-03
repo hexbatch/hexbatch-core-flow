@@ -2,6 +2,8 @@
 
 namespace app\models\standard;
 
+use app\helpers\UserHelper;
+use app\helpers\Utilities;
 use app\hexlet\JsonHelper;
 use app\models\base\FlowBase;
 use app\models\tag\FlowTag;
@@ -13,19 +15,25 @@ use RuntimeException;
 class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlowTagStandardAttribute {
 
 
-    public ?string $standard_name;
-    public ?object $standard_value;
-    public ?int $standard_updated_ts;
-    public ?string $tag_guid;
-    public ?string $standard_guid;
-    public ?int $tag_id;
-    public ?int $standard_id;
+    protected ?string $standard_name;
+    /**
+     * @var mixed|null
+     */
+    protected  $standard_value;
+
+    protected ?int $standard_updated_ts;
+    protected ?string $project_guid;
+    protected ?string $tag_guid;
+    protected ?string $standard_guid;
+    protected ?int $tag_id;
+    protected ?int $standard_id;
 
 
     public function __construct($object=null) {
         $this->standard_name = null;
         $this->standard_value = null;
         $this->standard_updated_ts = null;
+        $this->project_guid = null;
         $this->tag_guid = null;
         $this->tag_id = null;
         $this->standard_guid = null;
@@ -40,13 +48,12 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
                 $this->$key = $val;
             }
         }
+
+        $this->standard_value = Utilities::convert_to_object($this->standard_value);
     }
 
-    public function getStandardValue(): object
+    public function getStandardValue(): ?object
     {
-        if (!$this->standard_value) {
-            throw new RuntimeException("Standard Value is not set");
-        }
         return $this->standard_value;
     }
 
@@ -63,6 +70,13 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
             throw new RuntimeException("Standard Updated Timestamp is not set");
         }
         return $this->standard_updated_ts;
+    }
+
+    public function getProjectGuid() : string  {
+        if (!$this->project_guid) {
+            throw new RuntimeException("Standard Project Guid is not set");
+        }
+        return $this->project_guid;
     }
 
     public function getTagGuid() : string {
@@ -114,10 +128,9 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
                 'standard_name' => $this->standard_name,
                 'standard_value' => $output_value,
                 'standard_updated_ts' => $this->standard_updated_ts,
+                'project_guid' => $this->project_guid,
                 'tag_guid' => $this->tag_guid,
-                'tag_id' => $this->tag_id,
                 'standard_guid' => $this->standard_guid,
-                'standard_id' => $this->standard_id,
             ];
     }
 
@@ -127,12 +140,55 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
      * @param FlowTag[] $flow_tags
      * @return array<string,IFlowTagStandardAttribute[]>
      */
-    public static function read_standard_attributes(array $flow_tags): array
+    public static function read_standard_attributes_of_tags(array $flow_tags): array
     {
         $params = new StandardAttributeSearchParams();
 
         foreach ($flow_tags as $tag) {
             $params->addTagGuid($tag->flow_tag_guid);
+        }
+
+        $found = StandardAttributeSearch::search($params);
+        $ret = [];
+        foreach ($found as $standard) {
+            if (!isset($ret[$standard->getTagGuid()])) { $ret[$standard->getTagGuid()] = [];}
+            $ret[$standard->getTagGuid()][] = $standard;
+        }
+        return $ret;
+    }
+
+    /**
+     * @param string|string[] $project_guid
+     * @return array<string,IFlowTagStandardAttribute[]>  mapped to project guid
+     */
+    public  static function read_standard_attributes_of_projects( $project_guid) : array {
+        $params = new StandardAttributeSearchParams();
+
+        $params->addOwningProject($project_guid);
+
+        $found = StandardAttributeSearch::search($params);
+        $ret = [];
+        foreach ($found as $standard) {
+            if (!isset($ret[$standard->getProjectGuid()])) { $ret[$standard->getProjectGuid()] = [];}
+            $ret[$standard->getProjectGuid()][] = $standard;
+        }
+        return $ret;
+    }
+
+    /**
+     * @param string $user_name_email_or_guid (email, username or guid)
+     * @param bool $b_user_project_only default true
+     * @return IFlowTagStandardAttribute[]  flat array of user's project's guids
+     * @throws
+     */
+    public  static function read_standard_attributes_of_user(string $user_name_email_or_guid,bool $b_user_project_only = true) : array {
+        $params = new StandardAttributeSearchParams();
+
+        $params->setOwningUser($user_name_email_or_guid);
+
+        if ($b_user_project_only) {
+            $home_project = UserHelper::get_user_helper()->get_user_home_project();
+            $params->addOwningProject($home_project->flow_project_guid);
         }
 
         $ret = StandardAttributeSearch::search($params);

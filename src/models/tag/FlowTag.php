@@ -588,7 +588,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
     protected function update_standard_attibutes() : int {
 
         FlowTagStandardAttribute::write_standard_attributes([$this]);
-        $resolved_attributes = FlowTagStandardAttribute::read_standard_attributes([$this]);
+        $resolved_attributes = FlowTagStandardAttribute::read_standard_attributes_of_tags([$this]);
         $count = 0;
         foreach ($resolved_attributes[$this->flow_tag_guid] as $standard_attribute) {
             if (property_exists($this,$standard_attribute->getStandardName())) {

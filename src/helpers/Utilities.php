@@ -3,9 +3,11 @@
 namespace app\helpers;
 
 use app\hexlet\JsonHelper;
+use app\hexlet\WillFunctions;
 use Carbon\Carbon;
 use DI\DependencyException;
 use DI\NotFoundException;
+use InvalidArgumentException;
 use LogicException;
 
 class Utilities extends BaseHelper {
@@ -67,9 +69,15 @@ class Utilities extends BaseHelper {
         return $now->toIso8601String();
     }
 
-    public static function convert_to_object(?array $what) : ?object {
+    public static function convert_to_object($what) : ?object {
         if (is_null($what)) { return null;}
-        $json = JsonHelper::toString($what);
+        if (is_array($what) || is_object(($what))) {
+            $json = JsonHelper::toString($what);
+        } elseif (JsonHelper::isJson($what)) {
+            $json = $what;
+        } else {
+            throw new InvalidArgumentException("This cannot be converted to an object: ".print_r($what,true));
+        }
         return JsonHelper::fromString($json,true,false);
     }
 }

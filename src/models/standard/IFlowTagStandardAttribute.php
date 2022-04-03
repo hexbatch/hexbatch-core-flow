@@ -152,9 +152,10 @@ Interface IFlowTagStandardAttribute {
 
 
 
-    public function getStandardValue() : object ;
+    public function getStandardValue() : ?object ;
     public function getStandardName() : string;
     public function getLastUpdatedTs() : int;
+    public function getProjectGuid() : string ;
     public function getTagGuid() : string ;
     public function getTagId() : int ;
     public function getStandardGuid() : string;
@@ -169,9 +170,22 @@ Interface IFlowTagStandardAttribute {
      * gets hash with guid of tag as key, and array of standard attributes as value
      * (reads these from db)
      * @param FlowTag[] $flow_tags
-     * @return array<string,IFlowTagStandardAttribute[]>
+     * @return array<string,IFlowTagStandardAttribute[]> mapped to tag guid
      */
-    public  static function read_standard_attributes(array $flow_tags) : array;
+    public  static function read_standard_attributes_of_tags(array $flow_tags) : array;
+
+    /**
+     * @param string|string[] $project_guid
+     * @return array<string,IFlowTagStandardAttribute[]>  mapped to project guid
+     */
+    public  static function read_standard_attributes_of_projects( $project_guid) : array;
+
+    /**
+     * @param string $user_name_email_or_guid  (email, username or guid)
+     * @param bool $b_user_project_only default true
+     * @return IFlowTagStandardAttribute[]  flat array of user's project's guids
+     */
+    public  static function read_standard_attributes_of_user(string $user_name_email_or_guid,bool $b_user_project_only = true) : array;
 
     /**
      * Writes standard attributes to db

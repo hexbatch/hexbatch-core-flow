@@ -14,6 +14,7 @@ return function (App $app) {
 
     $app->group('/admin', function (RouteCollectorProxy $group)   {
         $group->get('/thing_management', ['adminPages', 'thing_management'])->setName('thing_management');
+        $group->get('/db/redo_triggers', ['adminPages', 'redo_triggers'])->setName('redo_triggers');
         $group->get('/phpinfo', ['adminPages', 'php_info'])->setName('phpinfo');
         $group->get('/test', ['adminPages', 'test'])->setName('admin_test');
     })->add('checkAdminMiddleware')->add($container->get('twigMiddleware'))->add('pingUserMiddleware');

@@ -364,10 +364,10 @@ class FlowTagSearch  extends FlowBase{
             foreach ($filtered as $b_tag) {
                 $b_tag->refresh_inherited_fields();
             }
-            $resolved_attributes = FlowTagStandardAttribute::read_standard_attributes($ret);
+            $resolved_attributes = FlowTagStandardAttribute::read_standard_attributes_of_tags($ret);
             foreach ($resolved_attributes as $tag_guid => $standard_attributes) {
                 $tag = $rem_tags[$tag_guid]??null;
-                if (!$tag) {throw new LogicException("Could not find tag in map");}
+                if (!$tag) {continue;} //may not have any standards
                 $tag->setStandardAttributes($standard_attributes) ;
             }
             return  $filtered;

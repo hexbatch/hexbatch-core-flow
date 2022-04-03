@@ -2,10 +2,11 @@
 
 namespace app\models\standard;
 
+use JsonSerializable;
 use RuntimeException;
 
-//todo use with raw attribute search
-class RawAttributeData implements \JsonSerializable {
+
+class RawAttributeData implements JsonSerializable {
     protected ?string $attribute_name;
     protected ?string $text_val;
     protected ?int $long_val;
