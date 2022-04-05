@@ -87,6 +87,10 @@ class FlowTag extends FlowBase implements JsonSerializable {
         } else {
             $this->refresh_inherited_fields();
 
+            $standard_attribute_map = [];
+            foreach ($this->standard_attributes as $sa ) {
+                $standard_attribute_map[$sa->getStandardName()] = $sa->getStandardValue();
+            }
 
             return [
                 "flow_tag_guid" => $this->flow_tag_guid,
@@ -97,8 +101,8 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 "updated_at_ts" => $this->tag_updated_at_ts,
                 "flow_tag_name" => $this->flow_tag_name,
                 "attributes" => $this->inherited_attributes,
-                "css" => $this->standard_attributes['css'] ?? (object)[],
-                "standard_attributes" => $this->standard_attributes,
+                "css" => $standard_attribute_map['css'] ?? (object)[],
+                "standard_attributes" => $standard_attribute_map,
                 "flow_tag_parent" => $this->flow_tag_parent,
                 "applied" => $this->applied
             ];
@@ -590,7 +594,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
         FlowTagStandardAttribute::write_standard_attributes([$this]);
         $resolved_attributes = FlowTagStandardAttribute::read_standard_attributes_of_tags([$this]);
         $count = 0;
-        foreach ($resolved_attributes[$this->flow_tag_guid] as $standard_attribute) {
+        foreach (($resolved_attributes[$this->flow_tag_guid] ?? []) as $standard_attribute) {
             if (property_exists($this,$standard_attribute->getStandardName())) {
                 $key = $standard_attribute->getStandardName();
                 $this->$key = $standard_attribute->getStandardValue();

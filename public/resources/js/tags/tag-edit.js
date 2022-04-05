@@ -234,6 +234,7 @@ function flow_tag_show_editor(tag,
                 .data('attribute_guid', attribute.flow_tag_attribute_guid)
                 .attr("data-attribute_guid", attribute.flow_tag_attribute_guid);
 
+            let tag_name_display = li.find('.flow-attribute-inherited-from-tag');
             if (attribute.is_inherited) {
 
                 //find the parent who owns this attribute
@@ -246,12 +247,15 @@ function flow_tag_show_editor(tag,
                 }
 
 
-                let tag_name_display = li.find('.flow-attribute-inherited-from-tag');
+
                 tag_name_display.text(parent_for_attribute.flow_tag_name);
                 tag_name_display.data('tag_guid', parent_for_attribute.flow_tag_guid);
+                tag_name_display.show();
                 let tag_map = {}
                 tag_map[parent_for_attribute.flow_tag_guid] = parent_for_attribute;
                 add_tag_attributes_to_dom(tag_map, tag_name_display, true);
+            } else {
+                tag_name_display.hide();
             }
 
 

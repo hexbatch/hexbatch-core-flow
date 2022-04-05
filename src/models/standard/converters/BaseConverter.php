@@ -54,11 +54,12 @@ abstract class BaseConverter implements IAttributeConverter {
      */
     protected  function getFinalOfKey(string $key) : ?string  {
         $raws = $this->getRawOfKey($key);
-        $ret = null;
         if (count($raws)) {
             $ret = $raws[count($raws)-1];
+            return $ret->getTextVal();
         }
-        return $ret->getTextVal();
+        return null;
+
     }
 
     public function convert(): ?object

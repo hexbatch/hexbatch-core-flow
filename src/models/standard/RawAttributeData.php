@@ -78,7 +78,7 @@ class RawAttributeData implements JsonSerializable {
         if (!$this->tag_guid) {
             throw new RuntimeException("Tag Guid is not set");
         }
-        return $this->attribute_guid;
+        return $this->tag_guid;
     }
 
     public function getTagID() : int {
@@ -129,7 +129,7 @@ class RawAttributeData implements JsonSerializable {
     }
 
     public function getAttributeName() : ?string {
-        return $this->text_val;
+        return $this->attribute_name;
     }
 
 

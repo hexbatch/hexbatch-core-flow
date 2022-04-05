@@ -6,6 +6,7 @@ use app\hexlet\JsonHelper;
 use app\models\base\FlowBase;
 use app\models\standard\converters\BaseConverter;
 use app\models\tag\FlowTag;
+use InvalidArgumentException;
 use JsonSerializable;
 use LogicException;
 use PDO;
@@ -61,7 +62,15 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
          * @var BaseConverter $converter
          */
         $converter = new $converter_class($this->raw_array);
-        return $converter->convert();
+        $mu = [$converter,$callable[1]];
+        if (!is_callable($mu)) {
+            throw new LogicException("Cannot call the folowing for converter: ". JsonHelper::toString($mu));
+        }
+        $ret =  $converter->convert();
+        if (!(is_null($ret) || is_object($ret))) {
+            throw new InvalidArgumentException("return of callable is not an object or null !" . JsonHelper::toString($ret));
+        }
+        return $ret;
     }
 
     protected function maybe_copy() : void {
@@ -100,7 +109,7 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
                 $db->safeQuery($sql,$args,PDO::FETCH_BOTH,true);
                 break;
             }
-            default: { throw new LogicException("What copy type??!");}
+            default: { throw new LogicException("What copy type??! ".$copy_args_array['type']);}
         }
     }
 
@@ -127,6 +136,7 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
     }
 
 
+
     /**
      * @param FlowTag[] $flow_tags
      * @return FlowTagStandardAttribute[]
@@ -134,26 +144,84 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
     public static function createWriters(array $flow_tags) : array {
         $params = new RawAttributeSearchParams();
         foreach ($flow_tags as $tag) {
-            $params->addTagID($tag->id);
+            $params->addTagID($tag->flow_tag_id);
         }
 
         $attributes = RawAttributeSearch::search($params);
-        $attribute_map_by_tag = [];
-        foreach ($attributes as $raw_attribute) {
-            if (!$attribute_map_by_tag[$raw_attribute->getTagGuid()]??null) {
-                $attribute_map_by_tag[$raw_attribute->getTagGuid()] = [];
+
+        //ordered by tag parents first, no particular order for attributes that are flat
+        $raw_by_attribute_names_by_tag_guid = [];
+        /**
+         * @var array<string,RawAttributeData> $raw_map_by_tag_guid
+         */
+        $raw_map_by_tag_guid = [];
+
+        /**
+         * @var array<string,string> $attribute_map_by_attr_guid
+         */
+        $attribute_map_by_attr_guid = [];
+
+        /**
+         * @var array<string,string> $attribute_map_by_attr_guid
+         */
+        $tag_guid_map_to_parent_tag_guid = [];
+
+        foreach ($attributes as $att) {
+            $attribute_map_by_attr_guid[$att->getAttributeGuid()] = $att;
+            if (!isset($raw_map_by_tag_guid[$att->getTagGuid()])) {
+                $raw_map_by_tag_guid[$att->getTagGuid()] = [];
             }
-            $attribute_map_by_tag[$raw_attribute->getTagGuid()][] = [];
-            if (!$attribute_map_by_tag[$raw_attribute->getTagGuid()][$raw_attribute->getAttributeName()]??null) {
-                $attribute_map_by_tag[$raw_attribute->getTagGuid()][$raw_attribute->getAttributeName()][] = $raw_attribute;
+            $raw_map_by_tag_guid[$att->getTagGuid()][] = $att;
+            $tag_guid_map_to_parent_tag_guid[$att->getTagGuid()] = $att->getParentTagGuid();
+        }
+
+
+        foreach ($raw_map_by_tag_guid as $tag_guid => $raw_attribute_array) {
+            if (!isset($raw_by_attribute_names_by_tag_guid[$tag_guid])) {
+                $raw_by_attribute_names_by_tag_guid[$tag_guid] = [];
+            }
+
+            /**
+             * @var RawAttributeData $raw
+             */
+            foreach ($raw_attribute_array as $raw) {
+
+                $parent_attribute_array = [];
+                $parent_attribute_guid = $raw->getParentAttributeGuid();
+                while($parent_attribute_guid) {
+                    $parent_attribute = $attribute_map_by_attr_guid[$parent_attribute_guid];
+                    $parent_attribute_array[] = $parent_attribute;
+                    $parent_attribute_guid = $parent_attribute->getParentAttributeGuid();
+                }
+                $reversed_parent_attributes = array_reverse($parent_attribute_array);
+                $reversed_parent_attributes[] = $raw;
+                $raw_by_attribute_names_by_tag_guid[$tag_guid][$raw->getAttributeName()] = $reversed_parent_attributes;
+            }
+        }
+
+
+
+
+        //go through each ranby and loop though its ancestors adding name if missing
+        foreach ($raw_by_attribute_names_by_tag_guid as $tag_guid => &$raw_ancestor_list_by_attribute_names) {
+            $tag_parent_guid = $tag_guid_map_to_parent_tag_guid[$tag_guid];
+            while($tag_parent_guid) {
+                $their_attributes = $raw_by_attribute_names_by_tag_guid[$tag_parent_guid];
+                foreach ($their_attributes as $their_attribute_name => $their_raw_array) {
+                    if (!isset($raw_ancestor_list_by_attribute_names[$their_attribute_name])) {
+                        $raw_ancestor_list_by_attribute_names[$their_attribute_name] = $their_raw_array;
+                    }
+                }
+
+                $tag_parent_guid = $tag_guid_map_to_parent_tag_guid[$tag_parent_guid];
             }
         }
 
         $ret = [];
 
         $tag_has_property_names = [];
-        foreach ($attribute_map_by_tag as $tag_guid => $array_of_attribute_arrays) {
-            $writers = static::getWritersFromBunch($tag_guid,$array_of_attribute_arrays);
+        foreach ($raw_by_attribute_names_by_tag_guid as $tag_guid => $raw_ancestor_list_by_attribute_names) {
+            $writers = static::getWritersFromBunch($tag_guid,$raw_ancestor_list_by_attribute_names);
             foreach ($writers as $hand_cramp) {
                 $hand_cramp->write();
                 if (!isset($tag_has_property_names[$hand_cramp->tag_guid])) {
@@ -181,11 +249,11 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
             }
             if (count($in_question_array)) {
                 $comma_delimited_question = implode(",",$in_question_array);
-                $where_not = "a.tag_id = ? AND a.standard_name not in ($comma_delimited_question) ";
+                $where_not = "a.flow_tag_id = ? AND a.standard_name not in ($comma_delimited_question) ";
             } else {
                 continue;
             }
-            $sql = "DELETE FROM flow_standard_attributes WHERE 1 AND $where_not";
+            $sql = "DELETE FROM flow_standard_attributes a WHERE 1 AND $where_not";
             $array[$tag_guid]['number_deleted'] = $db->safeQuery($sql,$args,PDO::FETCH_BOTH,true);
         }
     }
@@ -200,10 +268,13 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
         if (empty($array_of_attribute_arrays)) {return [];}
         $ret = [];
         $first_key = array_key_first($array_of_attribute_arrays);
-        $tag_id = $array_of_attribute_arrays[$first_key]->getTagID();
+        $tag_id = $array_of_attribute_arrays[$first_key][0]->getTagID();
 
         foreach (IFlowTagStandardAttribute::STANDARD_ATTRIBUTES as $standard_name => $dets) {
 
+            /**
+             * @var RawAttributeData[] $raw_attributes
+             */
             $raw_attributes = [];
 
             foreach ($dets['keys'] as $key_name => $key_thing) {
@@ -224,8 +295,16 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
 
                         case IFlowTagStandardAttribute::OPTION_REQUIRED: {
                             if (!$key_rule_value) {break;}
-                            //if $attribute_array does not have this key, then cannot do this
-                            if (!isset($array_of_attribute_arrays[$key_name])) {continue 3;}
+                            //if $attribute_array does not have this key, maybe in new attributes?
+                            $b_found_in_new = false;
+                            foreach ($raw_attributes as $maybe_raw) {
+                                if ($maybe_raw->getAttributeName() === $key_name) {
+                                    $b_found_in_new = true;
+                                    break;
+                                }
+                            }
+                            //can only do it if this required has name in given raw or added raw
+                            if (!$b_found_in_new && !isset($array_of_attribute_arrays[$key_name])) {continue 4;}
                             break;
                         }
                     }
@@ -235,16 +314,20 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
 
                     if ($key_rule === IFlowTagStandardAttribute::OPTION_DEFAULT) {
 
+                        if (is_callable($key_rule_value)) {
+                            $constant_value = call_user_func($key_rule_value);
+                        } else {
+                            $constant_value = JsonHelper::toString($key_rule_value);
+                        }
                         //if missing, then create from function, make raw attribute and add to $attribute_array)
                         // if no creation function leave raw empty of text and long
                         if (isset($array_of_attribute_arrays[$key_name]) && count($array_of_attribute_arrays[$key_name])) {
                             foreach ($array_of_attribute_arrays[$key_name] as $raw) {
                                 if ($raw->getTextVal() || $raw->getLongVal()) {break;}
                             }
-                            $constant_value = call_user_func($key_rule_value);
                             $array_of_attribute_arrays[$key_name][0]->setTextVal($constant_value);
                         } else {
-                            $constant_value = call_user_func($key_rule_value);
+
                             $raw_attributes[] = new RawAttributeData([
                                 'tag_id'=> $tag_id,
                                 'tag_guid'=> $tag_guid ,
@@ -256,8 +339,12 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
                 }
 
             } //end for each key in a standard attribute
-            //if got here can create the writer
-            $ret[] = new StandardAttributeWrite($standard_name,$tag_id,$tag_guid,$raw_attributes);
+
+            if (count($raw_attributes)) {
+                //if got here can create the writer
+                $ret[] = new StandardAttributeWrite($standard_name,$tag_id,$tag_guid,$raw_attributes);
+            }
+
 
         }
         return $ret;

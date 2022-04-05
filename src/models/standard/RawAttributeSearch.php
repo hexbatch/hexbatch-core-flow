@@ -30,7 +30,7 @@ class RawAttributeSearch extends FlowBase {
             }
             if (count($in_question_array)) {
                 $comma_delimited_unhex_question = implode(",",$in_question_array);
-                $where_and[] = "t.flow_tag_guid in ($comma_delimited_unhex_question)";
+                $where_and[] = "driver_tag.flow_tag_guid in ($comma_delimited_unhex_question)";
             }
         }
 
@@ -42,7 +42,7 @@ class RawAttributeSearch extends FlowBase {
             }
             if (count($in_question_array)) {
                 $comma_delimited_unhex_question = implode(",",$in_question_array);
-                $where_and[] = "a.flow_tag_id in ($comma_delimited_unhex_question)";
+                $where_and[] = "driver_tag.id in ($comma_delimited_unhex_question)";
             }
         }
 
@@ -55,7 +55,7 @@ class RawAttributeSearch extends FlowBase {
             }
             if (count($in_question_array)) {
                 $comma_delimited_question = implode(",",$in_question_array);
-                $where_and[] = "a.tag_attribute_name in ($comma_delimited_question)";
+                $where_and[] = "attribute.tag_attribute_name in ($comma_delimited_question)";
             }
         }
 
@@ -189,7 +189,7 @@ class RawAttributeSearch extends FlowBase {
                         if ($maybe_parent_attribute->getAttributeName() === $raw->getAttributeName()) {
                             $raw->setParentAttributeGuid($maybe_parent_attribute->getAttributeGuid());
                             $raw->setParentAttributeID($maybe_parent_attribute->getAttributeID());
-                            break;
+                            break 2;
                         }
                     }
                     $parent_tag_guid = $map_tag_parent_guid_by_tag_guid[$parent_tag_guid];
@@ -215,11 +215,14 @@ class RawAttributeSearch extends FlowBase {
 
         $data = [];
         $data[] = ['id' => 0, 'parent' => -1, 'title' => 'dummy_root','raw'=>null];
+        $map = [];
         foreach ($raw_array_to_sort as $raw) {
+            $map[$raw->getTagGuid()][] = $raw;
+            if (count($map[$raw->getTagGuid()]) > 1) { continue;}
             $data[] = [
                 'id' => $raw->getTagID(),
                 'parent' => $raw->getParentTagID()??0,
-                'title' => $raw->getAttributeName(),
+                'title' => $raw->getTagGuid(),
                 'raw'=>$raw];
         }
         $tree = new Tree(
@@ -230,8 +233,16 @@ class RawAttributeSearch extends FlowBase {
         $sorted_nodes =  $tree->getNodes();
         $ret = [];
         foreach ($sorted_nodes as $node) {
+            /**
+             * @var RawAttributeData $what
+             */
             $what =  $node->raw??null;
-            if ($what) {$ret[] = $what;}
+            if (!$what) {continue;}
+
+            foreach ($map[$what->getTagGuid()] as $add_raw) {
+                $ret[] = $add_raw;
+            }
+
         }
         return $ret;
     }

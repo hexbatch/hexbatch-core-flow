@@ -209,13 +209,14 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
 
     public static function getStandardAttributeKeys(string $name, bool $b_ignore_non_enumerated = true): array
     {
-        if (!self::STANDARD_ATTRIBUTES[$name]??null) {
+        if (!isset(self::STANDARD_ATTRIBUTES[$name])) {
             throw new InvalidArgumentException("[get_standard_attribute_keys] name not found in standard meta: $name");
         }
         $key_array =  self::STANDARD_ATTRIBUTES[$name]['keys'];
         $ret = [];
         foreach ($key_array as $key_name => $dets) {
-            if (in_array(static::OPTION_NO_ENUMERATION,$dets)) {
+            $det_keys = array_keys($dets);
+            if (in_array(static::OPTION_NO_ENUMERATION,$det_keys)) {
                 if ($b_ignore_non_enumerated) {
                     continue;
                 }

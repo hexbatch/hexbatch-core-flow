@@ -128,12 +128,11 @@ class StandardAttributeSearch extends FlowBase {
             $db = static::get_connection();
             $res = $db->safeQuery($sql, $args, PDO::FETCH_OBJ);
 
-            $nodes = [];
             foreach ($res as $row) {
                 $node = new FlowTagStandardAttribute($row);
-                $nodes[] = $node;
+                $ret[] = $node;
             }
-            if (empty($nodes)) {
+            if (empty($ret)) {
                 return [];
             }
         }
