@@ -37,6 +37,7 @@ class CssConverter extends BaseConverter {
                $clean_ret = [];
                $allowed_public_keys = FlowTagStandardAttribute::getStandardAttributeKeys(static::STANDARD_NAME);
                foreach ($raws as $raw) {
+
                    $maybe_css_rules = array_map(function($x) {return trim($x);},explode(';',$raw->getTextVal()));
                    $maybe_css_object = JsonHelper::fromString($raw->getTextVal(),false,false);
                    if (is_object($maybe_css_object)) {
@@ -50,6 +51,14 @@ class CssConverter extends BaseConverter {
                        }
                    } else
                    {
+                       if ($only_css_key && count($maybe_css_rules) === 1) {
+                           if (count(explode(':',$maybe_css_rules[0])) === 1) {
+                               $clean_ret[$only_css_key] = $maybe_css_rules[0];
+                               continue;
+                           }
+
+                       }
+
                        foreach ($maybe_css_rules as $css_line) {
                            $maybe_css_parts = array_map(function($x) {return trim($x);},explode(':',$css_line));
 
@@ -61,6 +70,8 @@ class CssConverter extends BaseConverter {
                                $clean_ret[$maybe_css_parts[0]] = $maybe_css_parts[1];
                            }
                        }
+
+
                    }
 
                }

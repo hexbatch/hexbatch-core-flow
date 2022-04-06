@@ -3,6 +3,7 @@
 namespace app\models\standard;
 
 use app\hexlet\JsonHelper;
+use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\standard\converters\BaseConverter;
 use app\models\tag\FlowTag;
@@ -100,13 +101,19 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
                 } else {
                     $id_value = $id_value_begin;
                 }
+                if (WillFunctions::is_valid_guid_format($id_value)) {
+                    $sql_where_param = 'UNHEX(?)';
+                } else {
+                    $sql_where_param = '?';
+                }
                 $target_column = $copy_args_array['target_column'] ;
                 $json = JsonHelper::toString($this->standard_attribute_value);
                 $sql = /** @lang text */
-                    "UPDATE $table SET $target_column =  CAST(? AS $target_cast) WHERE $id_column = ?";
+                    "UPDATE $table SET $target_column =  CAST(? AS $target_cast) WHERE $id_column = $sql_where_param";
                 $args = [$json,$id_value];
                 $db = static::get_connection();
-                $db->safeQuery($sql,$args,PDO::FETCH_BOTH,true);
+                $b_changed = $db->safeQuery($sql,$args,PDO::FETCH_BOTH,true);
+                WillFunctions::will_do_nothing($b_changed);
                 break;
             }
             default: { throw new LogicException("What copy type??! ".$copy_args_array['type']);}
@@ -166,6 +173,11 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
          */
         $tag_guid_map_to_parent_tag_guid = [];
 
+        /**
+         * @var array<string,int> $tag_guid_map_to_tag_id
+         */
+        $tag_guid_map_to_tag_id = [];
+
         foreach ($attributes as $att) {
             $attribute_map_by_attr_guid[$att->getAttributeGuid()] = $att;
             if (!isset($raw_map_by_tag_guid[$att->getTagGuid()])) {
@@ -173,6 +185,7 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
             }
             $raw_map_by_tag_guid[$att->getTagGuid()][] = $att;
             $tag_guid_map_to_parent_tag_guid[$att->getTagGuid()] = $att->getParentTagGuid();
+            $tag_guid_map_to_tag_id[$att->getTagGuid()] = $att->getTagID();
         }
 
 
@@ -202,7 +215,7 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
 
 
 
-        //go through each ranby and loop though its ancestors adding name if missing
+        //go through each ran-by and loop though its ancestors adding name if missing
         foreach ($raw_by_attribute_names_by_tag_guid as $tag_guid => &$raw_ancestor_list_by_attribute_names) {
             $tag_parent_guid = $tag_guid_map_to_parent_tag_guid[$tag_guid];
             while($tag_parent_guid) {
@@ -216,12 +229,14 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
                 $tag_parent_guid = $tag_guid_map_to_parent_tag_guid[$tag_parent_guid];
             }
         }
+        unset($raw_ancestor_list_by_attribute_names);
 
         $ret = [];
 
         $tag_has_property_names = [];
-        foreach ($raw_by_attribute_names_by_tag_guid as $tag_guid => $raw_ancestor_list_by_attribute_names) {
-            $writers = static::getWritersFromBunch($tag_guid,$raw_ancestor_list_by_attribute_names);
+        foreach ($raw_by_attribute_names_by_tag_guid as $tag_guid => $raw_array) {
+            $tag_id = $tag_guid_map_to_tag_id[$tag_guid];
+            $writers = static::getWritersFromBunch($tag_id,$tag_guid,$raw_array);
             foreach ($writers as $hand_cramp) {
                 $hand_cramp->write();
                 if (!isset($tag_has_property_names[$hand_cramp->tag_guid])) {
@@ -259,16 +274,15 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
     }
 
     /**
+     * @param int $tag_id
      * @param string $tag_guid
      * @param array<string,RawAttributeData[]> $array_of_attribute_arrays
      * @return StandardAttributeWrite[]
      */
-    protected static function getWritersFromBunch(string $tag_guid, array $array_of_attribute_arrays) :array  {
+    protected static function getWritersFromBunch(int $tag_id, string $tag_guid, array $array_of_attribute_arrays) :array  {
 
         if (empty($array_of_attribute_arrays)) {return [];}
         $ret = [];
-        $first_key = array_key_first($array_of_attribute_arrays);
-        $tag_id = $array_of_attribute_arrays[$first_key][0]->getTagID();
 
         foreach (IFlowTagStandardAttribute::STANDARD_ATTRIBUTES as $standard_name => $dets) {
 
@@ -279,6 +293,9 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
 
             foreach ($dets['keys'] as $key_name => $key_thing) {
 
+                if (empty($key_thing)) {
+                    $key_thing[IFlowTagStandardAttribute::OPTION_NORMAL] = true;
+                }
                 foreach ($key_thing as $key_rule => $key_rule_value) {
 
                     $b_handled = false;
@@ -310,14 +327,24 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
                     }
                     if ($b_handled) {continue 2;}
 
-                    $raw_attributes = array_merge($raw_attributes,$array_of_attribute_arrays[$key_name]??[]);
+                    $found_attributes = $array_of_attribute_arrays[$key_name]??[];
+                    if (count($found_attributes) > 0) {
+                        $raw_attributes = array_merge($raw_attributes,$found_attributes);
+                        continue 2;
+                    }
+
 
                     if ($key_rule === IFlowTagStandardAttribute::OPTION_DEFAULT) {
 
                         if (is_callable($key_rule_value)) {
                             $constant_value = call_user_func($key_rule_value);
                         } else {
-                            $constant_value = JsonHelper::toString($key_rule_value);
+                            if (is_string($key_rule_value)) {
+                                $constant_value = $key_rule_value;
+                            } else {
+                                $constant_value = JsonHelper::toString($key_rule_value);
+                            }
+
                         }
                         //if missing, then create from function, make raw attribute and add to $attribute_array)
                         // if no creation function leave raw empty of text and long

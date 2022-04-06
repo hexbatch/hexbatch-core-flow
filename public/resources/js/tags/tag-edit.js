@@ -250,12 +250,10 @@ function flow_tag_show_editor(tag,
 
                 tag_name_display.text(parent_for_attribute.flow_tag_name);
                 tag_name_display.data('tag_guid', parent_for_attribute.flow_tag_guid);
-                tag_name_display.show();
+
                 let tag_map = {}
                 tag_map[parent_for_attribute.flow_tag_guid] = parent_for_attribute;
                 add_tag_attributes_to_dom(tag_map, tag_name_display, true);
-            } else {
-                tag_name_display.hide();
             }
 
 
@@ -265,6 +263,9 @@ function flow_tag_show_editor(tag,
             li.find('.flow-attribute-text-value-preview').html(attribute.tag_attribute_text ?? '');
 
             ul_home.append(li);
+            if (attribute.is_inherited) {
+                tag_name_display.removeClass('d-none');
+            }
         }
     }
 

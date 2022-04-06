@@ -120,13 +120,6 @@ class RawAttributeData implements JsonSerializable {
         $this->text_val = $text_val;
     }
 
-    /**
-     * @param int|null $long_val
-     */
-    public function setLongVal(?int $long_val): void
-    {
-        $this->long_val = $long_val;
-    }
 
     public function getAttributeName() : ?string {
         return $this->attribute_name;

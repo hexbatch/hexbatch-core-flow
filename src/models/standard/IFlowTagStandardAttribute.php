@@ -52,7 +52,7 @@ Interface IFlowTagStandardAttribute {
     const OPTION_NO_SERIALIZATION = 'no-serialization';
     const OPTION_NO_ENUMERATION = 'no-enumeration';
 
-    const OPTION_NORMAL = 'normal';
+    const OPTION_NORMAL = 'normal'; //used in the writer for keys with no attribute, not used to define keys
 
     # ------------- DEFINE copy types
 
@@ -85,9 +85,7 @@ Interface IFlowTagStandardAttribute {
             self::GIT_KEY_SSH_KEY => [
                 self::OPTION_NO_SERIALIZATION => true
             ],
-            self::GIT_SITE => [
-                self::OPTION_NORMAL => true
-            ],
+            self::GIT_SITE => [],
         ],
         'name' => self::STD_ATTR_NAME_GIT,
         'converter' => ['app\models\standard\converters\GitConverter','convert'],
@@ -106,9 +104,12 @@ Interface IFlowTagStandardAttribute {
 
     const STD_ATTR_TYPE_CSS = [
         'keys' => [
-            self::CSS_KEY_BACKGROUND_COLOR => [self::OPTION_NORMAL => true] ,
-            self::CSS_KEY_COLOR => [self::OPTION_NORMAL => true] ,
-            self::CSS_KEY_CSS_OVERALL => [self::OPTION_NO_ENUMERATION=>true ] ,
+            self::CSS_KEY_BACKGROUND_COLOR => [] ,
+            self::CSS_KEY_COLOR => [] ,
+            self::CSS_KEY_CSS_OVERALL => [
+                self::OPTION_NO_ENUMERATION=>true ,
+                self::OPTION_DEFAULT => '{}', //to clear out flow things css and make sure there is an object entry
+            ] ,
         ],
         'name' => self::STD_ATTR_NAME_CSS,
         'converter' => ['app\models\standard\converters\CssConverter','convert'],
