@@ -1,0 +1,81 @@
+<!--suppress CommaExpressionJS -->
+<script>
+    const FLOW_TAG_VIEWABLE_STANDARDS = {
+        {% for standard_view,standard_path in standard_viewable_scripts %}
+            {{ standard_view }}: "view_standard_{{ standard_view }}" {% if loop.last == false %},{% endif %}
+        {% endfor %}
+        }
+
+    const FLOW_TAG_EDITABLE_STANDARDS = {
+        {% for standard_view,standard_path in standard_editable_scripts %}
+            {{ standard_view }}: "edit_standard_{{ standard_view }}" {% if loop.last == false %},{% endif %}
+        {% endfor %}
+        }
+</script>
+
+
+{% for standard_view_frame,standard_path in standard_viewable_frames %}
+        {% include(standard_path) %}
+{% endfor %}
+
+{% for standard_edit_frame,standard_path in standard_editable_frames %}
+        {% include(standard_path) %}
+{% endfor %}
+
+{% for standard_view,standard_path in standard_viewable_scripts %}
+    <script>
+        {% include(standard_path) %}
+    </script>
+{% endfor %}
+
+{% for standard_edit,standard_path in standard_editable_scripts %}
+    <script>
+        {% include(standard_path) %}
+    </script>
+{% endfor %}
+
+<script>
+
+    function executeFunctionByName(functionName, context /*, args */) {
+        var args = Array.prototype.slice.call(arguments, 2);
+        var namespaces = functionName.split(".");
+        var func = namespaces.pop();
+        for(var i = 0; i < namespaces.length; i++) {
+            context = context[namespaces[i]];
+        }
+        return context[func].apply(context, args);
+    }
+
+    /**
+     * @param {jQuery} parent
+     * @param { FlowTag }tag
+     * @param {string} standard_name
+     */
+    function generate_view(standard_name,parent,tag) {
+        if (!FLOW_TAG_VIEWABLE_STANDARDS.hasOwnProperty(standard_name) ) {
+            console.warn(`standard name of ${standard_name} does not have a viewable component`)
+            return;
+        }
+
+
+        let thing = executeFunctionByName(FLOW_TAG_VIEWABLE_STANDARDS[standard_name],window,tag);
+        parent.append(thing);
+
+    }
+
+    /**
+     * @param {string} standard_name
+     * @param { FlowTag }tag
+     * @param {?FlowTagEditCallback} success_callback
+     * @param {?FlowTagEditCallback} fail_callback
+     */
+    function generate_edit_form(standard_name,tag,success_callback,fail_callback) {
+        if (!FLOW_TAG_EDITABLE_STANDARDS.hasOwnProperty(standard_name) ) {
+            console.warn(`standard name of ${standard_name} does not have a editable component`)
+            return;
+        }
+
+        executeFunctionByName(FLOW_TAG_EDITABLE_STANDARDS[standard_name],window,tag,success_callback,fail_callback);
+
+    }
+</script>

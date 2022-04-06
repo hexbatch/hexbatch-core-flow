@@ -10,6 +10,7 @@ use app\controllers\tag\TagPages;
 use app\controllers\user\UserPages;
 use app\helpers\AdminHelper;
 use app\helpers\ProjectHelper;
+use app\helpers\StandardHelper;
 use app\helpers\UserHelper;
 use app\helpers\Utilities;
 use Psr\Log\LoggerInterface;
@@ -60,6 +61,10 @@ return function (App $app) {
 
     $container->set('utilities', function() use ($app, $container) {
         return new Utilities($container->get('auth'),$container->get(LoggerInterface::class),$container);
+    });
+
+    $container->set('standardHelper', function() use ($app, $container) {
+        return new StandardHelper($container->get('auth'),$container->get(LoggerInterface::class),$container);
     });
 
 };

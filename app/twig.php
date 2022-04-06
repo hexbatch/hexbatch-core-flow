@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use app\helpers\ProjectHelper;
+use app\helpers\StandardHelper;
 use app\helpers\Utilities;
 use app\hexlet\FlowAntiCSRF;
 use app\hexlet\JsonHelper;
@@ -24,10 +25,42 @@ class Hexlet_Twig_Extension extends AbstractExtension implements GlobalsInterfac
     public function getGlobals(): array
     {
         $root = ProjectHelper::get_project_helper()->get_root_url();
+
+        $standard_helper = StandardHelper::get_standard_helper();
+        $viewable_standard_names = $standard_helper->get_viewable_standards();
+
+        $viewable_standard_scripts = [];
+        foreach ($viewable_standard_names as $standard_name) {
+            $viewable_standard_scripts[$standard_name] = $standard_helper->get_viewable_template_for_standard($standard_name);
+        }
+
+        $viewable_standard_frames = [];
+        foreach ($viewable_standard_names as $standard_name) {
+            $maybe_frame =  $standard_helper->get_viewable_template_for_standard($standard_name,true);
+            if ($maybe_frame) {$viewable_standard_frames[$standard_name] = $maybe_frame;}
+        }
+
+        $editable_standard_names = StandardHelper::get_standard_helper()->get_editable_standards();
+
+        $editable_standard_scripts = [];
+        foreach ($editable_standard_names as $standard_name) {
+            $editable_standard_scripts[$standard_name] = $standard_helper->get_editable_template_for_standard($standard_name);
+        }
+
+        $editable_standard_frames = [];
+        foreach ($viewable_standard_names as $standard_name) {
+            $maybe_frame =  $standard_helper->get_editable_template_for_standard($standard_name,true);
+            if ($maybe_frame) {$editable_standard_frames[$standard_name] = $maybe_frame;}
+        }
+
         return [
             'root_url' => $root,
             'csrf_token_set_to_root' => FlowAntiCSRF::SET_LOCK_TO_ANY_PAGE,
-            'program_version' => Utilities::get_utilities()->get_version_string()
+            'program_version' => Utilities::get_utilities()->get_version_string(),
+            'standard_viewable_scripts' => $viewable_standard_scripts,
+            'standard_editable_scripts' => $editable_standard_scripts,
+            'standard_viewable_frames' => $viewable_standard_frames,
+            'standard_editable_frames' => $editable_standard_frames,
         ];
     }
 

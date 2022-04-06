@@ -239,6 +239,17 @@
  */
 
 
+//  meta standard
+
+/**
+ *
+ * @typedef {Object} StandardMeta
+ * @property {string} meta_version
+ * @property {string} meta_author
+ * @property {string} meta_date_time
+ */
+
+
 
 
 

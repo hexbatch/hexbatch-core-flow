@@ -1,0 +1,20 @@
+/**
+ *
+ * @param {FlowTag} tag
+ */
+function view_standard_meta(tag) {
+    if (!tag.standard_attributes.hasOwnProperty('meta')) { return jQuery('<span>No Meta Found</span>');}
+
+    /**
+     * @var {StandardMeta} meta
+     */
+    let meta = tag.standard_attributes.meta;
+
+
+    let card = $("div#standard-meta-templates > div.standard-meta-card ").clone();
+    let version = card.find(`standard-meta-version`);
+    version.text(meta.meta_version);
+
+    return card;
+
+}
