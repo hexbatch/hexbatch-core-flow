@@ -11,8 +11,8 @@ function view_standard_meta(tag) {
     let meta = tag.standard_attributes.meta;
 
 
-    let card = $("div#standard-meta-templates > div.standard-meta-card ").clone();
-    let version = card.find(`standard-meta-version`);
+    let card = $("div#standard-meta-view-templates > div.standard-meta-card ").clone();
+    let version = card.find(`.standard-meta-version`);
     version.text(meta.meta_version);
 
     return card;

@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 
+use app\models\standard\FlowTagStandardAttribute;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
 
@@ -110,6 +111,15 @@ return function (App $app) {
                 $group->get('/files/{resource}', ['projectPages', 'get_resource_file'])->setName('project_files');
 
 
+                $group->group('/standard', function (RouteCollectorProxy $group) use($container){
+                    $meta_names = implode('|',FlowTagStandardAttribute::getStandardAttributeNames());
+                    $group->group('', function (RouteCollectorProxy $group) use ($container,$meta_names) {
+
+                        /** @uses \app\controllers\standard\StandardPages::update_tag_standard() */
+                        $group->post("/{tag_guid:[[:alnum:]\-]+}/{standard_name:$meta_names}/update",
+                            ['standardPages', 'update_tag_standard'])->setName('update_tag_standard_ajax');
+                    })->add('checkLoggedInMiddleware');
+                });
 
 
                 $group->group('/tag', function (RouteCollectorProxy $group) use($container){

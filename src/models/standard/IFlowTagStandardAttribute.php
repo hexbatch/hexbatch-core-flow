@@ -32,6 +32,9 @@ use app\models\tag\FlowTag;
  * defaults for missing key values can be provided by the code, but it does not change the behavior or overwriting of the keys later
  *  if an attribute is saved with the key name, or has json with the key name, then that default is tossed out and the new one used
  *
+ * If-others means the key is only used if other keys (that are not if-others) are there too
+ *      This is useful if want to put put in a default but not create the meta if only the defaults are there
+ *
  *  When tags load in their standard attributes, it will be from the table.
  *      If an ancestor was the last one to significantly change a standard attribute, then their standard is that one
  *          This ignores any ignored keys in their own (or inherited) attributes that have changed since then
@@ -48,6 +51,7 @@ Interface IFlowTagStandardAttribute {
     const OPTION_REQUIRED = 'required'; //if required has a default, then put that first in the key attributes array
 
     const OPTION_DEFAULT = 'default';
+    const OPTION_IF_OTHERS = 'if-others';
 
     const OPTION_NO_SERIALIZATION = 'no-serialization';
     const OPTION_NO_ENUMERATION = 'no-enumeration';
@@ -130,19 +134,27 @@ Interface IFlowTagStandardAttribute {
     const META_KEY_VERSION = 'meta_version';
     const META_KEY_DATETIME = 'meta_date_time';
     const META_KEY_AUTHOR = 'meta_author';
+    const META_KEY_FIRST_NAME = 'meta_first_name';
+    const META_KEY_LAST_NAME = 'meta_last_name';
+    const META_KEY_PUBLIC_EMAIL = 'meta_public_email';
+    const META_KEY_PICTURE_URL = 'meta_picture_url';
+    const META_KEY_WEBSITE = 'meta_website';
 
     const STD_ATTR_TYPE_META = [
         'keys' => [
             self::META_KEY_VERSION => [
-                self::OPTION_DEFAULT => ['app\helpers\Utilities','get_version_float'],
-                self::OPTION_REQUIRED => true,
+
             ] ,
             self::META_KEY_DATETIME => [
                 self::OPTION_DEFAULT=>['app\helpers\Utilities','generate_iso_time_stamp'],
+                self::OPTION_IF_OTHERS => true
             ] ,
-            self::META_KEY_AUTHOR => [
-                self::OPTION_VOLATILE => true
-            ] ,
+            self::META_KEY_AUTHOR => [] ,
+            self::META_KEY_FIRST_NAME => [] ,
+            self::META_KEY_LAST_NAME => [] ,
+            self::META_KEY_PUBLIC_EMAIL => [] ,
+            self::META_KEY_PICTURE_URL => [] ,
+            self::META_KEY_WEBSITE => [] ,
         ],
         'name' => self::STD_ATTR_NAME_META,
         'converter' => ['app\models\standard\converters\MetaConverter','convert']
@@ -171,6 +183,7 @@ Interface IFlowTagStandardAttribute {
 
     public static function getStandardAttributeKeys(string $name, bool $b_ignore_non_enumerated = true) : array;
     public static function getStandardAttributeNames() : array;
+    public static function isNameKey(string $key_name,bool $is_also_protected = false ) : bool;
 
     /**
      * gets hash with guid of tag as key, and array of standard attributes as value

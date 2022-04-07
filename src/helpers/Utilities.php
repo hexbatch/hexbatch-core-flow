@@ -58,7 +58,7 @@ class Utilities extends BaseHelper {
     }
 
     function get_program_timezone() : ?string {
-        $program = $this->get_settings()->timezone ?? (object)[];
+        $program = $this->get_settings()->program ?? (object)[];
         return $program->timezone ?? null;
     }
 
@@ -71,7 +71,7 @@ class Utilities extends BaseHelper {
 
     public static function convert_to_object($what) : ?object {
         if (is_null($what)) { return null;}
-        if (is_array($what) || is_object(($what))) {
+        if (is_array($what) || is_object($what)) {
             $json = JsonHelper::toString($what);
         } elseif (JsonHelper::isJson($what)) {
             $json = $what;
@@ -79,5 +79,13 @@ class Utilities extends BaseHelper {
             throw new InvalidArgumentException("This cannot be converted to an object: ".print_r($what,true));
         }
         return JsonHelper::fromString($json,true,false);
+    }
+
+    public  function deep_copy($what) {
+        if (!(is_array($what) || is_object($what))) { return $what; } //will copy if primitive
+        $json = JsonHelper::toString($what);
+        $b_to_array = false;
+        if (is_array($what)) { $b_to_array = true;}
+        return JsonHelper::fromString($json,true,$b_to_array);
     }
 }

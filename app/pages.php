@@ -6,11 +6,13 @@ use app\controllers\entry\EntryPages;
 use app\controllers\home\AdminPages;
 use app\controllers\home\HomePages;
 use app\controllers\project\ProjectPages;
+use app\controllers\standard\StandardPages;
 use app\controllers\tag\TagPages;
 use app\controllers\user\UserPages;
 use app\helpers\AdminHelper;
 use app\helpers\ProjectHelper;
 use app\helpers\StandardHelper;
+use app\helpers\TagHelper;
 use app\helpers\UserHelper;
 use app\helpers\Utilities;
 use Psr\Log\LoggerInterface;
@@ -43,6 +45,10 @@ return function (App $app) {
         return new TagPages($container->get('auth'),$container->get(LoggerInterface::class),$container);
     });
 
+    $container->set('standardPages', function() use ($app, $container) {
+        return new StandardPages($container->get('auth'),$container->get(LoggerInterface::class),$container);
+    });
+
     $container->set('entryPages', function() use ($app, $container) {
         return new EntryPages($container->get('auth'),$container->get(LoggerInterface::class),$container);
     });
@@ -65,6 +71,10 @@ return function (App $app) {
 
     $container->set('standardHelper', function() use ($app, $container) {
         return new StandardHelper($container->get('auth'),$container->get(LoggerInterface::class),$container);
+    });
+
+    $container->set('tagHelper', function() use ($app, $container) {
+        return new TagHelper($container->get('auth'),$container->get(LoggerInterface::class),$container);
     });
 
 };

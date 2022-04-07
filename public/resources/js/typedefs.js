@@ -239,14 +239,35 @@
  */
 
 
+/**
+ *
+ * @typedef {FlowBasicResponse} FlowStandardResponse
+ * @property {?FlowTag} tag
+ * @property {?string} action
+ * @property {?string} standard_name
+ * @property {?Object} standard_data
+ */
+
+
+/**
+ *
+ * @callback FlowStandardCallback
+ * @param {FlowStandardResponse} data
+ */
+
 //  meta standard
 
 /**
  *
  * @typedef {Object} StandardMeta
- * @property {string} meta_version
- * @property {string} meta_author
- * @property {string} meta_date_time
+ * @property {?string} meta_version
+ * @property {?string} meta_date_time
+ * @property {?string} meta_author
+ * @property {?string} meta_first_name
+ * @property {?string} meta_last_name
+ * @property {?string} meta_public_email
+ * @property {?string} meta_picture_url
+ * @property {?string} meta_website
  */
 
 

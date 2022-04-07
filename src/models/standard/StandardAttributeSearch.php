@@ -18,6 +18,7 @@ class StandardAttributeSearch extends FlowBase {
      */
     public static function search(StandardAttributeSearchParams $params) : array {
 
+        if (empty($params)) {return [];}
         $args = [];
         $where_and = [];
 

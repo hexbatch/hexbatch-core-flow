@@ -5,6 +5,7 @@ namespace app\models\standard;
 use app\helpers\UserHelper;
 use app\helpers\Utilities;
 use app\hexlet\JsonHelper;
+use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\tag\FlowTag;
 use InvalidArgumentException;
@@ -228,6 +229,27 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
 
     public static function getStandardAttributeNames() : array {
         return array_keys(static::STANDARD_ATTRIBUTES);
+    }
+
+    public static function isNameKey(string $key_name,bool $is_also_protected = false ) : bool {
+        foreach ( static::STANDARD_ATTRIBUTES as $attribute_name  => $dets) {
+            WillFunctions::will_do_nothing($attribute_name);
+            $keys = array_keys($dets['keys']??[]);
+            if (in_array($key_name,$keys)) {
+                if ($is_also_protected) {
+                    if ( isset($dets[$key_name][static::OPTION_NO_SERIALIZATION])) {
+                        if ($dets[$key_name][static::OPTION_NO_SERIALIZATION]) {
+                            return true;
+                        }
+                    }
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
 

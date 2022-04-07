@@ -6,6 +6,7 @@ namespace app\models\tag\brief;
 
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
+use app\models\standard\FlowTagStandardAttribute;
 use app\models\tag\FlowTagAttribute;
 use JsonSerializable;
 use stdClass;
@@ -141,7 +142,7 @@ class BriefFlowTagAttribute  implements JsonSerializable {
     }
 
     public function to_array() : array {
-        return [
+        $what =  [
             "flow_tag_attribute_guid" => $this->flow_tag_attribute_guid,
             "flow_tag_guid" => $this->flow_tag_guid,
             "points_to_flow_entry_guid" => $this->points_to_flow_entry_guid,
@@ -154,6 +155,13 @@ class BriefFlowTagAttribute  implements JsonSerializable {
             "updated_at_ts" => $this->attribute_updated_at_ts
 
         ];
+
+        if (FlowTagStandardAttribute::isNameKey($this->tag_attribute_name,true)) {
+            unset($what["tag_attribute_long"]);
+            unset($what["tag_attribute_text"]);
+        }
+
+        return $what;
     }
 
     /**

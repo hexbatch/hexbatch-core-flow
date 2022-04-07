@@ -134,6 +134,8 @@ swiper at https://swiperjs.com/ for nice looking media display
 
 dropzone at https://docs.dropzone.dev/ for uploading files
 
+Tempus Dominus at https://getdatepicker.com/ for chosing date time
+
 ### installation uses npm
  Run `npm i` to install js dependencies that are not saved in the repo
  
