@@ -22,10 +22,10 @@ class MetaConverter extends BaseConverter {
             $raws = $this->getRawOfKey(IFlowTagStandardAttribute::META_KEY_DATETIME);
             $reversed_raws =array_reverse($raws);
             foreach ($reversed_raws as $rawly) {
-                if ($rawly->getLongVal() && $rawly->getLongVal() > 0) {
-                    return Carbon::createFromTimestamp($rawly->getLongVal())->setTimezone($tz)->toIso8601String();
-                } elseif ($rawly->getTextVal()) {
+                if ($rawly->getTextVal()) {
                     return  Carbon::parse($rawly->getTextVal())->setTimezone($tz)->toIso8601String();
+                } elseif($rawly->getLongVal() && $rawly->getLongVal() > 0) {
+                    return Carbon::createFromTimestamp($rawly->getLongVal())->setTimezone($tz)->toIso8601String();
                 }
             }
             return null;
