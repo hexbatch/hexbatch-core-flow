@@ -100,7 +100,9 @@ class RawAttributeSearch extends FlowBase {
                     attribute.tag_attribute_text            as text_val    ,
                     
                     t.parent_tag_id                         as parent_tag_id ,
-                    HEX(parent_t.flow_tag_guid)             as parent_tag_guid
+                    HEX(parent_t.flow_tag_guid)             as parent_tag_guid,
+                    HEX(project.flow_project_guid)          as project_guid,
+                    HEX(u.flow_user_guid)                   as owner_user_guid
        
                 FROM flow_tags t
                 INNER JOIN  (
@@ -139,6 +141,8 @@ class RawAttributeSearch extends FlowBase {
                 )  as driver ON driver.flow_tag_id = t.id  
                 LEFT JOIN flow_tags parent_t ON parent_t.id = t.parent_tag_id
                 LEFT JOIN flow_tag_attributes attribute on attribute.flow_tag_id = t.id
+                INNER JOIN flow_projects project on t.flow_project_id = project.id
+                INNER JOIN flow_users u on project.admin_flow_user_id = u.id
                 WHERE 1 
                 ORDER BY tag_id,attribute_id DESC ;
                 ";

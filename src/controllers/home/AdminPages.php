@@ -5,8 +5,6 @@ use app\controllers\base\BasePages;
 use app\helpers\AdminHelper;
 use app\helpers\SQLHelper;
 use app\hexlet\JsonHelper;
-use DI\DependencyException;
-use DI\NotFoundException;
 use Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -19,8 +17,7 @@ class AdminPages extends BasePages
      * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
-     * @throws DependencyException
-     * @throws NotFoundException
+     * @throws
      * @noinspection PhpUnused
      */
     public function test( ServerRequestInterface $request,ResponseInterface $response) :ResponseInterface {
@@ -63,7 +60,6 @@ class AdminPages extends BasePages
     }
 
     /**
-     * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
      * @noinspection PhpUnused

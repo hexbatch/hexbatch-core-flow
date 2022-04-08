@@ -11,7 +11,6 @@ use app\models\multi\GeneralSearch;
 use app\models\multi\GeneralSearchParams;
 use app\models\project\FlowProjectSearch;
 use app\models\project\FlowProjectSearchParams;
-use app\models\tag\FlowTag;
 use app\models\tag\FlowTagSearch;
 use app\models\tag\FlowTagSearchParams;
 use Exception;

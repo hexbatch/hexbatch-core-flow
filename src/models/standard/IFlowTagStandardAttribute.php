@@ -42,6 +42,14 @@ use app\models\tag\FlowTag;
  *
  * Options for a standard attribute are: copy if supplied a column of [db-table,column] to write to the db table :
  *      output will be json string
+ *
+ * Standards must have converters with an array of the converter class to instantiate and, once created, a public non static method
+ *      This should be inherited from BaseConverter and use the convert method
+ *
+ * Standards can have  gui pre-processing with a callable with key of  pre_process_for_gui
+ *      There is no convention for this, except the callable needs to accept the interface here as its only param
+ *          the output can return any object, or null, and this will be the new attribute value going to the gui
+ *          But, this is only used when calling the method of preProcessForGui function below
  */
 Interface IFlowTagStandardAttribute {
 
@@ -157,7 +165,8 @@ Interface IFlowTagStandardAttribute {
             self::META_KEY_WEBSITE => [] ,
         ],
         'name' => self::STD_ATTR_NAME_META,
-        'converter' => ['app\models\standard\converters\MetaConverter','convert']
+        'converter' => ['app\models\standard\converters\MetaConverter','convert'],
+        'pre_process_for_gui' => ['app\models\standard\converters\MetaConverter','pre_process_outbound'],
     ];
 
 
@@ -181,9 +190,18 @@ Interface IFlowTagStandardAttribute {
 
     public function getStandardValueToArray() : array;
 
+    /**
+     * does nothing  if there is nothing to process set in interface for the standard
+     * otherwise returns a copy that shows the changed
+     * @return IFlowTagStandardAttribute
+     */
+    public function preProcessForGui() : IFlowTagStandardAttribute;
+
     public static function getStandardAttributeKeys(string $name, bool $b_ignore_non_enumerated = true) : array;
     public static function getStandardAttributeNames() : array;
     public static function isNameKey(string $key_name,bool $is_also_protected = false ) : bool;
+
+
 
     /**
      * gets hash with guid of tag as key, and array of standard attributes as value

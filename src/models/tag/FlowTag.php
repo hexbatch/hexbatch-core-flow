@@ -68,7 +68,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
     public array $inherited_attributes = [];
 
     /**
-     * @var \app\models\standard\IFlowTagStandardAttribute[] $standard_attributes
+     * @var IFlowTagStandardAttribute[] $standard_attributes
      */
     protected array $standard_attributes = [];
 
@@ -76,8 +76,18 @@ class FlowTag extends FlowBase implements JsonSerializable {
         return $this->standard_attributes;
     }
 
+    /**
+     * @param IFlowTagStandardAttribute[] $what
+     * @return void
+     */
     public function setStandardAttributes(array $what) : void  {
-        $this->standard_attributes = $what;
+
+        $processed = [];
+        foreach ($what as $s) {
+            $s->preProcessForGui();
+            $processed[] = $s;
+        }
+        $this->standard_attributes = $processed;
     }
 
 

@@ -10,6 +10,7 @@ use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\project\FlowGitFile;
 use app\models\project\FlowProject;
+use app\models\project\FlowProjectFiles;
 use app\models\project\FlowProjectUser;
 use app\models\user\FlowUser;
 
@@ -380,13 +381,13 @@ class ProjectPages extends BasePages
             }
 
             if (empty($args['flow_project_git_hash'])) {
-                if ($project->get_head_commit_hash()) {
+                if ($project->getFlowProjectFiles()->get_head_commit_hash()) {
                     throw new InvalidArgumentException("Missing flow_project_git_hash");
                 }
             }
 
             $old_git_hash = $args['flow_project_git_hash'];
-            if ($project->get_head_commit_hash() !== $old_git_hash) {
+            if ($project->getFlowProjectFiles()->get_head_commit_hash() !== $old_git_hash) {
                 throw new InvalidArgumentException("Git hash is too old, project was saved since this page loaded");
             }
 
@@ -443,7 +444,7 @@ class ProjectPages extends BasePages
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");
             }
 
-            $resource_urls = $project->get_resource_urls();
+            $resource_urls = $project->getFlowProjectFiles()->get_resource_urls();
 
 
             return $this->view->render($response, 'main.twig', [
@@ -721,7 +722,7 @@ class ProjectPages extends BasePages
 
             if (intval($page) < 1) {$page = 1;}
 
-            $status_array = $project->get_git_status();
+            $status_array = $project->getFlowProjectFiles()->get_git_status();
 
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/project_history.twig',
@@ -774,7 +775,7 @@ class ProjectPages extends BasePages
 
             $b_show_all = (bool)intval($args['show_all'] ?? '1');
 
-            $project_directory = $project->get_project_directory();
+            $project_directory = $project->getFlowProjectFiles()->get_project_directory();
             $flow_file = new FlowGitFile($project_directory,$commit,$file_path);
             $diff = $flow_file->show_diff($b_show_all);
 
@@ -994,7 +995,7 @@ class ProjectPages extends BasePages
                 throw new HttpInternalServerErrorException($request,"Cannot rename temp folder");
             }
 
-            $project_directory_path = $project->get_project_directory();
+            $project_directory_path = $project->getFlowProjectFiles()->get_project_directory();
             new GoodZipArchive($project_directory_path,    $temp_file_path,$project->flow_project_title) ;
             $file_size = filesize($temp_file_path);
             if (!$file_size) {
@@ -1186,8 +1187,8 @@ class ProjectPages extends BasePages
             try {
 
                 $file_upload = $this->get_project_helper()->find_and_move_uploaded_file($request,'flow_resource_file');
-                $file_resource_path = $project->get_project_directory().
-                    DIRECTORY_SEPARATOR. FlowProject::REPO_RESOURCES_DIRECTORY.
+                $file_resource_path = $project->getFlowProjectFiles()->get_project_directory().
+                    DIRECTORY_SEPARATOR. FlowProjectFiles::REPO_RESOURCES_DIRECTORY.
                     DIRECTORY_SEPARATOR. $file_upload->getClientFilename();
                 $file_name = $file_upload->getClientFilename();
 
@@ -1195,7 +1196,7 @@ class ProjectPages extends BasePages
 
                 $project->commit_changes("Added resource file $file_name\n\nFile path is $file_resource_path");
 
-                $new_urls = $project->get_resource_urls([$file_resource_path]);
+                $new_urls = $project->getFlowProjectFiles()->get_resource_urls([$file_resource_path]);
                 $new_url = $new_urls[0];
                 $data = ['success'=>true,'message'=>'ok file upload','file_name'=>$file_name,'action' => 'upload_resource_file',
                             'new_file_path'=>$file_resource_path,'new_file_url' => $new_urls[0]];
@@ -1278,7 +1279,7 @@ class ProjectPages extends BasePages
                 if ($part === 'resources') {break;}
             }
             $file_part_path = implode(DIRECTORY_SEPARATOR,array_reverse($backwards_parts)) ;
-            $base_resource_file_path = $project->get_project_directory(); //no slash at end
+            $base_resource_file_path = $project->getFlowProjectFiles()->get_project_directory(); //no slash at end
             $test_file_path = $base_resource_file_path . DIRECTORY_SEPARATOR . $file_part_path;
             $real_file_path = realpath($test_file_path);
             if (!$real_file_path) {
@@ -1402,8 +1403,8 @@ class ProjectPages extends BasePages
             }
 
 
-            $resource_path = $project->get_project_directory(). DIRECTORY_SEPARATOR .
-                FlowProject::REPO_FILES_DIRECTORY . DIRECTORY_SEPARATOR . $resource ;
+            $resource_path = $project->getFlowProjectFiles()->get_project_directory(). DIRECTORY_SEPARATOR .
+                FlowProjectFiles::REPO_FILES_DIRECTORY . DIRECTORY_SEPARATOR . $resource ;
             if (!is_readable($resource_path)) {
                 throw new HttpNotFoundException($request,"Resource $resource NOT found in the resources directory of $project_name");
             }

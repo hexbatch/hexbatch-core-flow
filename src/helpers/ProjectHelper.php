@@ -2,9 +2,11 @@
 
 namespace app\helpers;
 
+use app\models\base\SearchParamBase;
 use app\models\entry\FlowEntrySearch;
 use app\models\entry\FlowEntrySearchParams;
 use app\models\project\FlowProject;
+use app\models\project\FlowProjectFiles;
 use app\models\project\FlowProjectSearch;
 use app\models\project\FlowProjectSearchParams;
 use app\models\project\FlowProjectUser;
@@ -164,7 +166,7 @@ class ProjectHelper extends BaseHelper {
             //copy entries
             $entry_search_params = new FlowEntrySearchParams();
             $entry_search_params->owning_project_guid = $origonal_project->flow_project_guid;
-            $entry_search_params->setPageSize(FlowEntrySearchParams::UNLIMITED_RESULTS_PER_PAGE);
+            $entry_search_params->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
             $entries = FlowEntrySearch::search($entry_search_params);
             foreach ($entries as $entry) {
                 $new_entry = $entry->clone_with_missing_data($origonal_project,$new_project);
@@ -189,26 +191,26 @@ class ProjectHelper extends BaseHelper {
                 $new_tag = $tag->clone_change_project($guid_map);
                 $guid_map[$tag->flow_tag_guid] = $new_tag->flow_tag_guid;
             }
-            $new_project->save_tag_yaml_and_commit(true);
+            $new_project->save_tag_yaml_and_commit();
 
 
 
             //copy resource folder
-            $original_file_resource_path = $origonal_project->get_resource_directory();
-            $new_file_resource_path = $new_project->get_resource_directory();
+            $original_file_resource_path = $origonal_project->getFlowProjectFiles()->get_resource_directory();
+            $new_file_resource_path = $new_project->getFlowProjectFiles()->get_resource_directory();
             //cp -rT src target
             $this->do_command("cp -rT $original_file_resource_path $new_file_resource_path");
-            $find_files = $new_project->get_resource_file_paths();
+            $find_files = $new_project->getFlowProjectFiles()->get_resource_file_paths();
             if (count($find_files)) {
                 $new_project->commit_changes("Added resources from original project");
             }
 
             //copy files folder
-            $original_file_resource_path = $origonal_project->get_files_directory();
-            $new_file_resource_path = $new_project->get_files_directory();
+            $original_file_resource_path = $origonal_project->getFlowProjectFiles()->get_files_directory();
+            $new_file_resource_path = $new_project->getFlowProjectFiles()->get_files_directory();
             //cp -rT src target
             $this->do_command("cp -rT $original_file_resource_path $new_file_resource_path");
-            $find_files = $new_project->get_resource_file_paths(true);
+            $find_files = $new_project->getFlowProjectFiles()->get_resource_file_paths(true);
             if (count($find_files)) {
                 $new_project->commit_changes("Added protected files from original project");
             }
@@ -290,7 +292,7 @@ class ProjectHelper extends BaseHelper {
             $params->setPermissionUserNameOrGuidOrId($flow_user_id);
             $params->setCanRead(true);
             $params->setPage(1);
-            $params->setPageSize(FlowProjectSearchParams::UNLIMITED_RESULTS_PER_PAGE);
+            $params->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
             $ret = FlowProjectSearch::find_projects($params);
 
             if ($this->user->flow_user_id) {
@@ -320,39 +322,39 @@ class ProjectHelper extends BaseHelper {
     }
 
     /**
-     * @param FlowProject $project
-     * @param string|null $bb_code
+     * @param FlowProjectFiles $project_files
+     * @param string|null $text
      * @return string|null
      * @throws Exception
      */
-    public function bb_code_from_file_paths(FlowProject $project,string $bb_code) : string {
-        if (!$bb_code) {return $bb_code;}
-        $start_of_resources_url = $project->get_resource_url() . '/';
+    public function stub_from_file_paths(FlowProjectFiles $project_files, string $text) : string {
+        if (!$text) {return $text;}
+        $start_of_resources_url = $project_files->get_resource_url() . '/';
 
-        $bb_code =
-            str_replace($start_of_resources_url,FlowProject::RESOURCE_PATH_STUB,$bb_code);
+        $text =
+            str_replace($start_of_resources_url,FlowProjectFiles::RESOURCE_PATH_STUB,$text);
 
 
-        $start_of_files_url = $project->get_files_url() . '/';
-        $bb_code =
-            str_replace($start_of_files_url,FlowProject::FILES_PATH_STUB,$bb_code);
-        return $bb_code;
+        $start_of_files_url = $project_files->get_files_url() . '/';
+        $text =
+            str_replace($start_of_files_url,FlowProjectFiles::FILES_PATH_STUB,$text);
+        return $text;
 
     }
 
     /**
-     * @param FlowProject $project
-     * @param string|null $bb_code
+     * @param FlowProjectFiles $project_files
+     * @param string|null $text
      * @return string|null
      * @throws Exception
      */
-    public function bb_code_to_file_paths(FlowProject $project,string $bb_code) : string {
-        if (!$bb_code) {return $bb_code;}
-        $start_of_resources_url = $project->get_resource_url() . '/';
-        $start_of_files_url = $project->get_files_url() . '/';
-        $bb_code = str_replace(FlowProject::RESOURCE_PATH_STUB,$start_of_resources_url,$bb_code);
-        $bb_code = str_replace(FlowProject::FILES_PATH_STUB,$start_of_files_url,$bb_code);
-        return $bb_code;
+    public function stub_to_file_paths(FlowProjectFiles $project_files, string $text) : string {
+        if (!$text) {return $text;}
+        $start_of_resources_url = $project_files->get_resource_url() . '/';
+        $start_of_files_url = $project_files->get_files_url() . '/';
+        $text = str_replace(FlowProjectFiles::RESOURCE_PATH_STUB,$start_of_resources_url,$text);
+        $text = str_replace(FlowProjectFiles::FILES_PATH_STUB,$start_of_files_url,$text);
+        return $text;
 
 
     }
