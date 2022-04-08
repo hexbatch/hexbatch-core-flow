@@ -34,6 +34,7 @@
     "lodash": "^4.17.21",
     "sceditor": "^3.0.0",
     "select2": "^4.1.0-rc.0",
+    "simplelightbox": "^2.10.3",
     "sweetalert2": "^11.1.9",
     "swiper": "^8.0.7",
     "tingle.js": "^0.16.0",

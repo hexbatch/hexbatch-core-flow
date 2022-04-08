@@ -694,6 +694,10 @@ class FlowProject extends FlowBase implements JsonSerializable {
             if (mb_strlen($this->flow_project_blurb) > static::MAX_SIZE_BLURB) {
                 throw new InvalidArgumentException("Project Blurb cannot be more than ".static::MAX_SIZE_BLURB." characters");
             }
+            if ($this->flow_project_blurb) {
+                $this->flow_project_blurb = htmlspecialchars($this->flow_project_blurb,
+                    ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5,'UTF-8',false);
+            }
 
             $b_match = static::check_valid_title($this->flow_project_title);
             if (!$b_match) {

@@ -13,7 +13,7 @@ function edit_standard_meta(tag,success_callback,fail_callback) {
     let meta = tag.standard_attributes.meta;
 
 
-    let card = $("div#standard-meta-edit-templates > div.standard-meta-card ").clone();
+    let card = $("div#standard-meta-edit-templates > div.standard-meta-edit-card ").clone();
     let editing_div_id = 'meta-editor-'+uuid.v4();
     card.attr('id',editing_div_id);
     card.attr('id')
@@ -30,9 +30,26 @@ function edit_standard_meta(tag,success_callback,fail_callback) {
     let date_picker = card.find(`input[name=meta_date_time_picker]`);
     date_picker.val(meta.meta_date_time);
 
-    let image_preview = card.find('img.meta-picture-preview');
+
+
+    function set_preview_pic(url) {
+        let meta_node = card.find('.meta-image');
+        meta_node.removeClass('d-none').addClass('d-inline');
+
+        let meta_image = meta_node.find('img');
+        meta_image.attr('src',url);
+
+        let meta_link = meta_node.find('a.meta_picture_url');
+        meta_link.attr('href',url);
+
+        if (meta_link.simpleLightbox()) {
+            meta_link.simpleLightbox().destroy();
+        }
+        meta_link.simpleLightbox({nav:false,captions:false,loop:false});
+
+    }
     if (meta.meta_picture_url) {
-        image_preview.attr('src',meta.meta_picture_url);
+        set_preview_pic(meta.meta_picture_url)
     }
 
     // noinspection JSUnresolvedVariable
@@ -127,7 +144,10 @@ function edit_standard_meta(tag,success_callback,fail_callback) {
                 if (response.success) {
                     let url_holder = card.find(`input[name=meta_picture_url]`);
                     url_holder.val(response.new_file_url);
-                    image_preview.attr('src',response.new_file_url);
+
+                    if (response.new_file_url) {
+                        set_preview_pic(response.new_file_url)
+                    }
                     my_swal.fire(
                         'File Uploaded',
                         response.file_name +' Was Uploaded',

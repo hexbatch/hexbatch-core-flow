@@ -1,0 +1,8 @@
+database:
+  database: db name
+  user: db user
+  password: pwrod
+  hostport: port to database
+  charset: utf8mb4
+  collation: utf8mb4_0900_ai_ci
+  host: host name to db

@@ -136,13 +136,16 @@ dropzone at https://docs.dropzone.dev/ for uploading files
 
 Tempus Dominus at https://getdatepicker.com/ for chosing date time
 
+SimpleLightbox at https://simplelightbox.com/ for showing original image when clicking on thumbnail
+
 ### installation uses npm
  Run `npm i` to install js dependencies that are not saved in the repo
  
 
 ## Environmental Notes
 
-The database connection is set as constants in the flow-config.php (not included in the repo):
+The database connection is set as constants in the config/database.yaml (not included in the repo) 
+but example at config/database-example.yaml , so can copy, fill that in, and rename
 
 
 ### php ini and xdebug    

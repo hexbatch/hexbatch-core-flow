@@ -413,7 +413,10 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                 sprintf("Blurb Must be %s or less characters ",static::LENGTH_ENTRY_BLURB)
             );
         }
-
+        if ($safe_what) {
+            $safe_what = htmlspecialchars($safe_what,
+                ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5,'UTF-8',false);
+        }
         $this->flow_entry_blurb = $safe_what;
     }
 

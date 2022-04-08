@@ -2,7 +2,7 @@
 <div class="d-none " id="standard-meta-edit-templates">
 
 
-    <div class="card d-inline standard-meta-card">
+    <div class="card d-inline standard-meta-edit-card">
 
         <div class="card-title mb-2">
             <h4 class="pt-1">
@@ -21,6 +21,9 @@
                 <div class="col-12 col-md-6">
                     <label for="meta_author">
                         Author
+                        <span class="small ms-2" style="font-style: italic">
+                            Author linked to email if provided
+                        </span>
                     </label>
                     <input type="text"  id="meta_author" name="meta_author"
                            class="form-control" placeholder="Author"
@@ -55,8 +58,10 @@
 
                 <div class="col-12 ">
                     <div class="d-flex justify-content-center ">
-                        <div class="d-inline" style="width: 8em">
-                            <img src="" class="img-fluid img-thumbnail meta-picture-preview" alt="Image for meta">
+                        <div class="d-none meta-image" >
+                            <a href="#" class="meta_picture_url">
+                                <img src="" class="img-fluid img-thumbnail meta-picture-preview" alt="Image for meta">
+                            </a>
                         </div>
 
                     </div>

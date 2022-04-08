@@ -4,6 +4,7 @@ namespace app\models\standard\converters;
 
 use app\helpers\ProjectHelper;
 use app\helpers\Utilities;
+use app\hexlet\JsonHelper;
 use app\models\project\FlowProjectFiles;
 use app\models\standard\IFlowTagStandardAttribute;
 use Carbon\Carbon;
@@ -43,7 +44,32 @@ class MetaConverter extends BaseConverter {
                 $reversed_raws =array_reverse($raws);
                 $target = $reversed_raws[0];
                 $files = new FlowProjectFiles($target->getProjectGuid(),$target->getOwnerUserGuid());
-                return ProjectHelper::get_project_helper()->stub_from_file_paths($files,$target->getTextVal());
+                $outbound =  ProjectHelper::get_project_helper()->stub_from_file_paths($files,$target->getTextVal());
+                if ($outbound) {
+                    $outbound = strip_tags(JsonHelper::to_utf8($outbound));
+                }
+                return $outbound;
+            }
+            case IFlowTagStandardAttribute::META_KEY_PUBLIC_EMAIL:
+            case IFlowTagStandardAttribute::META_KEY_WEBSITE: {
+                $outbound = parent::getFinalOfKey($key);
+                if ($outbound) {
+                    $outbound = strip_tags(JsonHelper::to_utf8($outbound));
+                }
+                return $outbound;
+            }
+            case IFlowTagStandardAttribute::META_KEY_FIRST_NAME:
+            case IFlowTagStandardAttribute::META_KEY_LAST_NAME:
+            case IFlowTagStandardAttribute::META_KEY_AUTHOR:
+            case IFlowTagStandardAttribute::META_KEY_VERSION:
+
+             {
+                $outbound = parent::getFinalOfKey($key);
+                 if ($outbound) {
+                     $outbound = htmlspecialchars(JsonHelper::to_utf8($outbound),
+                         ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5,'UTF-8',false);
+                 }
+                 return $outbound;
             }
         }
 
@@ -67,6 +93,33 @@ class MetaConverter extends BaseConverter {
         $files = new FlowProjectFiles($a->getProjectGuid(),$a->getOwnerUserGuid());
         $original->$image_url_property_name =
             ProjectHelper::get_project_helper()->stub_to_file_paths($files,$original->$image_url_property_name);
+
+        $keys_to_encode = [
+            IFlowTagStandardAttribute::META_KEY_FIRST_NAME,
+            IFlowTagStandardAttribute::META_KEY_LAST_NAME,
+            IFlowTagStandardAttribute::META_KEY_AUTHOR,
+            IFlowTagStandardAttribute::META_KEY_VERSION
+
+        ];
+        foreach ($keys_to_encode as $a_key) {
+            if ($original->$a_key) {
+                $original->$a_key = htmlspecialchars(JsonHelper::to_utf8($original->$a_key),
+                    ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5,'UTF-8',false);
+            }
+        }
+
+        $keys_to_strip = [
+            IFlowTagStandardAttribute::META_KEY_PICTURE_URL,
+            IFlowTagStandardAttribute::META_KEY_WEBSITE,
+            IFlowTagStandardAttribute::META_KEY_PUBLIC_EMAIL
+        ];
+
+        foreach ($keys_to_strip as $a_key) {
+            if ($original->$a_key) {
+                $original->$a_key = strip_tags(JsonHelper::to_utf8($original->$a_key));
+            }
+        }
+
         return $original;
     }
 
