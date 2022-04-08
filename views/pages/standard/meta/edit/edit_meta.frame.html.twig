@@ -16,6 +16,7 @@
         </div>
 
         <div class="card-body">
+
             <div class="row">
                 <div class="col-12 col-md-6">
                     <label for="meta_author">
@@ -38,23 +39,47 @@
                 </div>
 
 
-                <div class="col-12 col-md-6">
+                <div class="col-12 ">
                     <label for="meta_picture_url">
                         Picture
+                        <span class="small ms-2" style="font-style: italic">
+                            Drag and Drop Image to Form
+                        </span>
                     </label>
                     <input type="url"  id="meta_picture_url" name="meta_picture_url"
                            class="form-control" placeholder="Picture Url"
                            value=""
                     >
+
+                </div>
+
+                <div class="col-12 ">
+                    <div class="d-flex justify-content-center ">
+                        <div class="d-inline" style="width: 8em">
+                            <img src="" class="img-fluid img-thumbnail meta-picture-preview" alt="Image for meta">
+                        </div>
+
+                    </div>
                 </div>
 
 
-                <div class="col-12 col-md-6">
+
+                <div class="col-12 col-md-9">
                     <label for="meta_website">
                         Web Site URL
                     </label>
                     <input type="url"  id="meta_website" name="meta_website"
                            class="form-control" placeholder="Website Url"
+                           value=""
+                    >
+                </div>
+
+                <div class="col-12 col-md-3">
+                    <label for="meta_version">
+                        Version
+                    </label>
+                    <input type="text"  id="meta_version" name="meta_version"
+                           class="form-control" placeholder="Version String"
                            value=""
                     >
                 </div>
@@ -94,15 +119,7 @@
                     >
                 </div>
 
-                <div class="col-12 col-md-6">
-                    <label for="meta_version">
-                        Version
-                    </label>
-                    <input type="text"  id="meta_version" name="meta_version"
-                           class="form-control" placeholder="Version String"
-                           value=""
-                    >
-                </div>
+
 
                 <div class="col-12">
                     <div class="mt-2 d-flex justify-content-center">
@@ -111,6 +128,10 @@
                         </button>
                     </div>
 
+                </div>
+
+                <div class="col-12">
+                    <div class="dropzone-previews form-group" id="dropzonePreview"></div>
                 </div>
 
             </div> <!-- /.row -->

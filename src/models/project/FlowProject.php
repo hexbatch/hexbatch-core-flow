@@ -9,7 +9,6 @@ use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\base\SearchParamBase;
 use app\models\entry\archive\FlowEntryArchive;
-use app\models\multi\GeneralSearch;
 use app\models\tag\brief\BriefCheckValidYaml;
 use app\models\tag\brief\BriefDiffFromYaml;
 use app\models\tag\brief\BriefUpdateFromYaml;
@@ -20,6 +19,7 @@ use app\models\tag\FlowTag;
 use Carbon\Carbon;
 use Exception;
 use InvalidArgumentException;
+use JsonSerializable;
 use LogicException;
 use Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
@@ -30,7 +30,7 @@ use Symfony\Component\Yaml\Yaml;
  * views
  * @uses \app\models\project\FlowProject::get_read_me_bb_code_with_paths()
  */
-class FlowProject extends FlowBase {
+class FlowProject extends FlowBase implements JsonSerializable {
 
     const TABLE_NAME = 'flow_projects';
 
@@ -324,6 +324,17 @@ class FlowProject extends FlowBase {
         }
     }
 
+    public function jsonSerialize() : array
+    {
+        return [
+            'admin_user'=>$this->admin_user,
+            'flow_project_title'=>$this->flow_project_title,
+            'flow_project_guid'=>$this->flow_project_guid,
+            'created_at_ts'=>$this->created_at_ts,
+            'flow_project_blurb'=>$this->flow_project_blurb,
+
+        ];
+    }
     /**
      * @param null|array|object $object
      * @throws Exception
@@ -1267,24 +1278,38 @@ class FlowProject extends FlowBase {
     }
 
 
-
     /**
      * returns array of full url paths of any resources found that is sharable (png,jpg,jpeg,pdf)
+     * @param array $resource_file_paths_given option to list
      * @return string[]
-     * @throws
+     * @throws Exception
      */
-    public function get_resource_urls(): array{
+    public function get_resource_urls(array $resource_file_paths_given = []): array{
         $resource_files = $this->get_resource_file_paths();
+
+        if (empty($resource_file_paths_given)) {
+            $resource_files_used = $resource_files;
+        } else {
+            $resource_files_used = [];
+            foreach ($resource_file_paths_given as $full_given_path) {
+                if (in_array($full_given_path,$resource_files)) {
+                    $resource_files_used[] = $full_given_path;
+                }
+            }
+        }
+
 
         $base_resource_file_path = $this->get_resource_directory(); //no slash at end
         $base_project_url = $this->get_resource_url();
         $resource_urls = [];
-        foreach ($resource_files as $full_path_file) {
+        foreach ($resource_files_used as $full_path_file) {
             $full_url = str_replace($base_resource_file_path,$base_project_url,$full_path_file);
             $resource_urls[] = $full_url;
         }
         return $resource_urls;
     }
+
+
 
 
 }

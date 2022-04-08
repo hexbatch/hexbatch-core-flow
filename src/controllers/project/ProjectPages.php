@@ -1156,25 +1156,35 @@ class ProjectPages extends BasePages
      * @param string $project_name
      * @return ResponseInterface
      * @throws Exception
-     * @noinspection PhpUnused
+     *
      */
     public function upload_resource_file(ServerRequestInterface $request,ResponseInterface $response,
                                      string $user_name, string $project_name) :ResponseInterface {
 
         $file_name = null;
+        $new_url = null;
+        $new_token = null;
         try {
-            $csrf = new AntiCSRF;
             $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, FlowProjectUser::PERMISSION_COLUMN_WRITE);
 
-            if (!empty($_POST)) {
-                if (!$csrf->validateRequest()) {
-                    throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
-                }
+            $args = $request->getParsedBody();
+            $b_rootless_auth = isset($args['b_use_rootless_auth']) && JsonHelper::var_to_boolean($args['b_use_rootless_auth']);
+
+            if ($b_rootless_auth) {
+                $csrf = new FlowAntiCSRF($args,$_SESSION,FlowAntiCSRF::$fake_server);
+                $new_token = $csrf->getTokenArray();
+            } else {
+                $csrf = new FlowAntiCSRF($args);
+            }
+            if (!$csrf->validateRequest()) {
+                throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
             }
 
 
 
+
             try {
+
                 $file_upload = $this->get_project_helper()->find_and_move_uploaded_file($request,'flow_resource_file');
                 $file_resource_path = $project->get_project_directory().
                     DIRECTORY_SEPARATOR. FlowProject::REPO_RESOURCES_DIRECTORY.
@@ -1185,7 +1195,12 @@ class ProjectPages extends BasePages
 
                 $project->commit_changes("Added resource file $file_name\n\nFile path is $file_resource_path");
 
-                $data = ['success'=>true,'message'=>'ok file upload','file-name'=>$file_name,'new_file_path'=>$file_resource_path];
+                $new_urls = $project->get_resource_urls([$file_resource_path]);
+                $new_url = $new_urls[0];
+                $data = ['success'=>true,'message'=>'ok file upload','file_name'=>$file_name,'action' => 'upload_resource_file',
+                            'new_file_path'=>$file_resource_path,'new_file_url' => $new_urls[0]];
+
+                $data['token'] = $new_token;
                 $payload = JsonHelper::toString($data);
 
                 $response->getBody()->write($payload);
@@ -1198,8 +1213,12 @@ class ProjectPages extends BasePages
             }
         } catch (Exception $e) {
             try {
+                $data = ['success'=>false,'message'=>($file_name??'') .': '.$e->getMessage(),
+                            'file_name'=>($file_name??''),'action' => 'upload_resource_file',
+                            'new_file_path'=>($file_resource_path??''),'new_file_url' => $new_url
 
-                $data = ['success'=>false,'message'=>($file_name??'') .': '.$e->getMessage()];
+                ];
+                $data['token'] = $new_token;
                 $payload = JsonHelper::toString($data);
 
                 $response->getBody()->write($payload);

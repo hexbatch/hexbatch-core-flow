@@ -14,6 +14,9 @@ function edit_standard_meta(tag,success_callback,fail_callback) {
 
 
     let card = $("div#standard-meta-edit-templates > div.standard-meta-card ").clone();
+    let editing_div_id = 'meta-editor-'+uuid.v4();
+    card.attr('id',editing_div_id);
+    card.attr('id')
     let title_tag = card.find('.flow-edit-this-meta-tag');
     title_tag.text(tag.flow_tag_name);
     title_tag.data('tag_guid', tag.flow_tag_guid);
@@ -26,6 +29,11 @@ function edit_standard_meta(tag,success_callback,fail_callback) {
     let date_time_holder = card.find(`input[name=meta_date_time]`);
     let date_picker = card.find(`input[name=meta_date_time_picker]`);
     date_picker.val(meta.meta_date_time);
+
+    let image_preview = card.find('img.meta-picture-preview');
+    if (meta.meta_picture_url) {
+        image_preview.attr('src',meta.meta_picture_url);
+    }
 
     // noinspection JSUnresolvedVariable
     new tempusDominus.TempusDominus(date_picker[0],{
@@ -47,6 +55,99 @@ function edit_standard_meta(tag,success_callback,fail_callback) {
 
     })
 
+    jQuery(function(){
+
+        const url_to_action_template = "{{  url_for('project_upload_resource_file',{user_name: 'yyy' ,project_name: 'xxx'} ) }}";
+        let url_to_action = url_to_action_template.replace('yyy',tag.flow_project.admin_user.flow_user_name).
+                                                    replace('xxx',tag.flow_project.flow_project_guid);
+
+        let myDropzone = new Dropzone("div#"+ editing_div_id, {
+            url: url_to_action,
+
+            paramName: "flow_resource_file", // The name that will be used to transfer the file
+            maxFilesize: 10 , // MB
+            previewpreviewsContainer: "#dropzonePreview",
+            clickable: false,
+            createImageThumbnails : true
+
+        });
+
+        myDropzone.on('sending', function(file, xhr, formData){
+            let extra_params = { b_use_rootless_auth: true };
+            set_object_with_flow_ajax_token_data(extra_params);
+            for(let param_name in extra_params) {
+                if (!extra_params.hasOwnProperty(param_name)) {continue;}
+                formData.append(param_name, extra_params[param_name]);
+            }
+
+        });
+
+        myDropzone.on("error",
+
+            /**
+             *
+             * @param file
+             * @param {FlowUploadResourceResponse} response
+             */
+            function(file, response) {
+                let message;
+                if (_.isObject(response)) {
+                    message = response.message;
+                    if (response && response.token) {
+                        update_root_flow_ajax_token(response.token);
+                    }
+                } else {
+                    message = response;
+                }
+
+                my_swal.fire(
+                    'Oh No!',
+                    'File could not be uploaed<br>\n ' + message,
+                    'error'
+                )
+             }
+            );
+
+
+        myDropzone.on("success",
+            /**
+             *
+             * @param file
+             * @param {FlowUploadResourceResponse} response
+             */
+            function(file,response) {
+                if (!response) {
+                    my_swal.fire(
+                        'Oh No!',
+                        'File could not be uploaed and there was no reason why',
+                        'error'
+                    )
+                    return;
+                }
+                if (response.success) {
+                    let url_holder = card.find(`input[name=meta_picture_url]`);
+                    url_holder.val(response.new_file_url);
+                    image_preview.attr('src',response.new_file_url);
+                    my_swal.fire(
+                        'File Uploaded',
+                        response.file_name +' Was Uploaded',
+                        'success'
+                    )
+                } else {
+                    my_swal.fire(
+                        'Oh No!',
+                        'File could not be uploaed<br>\n ' + response.message,
+                        'error'
+                    )
+                }
+                if (response && response.token) {
+                    update_root_flow_ajax_token(response.token);
+                }
+            }
+        );
+
+
+    });
 
     let save_button = card.find(`button.action-meta-save`);
     save_button.on('click',function() {

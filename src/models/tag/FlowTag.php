@@ -6,6 +6,7 @@ namespace app\models\tag;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
+use app\models\project\FlowProject;
 use app\models\standard\FlowTagStandardAttribute;
 use app\models\standard\IFlowTagStandardAttribute;
 use app\models\tag\brief\BriefFlowTag;
@@ -24,6 +25,9 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
     public ?int $flow_tag_id;
     public ?int $flow_project_id;
+
+    public ?FlowProject $flow_project;
+
     public ?int $parent_tag_id;
     public ?int $tag_created_at_ts;
     public ?int $tag_updated_at_ts;
@@ -104,7 +108,8 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 "css" => $standard_attribute_map['css'] ?? (object)[],
                 "standard_attributes" => $standard_attribute_map,
                 "flow_tag_parent" => $this->flow_tag_parent,
-                "applied" => $this->applied
+                "applied" => $this->applied,
+                'flow_project' => $this->flow_project
             ];
         }
 
@@ -158,6 +163,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
         $this->parent_tag_guid = null ;
         $this->flow_tag_parent = null;
         $this->children_list_as_string = null;
+        $this->flow_project = null;
 
         if (empty($object)) {
             return;

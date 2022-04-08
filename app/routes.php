@@ -102,6 +102,8 @@ return function (App $app) {
                     $group->post('/import', ['projectPages', 'import_from_git'])->setName('project_import_from_git');
                     $group->post('/import_from_file', ['projectPages', 'import_from_file'])->setName('project_import_from_file');
                     $group->get('/resources/', ['projectPages', 'resources'])->setName('project_resources');
+
+                    /** @uses \app\controllers\project\ProjectPages::upload_resource_file() */
                     $group->post('/resources', ['projectPages', 'upload_resource_file'])->setName('project_upload_resource_file');
                     $group->post('/resources_delete', ['projectPages', 'delete_resource_file'])->setName('project_delete_resource_file');
                 })->add('checkLoggedInMiddleware');
@@ -127,6 +129,7 @@ return function (App $app) {
                     $group->get('/{tag_name:[[:alnum:]\-]+}/show', ['tagPages', 'show_tag'])->setName('show_tag');
 
                     //tags in project , no matter how they are used or attached to
+                    /** @uses \app\controllers\tag\TagPages::get_tags() */
                     $group->get('/get', ['tagPages', 'get_tags'])->setName('get_tags_ajax');
 
                     $group->group('', function (RouteCollectorProxy $group) use ($container) {

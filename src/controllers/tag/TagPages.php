@@ -137,6 +137,8 @@ class TagPages extends BasePages
             $matches = FlowTagSearch::get_tags($search_params);
             $routeParser = RouteContext::fromRequest($request)->getRouteParser();
             foreach ($matches as $mtag) {
+                $mtag->flow_project = $project;
+
                 foreach ($mtag->applied as $mapp) {
                     $mapp->set_link_for_tagged($routeParser);
                 }

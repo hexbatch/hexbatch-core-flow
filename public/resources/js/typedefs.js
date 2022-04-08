@@ -1,4 +1,17 @@
 
+
+/**
+ *
+ * @typedef {Object} FlowProject
+ * @property {?FlowUser} admin_user
+ * @property {?string} flow_project_title
+ * @property {?string} flow_project_guid
+ * @property {?string} flow_project_blurb
+ * @property {?number} created_at_ts
+
+
+ */
+
 /**
  *
  * @typedef {Object} FlowProjectUser
@@ -124,6 +137,7 @@
  * @property {Object.<string, string>} css
  * @property {?FlowTag} flow_tag_parent
  * @property {FlowTagApplied[]} applied
+ * @property {?FlowProject} flow_project
  */
 
 
@@ -246,6 +260,16 @@
  * @property {?string} action
  * @property {?string} standard_name
  * @property {?Object} standard_data
+ */
+
+
+/**
+ *
+ * @typedef {FlowBasicResponse} FlowUploadResourceResponse
+ * @property {?string} action
+ * @property {?string} file_name
+ * @property {?string} new_file_path
+ * @property {?Object} new_file_url
  */
 
 
