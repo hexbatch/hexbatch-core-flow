@@ -8,5 +8,26 @@ div.standard-meta-edit-card a.meta_picture_url img {
 }
 
 
+/*css*/
+
+div.standard-css-edit-card select.select-font-now {
+    font-size: 30px;
+}
+
+div.standard-css-edit-card .flow-color-palette {
+    margin: 3px;
+    padding: 3px;
+    background-color: #FFF;
+}
+
+div.standard-css-edit-card  .flow-color-palette .thing {
+    width: 30px;
+    height: 30px;
+    margin: 3px;
+    position: relative;
+    border: 1px solid #DDD;
+    transition: all 0.2s;
+}
+
 
 

@@ -1,0 +1,102 @@
+
+<div class="d-none " id="standard-git-edit-templates">
+
+
+    <div class="card d-inline standard-git-edit-card">
+
+        <div class="card-title mb-2">
+            <h4 class="pt-1">
+                Edit Git Settings for Tag
+                <span class="flow-edit-this-git-tag flow-tag-display fw-bold" data-tag_guid=""></span>
+            </h4>
+        </div>
+
+        <div class="card-header">
+            Edit git fields
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+                <div class="col-12 col-md-12">
+                    <label for="git_url">
+                        Repository URL
+                        <span class="small ms-2 fst-italic">
+                            Allowed sites are
+                            {% for git_host in  supported_git_hosts %}
+                                <span class="me-1">{{ git_host }}</span>
+                            {% endfor %}
+                        </span>
+                    </label>
+                    <input type="url"  id="git_url" name="git_url"
+                           class="form-control" placeholder="Repository URL"
+                           value=""
+                    >
+                </div>
+
+                <div class="col-12 col-md-12">
+                    <label for="git_branch">
+                        Remote Git Branch to push or pull from
+                        <span class="small ms-2 fst-italic">
+                            Defaults to master if left blank
+                        </span>
+                    </label>
+                    <input type="text"  id="git_branch" name="git_branch"
+                           class="form-control" placeholder="Branch to Use"
+                           value=""
+                    >
+                </div>
+
+
+                <div class="col-12 ">
+                    <label for="git_ssh_key">
+                        Private Key to access this repo
+                        <span class="small ms-2 fst-italic">
+                           Make sure the key permissions match the operations here
+                        </span>
+                    </label>
+                    <textarea id="git_ssh_key" name="git_ssh_key" rows="12"
+                           class="form-control" placeholder="SSH PRIVATE KEY"
+                    ></textarea>
+
+                </div>
+
+                <div class="col-12 ">
+                    <label for="git_notes">
+                        Any title or notes
+                    </label>
+                    <textarea  id="git_notes" name="git_notes"
+                              class="form-control" placeholder="Any Notes"
+                    ></textarea>
+
+                </div>
+
+
+                <div class="col-12 col-md-9">
+                    <label for="git_web_page">
+                        Repo Web Page
+                    </label>
+                    <input type="url"  id="git_web_page" name="git_web_page"
+                           class="form-control" placeholder="Repo Web Page Url"
+                           value=""
+                    >
+                </div>
+
+
+
+                <div class="col-12">
+                    <div class="mt-2 d-flex justify-content-center">
+                        <button type="button" class="action-git-save btn btn-primary">
+                            Save Git Info
+                        </button>
+                    </div>
+
+                </div>
+
+
+            </div> <!-- /.row -->
+
+        </div><!-- /.card-body -->
+    </div><!-- /.card.col -->
+
+</div>

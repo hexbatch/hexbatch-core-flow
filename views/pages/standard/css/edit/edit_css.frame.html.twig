@@ -1,0 +1,111 @@
+
+<div class="d-none " id="standard-css-edit-templates">
+
+
+    <div class="card d-inline standard-css-edit-card">
+
+        <div class="card-title mb-2">
+            <h4 class="pt-1">
+                Edit CSS Settings for Tag
+                <span class="flow-edit-this-git-tag flow-tag-display fw-bold" data-tag_guid=""></span>
+            </h4>
+        </div>
+
+        <div class="card-header">
+            Edit CSS colors and font face
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+                <div class="col-6 color-thing color-div">
+                    <label for="color">
+                        Foreground Color
+                    </label>
+                    <input type="color"  id="color" name="color"
+                           class="form-control" placeholder="Forground Color"
+                           value=""
+                    >
+
+                    <div class="d-none color-not-set">
+                        Foreground color is not set
+                    </div>
+
+                    <div class="d-none color-set">
+                        <span>Color is set</span>
+
+                        <button class="btn btn-secondary action-unset-color">
+                            Unset Color
+                        </button>
+                    </div>
+
+                </div>
+
+
+
+
+                <div class="col-6 background-color-thing color-div">
+                    <label for="backgroundColor">
+                        Background Color
+                    </label>
+                    <input type="color"  id="backgroundColor" name="backgroundColor"
+                           class="form-control" placeholder="Background Color"
+                           value=""
+                    >
+
+
+                    <div class="d-none color-not-set">
+                        Background color is not set
+                    </div>
+
+                    <div class="d-none color-set">
+                        <span>Background is set</span>
+
+                        <button class="btn btn-secondary action-unset-backgound-color">
+                            Unset Color
+                        </button>
+                    </div>
+
+                </div>
+
+
+
+
+                <div class="col-12 ">
+                    <label for="fontFamily">
+                        Font Family
+                    </label>
+                    <select class = 'select-font-now'  name= "fontFamily" id="fontFamily" title="Select Font">
+                    </select>
+
+                    <div id = "font-family-preview-text" class="card text-white bg-dark mt-2 ms-5 p-2">
+                        <h1 id = "h1">Grumpy wizards make toxic brew for the evil Queen and Jack.</h1>
+                        <h2 id = "h2">Grumpy wizards make toxic brew for the evil Queen and Jack.</h2>
+                        <h3 id = "h3">Grumpy wizards make toxic brew for the evil Queen and Jack.</h3>
+                        <h4 id = "h4">Grumpy wizards make toxic brew for the evil Queen and Jack.</h4>
+                        <div id = "standard">Grumpy wizards make toxic brew for the evil Queen and Jack.</div><br>
+                        <div class="small">Grumpy wizards make toxic brew for the evil Queen and Jack.</div><br>
+                    </div>
+
+
+                    <div id="flow-font-place-be"></div>
+                </div>
+
+
+
+                <div class="col-12">
+                    <div class="mt-2 d-flex justify-content-center">
+                        <button type="button" class="action-css-save btn btn-primary">
+                            Save CSS
+                        </button>
+                    </div>
+
+                </div>
+
+
+            </div> <!-- /.row -->
+
+        </div><!-- /.card-body -->
+    </div><!-- /.card.col -->
+
+</div>

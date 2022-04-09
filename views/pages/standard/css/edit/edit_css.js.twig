@@ -1,0 +1,176 @@
+/**
+ *
+ * @param {FlowTag} tag
+ * @param {?FlowStandardCallback} success_callback
+ * @param {?FlowStandardCallback} fail_callback
+ */
+function edit_standard_css(tag,success_callback,fail_callback) {
+    /**
+     * @type {StandardCss} css
+     */
+    let css ;
+    if (tag.standard_attributes.hasOwnProperty('css')) {
+        css = tag.standard_attributes.css;
+    } else {
+        css = create_proxy_standard_css();
+    }
+
+    css = _.merge(create_proxy_standard_css(),css);
+
+
+
+
+    let card = $("div#standard-css-edit-templates > div.standard-css-edit-card ").clone();
+    let editing_div_id = 'css-editor-'+uuid.v4();
+    card.attr('id',editing_div_id);
+    card.attr('id')
+    let title_tag = card.find('.flow-edit-this-git-tag');
+    title_tag.text(tag.flow_tag_name);
+    title_tag.data('tag_guid', tag.flow_tag_guid);
+
+
+    {
+        let fonts_to_look_at = [
+            "Roboto",
+            "Open+Sans",
+            "Space Mono",
+            "Lato",
+            "Montserrat",
+            "Oswald",
+            "Raleway",
+            "Merriweather",
+            "Inconsolata",
+            "Allura",
+            "Sigmar One",
+            "Gloria Hallelujah",
+
+            "Montez","Lobster","Josefin Sans","Shadows Into Light","Pacifico","Amatic SC", "Orbitron",
+            "Rokkitt","Righteous","Dancing Script","Bangers","Chewy","Sigmar One","Architects Daughter",
+            "Abril Fatface","Covered By Your Grace","Kaushan Script","Gloria Hallelujah","Satisfy",
+            "Lobster Two","Comfortaa","Cinzel","Courgette"
+
+        ];
+
+
+        let select_jq = card.find("select.select-font-now");
+        let select = select_jq[0];
+
+        let opt = document.createElement('option');
+        opt.value = '';
+        opt.innerHTML = '(no font selected)';
+        select.add(opt);
+
+        for(var a = 0; a < fonts_to_look_at.length ; a++){
+            let opt = document.createElement('option');
+            opt.value = opt.innerHTML = fonts_to_look_at[a];
+            opt.style.fontFamily = fonts_to_look_at[a];
+            select.add(opt);
+        }
+
+        select_jq.on('change',function() {
+
+            let val_font_name = $(this).val();
+            let place_be = document.getElementById("flow-font-place-be");
+            place_be.insertAdjacentHTML("beforeend",
+                "<style> #font-family-preview-text{ font-family:'"+val_font_name+"';}"+
+                "select#fontFamily{font-family:'"+val_font_name+"';</style>");
+        });
+
+    }
+
+    {
+        let button_reset_background_color = card.find(`button.action-unset-backgound-color`);
+        button_reset_background_color.on('click',function() {
+           let input = $(this).closest('div.color-div').find('input[type=color]');
+           input.val('');
+        });
+
+        let button_reset_color = card.find(`button.action-unset-color`);
+        button_reset_color.on('click',function() {
+            let input = $(this).closest('div.color-div').find('input[type=color]');
+            input.val('');
+        });
+    }
+
+    for(let prop in css) {
+        if (!css[prop]) {continue;}
+        let da_val = css[prop];
+        switch (prop) {
+            case 'color':
+            case 'backgroundColor': {
+                da_val = chroma(da_val).hex();
+            }
+        }
+        card.find(`[name=${prop}]`).val(da_val);
+    }
+
+
+
+
+
+    function set_color_panel(jq_input) {
+        let color = jq_input.val();
+        let parent = jq_input.closest('.color-div');
+        if (color) {
+            parent.find('.color-set').removeClass('d-none').addClass('d-block');
+            parent.find('.color-not-set').removeClass('d-block').addClass('d-none');
+            parent.find('.flow-color-palette').css({backgroundColor: color});
+        } else {
+            parent.find('.color-not-set').removeClass('d-none').addClass('d-block');
+            parent.find('.color-set').removeClass('d-block').addClass('d-none');
+            parent.find('.flow-color-palette').attr('style','');
+        }
+    }
+
+    let input_color = card.find(`input[name=color]`);
+    set_color_panel(input_color);
+    let input_bg_color = card.find(`input[name=backgroundColor]`);
+    set_color_panel(input_bg_color);
+
+    input_color.on('change',function() {
+        set_color_panel($(this));
+    });
+
+    input_bg_color.on('change',function() {
+        set_color_panel($(this));
+    });
+
+
+    let save_button = card.find(`button.action-css-save`);
+    save_button.on('click',function() {
+        for(let prop in css) {
+            let val = card.find(`[name=${prop}]`).val();
+            if (!val) {val = null;}
+            css[prop] = val;
+        }
+        console.debug('got saved css as ',css);
+
+
+        let data_no_no_callback = function(data) {
+
+            if (!fail_callback) {
+                data_no_no_callback = function(what) {
+                    console.error('failed',what);
+                }
+            }
+            if (fail_callback) fail_callback(data);
+        }
+
+        let dat_ok_callback = function(data) {
+            if (!success_callback) {
+                dat_ok_callback = function(what) {
+                    console.debug('success',what);
+                }
+            }
+            if (success_callback) success_callback(data);
+        }
+
+        flow_update_standard(tag,'css',css,dat_ok_callback,data_no_no_callback);
+
+    });
+
+
+
+    return card;
+
+}

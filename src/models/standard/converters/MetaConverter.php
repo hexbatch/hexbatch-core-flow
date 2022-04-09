@@ -84,15 +84,16 @@ class MetaConverter extends BaseConverter {
     public static function pre_process_outbound(IFlowTagStandardAttribute $a ): ?object {
         $original = $a->getStandardValue();
         $image_url_property_name = IFlowTagStandardAttribute::META_KEY_PICTURE_URL;
-        if (empty($original) ||
-            !property_exists($original,$image_url_property_name) ||
-            empty($original->$image_url_property_name)
-        ) {
+        if (empty($original)) {
             return $original;
         }
-        $files = new FlowProjectFiles($a->getProjectGuid(),$a->getOwnerUserGuid());
-        $original->$image_url_property_name =
-            ProjectHelper::get_project_helper()->stub_to_file_paths($files,$original->$image_url_property_name);
+
+        if (property_exists($original,$image_url_property_name)) {
+            $files = new FlowProjectFiles($a->getProjectGuid(),$a->getOwnerUserGuid());
+            $original->$image_url_property_name =
+                ProjectHelper::get_project_helper()->stub_to_file_paths($files,$original->$image_url_property_name);
+        }
+
 
         $keys_to_encode = [
             IFlowTagStandardAttribute::META_KEY_FIRST_NAME,
@@ -101,8 +102,9 @@ class MetaConverter extends BaseConverter {
             IFlowTagStandardAttribute::META_KEY_VERSION
 
         ];
+
         foreach ($keys_to_encode as $a_key) {
-            if ($original->$a_key) {
+            if (property_exists($original,$a_key) && $original->$a_key) {
                 $original->$a_key = htmlspecialchars(JsonHelper::to_utf8($original->$a_key),
                     ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5,'UTF-8',false);
             }
@@ -115,7 +117,7 @@ class MetaConverter extends BaseConverter {
         ];
 
         foreach ($keys_to_strip as $a_key) {
-            if ($original->$a_key) {
+            if (property_exists($original,$a_key) && $original->$a_key) {
                 $original->$a_key = strip_tags(JsonHelper::to_utf8($original->$a_key));
             }
         }

@@ -6,9 +6,16 @@ function view_standard_meta(tag) {
     if (!tag.standard_attributes.hasOwnProperty('meta')) { return jQuery('<span>No Meta Found</span>');}
 
     /**
-     * @var {StandardMeta} meta
+     * @type {StandardMeta} meta
      */
-    let meta = tag.standard_attributes.meta;
+    let meta;
+    if (tag.standard_attributes.hasOwnProperty('meta')) {
+        meta = tag.standard_attributes.meta;
+    } else {
+        meta = create_proxy_standard_meta();
+    }
+
+    meta = _.merge(create_proxy_standard_meta(),meta);
 
     let card = $("div#standard-meta-view-templates > div.standard-meta-view-card ").clone();
     let view_div_id = 'meta-view-'+uuid.v4();

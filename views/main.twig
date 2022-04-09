@@ -63,6 +63,14 @@
 
     <link rel="stylesheet" href="{{ root_url }}/public/resources/css/standard/meta.css" />
 
+    <link rel="preload"
+          href="https://fonts.googleapis.com/css?family=Roboto|Open+Sans|Space+Mono|Lato|Montserrat|Oswald|Raleway|Merriweather|Inconsolata|Allura|Sigmar+One|Gloria+Hallelujah|Montez|Lobster|Josefin+Sans|Shadows+Into+Light|Pacifico|Amatic+SC:700|Orbitron:400,900|Rokkitt|Righteous|Dancing+Script:700|Bangers|Chewy|Sigmar+One|Architects+Daughter|Abril+Fatface|Covered+By+Your+Grace|Kaushan+Script|Gloria+Hallelujah|Satisfy|Lobster+Two:700|Comfortaa:700|Cinzel|Courgette"
+          as="style"
+          onload="this.onload=null;this.rel='stylesheet'">
+
+
+    <link href='' rel='stylesheet' type='text/css'>
+
     <title>{{ page_title }}</title>
 
 </head>
@@ -123,6 +131,8 @@
 
 <!-- Simple light box -->
 <script type="text/javascript" src="{{ root_url }}/node_modules/simplelightbox/dist/simple-lightbox.jquery.min.js"></script>
+
+<script type="text/javascript" src="{{ root_url }}/node_modules/chroma-js/chroma.min.js"></script>
 
 
 {#{{ dump_session() }}#}

@@ -10,12 +10,17 @@ session:
   session_name: hexbatch_flow_session
   flash_key : hexbatch_flow_flash
 twig:
-    cache: true
-    strict_variables: true
-    debug: true,
-    auto_reload: true
+  cache: true
+  strict_variables: true
+  debug: true,
+  auto_reload: true
 project:
-    parent_directory: /var/www/flow_projects
+  parent_directory: /var/www/flow_projects
+git:
+  supported_hosts:
+    - github.com
+    - bitbucket.org
+    - gitlab.com
 program:
     version: 0.5.0
     timezone: 'America/Chicago'

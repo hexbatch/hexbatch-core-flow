@@ -57,6 +57,7 @@ class Hexlet_Twig_Extension extends AbstractExtension implements GlobalsInterfac
             'root_url' => $root,
             'csrf_token_set_to_root' => FlowAntiCSRF::SET_LOCK_TO_ANY_PAGE,
             'program_version' => Utilities::get_utilities()->get_version_string(),
+            'supported_git_hosts' => ProjectHelper::get_project_helper()->get_allowed_git_sites(),
             'standard_viewable_scripts' => $viewable_standard_scripts,
             'standard_editable_scripts' => $editable_standard_scripts,
             'standard_viewable_frames' => $viewable_standard_frames,

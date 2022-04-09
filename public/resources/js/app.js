@@ -1,5 +1,6 @@
 // app.js
 
+function will_do_nothing() {}
 
 function flow_check_if_promise (obj) {
     const normal = !!obj && typeof obj === 'object' &&

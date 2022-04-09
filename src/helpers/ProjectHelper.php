@@ -355,8 +355,11 @@ class ProjectHelper extends BaseHelper {
         $text = str_replace(FlowProjectFiles::RESOURCE_PATH_STUB,$start_of_resources_url,$text);
         $text = str_replace(FlowProjectFiles::FILES_PATH_STUB,$start_of_files_url,$text);
         return $text;
+    }
 
-
+    public function get_allowed_git_sites() : array {
+        $program = $this->get_settings()->git ?? (object)[];
+        return $program->supported_hosts ?? [];
     }
 
 

@@ -30,6 +30,7 @@ class CssConverter extends BaseConverter {
         switch ($key) {
 
            case IFlowTagStandardAttribute::CSS_KEY_BACKGROUND_COLOR:
+           case IFlowTagStandardAttribute::CSS_KEY_FONT_FAMILY:
            case IFlowTagStandardAttribute::CSS_KEY_COLOR: {
                $only_css_key = $key;
             }

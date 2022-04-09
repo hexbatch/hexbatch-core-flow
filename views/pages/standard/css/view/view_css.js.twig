@@ -1,0 +1,68 @@
+/**
+ *
+ * @param {FlowTag} tag
+ */
+function view_standard_css(tag) {
+    if (!tag.standard_attributes.hasOwnProperty('git')) { return jQuery('<span>No Git Found</span>');}
+
+    /**
+     * @type {StandardGit} git
+     */
+    let git;
+    if (tag.standard_attributes.hasOwnProperty('git')) {
+        git = tag.standard_attributes.git;
+    } else {
+        git = create_proxy_standard_git();
+    }
+
+    git = _.merge(create_proxy_standard_git(),git);
+
+    let card = $("div#standard-git-view-templates > div.standard-git-view-card ").clone();
+    let view_div_id = 'git-view-'+uuid.v4();
+    card.attr('id',view_div_id);
+    card.attr('id');
+
+
+
+    if (git.git_url || git.git_branch || git.git_ssh_key || git.git_web_page) {
+        let git_node = card.find('.git-repo');
+        git_node.removeClass('d-none');
+
+        if (git.git_url) {
+            let da_url_node = git_node.find('.da-url');
+            da_url_node.removeClass('d-none').addClass('d-block');
+            da_url_node.find('.git_url').html(git.git_url);
+        }
+
+        if (git.git_ssh_key) {
+            let da_ssh = git_node.find('.git_ssh_key');
+            da_ssh.removeClass('d-none').addClass('d-inline');
+        }
+
+        if (git.git_branch) {
+            let da_branch = git_node.find('.da-branch');
+            da_branch.removeClass('d-none').addClass('d-block');
+            da_branch.find('.git_branch').html(git.git_branch);
+        }
+
+        if (git.git_web_page) {
+            let da_linky = git_node.find('.da-linky-linking');
+            da_linky.removeClass('d-none').addClass('d-block');
+            let git_website = da_linky.find('.git_web_page');
+            git_website.attr('href',git.git_web_page);
+            git_website.text(git.git_web_page);
+        }
+    }
+
+    if (git.git_notes) {
+        let git_node = card.find('.da-notes');
+        git_node.removeClass('d-none').addClass('d-block');
+        let git_notes = git_node.find('.git_notes');
+        git_notes.html(git.git_notes);
+    }
+
+
+
+    return card;
+
+}

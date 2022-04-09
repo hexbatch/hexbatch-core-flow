@@ -79,10 +79,11 @@ Interface IFlowTagStandardAttribute {
     # ------------- GIT
     const STD_ATTR_NAME_GIT = 'git';
 
-    const GIT_KEY_SSH_KEY = 'ssh_key';
-    const GIT_KEY_REPO_URL = 'repo_url';
-    const GIT_KEY_BRANCH = 'branch';
-    const GIT_SITE = 'site';
+    const GIT_KEY_SSH_KEY = 'git_ssh_key';
+    const GIT_KEY_REPO_URL = 'git_url';
+    const GIT_KEY_BRANCH = 'git_branch';
+    const GIT_KEY_NOTES = 'git_notes';
+    const GIT_KEY_WEB_PAGE = 'git_web_page';
 
     const STD_ATTR_TYPE_GIT = [
         'keys' => [
@@ -97,11 +98,13 @@ Interface IFlowTagStandardAttribute {
             self::GIT_KEY_SSH_KEY => [
                 self::OPTION_NO_SERIALIZATION => true
             ],
-            self::GIT_SITE => [],
+
+            self::GIT_KEY_NOTES => [],
+            self::GIT_KEY_WEB_PAGE => []
         ],
         'name' => self::STD_ATTR_NAME_GIT,
         'converter' => ['app\models\standard\converters\GitConverter','convert'],
-
+        'pre_process_for_gui' => ['app\models\standard\converters\GitConverter','pre_process_outbound'],
     ];
 
 
@@ -110,14 +113,16 @@ Interface IFlowTagStandardAttribute {
     const STD_ATTR_NAME_CSS = 'css';
 
     const CSS_KEY_COLOR = 'color';
-    const CSS_KEY_BACKGROUND_COLOR = 'background-color';
+    const CSS_KEY_BACKGROUND_COLOR = 'backgroundColor';
     const CSS_KEY_CSS_OVERALL = 'css';
+    const CSS_KEY_FONT_FAMILY = 'fontFamily';
 
 
     const STD_ATTR_TYPE_CSS = [
         'keys' => [
             self::CSS_KEY_BACKGROUND_COLOR => [] ,
             self::CSS_KEY_COLOR => [] ,
+            self::CSS_KEY_FONT_FAMILY => [] ,
             self::CSS_KEY_CSS_OVERALL => [
                 self::OPTION_NO_ENUMERATION=>true ,
                 self::OPTION_DEFAULT => '{}', //to clear out flow things css and make sure there is an object entry

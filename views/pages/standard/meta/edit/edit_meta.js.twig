@@ -5,12 +5,20 @@
  * @param {?FlowStandardCallback} fail_callback
  */
 function edit_standard_meta(tag,success_callback,fail_callback) {
-    if (!tag.standard_attributes.hasOwnProperty('meta')) { return jQuery('<span>No Meta Found</span>');}
 
     /**
      * @type {StandardMeta} meta
      */
-    let meta = tag.standard_attributes.meta;
+    let meta;
+    if (tag.standard_attributes.hasOwnProperty('meta')) {
+        meta = tag.standard_attributes.meta;
+    } else {
+        meta = create_proxy_standard_meta();
+    }
+
+    meta = _.merge(create_proxy_standard_meta(),meta);
+
+
 
 
     let card = $("div#standard-meta-edit-templates > div.standard-meta-edit-card ").clone();

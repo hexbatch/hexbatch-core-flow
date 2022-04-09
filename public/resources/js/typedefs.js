@@ -269,7 +269,7 @@
  * @property {?string} action
  * @property {?string} file_name
  * @property {?string} new_file_path
- * @property {?Object} new_file_url
+ * @property {?string} new_file_url
  */
 
 
@@ -292,6 +292,31 @@
  * @property {?string} meta_public_email
  * @property {?string} meta_picture_url
  * @property {?string} meta_website
+ */
+
+
+//  git standard
+
+/**
+ *
+ * @typedef {Object} StandardGit
+ * @property {?string} git_url
+ * @property {?string} git_ssh_key
+ * @property {?string} git_branch
+ * @property {?string} git_notes
+ * @property {?string} git_web_page
+ */
+
+//css standard
+
+
+/**
+ *
+ * @typedef {Object} StandardCss
+ * @property {?string} fontFamily
+ * @property {?string} css
+ * @property {?string} backgroundColor
+ * @property {?string} color
  */
 
 
