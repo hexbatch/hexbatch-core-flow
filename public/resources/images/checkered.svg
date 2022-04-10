@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="-500 -500 1000 1000">
+	<defs>
+		<pattern id="CheckerPattern" patternUnits="userSpaceOnUse" x="0" y="0" width="30" height="30" viewBox="0 0 30 30">
+			<rect fill="#FFF" stroke="none" x="0" y="0" height="15" width="15"/>
+			<rect fill="#FFF" stroke="none" x="15" y="15" height="15" width="15"/>
+			<rect fill="#E5E5E5" stroke="none" x="15" y="0" height="15" width="15"/>
+			<rect fill="#E5E5E5" stroke="none" x="0" y="15" height="15" width="15"/>
+		</pattern>
+	</defs>
+
+	<g>
+		<title>“Transparent” Background Pattern, by Adam Stanislav</title>
+		<rect fill="url(#CheckerPattern)" stroke="none" x="-500" y="-500" width="1000" height="1000"/>
+	</g>
+</svg>

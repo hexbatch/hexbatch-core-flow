@@ -5,6 +5,7 @@
  * @param {?FlowStandardCallback} fail_callback
  */
 function edit_standard_css(tag,success_callback,fail_callback) {
+    let b_debug = false;
     /**
      * @type {StandardCss} css
      */
@@ -17,7 +18,7 @@ function edit_standard_css(tag,success_callback,fail_callback) {
 
     css = _.merge(create_proxy_standard_css(),css);
 
-
+    let original_font_value = css.fontFamily;
 
 
     let card = $("div#standard-css-edit-templates > div.standard-css-edit-card ").clone();
@@ -28,6 +29,7 @@ function edit_standard_css(tag,success_callback,fail_callback) {
     title_tag.text(tag.flow_tag_name);
     title_tag.data('tag_guid', tag.flow_tag_guid);
 
+    let font_select;
 
     {
         let fonts_to_look_at = [
@@ -52,8 +54,8 @@ function edit_standard_css(tag,success_callback,fail_callback) {
         ];
 
 
-        let select_jq = card.find("select.select-font-now");
-        let select = select_jq[0];
+        font_select = card.find("select.select-font-now");
+        let select = font_select[0];
 
         let opt = document.createElement('option');
         opt.value = '';
@@ -67,84 +69,144 @@ function edit_standard_css(tag,success_callback,fail_callback) {
             select.add(opt);
         }
 
-        select_jq.on('change',function() {
+        font_select.on('change',function() {
 
             let val_font_name = $(this).val();
-            let place_be = document.getElementById("flow-font-place-be");
-            place_be.insertAdjacentHTML("beforeend",
-                "<style> #font-family-preview-text{ font-family:'"+val_font_name+"';}"+
-                "select#fontFamily{font-family:'"+val_font_name+"';</style>");
+            let preview = card.find(".font-family-preview-text");
+            if (!val_font_name) {
+                css.fontFamily = original_font_value;
+                $(this).css({fontFamily:'revert'});
+                preview.hide();
+                return;
+            }
+            preview.show();
+            css.fontFamily = val_font_name;
+            $(this).css({fontFamily: val_font_name});
+            $('.font-family-preview-text').css({fontFamily: val_font_name});
+            {#place_be.insertAdjacentHTML("beforeend",#}
+            {#    "<style> .font-family-preview-text{ font-family:'"+val_font_name+"';}"+#}
+            {#    "select.select-font-now{font-family:'"+val_font_name+"';</style>");#}
+
+            let da_button = card.find('.le-font-reset')
+            if (css.fontFamily) {
+                da_button.removeClass('d-none').addClass('d-block');
+            } else {
+                da_button.removeClass('d-block').addClass('d-none');
+            }
+        });
+
+        card.find('.le-font-reset').on('click',function() {
+           css.fontFamily = null;
+            original_font_value = null;
+            font_select.val('');
+            font_select.trigger('change');
         });
 
     }
 
-    {
-        let button_reset_background_color = card.find(`button.action-unset-backgound-color`);
-        button_reset_background_color.on('click',function() {
-           let input = $(this).closest('div.color-div').find('input[type=color]');
-           input.val('');
-        });
 
-        let button_reset_color = card.find(`button.action-unset-color`);
-        button_reset_color.on('click',function() {
-            let input = $(this).closest('div.color-div').find('input[type=color]');
-            input.val('');
-        });
-    }
 
     for(let prop in css) {
-        if (!css[prop]) {continue;}
+        if (!css.hasOwnProperty(prop)) {continue;}
         let da_val = css[prop];
+
+
         switch (prop) {
-            case 'color':
+            case 'color': {
+                if (da_val) {
+                    da_val = chroma(da_val).hex();
+                    card.find(`[name=${prop}]`).val(da_val);
+                } else {
+                    da_val = chroma('black').hex();
+                    card.find(`[name=${prop}]`).val(da_val);
+                }
+                break;
+            }
             case 'backgroundColor': {
-                da_val = chroma(da_val).hex();
+                if (da_val) {
+                    da_val = chroma(da_val).hex();
+                    card.find(`[name=${prop}]`).val(da_val);
+                } else {
+                    da_val = chroma('white').hex();
+                    card.find(`[name=${prop}]`).val(da_val);
+                }
+                break;
+            }
+            case 'fontFamily': {
+                if (!da_val) {da_val = '';}
+                card.find(`[name=${prop}]`).val(da_val);
+                font_select.trigger("change");
+                break;
             }
         }
-        card.find(`[name=${prop}]`).val(da_val);
+
     }
 
 
 
 
 
-    function set_color_panel(jq_input) {
-        let color = jq_input.val();
+    function set_color_panel(jq_input,le_color) {
         let parent = jq_input.closest('.color-div');
-        if (color) {
-            parent.find('.color-set').removeClass('d-none').addClass('d-block');
+        if (le_color) {
+            parent.find('.le-color-reset').removeClass('d-none').addClass('d-block');
             parent.find('.color-not-set').removeClass('d-block').addClass('d-none');
-            parent.find('.flow-color-palette').css({backgroundColor: color});
         } else {
             parent.find('.color-not-set').removeClass('d-none').addClass('d-block');
-            parent.find('.color-set').removeClass('d-block').addClass('d-none');
-            parent.find('.flow-color-palette').attr('style','');
+            parent.find('.le-color-reset').removeClass('d-block').addClass('d-none');
         }
+
+        let fore_color = 'black';
+        if (css.color) {fore_color = css.color;}
+
+        let back_color = 'white';
+        if (css.backgroundColor) {back_color = css.backgroundColor;}
+
+        card.find('.font-family-preview-text').css({
+            color: fore_color,
+            backgroundColor : back_color
+        });
     }
 
     let input_color = card.find(`input[name=color]`);
-    set_color_panel(input_color);
+    set_color_panel(input_color,css.color);
     let input_bg_color = card.find(`input[name=backgroundColor]`);
-    set_color_panel(input_bg_color);
+    set_color_panel(input_bg_color,css.backgroundColor);
 
     input_color.on('change',function() {
-        set_color_panel($(this));
+        let da_val = $(this).val();
+        css.color = chroma(da_val).name();
+        set_color_panel($(this),css.color);
+
     });
 
     input_bg_color.on('change',function() {
-        set_color_panel($(this));
+        let da_val = $(this).val();
+        css.backgroundColor = chroma(da_val).name();
+        set_color_panel($(this),css.backgroundColor);
     });
+
+    card.find('.remove-fore-color button').on('click',function() {
+        css.color = null;
+        let da_val = chroma('black').hex();
+        card.find(`[name=backgroundColor]`).val(da_val);
+        set_color_panel(input_color,css.color);
+    });
+
+    card.find('.remove-back-color button').on('click',function() {
+        css.backgroundColor = null;
+        let da_val = chroma('black').hex();
+        card.find(`[name=backgroundColor]`).val(da_val);
+        set_color_panel(input_bg_color,css.backgroundColor);
+    });
+
 
 
     let save_button = card.find(`button.action-css-save`);
     save_button.on('click',function() {
-        for(let prop in css) {
-            let val = card.find(`[name=${prop}]`).val();
-            if (!val) {val = null;}
-            css[prop] = val;
-        }
-        console.debug('got saved css as ',css);
 
+        console.debug('got saved css as ',css);
+        if (b_debug) {return;}
 
         let data_no_no_callback = function(data) {
 
