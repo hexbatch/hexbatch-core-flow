@@ -84,3 +84,9 @@ span.flow-tag-display {
     border-radius: 1em;
     display: inline-block;
 }
+
+span.flow-tag-display.flow-tag-no-borders-padding {
+    padding: 0;
+    box-shadow: none;
+    border-radius: 0;
+}

@@ -60,7 +60,7 @@ function create_select_2_for_tag_search(bare_select_control,b_multi,
      * @return {string}
      */
     function format_selected_tag (tag) {
-        return format_tag(tag);
+        return format_tag(tag,'flow-tag-no-borders-padding');
     }
 
     function  select2_create_tag (params) {

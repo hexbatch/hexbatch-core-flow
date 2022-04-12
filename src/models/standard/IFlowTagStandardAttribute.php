@@ -114,7 +114,6 @@ Interface IFlowTagStandardAttribute {
 
     const CSS_KEY_COLOR = 'color';
     const CSS_KEY_BACKGROUND_COLOR = 'backgroundColor';
-    const CSS_KEY_CSS_OVERALL = 'css';
     const CSS_KEY_FONT_FAMILY = 'fontFamily';
 
 
@@ -122,11 +121,7 @@ Interface IFlowTagStandardAttribute {
         'keys' => [
             self::CSS_KEY_BACKGROUND_COLOR => [] ,
             self::CSS_KEY_COLOR => [] ,
-            self::CSS_KEY_FONT_FAMILY => [] ,
-            self::CSS_KEY_CSS_OVERALL => [
-                self::OPTION_NO_ENUMERATION=>true ,
-                self::OPTION_DEFAULT => '{}', //to clear out flow things css and make sure there is an object entry
-            ] ,
+            self::CSS_KEY_FONT_FAMILY => []
         ],
         'name' => self::STD_ATTR_NAME_CSS,
         'converter' => ['app\models\standard\converters\CssConverter','convert'],

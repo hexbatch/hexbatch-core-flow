@@ -18,7 +18,7 @@ function edit_standard_meta(tag,success_callback,fail_callback) {
 
     meta = _.merge(create_proxy_standard_meta(),meta);
 
-
+    let inheritied = flow_standards_get_inherited('meta',tag);
 
 
     let card = $("div#standard-meta-edit-templates > div.standard-meta-edit-card ").clone();
@@ -32,6 +32,11 @@ function edit_standard_meta(tag,success_callback,fail_callback) {
     for(let prop in meta) {
         if (!meta[prop]) {continue;}
         card.find(`input[name=${prop}]`).val(meta[prop]);
+
+        if (inheritied.hasOwnProperty(prop)) {
+            let tagger = flow_tag_create_dom_name(inheritied[prop].ancestor_tag);
+            card.find(`[name=${prop}]`).closest('div').find('label').append(tagger);
+        }
     }
 
     let date_time_holder = card.find(`input[name=meta_date_time]`);

@@ -20,11 +20,12 @@ function edit_standard_css(tag,success_callback,fail_callback) {
 
     let original_font_value = css.fontFamily;
 
+    let inheritied = flow_standards_get_inherited('css',tag);
+
 
     let card = $("div#standard-css-edit-templates > div.standard-css-edit-card ").clone();
     let editing_div_id = 'css-editor-'+uuid.v4();
     card.attr('id',editing_div_id);
-    card.attr('id')
     let title_tag = card.find('.flow-edit-this-git-tag');
     title_tag.text(tag.flow_tag_name);
     title_tag.data('tag_guid', tag.flow_tag_guid);
@@ -138,6 +139,11 @@ function edit_standard_css(tag,success_callback,fail_callback) {
                 font_select.trigger("change");
                 break;
             }
+        }
+
+        if (inheritied.hasOwnProperty(prop)) {
+            let tagger = flow_tag_create_dom_name(inheritied[prop].ancestor_tag);
+            card.find(`[name=${prop}]`).closest('div').find('label').append(tagger);
         }
 
     }

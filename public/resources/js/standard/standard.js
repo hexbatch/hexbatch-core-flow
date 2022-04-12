@@ -90,3 +90,99 @@ function ProxyStandardCss() {
 function create_proxy_standard_css() {
     return new ProxyStandardCss();
 }
+
+function FlowInheritedAttribute() {
+
+    /**
+     * @type {?string}
+     */
+    this.attribute_name = null;
+
+    /**
+     * @type {?string}
+     */
+    this.ancestor_guid = null;
+
+    /**
+     * @type {?string}
+     */
+    this.ancestor_name = null;
+
+    /**
+     * @type {?string}
+     */
+    this.standard_name = null;
+
+
+    /**
+     *
+     * @type {?FlowTag} ancestor_tag
+     */
+    this.ancestor_tag = null;
+}
+
+/**
+ *
+ * @param {string} standard_name
+ * @param {FlowTag} tag
+ * @return {Object.<string, FlowInheritedAttribute>}
+ */
+function flow_standards_get_inherited(standard_name,tag) {
+    if (!tag.standard_attributes.hasOwnProperty(standard_name)) {
+        return {};
+    }
+
+    /**
+     *
+     * @type {Object.<string, FlowInheritedAttribute>} ret
+     */
+    let ret = {};
+
+    let standard = tag.standard_attributes[standard_name];
+    for(let standard_attribute in standard) {
+        if (!standard.hasOwnProperty(standard_attribute)) {return {};}
+        if (tag.attributes.hasOwnProperty(standard_attribute)) {
+            let attribute = tag.attributes[standard_attribute];
+            if (attribute.is_inherited) {
+
+                //find the parent who owns this attribute
+                let parent_for_attribute = tag.flow_tag_parent;
+                while (parent_for_attribute) {
+                    if (parent_for_attribute.flow_tag_guid === attribute.flow_tag_guid) {
+                        break;
+                    }
+                    parent_for_attribute = parent_for_attribute.flow_tag_parent;
+                }
+                let node = new FlowInheritedAttribute();
+                node.ancestor_guid = parent_for_attribute.flow_tag_guid;
+                node.ancestor_name = parent_for_attribute.flow_tag_name;
+                node.attribute_name = attribute.tag_attribute_name;
+                node.standard_name = standard_name;
+                node.ancestor_tag = parent_for_attribute;
+                ret[attribute.tag_attribute_name] = node;
+
+            }
+        }
+    }
+    return ret;
+}
+
+/**
+ *
+ * @param {FlowTag} tag
+ * @returns {jQuery}
+ */
+function flow_tag_create_dom_name(tag) {
+    let tag_name_display = jQuery(`<span `+
+            `class="flow-tag-display small flow-attribute-inherited-from-tag flow-tag-show-edit-on-click d-inline-block"`+
+            ` data-tag_guid=""></span>`);
+
+    tag_name_display.text(tag.flow_tag_name);
+    tag_name_display.data('tag_guid', tag.flow_tag_guid);
+
+    let tag_map = {}
+    tag_map[tag.flow_tag_guid] = tag;
+    add_tag_attributes_to_dom(tag_map, tag_name_display, true);
+    return tag_name_display;
+
+}
