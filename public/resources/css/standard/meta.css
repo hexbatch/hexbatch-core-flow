@@ -20,8 +20,8 @@ div.standard-css-edit-card select.select-font-now {
 div.standard-css-view-card div.display-da-colors {
     background-image : url("../../images/checkered.svg");
     background-repeat: repeat;
-    height: 16em;
-    width: 16em ;
+    height: 12em;
+    width: 12em ;
     position: relative;
 }
 
@@ -29,21 +29,20 @@ div.standard-css-view-card  .outer-circle {
     background-color: white;
     top: 0;
     left: 0;
-    height: 16em;
-    width: 16em;
+    height: 12em;
+    width: 12em;
     position: absolute;
     clip-path: polygon(0% 0%, 0% 100%, 25% 100%, 25% 25%, 75% 25%, 75% 75%, 25% 75%, 25% 100%, 100% 100%, 100% 0%);
-    /*clip-path: path('evenodd','M0,200 A200,200 0,1,1 400,200 A200,200 0,1,1 0,200 z M100,200 A100,100 0,1,1 300,200 A100,100 0,1,1 100,200 z');*/
 }
 
 div.standard-css-view-card  .inner-circle {
     background-color: black;
     position: absolute;
-    height: 8em;
-    width: 8em;
+    height: 6em;
+    width: 6em;
     top: 50%;
     left: 50%;
-    margin: -4em 0 0 -4em;
+    margin: -3em 0 0 -3em;
 }
 
 
