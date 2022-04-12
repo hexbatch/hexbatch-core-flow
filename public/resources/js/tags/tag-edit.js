@@ -276,7 +276,25 @@ function flow_tag_show_editor(tag,
                 }
             }
 
+            let delete_button = row.find(`.flow-delete-standard`);
+            if (tag.standard_attributes.hasOwnProperty(standard_name)) {
+               delete_button.data('tag_guid', tag.flow_tag_guid)
+                   .attr("data-tag_guid", tag.flow_tag_guid)
+                   .data('standard_name', standard_name)
+                   .attr("data-standard_name", standard_name);
+            } else {
+                delete_button.remove()
+            }
+
             home.append(row);
+        }
+        //append any views we might have
+        for(let standard_name in FLOW_VIEWABLE_STANDARDS) {
+            if (tag.standard_attributes.hasOwnProperty(standard_name)) {
+                let node = jQuery(`<div class="tag-standard-view m-2 ms-4"></div>`);
+                flow_standards_generate_view(standard_name,tag,node);
+                home.append(node);
+            }
         }
 
     }
@@ -296,6 +314,27 @@ function flow_tag_show_editor(tag,
                 my_swal.fire(
                     'Oh No!',
                     `The standard ${ret.standard_name} could not be changed <br>\n ` + ret.message,
+                    'error'
+                )
+            }
+        );
+    }
+
+    function delete_standard() {
+        let that = $(this);
+
+        let standard_name = that.data('standard_name');
+        flow_delete_standard(tag,standard_name,
+            function(ret) {
+                tag = ret.tag;
+                update_tags_in_display(true);
+                fill_attribute_tab();
+                fill_standard_tab();
+            },
+            function(ret) {
+                my_swal.fire(
+                    'Oh No!',
+                    `The standard ${ret.standard_name} could not be deleted <br>\n ` + ret.message,
                     'error'
                 )
             }
@@ -591,6 +630,7 @@ function flow_tag_show_editor(tag,
     let qj_body = $('body');
     qj_body.on("click", `div#${editing_div_id} .flow-attribute-show-edit-on-click`, edit_attribute);
     qj_body.on("click", `div#${editing_div_id} .flow-edit-standard`, edit_standard);
+    qj_body.on("click", `div#${editing_div_id} .flow-delete-standard`, delete_standard);
 
 
 

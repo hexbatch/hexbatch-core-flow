@@ -13,6 +13,21 @@ function flow_update_standard(tag,standard_name,meta_data,
         'Edited Standard','Could Not change standard');
 }
 
+
+/**
+ * @param {FlowTag} tag
+ * @param {string} standard_name
+ * @param {FlowStandardCallback} on_success_callback
+ * @param {FlowStandardCallback} on_fail_callback
+ */
+function flow_delete_standard(tag,standard_name,
+                              on_success_callback,on_fail_callback) {
+    let url = project_base_url + `/standard/${tag.flow_tag_guid}/${standard_name}/delete`;
+
+    do_flow_ajax_action(url,{},on_success_callback,on_fail_callback,
+        'Deleted Standard','Could not delete standard');
+}
+
 /**
  * @type {StandardGit}
  * @constructor

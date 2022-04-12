@@ -155,6 +155,7 @@ class RawAttributeSearch extends FlowBase {
             $nodes = [];
             foreach ($res as $row) {
                 $node = new RawAttributeData($row);
+                if (is_null($node->getAttributeGuid())) { continue;}
                 $nodes[] = $node;
             }
             if (empty($nodes)) {return [];}

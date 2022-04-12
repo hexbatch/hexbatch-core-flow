@@ -678,7 +678,31 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
     }
 
+    public function delete_attribute_by_name(string $attribute_name) : ?FlowTagAttribute {
+        //find attribute and its index
 
+        $attribute_index = null;
+
+        /**
+         * @var FlowTagAttribute|null $found_attribute
+         */
+        $found_attribute = null;
+
+        foreach ($this->attributes as $index_of => $attribute) {
+            if ($attribute->getTagAttributeName() === $attribute_name) {
+                $found_attribute = $attribute;
+                $attribute_index = $index_of;
+                break;
+            }
+        }
+
+        if ($found_attribute && !is_null($attribute_index)) {
+            $found_attribute->delete_attribute();
+            array_splice($this->attributes, $attribute_index, 1);
+        }
+
+        return $found_attribute;
+    }
 
 
 

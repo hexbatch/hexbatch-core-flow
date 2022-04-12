@@ -247,9 +247,40 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
             }
         }
         static::trim_absent_names($tag_has_property_names);
+
+        $tags_ids_with_no_standards = [];
+        foreach ($flow_tags as $tag) {
+            if (!isset($tag_has_property_names[$tag->flow_tag_guid])) {
+                $tags_ids_with_no_standards[] = $tag->flow_tag_id;
+            }
+        }
+        static::trim_tags($tags_ids_with_no_standards); //remove standards that might have been erased with no attributes behind
         return $ret;
 
     }
+
+    protected static function trim_tags(array $tag_id_array) : int {
+        if (empty($tag_id_array)) {return 0;}
+        $in_question_array = [];
+        $where_and = [];
+        $args = [];
+
+        foreach ($tag_id_array as $an_id) {
+            $args[] = $an_id;
+            $in_question_array[] = "?";
+        }
+        if (count($in_question_array)) {
+            $comma_delimited_unhex_question = implode(",",$in_question_array);
+            $where_and[] = "a.flow_tag_id in ($comma_delimited_unhex_question)";
+        }
+
+        $where_stuff = implode(' AND ',$where_and);
+
+        $sql = "DELETE FROM flow_standard_attributes a WHERE 1 AND $where_stuff";
+        $db = static::get_connection();
+        return $db->safeQuery($sql, $args, PDO::FETCH_OBJ,true);
+    }
+
 
     protected static function trim_absent_names(array &$array) : void {
         $db = static::get_connection();

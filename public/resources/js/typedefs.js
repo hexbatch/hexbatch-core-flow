@@ -260,6 +260,7 @@
  * @property {?string} action
  * @property {?string} standard_name
  * @property {?Object} standard_data
+ * @property {FlowTagAttribute[]} [removed_attributes]
  */
 
 

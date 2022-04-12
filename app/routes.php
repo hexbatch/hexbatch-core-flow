@@ -120,6 +120,10 @@ return function (App $app) {
                         /** @uses \app\controllers\standard\StandardPages::update_tag_standard() */
                         $group->post("/{tag_guid:[[:alnum:]\-]+}/{standard_name:$meta_names}/update",
                             ['standardPages', 'update_tag_standard'])->setName('update_tag_standard_ajax');
+
+                        /** @uses \app\controllers\standard\StandardPages::delete_tag_standard() */
+                        $group->post("/{tag_guid:[[:alnum:]\-]+}/{standard_name:$meta_names}/delete",
+                            ['standardPages', 'delete_tag_standard'])->setName('deelte_tag_standard_ajax');
                     })->add('checkLoggedInMiddleware');
                 });
 
