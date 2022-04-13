@@ -20,6 +20,9 @@ class RawAttributeData implements JsonSerializable {
     protected ?string $parent_tag_guid;
     protected ?int $parent_tag_id;
 
+    protected ?string $owner_user_guid;
+    protected ?string $project_guid;
+
 
     public function __construct($object=null) {
         $this->text_val = null;
@@ -33,6 +36,8 @@ class RawAttributeData implements JsonSerializable {
         $this->attribute_id = null;
         $this->parent_tag_id = null;
         $this->parent_tag_guid = null;
+        $this->owner_user_guid = null;
+        $this->project_guid = null;
 
 
 
@@ -61,6 +66,8 @@ class RawAttributeData implements JsonSerializable {
             'attribute_name'=> $this->attribute_name ,
             'parent_attribute_id'=> $this->parent_attribute_id ,
             'attribute_id'=> $this->attribute_name ,
+            'project_guid'=> $this->project_guid ,
+            'owner_user_guid'=> $this->owner_user_guid ,
 
 
         ];
@@ -132,6 +139,15 @@ class RawAttributeData implements JsonSerializable {
 
     public function setParentAttributeID(?int $what)   {
         $this->parent_attribute_id = $what;
+    }
+
+
+    public function getOwnerUserGuid() : ?string  {
+        return $this->owner_user_guid;
+    }
+
+    public function getProjectGuid() : ?string  {
+        return $this->project_guid;
     }
 
 

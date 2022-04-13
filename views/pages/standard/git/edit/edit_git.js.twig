@@ -1,0 +1,79 @@
+/**
+ *
+ * @param {FlowTag} tag
+ * @param {?FlowStandardCallback} success_callback
+ * @param {?FlowStandardCallback} fail_callback
+ */
+function edit_standard_git(tag,success_callback,fail_callback) {
+    /**
+     * @type {StandardGit} git
+     */
+    let git ;
+    if (tag.standard_attributes.hasOwnProperty('git')) {
+        git = tag.standard_attributes.git;
+    } else {
+        git = create_proxy_standard_git();
+    }
+
+    git = _.merge(create_proxy_standard_git(),git);
+
+    let inheritied = flow_standards_get_inherited('git',tag);
+
+
+    let card = $("div#standard-git-edit-templates > div.standard-git-edit-card ").clone();
+    let editing_div_id = 'git-editor-'+uuid.v4();
+    card.attr('id',editing_div_id);
+    card.attr('id')
+    let title_tag = card.find('.flow-edit-this-git-tag');
+    title_tag.text(tag.flow_tag_name);
+    title_tag.data('tag_guid', tag.flow_tag_guid);
+
+    for(let prop in git) {
+        if (!git[prop]) {continue;}
+        card.find(`[name=${prop}]`).val(git[prop]);
+
+        if (inheritied.hasOwnProperty(prop)) {
+            let tagger = flow_tag_create_dom_name(inheritied[prop].ancestor_tag);
+            card.find(`[name=${prop}]`).closest('div').find('label').append(tagger);
+        }
+    }
+
+
+    let save_button = card.find(`button.action-git-save`);
+    save_button.on('click',function() {
+        for(let prop in git) {
+            let val = card.find(`[name=${prop}]`).val();
+            if (!val) {val = null;}
+            git[prop] = val;
+        }
+        console.debug('got saved git as ',git);
+
+
+        let data_no_no_callback = function(data) {
+
+            if (!fail_callback) {
+                data_no_no_callback = function(what) {
+                    console.error('failed',what);
+                }
+            }
+            if (fail_callback) fail_callback(data);
+        }
+
+        let dat_ok_callback = function(data) {
+            if (!success_callback) {
+                dat_ok_callback = function(what) {
+                    console.debug('success',what);
+                }
+            }
+            if (success_callback) success_callback(data);
+        }
+
+        flow_update_standard(tag,'git',git,dat_ok_callback,data_no_no_callback);
+
+    });
+
+
+
+    return card;
+
+}

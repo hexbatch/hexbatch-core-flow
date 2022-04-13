@@ -247,9 +247,40 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
             }
         }
         static::trim_absent_names($tag_has_property_names);
+
+        $tags_ids_with_no_standards = [];
+        foreach ($flow_tags as $tag) {
+            if (!isset($tag_has_property_names[$tag->flow_tag_guid])) {
+                $tags_ids_with_no_standards[] = $tag->flow_tag_id;
+            }
+        }
+        static::trim_tags($tags_ids_with_no_standards); //remove standards that might have been erased with no attributes behind
         return $ret;
 
     }
+
+    protected static function trim_tags(array $tag_id_array) : int {
+        if (empty($tag_id_array)) {return 0;}
+        $in_question_array = [];
+        $where_and = [];
+        $args = [];
+
+        foreach ($tag_id_array as $an_id) {
+            $args[] = $an_id;
+            $in_question_array[] = "?";
+        }
+        if (count($in_question_array)) {
+            $comma_delimited_unhex_question = implode(",",$in_question_array);
+            $where_and[] = "a.flow_tag_id in ($comma_delimited_unhex_question)";
+        }
+
+        $where_stuff = implode(' AND ',$where_and);
+
+        $sql = "DELETE FROM flow_standard_attributes a WHERE 1 AND $where_stuff";
+        $db = static::get_connection();
+        return $db->safeQuery($sql, $args, PDO::FETCH_OBJ,true);
+    }
+
 
     protected static function trim_absent_names(array &$array) : void {
         $db = static::get_connection();
@@ -290,6 +321,7 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
              * @var RawAttributeData[] $raw_attributes
              */
             $raw_attributes = [];
+            $only_use_keys_if_others = [];
 
             foreach ($dets['keys'] as $key_name => $key_thing) {
 
@@ -308,6 +340,11 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
                             }
                             $b_handled = true;
                             break;
+                        }
+
+                        case IFlowTagStandardAttribute::OPTION_IF_OTHERS: {
+                            $only_use_keys_if_others[] = $key_name;
+                            continue 2; //go to next detail of this key
                         }
 
                         case IFlowTagStandardAttribute::OPTION_REQUIRED: {
@@ -350,7 +387,13 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
                         // if no creation function leave raw empty of text and long
                         if (isset($array_of_attribute_arrays[$key_name]) && count($array_of_attribute_arrays[$key_name])) {
                             foreach ($array_of_attribute_arrays[$key_name] as $raw) {
-                                if ($raw->getTextVal() || $raw->getLongVal()) {break;}
+                                if ($raw->getTextVal() || $raw->getLongVal()) {
+                                    //remove from $only_use_keys_if_others if was a default with that, as its explicitly added
+                                    if (($key = array_search($raw->getAttributeName(), $only_use_keys_if_others)) !== false) {
+                                        unset($only_use_keys_if_others[$key]);
+                                    }
+                                    break;
+                                }
                             }
                             $array_of_attribute_arrays[$key_name][0]->setTextVal($constant_value);
                         } else {
@@ -368,8 +411,19 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
             } //end for each key in a standard attribute
 
             if (count($raw_attributes)) {
-                //if got here can create the writer
-                $ret[] = new StandardAttributeWrite($standard_name,$tag_id,$tag_guid,$raw_attributes);
+
+                //see if any not in the $only_use_keys_if_others are here
+                $n_real_manly_keys = 0;
+                foreach ($raw_attributes as $rawly_raw) {
+                    if (!in_array($rawly_raw->getAttributeName(),$only_use_keys_if_others)) {
+                        $n_real_manly_keys ++;
+                    }
+                }
+                if ($n_real_manly_keys > 0) {
+                    //if got here can create the writer
+                    $ret[] = new StandardAttributeWrite($standard_name,$tag_id,$tag_guid,$raw_attributes);
+                }
+
             }
 
 

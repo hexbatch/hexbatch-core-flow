@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 
+use app\models\standard\FlowTagStandardAttribute;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
 
@@ -101,6 +102,8 @@ return function (App $app) {
                     $group->post('/import', ['projectPages', 'import_from_git'])->setName('project_import_from_git');
                     $group->post('/import_from_file', ['projectPages', 'import_from_file'])->setName('project_import_from_file');
                     $group->get('/resources/', ['projectPages', 'resources'])->setName('project_resources');
+
+                    /** @uses \app\controllers\project\ProjectPages::upload_resource_file() */
                     $group->post('/resources', ['projectPages', 'upload_resource_file'])->setName('project_upload_resource_file');
                     $group->post('/resources_delete', ['projectPages', 'delete_resource_file'])->setName('project_delete_resource_file');
                 })->add('checkLoggedInMiddleware');
@@ -110,6 +113,19 @@ return function (App $app) {
                 $group->get('/files/{resource}', ['projectPages', 'get_resource_file'])->setName('project_files');
 
 
+                $group->group('/standard', function (RouteCollectorProxy $group) use($container){
+                    $meta_names = implode('|',FlowTagStandardAttribute::getStandardAttributeNames());
+                    $group->group('', function (RouteCollectorProxy $group) use ($container,$meta_names) {
+
+                        /** @uses \app\controllers\standard\StandardPages::update_tag_standard() */
+                        $group->post("/{tag_guid:[[:alnum:]\-]+}/{standard_name:$meta_names}/update",
+                            ['standardPages', 'update_tag_standard'])->setName('update_tag_standard_ajax');
+
+                        /** @uses \app\controllers\standard\StandardPages::delete_tag_standard() */
+                        $group->post("/{tag_guid:[[:alnum:]\-]+}/{standard_name:$meta_names}/delete",
+                            ['standardPages', 'delete_tag_standard'])->setName('deelte_tag_standard_ajax');
+                    })->add('checkLoggedInMiddleware');
+                });
 
 
                 $group->group('/tag', function (RouteCollectorProxy $group) use($container){
@@ -117,6 +133,7 @@ return function (App $app) {
                     $group->get('/{tag_name:[[:alnum:]\-]+}/show', ['tagPages', 'show_tag'])->setName('show_tag');
 
                     //tags in project , no matter how they are used or attached to
+                    /** @uses \app\controllers\tag\TagPages::get_tags() */
                     $group->get('/get', ['tagPages', 'get_tags'])->setName('get_tags_ajax');
 
                     $group->group('', function (RouteCollectorProxy $group) use ($container) {

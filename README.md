@@ -134,13 +134,20 @@ swiper at https://swiperjs.com/ for nice looking media display
 
 dropzone at https://docs.dropzone.dev/ for uploading files
 
+Tempus Dominus at https://getdatepicker.com/ for chosing date time
+
+SimpleLightbox at https://simplelightbox.com/ for showing original image when clicking on thumbnail
+
+Chroma JS at https://gka.github.io/chroma.js/  to convert from named colors to hex
+
 ### installation uses npm
  Run `npm i` to install js dependencies that are not saved in the repo
  
 
 ## Environmental Notes
 
-The database connection is set as constants in the flow-config.php (not included in the repo):
+The database connection is set as constants in the config/database.yaml (not included in the repo) 
+but example at config/database-example.yaml , so can copy, fill that in, and rename
 
 
 ### php ini and xdebug    
@@ -187,6 +194,16 @@ when needing to do more git commands, either Run `sudo docker exec -it hexbatch_
 
 or to add code, php like this ` exec('cd /var/www/flow_projects/a/b && git status 2>&1',$output,$result_code);`
 
+### Git hosts
+
+The ssh to the hosts, when doing pushing or pulling with a remote repo, needs the host in the known_hosts file
+
+The list of supported git sites for ssh is found in the config/settings.yaml under the supported_hosts key.
+This simply is the list of which sites have this in the docker file at .docker/php-fpm/Dockerfile
+        
+    RUN (host=github.com; ssh-keyscan -H $host; for ip in $(dig @8.8.8.8 github.com +short); do ssh-keyscan -H $host,$ip; ssh-keyscan -H $ip; done) 2> /dev/null >> /home/www-data/.ssh/known_hosts;
+
+To add another, just copy that line and switch out the website name, then add to the settings above
 
 ## Wishlist
 

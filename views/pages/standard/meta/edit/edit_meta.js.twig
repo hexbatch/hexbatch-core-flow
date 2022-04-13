@@ -1,0 +1,222 @@
+/**
+ *
+ * @param {FlowTag} tag
+ * @param {?FlowStandardCallback} success_callback
+ * @param {?FlowStandardCallback} fail_callback
+ */
+function edit_standard_meta(tag,success_callback,fail_callback) {
+
+    /**
+     * @type {StandardMeta} meta
+     */
+    let meta;
+    if (tag.standard_attributes.hasOwnProperty('meta')) {
+        meta = tag.standard_attributes.meta;
+    } else {
+        meta = create_proxy_standard_meta();
+    }
+
+    meta = _.merge(create_proxy_standard_meta(),meta);
+
+    let inheritied = flow_standards_get_inherited('meta',tag);
+
+
+    let card = $("div#standard-meta-edit-templates > div.standard-meta-edit-card ").clone();
+    let editing_div_id = 'meta-editor-'+uuid.v4();
+    card.attr('id',editing_div_id);
+    card.attr('id')
+    let title_tag = card.find('.flow-edit-this-meta-tag');
+    title_tag.text(tag.flow_tag_name);
+    title_tag.data('tag_guid', tag.flow_tag_guid);
+
+    for(let prop in meta) {
+        if (!meta[prop]) {continue;}
+        card.find(`input[name=${prop}]`).val(meta[prop]);
+
+        if (inheritied.hasOwnProperty(prop)) {
+            let tagger = flow_tag_create_dom_name(inheritied[prop].ancestor_tag);
+            card.find(`[name=${prop}]`).closest('div').find('label').append(tagger);
+        }
+    }
+
+    let date_time_holder = card.find(`input[name=meta_date_time]`);
+    let date_picker = card.find(`input[name=meta_date_time_picker]`);
+    date_picker.val(meta.meta_date_time);
+
+
+
+    function set_preview_pic(url) {
+        let meta_node = card.find('.meta-image');
+        meta_node.removeClass('d-none').addClass('d-inline');
+
+        let meta_image = meta_node.find('img');
+        meta_image.attr('src',url);
+
+        let meta_link = meta_node.find('a.meta_picture_url');
+        meta_link.attr('href',url);
+
+        if (meta_link.simpleLightbox()) {
+            meta_link.simpleLightbox().destroy();
+        }
+        meta_link.simpleLightbox({nav:false,captions:false,loop:false});
+
+    }
+    if (meta.meta_picture_url) {
+        set_preview_pic(meta.meta_picture_url)
+    }
+
+    // noinspection JSUnresolvedVariable
+    new tempusDominus.TempusDominus(date_picker[0],{
+        display : {
+            buttons : {
+                today : true ,
+                clear : true
+            }
+        }
+    });
+
+    date_picker.on('change.td', (e) => {
+        if (e.isClear) {
+            date_time_holder.val('');
+        } else {
+            date_time_holder.val(e.date.toISOString())
+        }
+
+
+    })
+
+    jQuery(function(){
+
+        const url_to_action_template = "{{  url_for('project_upload_resource_file',{user_name: 'yyy' ,project_name: 'xxx'} ) }}";
+        let url_to_action = url_to_action_template.replace('yyy',tag.flow_project.admin_user.flow_user_name).
+                                                    replace('xxx',tag.flow_project.flow_project_guid);
+
+        let myDropzone = new Dropzone("div#"+ editing_div_id, {
+            url: url_to_action,
+
+            paramName: "flow_resource_file", // The name that will be used to transfer the file
+            maxFilesize: 10 , // MB
+            previewpreviewsContainer: "#dropzonePreview",
+            clickable: false,
+            createImageThumbnails : true
+
+        });
+
+        myDropzone.on('sending', function(file, xhr, formData){
+            let extra_params = { b_use_rootless_auth: true };
+            set_object_with_flow_ajax_token_data(extra_params);
+            for(let param_name in extra_params) {
+                if (!extra_params.hasOwnProperty(param_name)) {continue;}
+                formData.append(param_name, extra_params[param_name]);
+            }
+
+        });
+
+        myDropzone.on("error",
+
+            /**
+             *
+             * @param file
+             * @param {FlowUploadResourceResponse} response
+             */
+            function(file, response) {
+                let message;
+                if (_.isObject(response)) {
+                    message = response.message;
+                    if (response && response.token) {
+                        update_root_flow_ajax_token(response.token);
+                    }
+                } else {
+                    message = response;
+                }
+
+                my_swal.fire(
+                    'Oh No!',
+                    'File could not be uploaed<br>\n ' + message,
+                    'error'
+                )
+             }
+            );
+
+
+        myDropzone.on("success",
+            /**
+             *
+             * @param file
+             * @param {FlowUploadResourceResponse} response
+             */
+            function(file,response) {
+                if (!response) {
+                    my_swal.fire(
+                        'Oh No!',
+                        'File could not be uploaed and there was no reason why',
+                        'error'
+                    )
+                    return;
+                }
+                if (response.success) {
+                    let url_holder = card.find(`input[name=meta_picture_url]`);
+                    url_holder.val(response.new_file_url);
+
+                    if (response.new_file_url) {
+                        set_preview_pic(response.new_file_url)
+                    }
+                    my_swal.fire(
+                        'File Uploaded',
+                        response.file_name +' Was Uploaded',
+                        'success'
+                    )
+                } else {
+                    my_swal.fire(
+                        'Oh No!',
+                        'File could not be uploaed<br>\n ' + response.message,
+                        'error'
+                    )
+                }
+                if (response && response.token) {
+                    update_root_flow_ajax_token(response.token);
+                }
+            }
+        );
+
+
+    });
+
+    let save_button = card.find(`button.action-meta-save`);
+    save_button.on('click',function() {
+        for(let prop in meta) {
+            let val = card.find(`input[name=${prop}]`).val();
+            if (!val) {val = null;}
+            meta[prop] = val;
+        }
+        console.debug('got saved meta as ',meta);
+
+
+        let data_no_no_callback = function(data) {
+
+            if (!fail_callback) {
+                data_no_no_callback = function(what) {
+                    console.error('failed',what);
+                }
+            }
+            if (fail_callback) fail_callback(data);
+        }
+
+        let dat_ok_callback = function(data) {
+            if (!success_callback) {
+                dat_ok_callback = function(what) {
+                    console.debug('success',what);
+                }
+            }
+            if (success_callback) success_callback(data);
+        }
+
+        flow_update_standard(tag,'meta',meta,dat_ok_callback,data_no_no_callback);
+
+    });
+
+
+
+    return card;
+
+}

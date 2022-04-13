@@ -9,7 +9,6 @@ use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\base\SearchParamBase;
 use app\models\entry\archive\FlowEntryArchive;
-use app\models\multi\GeneralSearch;
 use app\models\tag\brief\BriefCheckValidYaml;
 use app\models\tag\brief\BriefDiffFromYaml;
 use app\models\tag\brief\BriefUpdateFromYaml;
@@ -20,6 +19,7 @@ use app\models\tag\FlowTag;
 use Carbon\Carbon;
 use Exception;
 use InvalidArgumentException;
+use JsonSerializable;
 use LogicException;
 use Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
@@ -30,7 +30,7 @@ use Symfony\Component\Yaml\Yaml;
  * views
  * @uses \app\models\project\FlowProject::get_read_me_bb_code_with_paths()
  */
-class FlowProject extends FlowBase {
+class FlowProject extends FlowBase implements JsonSerializable {
 
     const TABLE_NAME = 'flow_projects';
 
@@ -46,17 +46,7 @@ class FlowProject extends FlowBase {
 
     const MAX_SIZE_READ_ME_IN_CHARACTERS = 4000000;
 
-    const REPO_FILES_DIRECTORY = 'files';
-    const REPO_RESOURCES_DIRECTORY = 'resources';
-    const REPO_RESOURCES_VALID_TYPES = [
-      'png',
-      'jpeg',
-      'jpg',
-      'pdf'
-    ];
 
-    const RESOURCE_PATH_STUB = '@resource@';
-    const FILES_PATH_STUB = '@file@';
 
     public ?int $id;
     public ?int $created_at_ts;
@@ -95,6 +85,19 @@ class FlowProject extends FlowBase {
     public array $project_users;
 
     protected ?FlowUser $admin_user ;
+
+    protected ?FlowProjectFiles $project_files;
+
+    /**
+     * @return FlowProjectFiles
+     * @throws Exception
+     */
+    public function getFlowProjectFiles() : FlowProjectFiles {
+        if (empty($this->project_files)) {
+            $this->project_files = new FlowProjectFiles($this->flow_project_guid,$this->get_admin_user()->flow_user_guid);
+        }
+        return $this->project_files;
+    }
 
     /**
      * @var FlowGitHistory[] $project_history
@@ -223,7 +226,7 @@ class FlowProject extends FlowBase {
     public function history(?int $start_at = null, ?int $limit = null,  bool $b_refresh= false, bool $b_public = false): array
     {
         if ($b_refresh || empty($this->project_history)) {
-            $this->project_history = FlowGitHistory::get_history($this->get_project_directory());
+            $this->project_history = FlowGitHistory::get_history($this->getFlowProjectFiles()->get_project_directory());
         }
         $history_to_scan = $this->project_history;
         if ($b_public) {
@@ -290,7 +293,7 @@ class FlowProject extends FlowBase {
      * @throws Exception
      */
     public function delete_project_directory() : void {
-        $folder_to_remove = $this->get_project_directory();
+        $folder_to_remove = $this->getFlowProjectFiles()->get_project_directory();
         if ($folder_to_remove) {
             RecursiveClasses::rrmdir($folder_to_remove);
         }
@@ -324,6 +327,17 @@ class FlowProject extends FlowBase {
         }
     }
 
+    public function jsonSerialize() : array
+    {
+        return [
+            'admin_user'=>$this->admin_user,
+            'flow_project_title'=>$this->flow_project_title,
+            'flow_project_guid'=>$this->flow_project_guid,
+            'created_at_ts'=>$this->created_at_ts,
+            'flow_project_blurb'=>$this->flow_project_blurb,
+
+        ];
+    }
     /**
      * @param null|array|object $object
      * @throws Exception
@@ -332,6 +346,7 @@ class FlowProject extends FlowBase {
         $this->admin_user = null;
         $this->b_did_applied_for_owned_tags = false;
         $this->flow_project_readme_html = null;
+        $this->project_files = null;
 
         if (empty($object)) {
             $this->admin_flow_user_id = null;
@@ -419,7 +434,7 @@ class FlowProject extends FlowBase {
             //see if we are changing the remote
 
             try {
-                $remote_url = $this->do_git_command("config --get remote.origin.url");
+                $remote_url = $this->getFlowProjectFiles()->do_git_command("config --get remote.origin.url");
             } catch (Exception $e) {
                 $remote_url = '';
             }
@@ -427,10 +442,10 @@ class FlowProject extends FlowBase {
             if ( $this->export_repo_url && ($remote_url !== $this->export_repo_url)) {
                 if ($remote_url) {
                     //change the origin
-                    $this->do_git_command("remote set-url origin $this->export_repo_url");
+                    $this->getFlowProjectFiles()->do_git_command("remote set-url origin $this->export_repo_url");
                 } else {
                     //set the origin to the url
-                    $this->do_git_command("remote add origin $this->export_repo_url");
+                    $this->getFlowProjectFiles()->do_git_command("remote add origin $this->export_repo_url");
                 }
             }
 
@@ -481,7 +496,7 @@ class FlowProject extends FlowBase {
             //see if we are changing the remote
 
             try {
-                $remote_url = $this->do_git_command("config --get remote.import.url");
+                $remote_url = $this->getFlowProjectFiles()->do_git_command("config --get remote.import.url");
             } catch (Exception $e) {
                 $remote_url = '';
             }
@@ -489,10 +504,10 @@ class FlowProject extends FlowBase {
             if ( $this->import_repo_url && ($remote_url !== $this->import_repo_url)) {
                 if ($remote_url) {
                     //change the import
-                    $this->do_git_command("remote set-url import $this->import_repo_url");
+                    $this->getFlowProjectFiles()->do_git_command("remote set-url import $this->import_repo_url");
                 } else {
                     //set the origin to the url
-                    $this->do_git_command("remote add import $this->import_repo_url");
+                    $this->getFlowProjectFiles()->do_git_command("remote add import $this->import_repo_url");
                 }
             }
 
@@ -510,7 +525,7 @@ class FlowProject extends FlowBase {
      * @throws Exception
      */
     public function get_tag_yaml_path() : string {
-        $dir = $this->get_project_directory();
+        $dir = $this->getFlowProjectFiles()->get_project_directory();
         if (!is_readable($dir)) {
             throw new LogicException("Project directory of $dir not created before saving tags");
         }
@@ -550,8 +565,8 @@ class FlowProject extends FlowBase {
      * @throws Exception
      */
     public function reset_local_files() {
-        $this->do_git_command('add .');
-        $this->do_git_command('reset --hard');
+        $this->getFlowProjectFiles()->do_git_command('add .');
+        $this->getFlowProjectFiles()->do_git_command('reset --hard');
     }
     /**
      * @param string $commit_message
@@ -565,15 +580,15 @@ class FlowProject extends FlowBase {
             static::get_logger()->debug(" Commit message",['message'=>$commit_message]);
         }
         if ($b_commit) {
-            $this->do_git_command("add .");
-            $this->do_git_command("commit  -m '$commit_message'");
+            $this->getFlowProjectFiles()->do_git_command("add .");
+            $this->getFlowProjectFiles()->do_git_command("commit  -m '$commit_message'");
             if (isset($_SESSION[FlowUser::SESSION_USER_KEY])) {
                 /**
                  * @var FlowUser $logged_in_user
                  */
                 $logged_in_user = $_SESSION[FlowUser::SESSION_USER_KEY];
                 $user_info = "$logged_in_user->flow_user_guid <$logged_in_user->flow_user_email>";
-                $this->do_git_command("commit --amend --author='$user_info' --no-edit");
+                $this->getFlowProjectFiles()->do_git_command("commit --amend --author='$user_info' --no-edit");
             }
             if ($this->export_repo_do_auto_push) {
                 $this->push_repo();
@@ -634,7 +649,7 @@ class FlowProject extends FlowBase {
      * @throws Exception
      */
     public function get_html_path() : ?string{
-        $dir = $this->get_project_directory();
+        $dir = $this->getFlowProjectFiles()->get_project_directory();
         if (empty($dir)) {return null;}
         $path = $dir . DIRECTORY_SEPARATOR . 'flow_project_readme_html.html';
         return $path;
@@ -678,6 +693,10 @@ class FlowProject extends FlowBase {
 
             if (mb_strlen($this->flow_project_blurb) > static::MAX_SIZE_BLURB) {
                 throw new InvalidArgumentException("Project Blurb cannot be more than ".static::MAX_SIZE_BLURB." characters");
+            }
+            if ($this->flow_project_blurb) {
+                $this->flow_project_blurb = htmlspecialchars($this->flow_project_blurb,
+                    ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5,'UTF-8',false);
             }
 
             $b_match = static::check_valid_title($this->flow_project_title);
@@ -740,7 +759,7 @@ class FlowProject extends FlowBase {
             $this->old_flow_project_title = $this->flow_project_title;
 
             $b_already_created = false;
-            $dir = $this->get_project_directory($b_already_created);
+            $dir = $this->getFlowProjectFiles()->get_project_directory($b_already_created);
             $make_first_commit = !$b_already_created;
 
             $read_me_path_bb = $dir . DIRECTORY_SEPARATOR . 'flow_project_readme_bb_code.bbcode';
@@ -765,8 +784,8 @@ class FlowProject extends FlowBase {
 
             if ($make_first_commit) {
                 $commit_title = "First Commit";
-                $this->do_git_command("add .");
-                $this->do_git_command("commit  -m '$commit_title'");
+                $this->getFlowProjectFiles()->do_git_command("add .");
+                $this->getFlowProjectFiles()->do_git_command("commit  -m '$commit_title'");
             }
 
 
@@ -799,7 +818,7 @@ class FlowProject extends FlowBase {
             if (empty($commit_title_array) && empty($commit_message_array)) {
                 return ''; //nothing to commit
             }
-            $this->do_git_command("add .");
+            $this->getFlowProjectFiles()->do_git_command("add .");
 
             $commit_title = implode('; ',$commit_title_array);
             $commit_body = implode('\n',$commit_message_array);
@@ -811,7 +830,7 @@ class FlowProject extends FlowBase {
 
 
 
-            $this->do_git_command("commit  -m '$commit_message_full'");
+            $this->getFlowProjectFiles()->do_git_command("commit  -m '$commit_message_full'");
 
             if (isset($_SESSION[FlowUser::SESSION_USER_KEY])) {
                 /**
@@ -819,7 +838,7 @@ class FlowProject extends FlowBase {
                  */
                 $logged_in_user = $_SESSION[FlowUser::SESSION_USER_KEY];
                 $user_info = "$logged_in_user->flow_user_guid <$logged_in_user->flow_user_email>";
-                $this->do_git_command("commit --amend --author='$user_info' --no-edit");
+                $this->getFlowProjectFiles()->do_git_command("commit --amend --author='$user_info' --no-edit");
             }
 
             if ($b_do_transaction && $db->inTransaction()) {
@@ -849,11 +868,11 @@ class FlowProject extends FlowBase {
      */
     public function get_read_me_bb_code_with_paths(): string {
 
-        $resource_url = $this->get_resource_url().'/';
-        $read_me_full = str_replace(static::RESOURCE_PATH_STUB,$resource_url,$this->flow_project_readme_bb_code);
+        $resource_url = $this->getFlowProjectFiles()->get_resource_url().'/';
+        $read_me_full = str_replace(FlowProjectFiles::RESOURCE_PATH_STUB,$resource_url,$this->flow_project_readme_bb_code);
 
-        $file_url = $this->get_files_url().'/';
-        $read_me_full = str_replace(static::FILES_PATH_STUB,$file_url,$read_me_full);
+        $file_url = $this->getFlowProjectFiles()->get_files_url().'/';
+        $read_me_full = str_replace(FlowProjectFiles::FILES_PATH_STUB,$file_url,$read_me_full);
 
         return $read_me_full;
     }
@@ -867,104 +886,21 @@ class FlowProject extends FlowBase {
         $bb_code = JsonHelper::to_utf8($bb_code);
         $origonal_bb_code = $bb_code;
 
-        $this->flow_project_readme_bb_code = ProjectHelper::get_project_helper()->bb_code_from_file_paths($this,$bb_code);
+        $this->flow_project_readme_bb_code = ProjectHelper::get_project_helper()->
+                                                stub_from_file_paths($this->getFlowProjectFiles(),$bb_code);
 
 
         //may need to convert from the stubs back to the full paths for the html !
-        $nu_read_me = ProjectHelper::get_project_helper()->bb_code_to_file_paths($this,$origonal_bb_code);
+        $nu_read_me = ProjectHelper::get_project_helper()->
+                                            stub_to_file_paths($this->getFlowProjectFiles(),$origonal_bb_code);
+
         $this->flow_project_readme_html = JsonHelper::html_from_bb_code($nu_read_me);
         $this->flow_project_readme = str_replace('&nbsp;',' ',strip_tags($this->flow_project_readme_html));
     }
 
-    /**
-     * @return string
-     * @throws Exception
-     */
-    protected function get_projects_base_directory() : string {
-        $check =  static::$container->get('settings')->project->parent_directory;
-        if (!is_readable($check)) {
-            throw new RuntimeException("The directory of $check is not readable");
-        }
-        return $check;
-    }
 
-    /**
-     * @param bool $b_already_created optional, OUTREF, set to true if already created
-     * @return string|null
-     * @throws Exception
-     */
-    public function get_project_directory(bool &$b_already_created = false) : ?string {
-        if (empty($this->flow_project_guid) || empty($this->get_admin_user())) {return null;}
-        $check =  $this->get_projects_base_directory(). DIRECTORY_SEPARATOR .
-            $this->get_admin_user()->flow_user_guid . DIRECTORY_SEPARATOR . $this->flow_project_guid;
-        $b_already_created = true;
-        if (!is_readable($check)) {
-            $b_already_created = false;
-            $this->create_project_repo($check);
-        }
-        $real = realpath($check);
-        if (!$real) {
-            throw new LogicException("Could not find project directory at $check");
-        }
-        return $real;
-    }
 
-    /**
-     * @param string $repo_path
-     * @throws Exception
-     */
-    protected function create_project_repo(string $repo_path) {
-        if (!is_readable($repo_path)) {
-            $check =  mkdir($repo_path,0777,true);
-            if (!$check) {
-                throw new RuntimeException("Could not create the directory of $repo_path");
-            }
 
-            if (!is_readable($repo_path)) {
-                throw new RuntimeException("Could not make a readable directory of $repo_path");
-            }
-        }
-        //have a directory, now need to add the .gitignore
-        $ignore = file_get_contents(__DIR__. DIRECTORY_SEPARATOR . 'repo'. DIRECTORY_SEPARATOR . 'gitignore.txt');
-        file_put_contents($repo_path.DIRECTORY_SEPARATOR.'.gitignore',$ignore);
-        $this->do_git_command("init");
-    }
-
-    /**
-     * @param string $command
-     * @param string|null $pre_command
-     * @param  bool $b_include_git_word  default true
-     * @return string
-     * @throws Exception
-     */
-    protected function do_git_command( string $command,bool $b_include_git_word = true,?string $pre_command = null) : string {
-        $dir = $this->get_project_directory();
-        if (!$dir) {
-            throw new RuntimeException("Project Directory is not created yet");
-        }
-        return FlowGitHistory::do_git_command($dir,$command,$b_include_git_word,$pre_command);
-    }
-
-    /**
-     * @return array
-     * @throws Exception
-     */
-    public function get_git_status(): array  {
-        $what =  $this->do_git_command("status");
-        return explode("\n",$what);
-    }
-
-    /**
-     * @return string
-     * @throws Exception
-     */
-    public function get_head_commit_hash() : string {
-        try {
-            return $this->do_git_command('rev-parse HEAD');
-        } catch (Exception $e) {
-            return '';
-        }
-    }
 
     /**
      * Saves the private key to a file, and deletes it after, and might take care of ssh local host issues
@@ -982,7 +918,7 @@ class FlowProject extends FlowBase {
             //save private key as temp file, and set permissions to owner only
             $temp_file_path = tempnam(sys_get_temp_dir(), 'git-key-');
             file_put_contents($temp_file_path,$private_key);
-            $directory = $this->get_project_directory();
+            $directory = $this->getFlowProjectFiles()->get_project_directory();
             $command = "ssh-agent bash -c ' ".
                 "cd $directory; ".
                 "ssh-add $temp_file_path; ".
@@ -1016,7 +952,7 @@ class FlowProject extends FlowBase {
      * @throws Exception
      */
     protected function do_project_directory_command($command) :string  {
-        $directory = $this->get_project_directory();
+        $directory = $this->getFlowProjectFiles()->get_project_directory();
         $full_command = "cd $directory && $command";
         exec($full_command,$output,$result_code);
         if ($result_code) {
@@ -1060,9 +996,9 @@ class FlowProject extends FlowBase {
             throw new RuntimeException("Import Repo Branch not set");
         }
 
-        $old_head = $this->get_head_commit_hash();
+        $old_head = $this->getFlowProjectFiles()->get_head_commit_hash();
         try {
-            $this->do_git_command('reset --hard'); //clear up any earlier bugs or crashes
+            $this->getFlowProjectFiles()->do_git_command('reset --hard'); //clear up any earlier bugs or crashes
         } catch (Exception $e) {
             $message = "Could not do a hard reset";
             $message.="<br>{$e->getMessage()}\n";
@@ -1073,11 +1009,11 @@ class FlowProject extends FlowBase {
         try {
             $git_ret =  $this->do_key_command_with_private_key($this->import_repo_key,$this->import_repo_url,$command);
         } catch (Exception $e) {
-            $maybe_changes = $this->do_git_command('diff');
+            $maybe_changes = $this->getFlowProjectFiles()->do_git_command('diff');
             $message = $e->getMessage();
             if (!empty(trim($maybe_changes))) {
                 try {
-                    $this->do_git_command('merge --abort');
+                    $this->getFlowProjectFiles()->do_git_command('merge --abort');
                     $message.="<br>Aborted Merge\n";
                 } catch (Exception $oh_no) {
                     $message.="<br>{$oh_no->getMessage()}\n";
@@ -1087,14 +1023,14 @@ class FlowProject extends FlowBase {
             throw new RuntimeException($message);
         }
 
-        $new_head = $this->get_head_commit_hash();
+        $new_head = $this->getFlowProjectFiles()->get_head_commit_hash();
         try {
             $this->check_integrity();
             $this->set_db_from_file_state();
         } catch (Exception $e) {
             //do not use commit just imported, and remove any changes to files
             if ($old_head !== $new_head) {
-                $this->do_git_command("reset --hard $old_head");
+                $this->getFlowProjectFiles()->do_git_command("reset --hard $old_head");
             }
             throw $e;
         }
@@ -1168,123 +1104,5 @@ class FlowProject extends FlowBase {
         }
 
     }
-
-
-    /**
-     * @return string|null
-     * @throws Exception
-     */
-    public function get_files_directory() : ?string {
-        $project_directory = $this->get_project_directory();
-        if (!$project_directory) {return null;}
-        $resource_directory = $project_directory.DIRECTORY_SEPARATOR. static::REPO_FILES_DIRECTORY;
-        $real = realpath($resource_directory);
-        if (!$real) {
-            $b_made = mkdir($resource_directory);
-            if (!$b_made) {
-                throw new RuntimeException("Cannot make files directory at $real");
-            }
-            $real = realpath($resource_directory);
-        }
-        if (!is_readable($real)) {
-            throw new RuntimeException("Files directory is not readable at $real");
-        }
-        return $real;
-    }
-
-    /**
-     * @return string|null
-     * @throws Exception
-     */
-    public function get_resource_directory() : ?string {
-        $project_directory = $this->get_project_directory();
-        if (!$project_directory) {return null;}
-        $resource_directory = $project_directory.DIRECTORY_SEPARATOR. static::REPO_RESOURCES_DIRECTORY;
-        $real = realpath($resource_directory);
-        if (!$real) {
-            $b_made = mkdir($resource_directory);
-            if (!$b_made) {
-                throw new RuntimeException("Cannot make resource directory at $real");
-            }
-            $real = realpath($resource_directory);
-        }
-        if (!is_readable($real)) {
-            throw new RuntimeException("Resource directory is not readable at $real");
-        }
-        return $real;
-    }
-
-    /**
-     * @return string
-     * @throws Exception
-     */
-    public function get_resource_url() : string {
-        $base_resource_directory = '/' . $this->get_admin_user()->flow_user_guid .
-            '/' . $this->flow_project_guid . '/' . static::REPO_RESOURCES_DIRECTORY ; //no slash at end
-        $root = ProjectHelper::get_project_helper()->get_root_url();
-        return $root. $base_resource_directory;
-    }
-
-
-    /**
-     * @return string
-     * @throws Exception
-     */
-    public function get_files_url() : string {
-        $base_resource_directory = '/' . $this->get_admin_user()->flow_user_guid .
-            '/' . $this->flow_project_guid . '/' . static::REPO_FILES_DIRECTORY ; //no slash at end
-        $root = ProjectHelper::get_project_helper()->get_root_url();
-        return $root. $base_resource_directory;
-    }
-
-    /**
-     * returns array of full file paths of any resources (or protected files) found that is sharable (png,jpg,jpeg,pdf)
-     * @return string[]
-     * @throws
-     */
-    public function get_resource_file_paths(bool $b_get_protected_files_instead = false): array{
-        if ($b_get_protected_files_instead) {
-            $resource_directory = $this->get_files_directory();
-        } else {
-            $resource_directory = $this->get_resource_directory();
-        }
-
-        if (empty($resource_directory)) {return [];}
-        $types_piped = implode('|',static::REPO_RESOURCES_VALID_TYPES);
-        $pattern = "/.+($types_piped)\$/";
-        $list = RecursiveClasses::rsearch_for_paths($resource_directory,$pattern);
-        $ret = [];
-        foreach ($list as $path) {
-            if (!is_string($path)) {
-                static::get_logger()->error("File path in resource directory is not a string",['$path'=>$path]);
-                throw new LogicException("File path in resource directory is not a string");
-            }
-
-            $what = realpath($path);
-            if ($what && is_readable($path)) {$ret[] = $what;}
-        }
-        return $ret;
-    }
-
-
-
-    /**
-     * returns array of full url paths of any resources found that is sharable (png,jpg,jpeg,pdf)
-     * @return string[]
-     * @throws
-     */
-    public function get_resource_urls(): array{
-        $resource_files = $this->get_resource_file_paths();
-
-        $base_resource_file_path = $this->get_resource_directory(); //no slash at end
-        $base_project_url = $this->get_resource_url();
-        $resource_urls = [];
-        foreach ($resource_files as $full_path_file) {
-            $full_url = str_replace($base_resource_file_path,$base_project_url,$full_path_file);
-            $resource_urls[] = $full_url;
-        }
-        return $resource_urls;
-    }
-
 
 }

@@ -56,8 +56,8 @@ class FlowGitFile {
     }
 
     protected function is_valid_resource_file() : bool{
-        if (strpos($this->file,FlowProject::REPO_FILES_DIRECTORY.DIRECTORY_SEPARATOR) !== false) {return true;}
-        if (strpos($this->file,FlowProject::REPO_RESOURCES_DIRECTORY.DIRECTORY_SEPARATOR) !== false) {return true;}
+        if (strpos($this->file,FlowProjectFiles::REPO_FILES_DIRECTORY.DIRECTORY_SEPARATOR) !== false) {return true;}
+        if (strpos($this->file,FlowProjectFiles::REPO_RESOURCES_DIRECTORY.DIRECTORY_SEPARATOR) !== false) {return true;}
         return false;
     }
 

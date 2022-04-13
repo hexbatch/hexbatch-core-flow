@@ -16,7 +16,6 @@ class StandardAttributeSearchParams  extends RawAttributeSearchParams {
 
 
 
-
     public function __construct()
     {
         parent::__construct();

@@ -1,0 +1,102 @@
+/**
+ *
+ * @param {FlowTag} tag
+ */
+function view_standard_css(tag) {
+    if (!tag.standard_attributes.hasOwnProperty('css')) { return jQuery('<span>No CSS Found</span>');}
+
+    /**
+     * @type {StandardCss} css
+     */
+    let css ;
+    if (tag.standard_attributes.hasOwnProperty('css')) {
+        css = tag.standard_attributes.css;
+    } else {
+        css = create_proxy_standard_css();
+    }
+
+    css = _.merge(create_proxy_standard_css(),css);
+
+    let card = $("div#standard-css-view-templates > div.standard-css-view-card ").clone();
+    let view_div_id = 'css-view-'+uuid.v4();
+    card.attr('id',view_div_id);
+    card.attr('id');
+
+    function invertColor(hex) {
+
+        function padZero(str, len) {
+            len = len || 2;
+            var zeros = new Array(len).join('0');
+            return (zeros + str).slice(-len);
+        }
+
+        if (hex.indexOf('#') === 0) {
+            hex = hex.slice(1);
+        }
+        // convert 3-digit hex to 6-digits.
+        if (hex.length === 3) {
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        }
+        if (hex.length !== 6) {
+            throw new Error('Invalid HEX color.');
+        }
+        // invert color components
+        var r = (255 - parseInt(hex.slice(0, 2), 16)).toString(16),
+            g = (255 - parseInt(hex.slice(2, 4), 16)).toString(16),
+            b = (255 - parseInt(hex.slice(4, 6), 16)).toString(16);
+        // pad each with zeros and return
+        return '#' + padZero(r) + padZero(g) + padZero(b);
+    }
+
+
+
+    if (css.color || css.backgroundColor || css.fontFamily) {
+        let thang = card.find('.css-thang');
+        thang.removeClass('d-none');
+        if (css.color || css.backgroundColor) {
+            let color_node = card.find('.da-colors');
+            color_node.removeClass('d-none');
+
+            let da_foreground_color_node = color_node.find('.show-foreground-color');
+            let hexwords_fore = da_foreground_color_node.find('.da-color-hex');
+            if (css.color) {
+                da_foreground_color_node.css({backgroundColor: css.color});
+                let dapper_color = chroma(invertColor(chroma(css.color).hex())).name();
+                let display_color = chroma(css.color).name();
+                hexwords_fore.css({color: dapper_color, backgroundColor: 'transparent'}).text('TEXT ' + display_color);
+            } else {
+                da_foreground_color_node.css({backgroundColor: 'transparent'});
+            }
+
+            let da_background_color_node = color_node.find('.show-background-color');
+            let hexwords_aft = da_background_color_node.find('.da-color-hex');
+            if (css.backgroundColor) {
+                da_background_color_node.css({backgroundColor: css.backgroundColor});
+                let dapper_color = chroma(invertColor(chroma(css.backgroundColor).hex())).name();
+                let display_color = chroma(css.backgroundColor).name();
+                hexwords_aft.css({
+                    color: dapper_color,
+                    backgroundColor: 'transparent'
+                }).text('BACKGROUND ' + display_color);
+            } else {
+                da_background_color_node.css({backgroundColor: 'transparent'});
+            }
+        }
+
+        if (css.fontFamily) {
+            let da_font_name = card.find('.da-font-name');
+            da_font_name.removeClass('d-none');
+            let da_span = da_font_name.find('span');
+            da_span.text(css.fontFamily);
+            da_span.css({fontFamily: css.fontFamily})
+        }
+    } else {
+        let no_thang = card.find('.no-css');
+        no_thang.removeClass('d-none');
+    }
+
+
+
+    return card;
+
+}

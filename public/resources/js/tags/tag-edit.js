@@ -44,6 +44,7 @@ function flow_tag_show_editor(tag,
         editing_div.find('.flow-edit-tag-created-at').data('ts', tag.created_at_ts).attr('data-ts', tag.created_at_ts);
         editing_div.find('.flow-edit-tag-modified-at').data('ts', tag.updated_at_ts).attr('data-ts', tag.created_at_ts);
         generate_parent_nav_list();
+        fill_standard_tab();
         fill_attribute_tab();
         fill_applied_tab();
         refresh_auto_formatted_times();
@@ -205,6 +206,8 @@ function flow_tag_show_editor(tag,
                 triggers.attributes = tabTrigger;
             } else if (that.hasClass('flow-edit-tag-applied-tab')) {
                 triggers.applied = tabTrigger;
+            } else if (that.hasClass('flow-edit-tag-standard-tab')) {
+                triggers.standards = tabTrigger;
             }
 
         });
@@ -213,15 +216,129 @@ function flow_tag_show_editor(tag,
             let that = $(this);
             if (that.hasClass('flow-edit-tag-attribute-tab')) {
                 triggers.attributes.show();
+                editing_div.find('.flow-edit-tag-standard-content').removeClass('show active');
                 editing_div.find('.flow-edit-tag-attribute-content').addClass('show active');
                 editing_div.find('.flow-edit-tag-applied-content').removeClass('show active');
             } else if (that.hasClass('flow-edit-tag-applied-tab')) {
                 triggers.applied.show();
+                editing_div.find('.flow-edit-tag-standard-content').removeClass('show active');
                 editing_div.find('.flow-edit-tag-attribute-content').removeClass('show active');
                 editing_div.find('.flow-edit-tag-applied-content').addClass('show active');
+            } else if (that.hasClass('flow-edit-tag-standard-tab')) {
+                triggers.applied.show();
+                editing_div.find('.flow-edit-tag-standard-content').addClass('show active');
+                editing_div.find('.flow-edit-tag-attribute-content').removeClass('show active');
+                editing_div.find('.flow-edit-tag-applied-content').removeClass('show active');
             }
+            modal.checkOverflow()
 
         });
+    }
+
+    function fill_standard_tab() {
+        //
+        let home = editing_div.find('.flow-edit-tag-standard-content .standard-home');
+        home.html('');
+
+        for(let standard_name in FLOW_EDITABLE_STANDARDS) {
+            let row = $("#flow-edit-tag-template-holder > div.flow-edit-tag-line ").clone();
+            row.find('.flow-standard-name').text(standard_name);
+
+
+            let button_class = 'btn-light';
+            let action_name = 'Create';
+            if (tag.standard_attributes.hasOwnProperty(standard_name)) {
+                button_class = 'btn-light'
+                action_name = 'Edit';
+            }
+
+            row.find('.flow-standard-action').text(action_name);
+
+            row.find('button.flow-edit-standard')
+                .data('tag_guid', tag.flow_tag_guid)
+                .attr("data-tag_guid", tag.flow_tag_guid)
+                .data('standard_name', standard_name)
+                .attr("data-standard_name", standard_name)
+                .addClass(button_class);
+
+            let inheritied = flow_standards_get_inherited(standard_name,tag);
+            let inherited_home = row.find('.flow-standard-parents');
+
+            let map = {};
+            for (let standard_attribute_name in inheritied ) {
+                if (inheritied.hasOwnProperty(standard_attribute_name)) {
+                    if (map.hasOwnProperty(inheritied[standard_attribute_name].ancestor_guid)) { continue;}
+
+                    let tagger = flow_tag_create_dom_name(inheritied[standard_attribute_name].ancestor_tag);
+                    tagger.addClass('me-2');
+                    map[inheritied[standard_attribute_name].ancestor_guid] = tagger;
+                    inherited_home.append(tagger);
+                }
+            }
+
+            let delete_button = row.find(`.flow-delete-standard`);
+            if (tag.standard_attributes.hasOwnProperty(standard_name)) {
+               delete_button.data('tag_guid', tag.flow_tag_guid)
+                   .attr("data-tag_guid", tag.flow_tag_guid)
+                   .data('standard_name', standard_name)
+                   .attr("data-standard_name", standard_name);
+            } else {
+                delete_button.remove()
+            }
+
+            home.append(row);
+        }
+        //append any views we might have
+        for(let standard_name in FLOW_VIEWABLE_STANDARDS) {
+            if (tag.standard_attributes.hasOwnProperty(standard_name)) {
+                let node = jQuery(`<div class="tag-standard-view m-2 ms-4"></div>`);
+                flow_standards_generate_view(standard_name,tag,node);
+                home.append(node);
+            }
+        }
+
+    }
+
+    function edit_standard() {
+        let that = $(this);
+        let tag_guid = that.data('tag_guid');
+        let standard_name = that.data('standard_name');
+        flow_standards_generate_edit_form(standard_name,tag_guid,null,
+            function(ret) {
+                tag = ret.tag;
+                update_tags_in_display(true);
+                fill_attribute_tab();
+                fill_standard_tab();
+            },
+            function(ret) {
+                my_swal.fire(
+                    'Oh No!',
+                    `The standard ${ret.standard_name} could not be changed <br>\n ` + ret.message,
+                    'error'
+                )
+            }
+        );
+    }
+
+    function delete_standard() {
+        let that = $(this);
+
+        let standard_name = that.data('standard_name');
+        flow_delete_standard(tag,standard_name,
+            function(ret) {
+                tag = ret.tag;
+                update_tags_in_display(true);
+                fill_attribute_tab();
+                fill_standard_tab();
+            },
+            function(ret) {
+                my_swal.fire(
+                    'Oh No!',
+                    `The standard ${ret.standard_name} could not be deleted <br>\n ` + ret.message,
+                    'error'
+                )
+            }
+        );
     }
 
     function fill_attribute_tab() {
@@ -456,12 +573,14 @@ function flow_tag_show_editor(tag,
                     tag = new_tag;
                     update_tags_in_display(true);
                     fill_attribute_tab();
+                    fill_standard_tab();
 
                 },
                 function(new_tag) {
                     tag = new_tag;
                     update_tags_in_display(true);
                     fill_attribute_tab();
+                    fill_standard_tab();
 
                 },
                 b_view_only
@@ -475,6 +594,7 @@ function flow_tag_show_editor(tag,
                 function (new_tag) {
                     tag = new_tag;
                     fill_attribute_tab();
+                    fill_standard_tab();
                     console.debug("got new tag of ", new_tag);
                     update_tags_in_display(true)
                 },
@@ -482,6 +602,7 @@ function flow_tag_show_editor(tag,
                     tag = new_tag;
                     update_tags_in_display(true);
                     fill_attribute_tab();
+                    fill_standard_tab();
                 },
                 b_view_only
             );
@@ -499,6 +620,8 @@ function flow_tag_show_editor(tag,
             );
 
         });
+
+
     } else {
         editing_div.find('button.flow-create-attribute-action').attr('disabled',true);
         editing_div.find('button.flow-create-attribute-action').attr('disabled',true);
@@ -506,6 +629,10 @@ function flow_tag_show_editor(tag,
 
     let qj_body = $('body');
     qj_body.on("click", `div#${editing_div_id} .flow-attribute-show-edit-on-click`, edit_attribute);
+    qj_body.on("click", `div#${editing_div_id} .flow-edit-standard`, edit_standard);
+    qj_body.on("click", `div#${editing_div_id} .flow-delete-standard`, delete_standard);
+
+
 
 }
 

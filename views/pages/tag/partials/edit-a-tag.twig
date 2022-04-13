@@ -118,8 +118,17 @@
 
             <div class="card-body">
                 <ul class="nav nav-tabs flow-edit-tag-tabs"  role="tablist">
+
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link flow-edit-tag-attribute-tab active"
+                        <button class="nav-link flow-edit-tag-standard-tab active"
+                                data-bs-toggle="tab"  type="button" role="tab" aria-controls="standards" aria-selected="true"
+                        >
+                            Standards
+                        </button>
+                    </li>
+
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link flow-edit-tag-attribute-tab"
                                 data-bs-toggle="tab"  type="button" role="tab" aria-controls="attributes" aria-selected="true"
                         >
                             Attributes
@@ -135,14 +144,23 @@
                 </ul>
                 <div class="tab-content">
 
-                    <div class="tab-pane fade show active flow-edit-tag-attribute-content"  role="tabpanel" aria-labelledby="attributes-tab">
+                    <div class="tab-pane fade show active flow-edit-tag-standard-content"
+                         role="tabpanel" aria-labelledby="attributes-tab"
+                    >
+                        <div class="w-100 mt-2 standard-home p-2">
+                            Standards here
+                        </div>
+
+                    </div>
+
+                    <div class="tab-pane fade  flow-edit-tag-attribute-content"  role="tabpanel" aria-labelledby="attributes-tab">
                         <div class="text-center w-100 mt-2">
                             <button class="btn btn-sm btn-success flow-create-attribute-action">
                                 New Attribute
                                 <i class="fas fa-plus-circle"></i>
                             </button>
                         </div>
-                        <ul class="list-group list-group-flush mt-1"></ul>
+                        <ul class="list-group list-group-flush mt-1" style="overflow: scroll"></ul>
                     </div>
 
                     <div class="tab-pane fade flow-edit-tag-applied-content"  role="tabpanel" aria-labelledby="applied-tab">
@@ -173,6 +191,8 @@
     {% include 'tag/partials/attribute/edit-attribute.twig' %}}
 
     {% include 'tag/partials/applied/create-applied.twig' %}}
+
+    {% include 'tag/partials/standard/standard-create-edit.twig' %}}
 
 </div> <!-- / anon div to hide modal screens -->
 

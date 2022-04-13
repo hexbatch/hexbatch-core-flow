@@ -26,14 +26,13 @@ class CssConverter extends BaseConverter {
     protected function getFinalOfKey(string $key): ?string
     {
         $raws = $this->getRawOfKey($key);
-        $only_css_key = null;
+
         switch ($key) {
 
            case IFlowTagStandardAttribute::CSS_KEY_BACKGROUND_COLOR:
+           case IFlowTagStandardAttribute::CSS_KEY_FONT_FAMILY:
            case IFlowTagStandardAttribute::CSS_KEY_COLOR: {
                $only_css_key = $key;
-            }
-           case IFlowTagStandardAttribute::CSS_KEY_CSS_OVERALL: {
                $clean_ret = [];
                $allowed_public_keys = FlowTagStandardAttribute::getStandardAttributeKeys(static::STANDARD_NAME);
                foreach ($raws as $raw) {
