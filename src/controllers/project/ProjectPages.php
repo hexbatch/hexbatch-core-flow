@@ -1187,9 +1187,9 @@ class ProjectPages extends BasePages
             try {
 
                 $file_upload = $this->get_project_helper()->find_and_move_uploaded_file($request,'flow_resource_file');
-                $file_resource_path = $project->getFlowProjectFiles()->get_project_directory().
-                    DIRECTORY_SEPARATOR. FlowProjectFiles::REPO_RESOURCES_DIRECTORY.
-                    DIRECTORY_SEPARATOR. $file_upload->getClientFilename();
+                $resource_base = $project->getFlowProjectFiles()->get_resource_directory();
+
+                $file_resource_path = $resource_base. DIRECTORY_SEPARATOR. $file_upload->getClientFilename();
                 $file_name = $file_upload->getClientFilename();
 
                 $file_upload->moveTo($file_resource_path);

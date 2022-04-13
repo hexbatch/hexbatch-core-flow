@@ -11,14 +11,30 @@
 
             <div class="card-body">
                 <h5 class="card-title">
-                    {{ user_home_project.flow_project_blurb }}
+                    {{ project.flow_project_blurb }}
                 </h5>
 
-                <div class="flow-user_home_project-readme-display">
-                    {{ user_home_project.flow_project_readme_html| raw }}
+                <div class="flow-project-readme-display">
+                    {{ project.flow_project_readme_html| raw }}
                 </div>
+
+                <div class="user-meta-here m-2"></div>
 
             </div>
         </div>
     </div>
 </div><!-- /.col -->
+
+<script>
+    jQuery(function($){
+        let tag_guids = {{ meta_tag_guids|to_json_string }};
+        let home = $(`.user-meta-here`);
+        for(let i = 0; i < tag_guids.length ; i++) {
+            let guid = tag_guids[i];
+            flow_standards_generate_view('meta',guid,home);
+        }
+    });
+
+
+
+</script>
