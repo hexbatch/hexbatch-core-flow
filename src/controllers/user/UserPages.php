@@ -577,13 +577,13 @@ class UserPages extends BasePages {
             }
             $user_home = $this->get_user_helper()->get_user_home_project($dat_user->flow_user_guid);
             $user_home->get_admin_user();
-            $meta_tag_guids = [];
+            $meta_tags = [];
             $tags = $user_home->get_all_owned_tags_in_project();
             foreach ($tags as $tag) {
                 $sa = $tag->getStandardAttributes();
                 foreach ($sa as $standard) {
                     if ( $standard->getStandardName() === IFlowTagStandardAttribute::STD_ATTR_NAME_META) {
-                        $meta_tag_guids[] = $tag->flow_tag_guid;
+                        $meta_tags[] = $tag;
                     }
                 }
 
@@ -595,7 +595,7 @@ class UserPages extends BasePages {
                 'page_description' => 'Public Profile',
                 'dat_user' => $dat_user,
                 'project' => $user_home,
-                'meta_tag_guids' => $meta_tag_guids
+                'meta_tags' => $meta_tags
             ]);
         } catch (Exception $e) {
             $this->logger->error("Could not render user_page_for_others",['exception'=>$e]);
