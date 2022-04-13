@@ -72,6 +72,8 @@ return function (App $app) {
 
         $group->group('', function (RouteCollectorProxy $group) {
             $group->get('/general_search', ['homePages', 'general_search'])->setName('general_search');
+
+            /** @uses \app\controllers\user\UserPages::user_page() */
             $group->get('/{user_name:[[:alnum:]\-]+}', ['userPages', 'user_page'])->setName('user_page');
         });
 
