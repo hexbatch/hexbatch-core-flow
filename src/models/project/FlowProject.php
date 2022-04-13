@@ -29,6 +29,7 @@ use Symfony\Component\Yaml\Yaml;
 /**
  * views
  * @uses \app\models\project\FlowProject::get_read_me_bb_code_with_paths()
+ * @uses \app\models\project\FlowProject::get_current_user_permissions()
  */
 class FlowProject extends FlowBase implements JsonSerializable {
 
@@ -110,10 +111,27 @@ class FlowProject extends FlowBase implements JsonSerializable {
         $this->current_user_permissions = $v;
     }
 
-    /** @noinspection PhpUnused */
+    /**
+     * @return FlowProjectUser|null
+     * @throws Exception
+     */
     public function get_current_user_permissions(): ?FlowProjectUser
     {
-        if (!isset($this->current_user_permissions)) {return new FlowProjectUser();} //return no permissions
+        if (!isset($this->current_user_permissions)) {
+            $user_permissions = FlowUser::find_users_by_project(true,
+                $this->flow_project_guid, null, true, $this->get_admin_user()->flow_user_guid);
+
+            if (empty($user_permissions)) {
+                throw new InvalidArgumentException("No permissions set for this");
+            }
+            $permissions_array = $user_permissions[0]->get_permissions();
+            if (empty($permissions_array)) {
+                throw new InvalidArgumentException("No permissions found, although in project");
+            }
+            $project_user = $permissions_array[0];
+
+            $this->set_current_user_permissions($project_user);
+        } //return no permissions
         return $this->current_user_permissions;
     }
 

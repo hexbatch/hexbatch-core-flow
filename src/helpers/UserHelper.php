@@ -39,21 +39,27 @@ class UserHelper extends BaseHelper {
        if (!$user_guid) {throw new InvalidArgumentException("If not logged in, must provide a user guid to get the user home");}
 
        try {
-           $params = new FlowProjectSearchParams();
-           $params->setFlowProjectType(FlowProject::FLOW_PROJECT_TYPE_USER_HOME);
-           $params->setOwnerUserNameOrGuidOrId($user_guid);
-           $res = FlowProjectSearch::find_projects($params);
+            $params = new FlowProjectSearchParams();
+            $params->setFlowProjectType(FlowProject::FLOW_PROJECT_TYPE_USER_HOME);
+            $params->setOwnerUserNameOrGuidOrId($user_guid);
+            $res = FlowProjectSearch::find_projects($params);
 
-           if (count($res)) {return $res[0];}
+            if (count($res)) {
+                $user_home_project =  $res[0];
+            }
+            else {
                 $target_user = FlowUser::find_one($user_guid);
-               $user_home_project = new FlowProject();
-               $user_home_project->flow_project_title = static::USER_HOME_TITLE;
-               $user_home_project->is_public = false;
-               $user_home_project->parent_flow_project_id = null;
-               $user_home_project->flow_project_type = FlowProject::FLOW_PROJECT_TYPE_USER_HOME;
-               $user_home_project->admin_flow_user_id = $target_user->flow_user_id;
-               $user_home_project->save();
-               return $user_home_project;
+                $user_home_project = new FlowProject();
+                $user_home_project->flow_project_title = static::USER_HOME_TITLE;
+                $user_home_project->is_public = false;
+                $user_home_project->parent_flow_project_id = null;
+                $user_home_project->flow_project_type = FlowProject::FLOW_PROJECT_TYPE_USER_HOME;
+                $user_home_project->admin_flow_user_id = $target_user->flow_user_id;
+                $user_home_project->save();
+            }
+
+            return $user_home_project;
+
 
        } catch (Exception $e) {
            $this->get_logger()->warning("Cannot find or perhaps create user home project");
