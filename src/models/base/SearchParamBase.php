@@ -15,6 +15,14 @@ class SearchParamBase {
     const ARG_IS_EMAIL = 'arg-is-email';
     const ARG_IS_INVALID = 'arg-is-invalid';
 
+    public function is_empty() : bool {
+        $ignore_non_empty = ['page','page_size'];
+        foreach ($this as $key => $value) {
+            if (in_array($key,$ignore_non_empty)) { continue;}
+            if (!empty($value)) { return false;}
+        }
+        return true;
+    }
 
 
     public static function find_type_of_arg($what) : string {

@@ -1,0 +1,119 @@
+
+<div class="d-none " id="standard-css-edit-templates">
+
+
+    <div class="card d-inline standard-css-edit-card">
+
+        <div class="card-title mb-2">
+            <h4 class="pt-1">
+                Edit CSS Settings for Tag
+                <span class="flow-edit-this-git-tag flow-tag-display fw-bold" data-tag_guid=""></span>
+            </h4>
+        </div>
+
+        <div class="card-header">
+            Edit CSS colors and font face
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+                <div class="col-6 col-lg-4 col-xxl-2 color-thing color-div">
+                    <label for="color" class="pb-1">
+                        Foreground Color
+                    </label>
+                    <input type="color"  id="color" name="color"
+                           class="form-control" placeholder="Forground Color"
+
+                    >
+
+                    <div class="d-none color-not-set">
+                        Foreground color is not set
+                    </div>
+
+                    <div class="d-none remove-fore-color le-color-reset mt-1">
+                        <button class="btn btn-dark btn-sm">
+                            Clear
+                        </button>
+                    </div>
+
+
+                </div>
+
+
+
+
+                <div class="col-6 col-lg-4 col-xxl-2  background-color-thing color-div">
+                    <label for="backgroundColor" class="pb-1">
+                        Background Color
+                    </label>
+                    <input type="color"  id="backgroundColor" name="backgroundColor"
+                           class="form-control" placeholder="Background Color"
+
+                    >
+
+
+                    <div class="d-none color-not-set">
+                        Background color is not set
+                    </div>
+
+                    <div class="d-none remove-back-color le-color-reset mt-1">
+                        <button class="btn btn-dark btn-sm">
+                            Clear
+                        </button>
+                    </div>
+
+
+                </div>
+
+
+
+
+                <div class="col-12 col-xxl-8">
+                    <label for="fontFamily" class="pb-1">
+                        Font Family
+                    </label>
+                    <br>
+                    <select class = 'select-font-now' id="fontFamily" name= "fontFamily"  title="Select Font">
+                    </select>
+                    <div class="d-none remove-back-color le-font-reset mt-1">
+                        <button class="btn btn-dark btn-sm">
+                            Clear
+                        </button>
+                    </div>
+                    <div id="flow-font-place-be"></div>
+                </div>
+
+
+                <div class="col-12 mt-4">
+                    <div  class="card mt-2 p-2 font-family-preview-text w-100">
+                        <h1 >Grumpy wizards make toxic brew for the evil Queen and Jack.</h1>
+                        <h2>Grumpy wizards make toxic brew for the evil Queen and Jack.</h2>
+                        <h3>Grumpy wizards make toxic brew for the evil Queen and Jack.</h3>
+                        <h4>Grumpy wizards make toxic brew for the evil Queen and Jack.</h4>
+                        <div>Grumpy wizards make toxic brew for the evil Queen and Jack.</div>
+                        <div class="small">Grumpy wizards make toxic brew for the evil Queen and Jack.</div>
+                        <div class="small">
+                            <span class="small">
+                                Grumpy wizards make toxic brew for the evil Queen and Jack.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="mt-2 d-flex justify-content-center">
+                        <button type="button" class="action-css-save btn btn-primary">
+                            Save CSS
+                        </button>
+                    </div>
+
+                </div>
+
+
+            </div> <!-- /.row -->
+
+        </div><!-- /.card-body -->
+    </div><!-- /.card.col -->
+
+</div>

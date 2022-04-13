@@ -13,7 +13,7 @@
                         project_name: project.flow_project_title
                     } )) }}
 
-                    <input type="hidden" name="flow_project_git_hash" value="{{ project.get_head_commit_hash() }}">
+                    <input type="hidden" name="flow_project_git_hash" value="{{ project.getFlowProjectFiles().get_head_commit_hash() }}">
 
 
                     <div class="d-inline-block float-start">

@@ -1,0 +1,85 @@
+/**
+ *
+ * @param {FlowTag} tag
+ */
+function view_standard_meta(tag) {
+    if (!tag.standard_attributes.hasOwnProperty('meta')) { return jQuery('<span>No Meta Found</span>');}
+
+    /**
+     * @type {StandardMeta} meta
+     */
+    let meta;
+    if (tag.standard_attributes.hasOwnProperty('meta')) {
+        meta = tag.standard_attributes.meta;
+    } else {
+        meta = create_proxy_standard_meta();
+    }
+
+    meta = _.merge(create_proxy_standard_meta(),meta);
+
+    let card = $("div#standard-meta-view-templates > div.standard-meta-view-card ").clone();
+    let view_div_id = 'meta-view-'+uuid.v4();
+    card.attr('id',view_div_id);
+    card.attr('id');
+
+    if (meta.meta_picture_url) {
+        let meta_node = card.find('.meta-image');
+        meta_node.removeClass('d-none');
+
+        let meta_image = meta_node.find('img');
+        meta_image.attr('src',meta.meta_picture_url);
+
+        let meta_link = meta_node.find('a.meta_picture_url');
+        meta_link.attr('href',meta.meta_picture_url);
+
+        meta_link.simpleLightbox({nav:false,captions:false,loop:false});
+    }
+
+    if (meta.meta_first_name || meta.meta_last_name || meta.meta_website) {
+        let meta_node = card.find('.meta-names-and-web');
+        meta_node.removeClass('d-none');
+        if (meta.meta_first_name || meta.meta_last_name) {
+            let da_names_node = meta_node.find('.da-names');
+            da_names_node.removeClass('d-none').addClass('d-block');
+            da_names_node.find('.meta_first_name').html(meta.meta_first_name);
+            da_names_node.find('.meta_last_name').html(meta.meta_last_name);
+        }
+
+        if (meta.meta_website) {
+            let da_linky = meta_node.find('.da-linky-linking');
+            da_linky.removeClass('d-none').addClass('d-block');
+            let meta_website = da_linky.find('.meta_website');
+            meta_website.attr('href',meta.meta_website);
+            meta_website.text(meta.meta_website);
+        }
+    }
+
+
+    if (meta.meta_public_email || meta.meta_version || meta.meta_date_time) {
+        let meta_node = card.find('.meta-email-date-version');
+        meta_node.removeClass('d-none');
+        if (meta.meta_public_email ) {
+            let meta_email = meta_node.find('.meta_public_email');
+            meta_email.removeClass('d-none').addClass('d-block');
+            let email_link = meta_email.find('a');
+            email_link.attr('href','mailto:'+meta.meta_public_email);
+            email_link.text(meta.meta_public_email);
+        }
+
+        if (meta.meta_version) {
+            let da_version_node = meta_node.find('.da-version');
+            da_version_node.removeClass('d-none').addClass('d-block');
+            da_version_node.find('.meta_version').html(meta.meta_version);
+        }
+
+        if (meta.meta_date_time) {
+            let da_time_node = meta_node.find('.da-time');
+            da_time_node.removeClass('d-none').addClass('d-block');
+            let date = new Date(meta.meta_date_time);
+            da_time_node.find('.meta_date_time').text(date.toLocaleString());
+        }
+    }
+
+    return card;
+
+}

@@ -1,4 +1,17 @@
 
+
+/**
+ *
+ * @typedef {Object} FlowProject
+ * @property {?FlowUser} admin_user
+ * @property {?string} flow_project_title
+ * @property {?string} flow_project_guid
+ * @property {?string} flow_project_blurb
+ * @property {?number} created_at_ts
+
+
+ */
+
 /**
  *
  * @typedef {Object} FlowProjectUser
@@ -124,6 +137,7 @@
  * @property {Object.<string, string>} css
  * @property {?FlowTag} flow_tag_parent
  * @property {FlowTagApplied[]} applied
+ * @property {?FlowProject} flow_project
  */
 
 
@@ -236,6 +250,77 @@
  * @property {?GeneralSearchResult} owning_project_result
  * @property {number} [id]
  * @property {string} [text]
+ */
+
+
+/**
+ *
+ * @typedef {FlowBasicResponse} FlowStandardResponse
+ * @property {?FlowTag} tag
+ * @property {?string} action
+ * @property {?string} standard_name
+ * @property {?Object} standard_data
+ * @property {FlowTagAttribute[]} [removed_attributes]
+ */
+
+
+/**
+ *
+ * @typedef {FlowBasicResponse} FlowUploadResourceResponse
+ * @property {?string} action
+ * @property {?string} file_name
+ * @property {?string} new_file_path
+ * @property {?string} new_file_url
+ */
+
+
+/**
+ *
+ * @callback FlowStandardCallback
+ * @param {FlowStandardResponse} data
+ */
+
+
+
+
+//  meta standard
+
+/**
+ *
+ * @typedef {Object} StandardMeta
+ * @property {?string} meta_version
+ * @property {?string} meta_date_time
+ * @property {?string} meta_author
+ * @property {?string} meta_first_name
+ * @property {?string} meta_last_name
+ * @property {?string} meta_public_email
+ * @property {?string} meta_picture_url
+ * @property {?string} meta_website
+ */
+
+
+//  git standard
+
+/**
+ *
+ * @typedef {Object} StandardGit
+ * @property {?string} git_url
+ * @property {?string} git_ssh_key
+ * @property {?string} git_branch
+ * @property {?string} git_notes
+ * @property {?string} git_web_page
+ */
+
+//css standard
+
+
+/**
+ *
+ * @typedef {Object} StandardCss
+ * @property {?string} fontFamily
+ * @property {?string} css
+ * @property {?string} backgroundColor
+ * @property {?string} color
  */
 
 

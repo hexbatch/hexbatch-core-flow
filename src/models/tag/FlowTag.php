@@ -6,6 +6,7 @@ namespace app\models\tag;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
+use app\models\project\FlowProject;
 use app\models\standard\FlowTagStandardAttribute;
 use app\models\standard\IFlowTagStandardAttribute;
 use app\models\tag\brief\BriefFlowTag;
@@ -24,6 +25,9 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
     public ?int $flow_tag_id;
     public ?int $flow_project_id;
+
+    public ?FlowProject $flow_project;
+
     public ?int $parent_tag_id;
     public ?int $tag_created_at_ts;
     public ?int $tag_updated_at_ts;
@@ -64,7 +68,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
     public array $inherited_attributes = [];
 
     /**
-     * @var \app\models\standard\IFlowTagStandardAttribute[] $standard_attributes
+     * @var IFlowTagStandardAttribute[] $standard_attributes
      */
     protected array $standard_attributes = [];
 
@@ -72,8 +76,18 @@ class FlowTag extends FlowBase implements JsonSerializable {
         return $this->standard_attributes;
     }
 
+    /**
+     * @param IFlowTagStandardAttribute[] $what
+     * @return void
+     */
     public function setStandardAttributes(array $what) : void  {
-        $this->standard_attributes = $what;
+
+        $processed = [];
+        foreach ($what as $s) {
+            $s->preProcessForGui();
+            $processed[] = $s;
+        }
+        $this->standard_attributes = $processed;
     }
 
 
@@ -104,7 +118,8 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 "css" => $standard_attribute_map['css'] ?? (object)[],
                 "standard_attributes" => $standard_attribute_map,
                 "flow_tag_parent" => $this->flow_tag_parent,
-                "applied" => $this->applied
+                "applied" => $this->applied,
+                'flow_project' => $this->flow_project
             ];
         }
 
@@ -158,6 +173,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
         $this->parent_tag_guid = null ;
         $this->flow_tag_parent = null;
         $this->children_list_as_string = null;
+        $this->flow_project = null;
 
         if (empty($object)) {
             return;
@@ -662,7 +678,31 @@ class FlowTag extends FlowBase implements JsonSerializable {
 
     }
 
+    public function delete_attribute_by_name(string $attribute_name) : ?FlowTagAttribute {
+        //find attribute and its index
 
+        $attribute_index = null;
+
+        /**
+         * @var FlowTagAttribute|null $found_attribute
+         */
+        $found_attribute = null;
+
+        foreach ($this->attributes as $index_of => $attribute) {
+            if ($attribute->getTagAttributeName() === $attribute_name) {
+                $found_attribute = $attribute;
+                $attribute_index = $index_of;
+                break;
+            }
+        }
+
+        if ($found_attribute && !is_null($attribute_index)) {
+            $found_attribute->delete_attribute();
+            array_splice($this->attributes, $attribute_index, 1);
+        }
+
+        return $found_attribute;
+    }
 
 
 

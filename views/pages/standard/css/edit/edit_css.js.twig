@@ -1,0 +1,244 @@
+/**
+ *
+ * @param {FlowTag} tag
+ * @param {?FlowStandardCallback} success_callback
+ * @param {?FlowStandardCallback} fail_callback
+ */
+function edit_standard_css(tag,success_callback,fail_callback) {
+    let b_debug = false;
+    /**
+     * @type {StandardCss} css
+     */
+    let css ;
+    if (tag.standard_attributes.hasOwnProperty('css')) {
+        css = tag.standard_attributes.css;
+    } else {
+        css = create_proxy_standard_css();
+    }
+
+    css = _.merge(create_proxy_standard_css(),css);
+
+    let original_font_value = css.fontFamily;
+
+    let inheritied = flow_standards_get_inherited('css',tag);
+
+
+    let card = $("div#standard-css-edit-templates > div.standard-css-edit-card ").clone();
+    let editing_div_id = 'css-editor-'+uuid.v4();
+    card.attr('id',editing_div_id);
+    let title_tag = card.find('.flow-edit-this-git-tag');
+    title_tag.text(tag.flow_tag_name);
+    title_tag.data('tag_guid', tag.flow_tag_guid);
+
+    let font_select;
+
+    {
+        let fonts_to_look_at = [
+            "Roboto",
+            "Open+Sans",
+            "Space Mono",
+            "Lato",
+            "Montserrat",
+            "Oswald",
+            "Raleway",
+            "Merriweather",
+            "Inconsolata",
+            "Allura",
+            "Sigmar One",
+            "Gloria Hallelujah",
+
+            "Montez","Lobster","Josefin Sans","Shadows Into Light","Pacifico","Amatic SC", "Orbitron",
+            "Rokkitt","Righteous","Dancing Script","Bangers","Chewy","Sigmar One","Architects Daughter",
+            "Abril Fatface","Covered By Your Grace","Kaushan Script","Gloria Hallelujah","Satisfy",
+            "Lobster Two","Comfortaa","Cinzel","Courgette"
+
+        ];
+
+
+        font_select = card.find("select.select-font-now");
+        let select = font_select[0];
+
+        let opt = document.createElement('option');
+        opt.value = '';
+        opt.innerHTML = '(no font selected)';
+        select.add(opt);
+
+        for(var a = 0; a < fonts_to_look_at.length ; a++){
+            let opt = document.createElement('option');
+            opt.value = opt.innerHTML = fonts_to_look_at[a];
+            opt.style.fontFamily = fonts_to_look_at[a];
+            select.add(opt);
+        }
+
+        font_select.on('change',function() {
+
+            let val_font_name = $(this).val();
+            let preview = card.find(".font-family-preview-text");
+            if (!val_font_name) {
+                css.fontFamily = original_font_value;
+                $(this).css({fontFamily:'revert'});
+                preview.hide();
+                return;
+            }
+            preview.show();
+            css.fontFamily = val_font_name;
+            $(this).css({fontFamily: val_font_name});
+            $('.font-family-preview-text').css({fontFamily: val_font_name});
+            {#place_be.insertAdjacentHTML("beforeend",#}
+            {#    "<style> .font-family-preview-text{ font-family:'"+val_font_name+"';}"+#}
+            {#    "select.select-font-now{font-family:'"+val_font_name+"';</style>");#}
+
+            let da_button = card.find('.le-font-reset')
+            if (css.fontFamily) {
+                da_button.removeClass('d-none').addClass('d-block');
+            } else {
+                da_button.removeClass('d-block').addClass('d-none');
+            }
+        });
+
+        card.find('.le-font-reset').on('click',function() {
+           css.fontFamily = null;
+            original_font_value = null;
+            font_select.val('');
+            font_select.trigger('change');
+        });
+
+    }
+
+
+
+    for(let prop in css) {
+        if (!css.hasOwnProperty(prop)) {continue;}
+        let da_val = css[prop];
+
+
+        switch (prop) {
+            case 'color': {
+                if (da_val) {
+                    da_val = chroma(da_val).hex();
+                    card.find(`[name=${prop}]`).val(da_val);
+                } else {
+                    da_val = chroma('black').hex();
+                    card.find(`[name=${prop}]`).val(da_val);
+                }
+                break;
+            }
+            case 'backgroundColor': {
+                if (da_val) {
+                    da_val = chroma(da_val).hex();
+                    card.find(`[name=${prop}]`).val(da_val);
+                } else {
+                    da_val = chroma('white').hex();
+                    card.find(`[name=${prop}]`).val(da_val);
+                }
+                break;
+            }
+            case 'fontFamily': {
+                if (!da_val) {da_val = '';}
+                card.find(`[name=${prop}]`).val(da_val);
+                font_select.trigger("change");
+                break;
+            }
+        }
+
+        if (inheritied.hasOwnProperty(prop)) {
+            let tagger = flow_tag_create_dom_name(inheritied[prop].ancestor_tag);
+            card.find(`[name=${prop}]`).closest('div').find('label').append(tagger);
+        }
+
+    }
+
+
+
+
+
+    function set_color_panel(jq_input,le_color) {
+        let parent = jq_input.closest('.color-div');
+        if (le_color) {
+            parent.find('.le-color-reset').removeClass('d-none').addClass('d-block');
+            parent.find('.color-not-set').removeClass('d-block').addClass('d-none');
+        } else {
+            parent.find('.color-not-set').removeClass('d-none').addClass('d-block');
+            parent.find('.le-color-reset').removeClass('d-block').addClass('d-none');
+        }
+
+        let fore_color = 'black';
+        if (css.color) {fore_color = css.color;}
+
+        let back_color = 'white';
+        if (css.backgroundColor) {back_color = css.backgroundColor;}
+
+        card.find('.font-family-preview-text').css({
+            color: fore_color,
+            backgroundColor : back_color
+        });
+    }
+
+    let input_color = card.find(`input[name=color]`);
+    set_color_panel(input_color,css.color);
+    let input_bg_color = card.find(`input[name=backgroundColor]`);
+    set_color_panel(input_bg_color,css.backgroundColor);
+
+    input_color.on('change',function() {
+        let da_val = $(this).val();
+        css.color = chroma(da_val).name();
+        set_color_panel($(this),css.color);
+
+    });
+
+    input_bg_color.on('change',function() {
+        let da_val = $(this).val();
+        css.backgroundColor = chroma(da_val).name();
+        set_color_panel($(this),css.backgroundColor);
+    });
+
+    card.find('.remove-fore-color button').on('click',function() {
+        css.color = null;
+        let da_val = chroma('black').hex();
+        card.find(`[name=backgroundColor]`).val(da_val);
+        set_color_panel(input_color,css.color);
+    });
+
+    card.find('.remove-back-color button').on('click',function() {
+        css.backgroundColor = null;
+        let da_val = chroma('black').hex();
+        card.find(`[name=backgroundColor]`).val(da_val);
+        set_color_panel(input_bg_color,css.backgroundColor);
+    });
+
+
+
+    let save_button = card.find(`button.action-css-save`);
+    save_button.on('click',function() {
+
+        console.debug('got saved css as ',css);
+        if (b_debug) {return;}
+
+        let data_no_no_callback = function(data) {
+
+            if (!fail_callback) {
+                data_no_no_callback = function(what) {
+                    console.error('failed',what);
+                }
+            }
+            if (fail_callback) fail_callback(data);
+        }
+
+        let dat_ok_callback = function(data) {
+            if (!success_callback) {
+                dat_ok_callback = function(what) {
+                    console.debug('success',what);
+                }
+            }
+            if (success_callback) success_callback(data);
+        }
+
+        flow_update_standard(tag,'css',css,dat_ok_callback,data_no_no_callback);
+
+    });
+
+
+
+    return card;
+
+}

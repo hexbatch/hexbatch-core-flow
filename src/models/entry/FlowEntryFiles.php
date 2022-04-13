@@ -69,7 +69,7 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
     public function get_entry_folder() : ?string{
 
         if (!$this->flow_entry_guid) {return null;}
-        $project_dir = $this->project->get_project_directory();
+        $project_dir = $this->project->getFlowProjectFiles()->get_project_directory();
         if (empty($project_dir)) {return null;}
         $path = $project_dir . DIRECTORY_SEPARATOR . static::ENTRY_FOLDER_PREFIX . $this->flow_entry_guid;
         return $path;
@@ -140,11 +140,13 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
         $bb_code = JsonHelper::to_utf8($bb_code);
         $origonal_bb_code = $bb_code;
 
-        $this->flow_entry_body_bb_code = ProjectHelper::get_project_helper()->bb_code_from_file_paths($this->get_project(),$bb_code);
+        $this->flow_entry_body_bb_code = ProjectHelper::get_project_helper()->
+                                            stub_from_file_paths($this->get_project()->getFlowProjectFiles(),$bb_code);
 
 
         //may need to convert from the stubs back to the full paths for the html !
-        $nu_read_me = ProjectHelper::get_project_helper()->bb_code_to_file_paths($this->get_project(),$origonal_bb_code);
+        $nu_read_me = ProjectHelper::get_project_helper()->
+                                            stub_to_file_paths($this->get_project()->getFlowProjectFiles(),$origonal_bb_code);
         $this->flow_entry_body_html = JsonHelper::html_from_bb_code($nu_read_me);
         $this->flow_entry_body_text = str_replace('&nbsp;',' ',strip_tags($this->flow_entry_body_html));
 

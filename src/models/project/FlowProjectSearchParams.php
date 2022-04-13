@@ -2,8 +2,6 @@
 namespace app\models\project;
 
 use app\hexlet\JsonHelper;
-use app\hexlet\WillFunctions;
-use app\models\base\FlowBase;
 use app\models\base\SearchParamBase;
 use InvalidArgumentException;
 
@@ -49,14 +47,7 @@ class FlowProjectSearchParams extends SearchParamBase {
     }
 
 
-    /*
-     if (WillFunctions::is_valid_guid_format($project_title_guid_or_id)) {
-                    $where_conditions[] = " (p.flow_project_guid = UNHEX(?) )";
-                }
-                else if (ctype_digit($project_title_guid_or_id) && (intval($project_title_guid_or_id) < (PHP_INT_MAX/2))) {
-                    $where_conditions[] = " (p.id = ? )";
-                }
-     */
+
     /**
      * @param mixed $project_title_guid_or_id
      */

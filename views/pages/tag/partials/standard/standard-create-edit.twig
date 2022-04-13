@@ -1,0 +1,39 @@
+<style>
+    div.row.flow-edit-tag-line:nth-child(even) {
+        background-color: #ddd;
+    }
+
+    div.row.flow-edit-tag-line:nth-child(odd) {
+        background-color: #eee;
+    }
+
+</style>
+
+<div class="row flow-edit-tag-line mb-1 table-striped p-1 ms-2 me-2">
+    <div class="col-3">
+        <button
+                class="btn flow-edit-standard "
+                data-tag_guid=""
+                data-standard_name=""
+        >
+            <span class="flow-standard-action me-1"></span>
+            <span class="flow-standard-name"></span>
+        </button>
+    </div>
+
+    <div class="col-3">
+        <div class="flow-standard-parents"></div>
+    </div>
+
+    <div class="col-3">
+        <button
+            class="btn btn-light flow-delete-standard"
+            data-tag_guid=""
+            data-standard_name=""
+        >
+            <i class="bi bi-trash text-danger"></i>
+            <i class="fas fa-spinner fa-pulse flow-spinner"  style="display: none"></i>
+        </button>
+    </div>
+
+</div>

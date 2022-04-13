@@ -501,9 +501,16 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         }
 
         foreach ($top as $key => $val) {
-            if (!empty($val)) {
+            if ($key === 'tag_attribute_text') {
                 $ret->$key = $val;
+            } elseif ($key === 'tag_attribute_long') {
+                $ret->$key = $val;
+            } else {
+                if (!empty($val)) {
+                    $ret->$key = $val;
+                }
             }
+
         }
         return $ret;
     }

@@ -5,7 +5,7 @@ namespace app\helpers;
 use app\hexlet\DBSelector;
 use app\hexlet\MYDB;
 use app\models\base\SearchParamBase;
-use app\models\standard\StandardAttributeWrite;
+use app\models\standard\FlowTagStandardAttribute;
 use app\models\tag\FlowTagSearch;
 use app\models\tag\FlowTagSearchParams;
 use Exception;
@@ -82,9 +82,8 @@ class SQLHelper {
         $search_params->setPage(1);
         $search_params->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
         $all_tags = FlowTagSearch::get_tags($search_params);
-        $writer = new StandardAttributeWrite($all_tags);
-        $ret = $writer->write();
-        return $ret;
+        $writers = FlowTagStandardAttribute::write_standard_attributes($all_tags);
+        return count($writers);
     }
 
 }

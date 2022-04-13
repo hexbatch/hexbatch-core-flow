@@ -104,13 +104,13 @@ class AdminHelper extends BaseHelper {
     public  function admin_test(ServerRequestInterface $request) : array  {
         WillFunctions::will_do_nothing($request);
         $project = ProjectHelper::get_project_helper()->find_one($this->get_admin_project_guid());
-        $resource_files = $project->get_resource_file_paths();
+        $resource_files = $project->getFlowProjectFiles()->get_resource_file_paths();
         $routeParser = RouteContext::fromRequest($request)->getRouteParser();
         $base_project_url = $routeParser->urlFor('single_project_home',[
             "user_name" => $project->get_admin_user()->flow_user_guid,
             "project_name" => $project->flow_project_guid
         ]);
-        $base_resource_file_path = $project->get_project_directory(); //no slash at end
+        $base_resource_file_path = $project->getFlowProjectFiles()->get_project_directory(); //no slash at end
 
         $resource_urls = [];
         foreach ($resource_files as $full_path_file) {

@@ -3,8 +3,7 @@ namespace app\controllers\home;
 
 use app\helpers\AdminHelper;
 use app\models\base\FlowBase;
-use DI\DependencyException;
-use DI\NotFoundException;
+use Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as RequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -22,8 +21,7 @@ class CheckAdminMiddleware extends FlowBase
      *
      * @return Response
      * @throws HttpForbiddenException if not logged in
-     * @throws DependencyException
-     * @throws NotFoundException
+     * @throws Exception
      */
     public function __invoke(RequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {

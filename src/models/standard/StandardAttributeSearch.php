@@ -18,6 +18,7 @@ class StandardAttributeSearch extends FlowBase {
      */
     public static function search(StandardAttributeSearchParams $params) : array {
 
+        if (empty($params) || $params->is_empty()) {return [];}
         $args = [];
         $where_and = [];
 
@@ -113,7 +114,8 @@ class StandardAttributeSearch extends FlowBase {
                     HEX(a.standard_guid)                    as standard_guid,
                     a.flow_tag_id                           as tag_id,
                     HEX(tag.flow_tag_guid)                  as tag_guid,
-                    HEX(project.flow_project_guid)          as project_guid
+                    HEX(project.flow_project_guid)          as project_guid,
+                    HEX(u.flow_user_guid)                   as owner_user_guid
        
                 FROM flow_standard_attributes a
                 INNER JOIN flow_tags tag on a.flow_tag_id = tag.id

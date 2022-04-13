@@ -1,0 +1,166 @@
+<!--suppress CommaExpressionJS -->
+<script>
+    const FLOW_VIEWABLE_STANDARDS = {
+        {% for standard_view,standard_path in standard_viewable_scripts %}
+            {{ standard_view }}: "view_standard_{{ standard_view }}" {% if loop.last == false %},{% endif %}
+        {% endfor %}
+        }
+
+    const FLOW_EDITABLE_STANDARDS = {
+        {% for standard_view,standard_path in standard_editable_scripts %}
+            {{ standard_view }}: "edit_standard_{{ standard_view }}" {% if loop.last == false %},{% endif %}
+        {% endfor %}
+        }
+</script>
+
+
+{% for standard_view_frame,standard_path in standard_viewable_frames %}
+        {% include(standard_path) %}
+{% endfor %}
+
+{% for standard_edit_frame,standard_path in standard_editable_frames %}
+        {% include(standard_path) %}
+{% endfor %}
+
+{% for standard_view,standard_path in standard_viewable_scripts %}
+    <script>
+        {% include(standard_path) %}
+    </script>
+{% endfor %}
+
+{% for standard_edit,standard_path in standard_editable_scripts %}
+    <script>
+        {% include(standard_path) %}
+    </script>
+{% endfor %}
+
+<script>
+
+    /**
+     * @param {string} standard_name
+     * @param { FlowTag|string }tag_guid_or_object
+     * @param {object} standards_object
+     * @param {?jQuery} parent
+     * @param {?FlowStandardCallback} success_callback
+     * @param {?FlowStandardCallback} fail_callback
+
+     *
+     *
+     */
+    function flow_generate_standard_gui(standard_name,tag_guid_or_object,standards_object,
+                                   parent,success_callback,fail_callback) {
+
+
+        function executeFunctionByName(functionName, context /*, args */) {
+            var args = Array.prototype.slice.call(arguments, 2);
+            var namespaces = functionName.split(".");
+            var func = namespaces.pop();
+            for(var i = 0; i < namespaces.length; i++) {
+                context = context[namespaces[i]];
+            }
+            return context[func].apply(context, args);
+        }
+
+        if (_.isObject(standard_name)) {
+            let source = standard_name;
+            standard_name = source['standard_name']??null;
+            tag_guid_or_object = source['tag_guid_or_object']??null;
+            parent = source['parent']??null;
+        }
+        if (!standards_object.hasOwnProperty(standard_name) ) {
+            console.warn(`standard name of ${standard_name} does not have a viewable component`)
+            return;
+        }
+
+        function display(tag_to_use,gui_parent) {
+            let modal = null;
+
+            let data_no_no_callback = function(data) {
+
+                if (!fail_callback) {
+                    data_no_no_callback = function(what) {
+                        console.error('failed',what);
+                    }
+                }
+                if (modal) { modal.close()}
+                if (fail_callback) fail_callback(data);
+            }
+
+            let dat_ok_callback = function(data) {
+                if (!success_callback) {
+                    dat_ok_callback = function(what) {
+                        console.debug('success',what);
+                    }
+                }
+                if (modal) { modal.close()}
+                if (success_callback) success_callback(data);
+            }
+
+            let thing = executeFunctionByName(standards_object[standard_name],window,tag_to_use,dat_ok_callback,data_no_no_callback);
+            if (gui_parent) {
+                parent.append(thing);
+                update_tag_name_and_style_in_page(tag_to_use);
+                refresh_auto_formatted_times();
+            } else {
+                 modal = new tingle.modal({
+                    footer: false,
+                    stickyFooter: false,
+                    closeMethods: ['overlay', 'button', 'escape'],
+                    closeLabel: "Close",
+                    cssClass: ['flow-attribute-tingle'],
+                    onOpen: function () {
+                        update_tag_name_and_style_in_page(tag_to_use);
+                        refresh_auto_formatted_times();
+                    },
+                    onClose: function () {
+                        this.destroy();
+                    },
+
+                    beforeClose: function () {
+                        return true;
+                    }
+                });
+                modal.setContent(thing[0]);
+                modal.open();
+            }
+        }
+
+        if (_.isString(tag_guid_or_object)) {
+            get_tag_by_guid(
+                tag_guid_or_object,
+                function(found_tag) {
+                    display(found_tag, parent);
+                }
+            )
+
+        } else {
+            display(tag_guid_or_object,parent)
+        }
+
+    }
+
+    /**
+     * @param {string} standard_name
+     * @param { FlowTag|string }tag_guid_or_object
+     * @param {?jQuery} parent
+     *
+     *
+     */
+    function flow_standards_generate_view(standard_name,tag_guid_or_object,parent) {
+        return flow_generate_standard_gui(standard_name,tag_guid_or_object,FLOW_VIEWABLE_STANDARDS,parent,null,null);
+
+    }
+
+    /**
+     * @param {string} standard_name
+     * @param { FlowTag|string }tag_guid_or_object
+     * @param {?jQuery} parent
+     * @param {?FlowStandardCallback} success_callback
+     * @param {?FlowStandardCallback} fail_callback
+     */
+    function flow_standards_generate_edit_form(standard_name,tag_guid_or_object,parent,success_callback,fail_callback) {
+        return flow_generate_standard_gui(standard_name,tag_guid_or_object,FLOW_EDITABLE_STANDARDS,parent,
+            success_callback,fail_callback);
+
+    }
+</script>

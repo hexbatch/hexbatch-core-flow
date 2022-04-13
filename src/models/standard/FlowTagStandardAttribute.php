@@ -5,10 +5,12 @@ namespace app\models\standard;
 use app\helpers\UserHelper;
 use app\helpers\Utilities;
 use app\hexlet\JsonHelper;
+use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\tag\FlowTag;
 use InvalidArgumentException;
 use JsonSerializable;
+use LogicException;
 use RuntimeException;
 
 
@@ -23,6 +25,7 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
 
     protected ?int $standard_updated_ts;
     protected ?string $project_guid;
+    protected ?string $owner_user_guid;
     protected ?string $tag_guid;
     protected ?string $standard_guid;
     protected ?int $tag_id;
@@ -38,6 +41,7 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
         $this->tag_id = null;
         $this->standard_guid = null;
         $this->standard_id = null;
+        $this->owner_user_guid = null;
 
         if (empty($object)) {
             return;
@@ -77,6 +81,13 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
             throw new RuntimeException("Standard Project Guid is not set");
         }
         return $this->project_guid;
+    }
+
+    public function getOwnerUserGuid() : string  {
+        if (!$this->owner_user_guid) {
+            throw new RuntimeException("Standard User Guid is not set");
+        }
+        return $this->owner_user_guid;
     }
 
     public function getTagGuid() : string {
@@ -128,9 +139,10 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
                 'standard_name' => $this->standard_name,
                 'standard_value' => $output_value,
                 'standard_updated_ts' => $this->standard_updated_ts,
-                'project_guid' => $this->project_guid,
                 'tag_guid' => $this->tag_guid,
                 'standard_guid' => $this->standard_guid,
+                'project_guid'=> $this->project_guid ,
+                'owner_user_guid'=> $this->owner_user_guid ,
             ];
     }
 
@@ -230,5 +242,41 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
         return array_keys(static::STANDARD_ATTRIBUTES);
     }
 
+    public static function isNameKey(string $key_name,bool $is_also_protected = false ) : bool {
+        foreach ( static::STANDARD_ATTRIBUTES as $attribute_name  => $dets) {
+            WillFunctions::will_do_nothing($attribute_name);
+            $keys = array_keys($dets['keys']??[]);
+            if (in_array($key_name,$keys)) {
+                if ($is_also_protected) {
+                    if ( isset($dets[$key_name][static::OPTION_NO_SERIALIZATION])) {
+                        if ($dets[$key_name][static::OPTION_NO_SERIALIZATION]) {
+                            return true;
+                        }
+                    }
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public function preProcessForGui() : IFlowTagStandardAttribute {
+        if (!isset(IFlowTagStandardAttribute::STANDARD_ATTRIBUTES[$this->standard_name]['pre_process_for_gui'])) {
+            return $this;
+        }
+
+        $callable = IFlowTagStandardAttribute::STANDARD_ATTRIBUTES[$this->standard_name]['pre_process_for_gui'];
+        if (!is_callable($callable)) {
+            throw new LogicException(sprintf("%s does not have a valid callable for pre_process_for_gui",$this->standard_name));
+        }
+        $clone = new FlowTagStandardAttribute($this);
+        $clone->standard_value = call_user_func($callable,$this);
+        return $clone;
+
+
+    }
 
 }
