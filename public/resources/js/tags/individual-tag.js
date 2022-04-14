@@ -130,3 +130,37 @@ function add_tag_attributes_to_dom(tag_map,tags_here_jquery_or_string,b_allow_li
         }
     });
 }
+
+/**
+ *
+ * @param {FlowTagAttribute} attribute
+ * @return {string}
+ */
+function get_icon_html_for_attribute_pointee(attribute) {
+    let icon ;
+    if (attribute.points_to_flow_project_guid) {
+        icon = `<i class="bi bi-box"></i>`;
+    } else if (attribute.points_to_flow_user_guid) {
+        icon = `<i class="bi-person-circle"></i>`;
+    } else if (attribute.points_to_flow_tag_guid ) {
+        icon = `<i class="bi bi-tag"></i>`;
+    } else if (attribute.points_to_flow_entry_guid) {
+        icon = `<i class="bi bi-columns"></i>`;
+    } else {
+        icon = '';
+    }
+    return icon;
+}
+
+/**
+ *
+ * @param {FlowTagAttribute} attribute
+ * @return {string}
+ */
+function get_title_html_for_attribute_pointee(attribute) {
+    let pointee_title = '';
+    if (attribute.points_to_title) {
+        pointee_title = `<span class="ms-1">${attribute.points_to_title}</span>`;
+    }
+    return pointee_title;
+}

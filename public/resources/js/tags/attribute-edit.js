@@ -60,7 +60,9 @@ function flow_attribute_show_editor(tag,passed_attribute,
         editing_div.find('.flow-edit-attribute-created-at').data('ts',attribute.created_at_ts).attr('data-ts',attribute.created_at_ts);
         editing_div.find('.flow-edit-attribute-modified-at').data('ts',attribute.updated_at_ts).attr('data-ts',attribute.updated_at_ts);
         editing_div.find('.flow-edit-attribute-link').attr('href',attribute.points_to_url);
-        editing_div.find('.flow-attribute-link-title').html(attribute.points_to_title);
+        let pointee_icon = get_icon_html_for_attribute_pointee(attribute);
+        let pointee_title = get_title_html_for_attribute_pointee(attribute);
+        editing_div.find('.flow-attribute-link-title').html(pointee_icon + pointee_title);
         attribute_text.val(attribute.tag_attribute_text?? '');
         attribute_integer_input.val(attribute.tag_attribute_long?? '');
         refresh_auto_formatted_times();
@@ -140,6 +142,11 @@ function flow_attribute_show_editor(tag,passed_attribute,
         modal.addFooterBtn(footer_button_text, 'tingle-btn tingle-btn--primary', function () {
 
             if (attribute_points_to_search) {
+                attribute.points_to_flow_project_guid = null;
+                attribute.points_to_flow_entry_guid = null;
+                attribute.points_to_flow_tag_guid = null;
+                attribute.points_to_flow_user_guid = null;
+
                 switch (attribute_points_to_search.type) {
                     case 'user': {
                         attribute.points_to_flow_user_guid = attribute_points_to_search.guid;
@@ -151,6 +158,10 @@ function flow_attribute_show_editor(tag,passed_attribute,
                     }
                     case 'project': {
                         attribute.points_to_flow_project_guid = attribute_points_to_search.guid;
+                        break;
+                    }
+                    case 'tag': {
+                        attribute.points_to_flow_tag_guid = attribute_points_to_search.guid;
                         break;
                     }
                 }

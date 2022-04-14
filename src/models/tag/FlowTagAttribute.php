@@ -24,6 +24,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     protected ?int $points_to_entry_id;
     protected ?int $points_to_user_id;
     protected ?int $points_to_project_id;
+    protected ?int $points_to_tag_id;
     protected ?int $attribute_created_at_ts;
     protected ?int $attribute_updated_at_ts;
 
@@ -36,13 +37,17 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     protected ?string $points_to_flow_entry_guid;
     protected ?string $points_to_flow_user_guid;
     protected ?string $points_to_flow_project_guid;
+    protected ?string $points_to_flow_tag_guid;
 
     protected ?bool $is_inherited;
 
     protected ?string $points_to_title;
-    protected ?string $points_to_admin_name;
-    protected ?string $points_to_admin_guid;
     protected ?string $points_to_url;
+
+
+    protected ?string $project_guid_of_pointee;
+    protected ?string $project_admin_guid_of_pointee;
+    protected ?string $project_admin_name_of_pointee;
 
     /**
      * @param bool|null $is_inherited
@@ -74,6 +79,14 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     public function setPointsToFlowProjectGuid(?string $points_to_flow_project_guid): void
     {
         $this->points_to_flow_project_guid = $points_to_flow_project_guid;
+    }
+
+    /**
+     * @param string|null $points_to_flow_tag_guid
+     */
+    public function setPointsToFlowTagGuid(?string $points_to_flow_tag_guid): void
+    {
+        $this->points_to_flow_tag_guid = $points_to_flow_tag_guid;
     }
 
 
@@ -131,6 +144,14 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     public function setPointsToProjectId(?int $points_to_project_id): void
     {
         $this->points_to_project_id = $points_to_project_id;
+    }
+
+    /**
+     * @param int|null $points_to_tag_id
+     */
+    public function setPointsToTagId(?int $points_to_tag_id): void
+    {
+        $this->points_to_tag_id = $points_to_tag_id;
     }
 
 
@@ -203,6 +224,14 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         return $this->points_to_project_id;
     }
 
+    /**
+     * @return int|null
+     */
+    public function getPointsToTagId(): ?int
+    {
+        return $this->points_to_tag_id;
+    }
+
 
 
 
@@ -270,6 +299,14 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         return $this->points_to_flow_project_guid;
     }
 
+    /**
+     * @return string|null
+     */
+    public function getPointsToFlowTagGuid(): ?string
+    {
+        return $this->points_to_flow_tag_guid;
+    }
+
 
 
     public function has_enough_data_set() :bool {
@@ -287,11 +324,13 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         $this->points_to_flow_entry_guid = $attribute->points_to_flow_entry_guid ;
         $this->points_to_flow_user_guid = $attribute->points_to_flow_user_guid ;
         $this->points_to_flow_project_guid = $attribute->points_to_flow_project_guid ;
+        $this->points_to_flow_tag_guid = $attribute->points_to_flow_tag_guid ;
 
         //instead of doing a lot of edge case testing, just null them out and reform them when saving
         $this->points_to_user_id = null;
         $this->points_to_project_id = null;
         $this->points_to_entry_id = null;
+        $this->points_to_tag_id = null;
 
     }
 
@@ -302,6 +341,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         $this->points_to_entry_id = null ;
         $this->points_to_user_id = null ;
         $this->points_to_project_id = null ;
+        $this->points_to_tag_id = null ;
         $this->attribute_created_at_ts = null ;
         $this->attribute_updated_at_ts = null ;
         $this->flow_tag_attribute_guid = null ;
@@ -313,11 +353,14 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         $this->points_to_flow_entry_guid = null ;
         $this->points_to_flow_user_guid = null ;
         $this->points_to_flow_project_guid = null ;
+        $this->points_to_flow_tag_guid = null ;
         $this->is_inherited = null;
         $this->points_to_title = null;
-        $this->points_to_admin_name = null;
-        $this->points_to_admin_guid = null;
         $this->points_to_url = null;
+
+        $this->project_admin_guid_of_pointee = null;
+        $this->project_admin_name_of_pointee = null;
+        $this->project_guid_of_pointee = null;
 
         if (empty($object)) {
             return;
@@ -336,8 +379,10 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         if (empty($this->flow_tag_guid)) { $this->flow_tag_guid = null;}
         if (empty($this->points_to_flow_user_guid)) { $this->points_to_flow_user_guid = null;}
         if (empty($this->points_to_flow_project_guid)) { $this->points_to_flow_project_guid = null;}
+        if (empty($this->points_to_flow_tag_guid)) { $this->points_to_flow_tag_guid = null;}
         if (empty($this->points_to_flow_entry_guid)) { $this->points_to_flow_entry_guid = null;}
-        if (empty($this->points_to_admin_guid)) { $this->points_to_admin_guid = null;}
+        if (empty($this->project_guid_of_pointee)) { $this->project_guid_of_pointee = null;}
+        if (empty($this->project_admin_guid_of_pointee)) { $this->project_admin_guid_of_pointee = null;}
 
         $this->setTagAttributeLong($this->getTagAttributeLong());
         $this->setTagAttributeText($this->getTagAttributeText());
@@ -402,6 +447,12 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                     $this->points_to_flow_project_guid);
             }
 
+            if (!$this->points_to_tag_id && $this->points_to_flow_tag_guid) {
+                $this->points_to_tag_id = $db->cell(
+                    "SELECT id  FROM flow_tags WHERE flow_tag_guid = UNHEX(?)",
+                    $this->points_to_flow_tag_guid);
+            }
+
             if (!$this->points_to_user_id && $this->points_to_flow_user_guid) {
                 $this->points_to_user_id = $db->cell(
                     "SELECT id  FROM flow_users WHERE flow_user_guid = UNHEX(?)",
@@ -420,6 +471,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                 'points_to_entry_id' => $this->points_to_entry_id ,
                 'points_to_user_id' => $this->points_to_user_id ,
                 'points_to_project_id' => $this->points_to_project_id ,
+                'points_to_tag_id' => $this->points_to_tag_id ,
                 'tag_attribute_name' => $this->tag_attribute_name ,
                 'tag_attribute_long' => $this->getTagAttributeLong() ,
                 'tag_attribute_text' => $this->getTagAttributeText()
@@ -435,13 +487,15 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
             elseif ($this->flow_tag_attribute_guid) {
                 $insert_sql = "
                     INSERT INTO flow_tag_attributes(flow_tag_id,  created_at_ts, points_to_entry_id,
-                                                    points_to_user_id, points_to_project_id, flow_tag_attribute_guid,
+                                                    points_to_user_id, points_to_project_id , points_to_tag_id,
+                                                    flow_tag_attribute_guid,      
                                                     tag_attribute_name, tag_attribute_long, tag_attribute_text)  
-                    VALUES (?,?,?,?,?,UNHEX(?),?,?,?) 
+                    VALUES (?,?,?,?,?,?,UNHEX(?),?,?,?) 
                     ON DUPLICATE KEY UPDATE    flow_tag_id = VALUES(flow_tag_id),   
                                                 points_to_entry_id = VALUES(points_to_entry_id),
                                                 points_to_user_id = VALUES(points_to_user_id),
                                                 points_to_project_id = VALUES(points_to_project_id),
+                                                points_to_tag_id = VALUES(points_to_tag_id),
                                                 tag_attribute_name = VALUES(tag_attribute_name),
                                                 tag_attribute_long = VALUES(tag_attribute_long),
                                                 tag_attribute_text = VALUES(tag_attribute_text)
@@ -453,6 +507,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                     $this->points_to_entry_id,
                     $this->points_to_user_id,
                     $this->points_to_project_id,
+                    $this->points_to_tag_id,
                     $this->flow_tag_attribute_guid,
                     $this->tag_attribute_name,
                     $this->getTagAttributeLong(),
@@ -527,6 +582,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                 "points_to_flow_entry_guid" => $this->points_to_flow_entry_guid,
                 "points_to_flow_user_guid" => $this->points_to_flow_user_guid,
                 "points_to_flow_project_guid" => $this->points_to_flow_project_guid,
+                "points_to_flow_tag_guid" => $this->points_to_flow_tag_guid,
                 "tag_attribute_name" => $this->tag_attribute_name,
                 "tag_attribute_long" => $this->getTagAttributeLong(),
                 "tag_attribute_text" => $this->getTagAttributeText(),
@@ -534,8 +590,9 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                 "updated_at_ts" => $this->attribute_updated_at_ts,
                 "is_inherited" => $this->is_inherited,
                 "points_to_title" => $this->points_to_title,
-                "points_to_admin_guid" => $this->points_to_admin_guid,
-                "points_to_admin_name" => $this->points_to_admin_name,
+                "project_admin_guid_of_pointee" => $this->project_admin_guid_of_pointee,
+                "project_admin_name_of_pointee" => $this->project_admin_name_of_pointee,
+                "project_guid_of_pointee" => $this->project_guid_of_pointee,
                 "points_to_url" => $this->points_to_url
 
             ];
@@ -565,8 +622,8 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         {
             $this->points_to_url = $routeParser->urlFor('single_project_home',
                 [
-                    "user_name" => $this->points_to_admin_name,
-                    "project_name" => $this->points_to_title
+                    "user_name" => $this->project_admin_guid_of_pointee,
+                    "project_name" => $this->project_guid_of_pointee
                 ]
             );
         }
@@ -575,6 +632,25 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
             $this->points_to_url = $routeParser->urlFor('user_page',
                 [
                     "user_name" => $this->points_to_title,
+                ]
+            );
+        } elseif ( $this->points_to_flow_entry_guid)
+        {
+            $this->points_to_url = $routeParser->urlFor('show_entry',
+                [
+                    "user_name" => $this->project_admin_guid_of_pointee,
+                    "project_name" => $this->project_guid_of_pointee,
+                    "entry_name" => $this->points_to_flow_entry_guid
+                ]
+            );
+        }
+        elseif ( $this->points_to_flow_tag_guid)
+        {
+            $this->points_to_url = $routeParser->urlFor('show_tag',
+                [
+                    "user_name" => $this->project_admin_guid_of_pointee,
+                    "project_name" => $this->project_guid_of_pointee,
+                    "tag_name" => $this->points_to_flow_tag_guid
                 ]
             );
         }
@@ -590,6 +666,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         if (empty($this->points_to_entry_id) && $this->points_to_flow_entry_guid) { $ret[] = $this->points_to_flow_entry_guid;}
         if (empty($this->points_to_user_id) && $this->points_to_flow_user_guid) { $ret[] = $this->points_to_flow_user_guid;}
         if (empty($this->points_to_project_id) && $this->points_to_flow_project_guid) { $ret[] = $this->points_to_flow_project_guid;}
+        if (empty($this->points_to_tag_id) && $this->points_to_flow_tag_guid) { $ret[] = $this->points_to_flow_tag_guid;}
 
         return $ret;
     }
@@ -607,5 +684,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
             $this->points_to_user_id = $guid_map_to_ids[$this->points_to_flow_user_guid] ?? null;}
         if (empty($this->points_to_project_id) && $this->points_to_flow_project_guid) {
             $this->points_to_project_id= $guid_map_to_ids[$this->points_to_flow_project_guid] ?? null;}
+        if (empty($this->points_to_tag_id) && $this->points_to_flow_tag_guid) {
+            $this->points_to_tag_id= $guid_map_to_ids[$this->points_to_flow_tag_guid] ?? null;}
     }
 }

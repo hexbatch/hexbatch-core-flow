@@ -48,6 +48,7 @@ return function (App $app) {
 
         $group->group('/user', function (RouteCollectorProxy $group) {
 
+            /** @uses \app\controllers\user\UserPages::user_home() */
             $group->get('/home', ['userPages', 'user_home'])->setName('user_home');
             $group->get('/profile', ['userPages', 'user_settings'])->setName('user_settings');
 

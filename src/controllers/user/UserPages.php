@@ -358,7 +358,7 @@ class UserPages extends BasePages {
      * @param ResponseInterface $response
      * @return ResponseInterface
      * @throws Exception
-     * @noinspection PhpUnused
+     *
      */
     public function user_home( ResponseInterface $response) :ResponseInterface {
         $user_home = $this->get_user_helper()->get_user_home_project();

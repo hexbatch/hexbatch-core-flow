@@ -94,6 +94,7 @@
  * @property {?string} points_to_flow_entry_guid
  * @property {?string} points_to_flow_user_guid
  * @property {?string} points_to_flow_project_guid
+ * @property {?string} points_to_flow_tag_guid
  * @property {?string} tag_attribute_name
  * @property {?number} tag_attribute_long
  * @property {?string} tag_attribute_text
@@ -101,8 +102,9 @@
  * @property {?number} updated_at_ts
  * @property {?boolean} is_inherited
  * @property {?string} points_to_title
- * @property {?string} points_to_admin_guid
- * @property {?string} points_to_admin_name
+ * @property {?string} project_guid_of_pointee
+ * @property {?string} project_admin_guid_of_pointee
+ * @property {?string} project_admin_name_of_pointee
  * @property {?string} points_to_url
  */
 
@@ -321,6 +323,36 @@
  * @property {?string} css
  * @property {?string} backgroundColor
  * @property {?string} color
+ */
+
+
+/**
+ * @typedef {Object} FlowStandardSettingCallbackParams
+ * @property {FlowTag} tag_setting
+ * @property {?FlowTagAttribute} [setting_attribute]
+ * @property {?FlowTag} [chosen_tag]
+ * @property {string} standard_name
+ * @property {?Object} [standard_value]
+ * @property {?string} [message]
+ */
+
+
+
+/**
+ *
+ * @callback FlowStandardSettingCallback
+ * @param {FlowStandardSettingCallbackParams} params
+ */
+
+
+/**
+ * @typedef {FlowStandardSettingCallbackParams} FlowStandardSettingsSetup
+ * @property {FlowTag[]} tag_list
+ * @property {string} setting_name
+ * @property {string} selected_label
+ * @property {?FlowStandardSettingCallback} [on_change_callback]
+ * @property {?FlowStandardSettingCallback} [on_cancel_callback]
+ * @property {?FlowStandardSettingCallback} [on_error_callback]
  */
 
 

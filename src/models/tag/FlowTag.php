@@ -347,6 +347,10 @@ class FlowTag extends FlowBase implements JsonSerializable {
                     $me_attribute->setPointsToProjectId(null);
                 }
 
+                if ($me_attribute->getPointsToTagId() && !$this_attribute->getPointsToFlowTagGuid()) {
+                    $me_attribute->setPointsToTagId(null);
+                }
+
                 $me_attribute->setPointsToFlowEntryGuid(
                     empty($this_attribute->getPointsToFlowEntryGuid())
                         ? null:  $this_attribute->getPointsToFlowEntryGuid()
@@ -358,6 +362,10 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 $me_attribute->setPointsToFlowProjectGuid(
                     empty($this_attribute->getPointsToFlowProjectGuid())?
                         null : $this_attribute->getPointsToFlowProjectGuid() );
+
+                $me_attribute->setPointsToFlowTagGuid(
+                    empty($this_attribute->getPointsToFlowTagGuid())?
+                        null : $this_attribute->getPointsToFlowTagGuid() );
 
                 $me_attribute->setTagAttributeName($this_attribute->getTagAttributeName());
 
@@ -546,6 +554,11 @@ class FlowTag extends FlowBase implements JsonSerializable {
                         if (isset($guid_map_old_to_new[$attribute->getPointsToFlowProjectGuid()])) {
                             $attribute->setPointsToFlowProjectGuid($guid_map_old_to_new[$attribute->getPointsToFlowProjectGuid()]);
                             $attribute->setPointsToProjectId(null) ;
+                        }
+
+                        if (isset($guid_map_old_to_new[$attribute->getPointsToFlowTagGuid()])) {
+                            $attribute->setPointsToFlowTagGuid($guid_map_old_to_new[$attribute->getPointsToFlowTagGuid()]);
+                            $attribute->setPointsToTagId(null) ;
                         }
 
                         if (isset($guid_map_old_to_new[$attribute->getPointsToFlowEntryGuid()])) {

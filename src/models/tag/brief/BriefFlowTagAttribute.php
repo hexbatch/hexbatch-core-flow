@@ -18,6 +18,7 @@ class BriefFlowTagAttribute  implements JsonSerializable {
     public ?string $points_to_flow_entry_guid ;
     public ?string $points_to_flow_user_guid ;
     public ?string $points_to_flow_project_guid ;
+    public ?string $points_to_flow_tag_guid ;
     public string $tag_attribute_name ;
     public ?int $tag_attribute_long ;
     public ?string $tag_attribute_text ;
@@ -64,6 +65,14 @@ class BriefFlowTagAttribute  implements JsonSerializable {
     public function getPointsToFlowProjectGuid(): ?string
     {
         return $this->points_to_flow_project_guid;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getPointsToFlowTagGuid(): ?string
+    {
+        return $this->points_to_flow_tag_guid;
     }
 
     /**
@@ -125,6 +134,7 @@ class BriefFlowTagAttribute  implements JsonSerializable {
         $this->points_to_flow_entry_guid = $b_standard? $att->points_to_flow_entry_guid : $att->getPointsToFlowEntryGuid();
         $this->points_to_flow_user_guid = $b_standard? $att->points_to_flow_user_guid : $att->getPointsToFlowUserGuid();
         $this->points_to_flow_project_guid = $b_standard? $att->points_to_flow_project_guid : $att->getPointsToFlowProjectGuid();
+        $this->points_to_flow_tag_guid = $b_standard? $att->points_to_flow_tag_guid : $att->getPointsToFlowTagGuid();
         $this->tag_attribute_name = $b_standard? $att->tag_attribute_name : $att->getTagAttributeName();
         $this->tag_attribute_long = (int)($b_standard? $att->tag_attribute_long : $att->getTagAttributeLong());
         $this->tag_attribute_text = $b_standard? $att->tag_attribute_text : $att->getTagAttributeText();
@@ -148,6 +158,7 @@ class BriefFlowTagAttribute  implements JsonSerializable {
             "points_to_flow_entry_guid" => $this->points_to_flow_entry_guid,
             "points_to_flow_user_guid" => $this->points_to_flow_user_guid,
             "points_to_flow_project_guid" => $this->points_to_flow_project_guid,
+            "points_to_flow_tag_guid" => $this->points_to_flow_tag_guid,
             "tag_attribute_name" => $this->tag_attribute_name,
             "tag_attribute_long" => $this->tag_attribute_long,
             "tag_attribute_text" => $this->tag_attribute_text,
