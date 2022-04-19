@@ -1,12 +1,16 @@
 <?php
 
-namespace app\models\tag;
+namespace app\helpers;
 
 use app\models\project\FlowProject;
+use app\models\project\FlowProjectUser;
+use app\models\tag\FlowAppliedTag;
+use app\models\tag\FlowTag;
+use app\models\tag\FlowTagAttribute;
 use InvalidArgumentException;
 use stdClass;
 
-class FlowTagCallData {
+class AjaxCallData {
     public ?string $note = null;
 
     public ?stdClass $args = null;
@@ -44,6 +48,8 @@ class FlowTagCallData {
      */
     public ?FlowAppliedTag $applied = null;
 
+    public ?string $permission_mode;
+
 
     function __construct(array $options = [], ?stdClass $args = null ,?FlowProject $project = null ,?array $new_token = null ){
         $this->args = $args;
@@ -56,6 +62,7 @@ class FlowTagCallData {
 
         $this->options = [];
         $this->note = null;
+        $this->permission_mode = FlowProjectUser::PERMISSION_COLUMN_WRITE;
 
         foreach ($options as $opt) {
             switch ($opt) {
@@ -69,7 +76,7 @@ class FlowTagCallData {
                     break;
                 }
                 default: {
-                    throw new InvalidArgumentException("[FlowTagCallData] Option of $opt not recognized");
+                    throw new InvalidArgumentException("[AjaxCallData] Option of $opt not recognized");
                 }
             }
         }

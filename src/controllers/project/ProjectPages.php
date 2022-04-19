@@ -3,7 +3,9 @@ namespace app\controllers\project;
 
 use app\controllers\base\BasePages;
 use app\controllers\user\UserPages;
+use app\helpers\AjaxCallData;
 use app\helpers\ProjectHelper;
+use app\helpers\UserHelper;
 use app\hexlet\FlowAntiCSRF;
 use app\hexlet\GoodZipArchive;
 use app\hexlet\JsonHelper;
@@ -12,6 +14,9 @@ use app\models\project\FlowGitFile;
 use app\models\project\FlowProject;
 use app\models\project\FlowProjectFiles;
 use app\models\project\FlowProjectUser;
+use app\models\standard\IFlowTagStandardAttribute;
+use app\models\tag\FlowTagSearch;
+use app\models\tag\FlowTagSearchParams;
 use app\models\user\FlowUser;
 
 use Exception;
@@ -724,6 +729,40 @@ class ProjectPages extends BasePages
 
             $status_array = $project->getFlowProjectFiles()->get_git_status();
 
+            $git_tags = UserHelper::get_user_helper()->
+                        get_user_tags_of_standard($this->user->flow_user_guid,IFlowTagStandardAttribute::STD_ATTR_NAME_GIT);
+
+            //todo make helper function to get tags and check for read permissions, also one to get the standard value, after using that
+            $import_tag_container = $project->get_tag_by_name(FlowProject::STANDARD_SETTINGS[FlowProject::GIT_IMPORT_SETTING_NAME]['tag_name']);
+            $import_tag_setting_attribute = $import_tag_container->get_or_create_attribute(FlowProject::GIT_IMPORT_SETTING_NAME);
+            $import_tag_setting_tag_guid = $import_tag_setting_attribute->getPointsToFlowTagGuid();
+
+            $export_tag_container = $project->get_tag_by_name(FlowProject::STANDARD_SETTINGS[FlowProject::GIT_EXPORT_SETTING_NAME]['tag_name']);
+            $export_tag_setting_attribute = $export_tag_container->get_or_create_attribute(FlowProject::GIT_EXPORT_SETTING_NAME);
+            $export_tag_setting_tag_guid = $export_tag_setting_attribute->getPointsToFlowTagGuid();
+
+            $tag_params = new FlowTagSearchParams();
+            if ($import_tag_setting_tag_guid) { $tag_params->tag_guids[] = $import_tag_setting_tag_guid; }
+            if ($export_tag_setting_tag_guid) { $tag_params->tag_guids[] = $import_tag_setting_tag_guid; }
+            $pointee_tag_array  = [];
+            if (count($tag_params->tag_guids)) {
+                $pointee_tag_array = FlowTagSearch::get_tags($tag_params);
+            }
+
+            $git_import_tag_setting = null;
+            $git_export_tag_setting = null;
+
+            foreach ($pointee_tag_array as $found_tag) {
+                if ($found_tag->flow_tag_guid === $import_tag_setting_tag_guid) {
+                    $git_import_tag_setting = $found_tag;
+                }
+
+                if ($found_tag->flow_tag_guid === $export_tag_setting_tag_guid) {
+                    $git_export_tag_setting = $found_tag;
+                }
+            }
+
+
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/project_history.twig',
                 'page_title' => "History for Project $project_name",
@@ -731,13 +770,123 @@ class ProjectPages extends BasePages
                 'history_page_number' => $page,
                 'history_page_size' => 10,
                 'project' => $project,
-                'status' => $status_array
+                'status' => $status_array,
+                'git_tags' => $git_tags,
+                'git_import_tag_setting' => $git_import_tag_setting,
+                'git_export_tag_setting' => $git_export_tag_setting
             ]);
+
+
 
         } catch (Exception $e) {
             $this->logger->error("Could not render history page",['exception'=>$e]);
             throw $e;
         }
+    }
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @param string $setting_name
+     * @return ResponseInterface
+     */
+    public function set_project_setting(ServerRequestInterface $request,ResponseInterface $response,
+                                   string $user_name, string $project_name, string $setting_name): ResponseInterface
+    {
+
+        try {
+            $option = new AjaxCallData([
+                AjaxCallData::OPTION_IS_AJAX,
+                AjaxCallData::OPTION_MAKE_NEW_TOKEN,
+                AjaxCallData::OPTION_VALIDATE_TOKEN
+            ]);
+
+            $option->note = 'set_import_git';
+            $option->permission_mode = FlowProjectUser::PERMISSION_COLUMN_ADMIN;
+            $call = $this->get_project_helper()->validate_ajax_call($option, $request, null, $user_name, $project_name);
+
+            $project = $call->project;
+
+            if (!$project) {
+                throw new HttpNotFoundException($request, "Project $project_name Not Found");
+            }
+
+
+            if (!isset(FlowProject::STANDARD_SETTINGS[$setting_name])) {
+                throw new InvalidArgumentException("[set_standard_name] $setting_name is not a valid setting for projects");
+            }
+            $setting_details = FlowProject::STANDARD_SETTINGS[$setting_name];
+            $standard_attribute_name = $setting_details['standard_attribute_name'];
+
+            if (!isset($call->args->tag_guid)) {
+                throw new InvalidArgumentException("[set_standard_name] need to have tag_guid");
+            }
+            $pointee_tag_guid = $call->args->tag_guid;
+
+            $tag_params = new FlowTagSearchParams();
+            $tag_params->tag_guids[] = $pointee_tag_guid;
+            $pointee_tag_array  = FlowTagSearch::get_tags($tag_params);
+            if (empty($pointee_tag_array)) {
+                throw new InvalidArgumentException("[set_standard_name] could not find tag by tag_guid ". $pointee_tag_guid);
+            }
+
+            $pointee_tag = $pointee_tag_array[0];
+            //make sure can read the tag
+            if ($pointee_tag->flow_project_guid !== $project->flow_project_guid) {
+                $pointee_project = $this->get_project_helper()->get_project_with_permissions(
+                    $request,$pointee_tag->flow_project_admin_user_guid,$pointee_tag->flow_project_guid,FlowProjectUser::PERMISSION_COLUMN_READ);
+                if (!$pointee_project) {
+                    throw new InvalidArgumentException("You do not have permission to read the project from the tag");
+                }
+            }
+
+            $setting_tag = $project->get_tag_by_name($setting_name);
+
+            $setting_attribute = $setting_tag->get_or_create_attribute($setting_name);
+            $setting_attribute->setPointsToFlowTagGuid($pointee_tag->flow_tag_guid);
+            $setting_tag->save(true, true);
+
+            $ret_tag = $setting_tag->clone_refresh();
+            $new_standard_value = $ret_tag->hasStandardAttribute($standard_attribute_name);
+            if (!$new_standard_value) {
+                throw new LogicException("Could not make standard attribute of type $setting_name for tag ". $ret_tag->flow_tag_guid);
+            }
+            $data = [
+                'success'=>true,
+                'message'=>'ok',
+                'tag'=>$ret_tag,
+                'setting_name'=>$setting_name,
+                'standard_name'=>$standard_attribute_name,
+                'standard_value'=>$new_standard_value,
+                'token'=> $call->new_token
+            ];
+            $payload = JsonHelper::toString($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(201);
+
+        } catch (Exception $e) {
+            $this->logger->error("Could not set_standard_setting: ".$e->getMessage(),['exception'=>$e]);
+            $data = [
+                'success'=>false,'message'=>$e->getMessage(),
+                'tag'=>null,
+                'setting_name'=>null,
+                'standard_name'=>null,
+                'standard_value'=>null,
+                'token'=> $call->new_token?? null
+            ];
+            $payload = JsonHelper::toString($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(500);
+        }
+
     }
 
     /**

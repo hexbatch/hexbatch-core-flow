@@ -475,7 +475,7 @@ function flow_tag_show_editor(tag,
     }
 
 
-    // noinspection JSPotentiallyInvalidConstructorUsage,JSUnusedGlobalSymbols
+
     modal = new tingle.modal({
         footer: true,
         stickyFooter: false,

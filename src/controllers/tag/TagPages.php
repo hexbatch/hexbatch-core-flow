@@ -2,6 +2,7 @@
 namespace app\controllers\tag;
 
 use app\controllers\base\BasePages;
+use app\helpers\AjaxCallData;
 use app\helpers\ProjectHelper;
 use app\helpers\TagHelper;
 use app\hexlet\JsonHelper;
@@ -11,14 +12,13 @@ use app\models\project\FlowProjectUser;
 use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
 use app\models\tag\FlowTagAttribute;
-use app\models\tag\FlowTagCallData;
 use app\models\tag\FlowTagSearch;
 use app\models\tag\FlowTagSearchParams;
 use app\models\user\FlowUser;
 use Exception;
 use InvalidArgumentException;
-use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Slim\Exception\HttpNotFoundException;
 use Slim\Routing\RouteContext;
 
@@ -42,7 +42,7 @@ class TagPages extends BasePages
                               string $user_name, string $project_name,string $tag_name) :ResponseInterface
     {
         try {
-            $option = new FlowTagCallData([FlowTagCallData::OPTION_GET_APPLIED,FlowTagCallData::OPTION_ALLOW_EMPTY_BODY]);
+            $option = new AjaxCallData([AjaxCallData::OPTION_GET_APPLIED, AjaxCallData::OPTION_ALLOW_EMPTY_BODY]);
             $option->note = 'show_tag';
 
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
@@ -198,7 +198,7 @@ class TagPages extends BasePages
                               string $user_name, string $project_name) :ResponseInterface {
         
         try {
-            $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
+            $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'create_tag';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name);
 
@@ -259,7 +259,7 @@ class TagPages extends BasePages
     {
         
         try {
-            $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
+            $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX,AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'edit_tag';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
             if (property_exists($call->args,'flow_tag_parent')) {
@@ -323,7 +323,7 @@ class TagPages extends BasePages
     {
         
         try {
-            $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
+            $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX,AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'delete_tag';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
             $call->tag->delete_tag();
@@ -369,7 +369,7 @@ class TagPages extends BasePages
     {
         
         try {
-            $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
+            $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'create_attribute';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
             $attribute_data = $call->args ?? null;
@@ -435,7 +435,7 @@ class TagPages extends BasePages
     {
         
         try {
-            $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
+            $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'edit_attribute';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name,$attribute_name);
             $attribute_data = $call->args ?? null;
@@ -500,7 +500,7 @@ class TagPages extends BasePages
     {
         
         try {
-            $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
+            $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'delete_attribute';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name,$attribute_name);
 
@@ -564,7 +564,7 @@ class TagPages extends BasePages
                                 string $user_name, string $project_name,string $tag_name) :ResponseInterface
     {
         try {
-            $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
+            $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'create_applied';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
             $new_applied = new FlowAppliedTag($call->args);
@@ -624,7 +624,7 @@ class TagPages extends BasePages
                                     string $user_name, string $project_name,string $tag_name) :ResponseInterface
     {
         try {
-            $option = new FlowTagCallData([FlowTagCallData::OPTION_IS_AJAX,FlowTagCallData::OPTION_MAKE_NEW_TOKEN,FlowTagCallData::OPTION_VALIDATE_TOKEN]);
+            $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'delete_applied';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
             $applied_that_was_given = new FlowAppliedTag($call->args);

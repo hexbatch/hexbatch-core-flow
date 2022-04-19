@@ -164,3 +164,25 @@ function get_title_html_for_attribute_pointee(attribute) {
     }
     return pointee_title;
 }
+
+
+
+/**
+ *
+ * @param {FlowTag} tag
+ * @returns {jQuery}
+ */
+function flow_tag_create_dom_name(tag) {
+    let tag_name_display = jQuery(`<span `+
+        `class="flow-tag-display small flow-attribute-inherited-from-tag flow-tag-show-edit-on-click d-inline-block"`+
+        ` data-tag_guid=""></span>`);
+
+    tag_name_display.text(tag.flow_tag_name);
+    tag_name_display.data('tag_guid', tag.flow_tag_guid);
+
+    let tag_map = {}
+    tag_map[tag.flow_tag_guid] = tag;
+    add_tag_attributes_to_dom(tag_map, tag_name_display, true);
+    return tag_name_display;
+
+}

@@ -111,7 +111,7 @@
 
 /**
  *
- * @typedef {Object} FlowStandardAttributes
+ * @typedef {Object} FlowStandardAttribute
  * @property {string?} standard_name
  * @property {Object?} standard_value
  * @property {int?} standard_updated_ts
@@ -120,6 +120,7 @@
  * @property {string?} standard_guid
 
  */
+
 
 
 
@@ -135,7 +136,7 @@
  * @property {number} created_at_ts
  * @property {number} updated_at_ts
  * @property {Object.<string, FlowTagAttribute>} attributes
- * @property {Object.<string, FlowStandardAttributes>} standard_attributes
+ * @property {Object.<string, FlowStandardAttribute>} standard_attributes
  * @property {Object.<string, string>} css
  * @property {?FlowTag} flow_tag_parent
  * @property {FlowTagApplied[]} applied
@@ -329,9 +330,9 @@
 /**
  * @typedef {Object} FlowStandardSettingCallbackParams
  * @property {FlowTag} tag_setting
- * @property {?FlowTagAttribute} [setting_attribute]
  * @property {?FlowTag} [chosen_tag]
  * @property {string} standard_name
+ * @property {string} setting_name
  * @property {?Object} [standard_value]
  * @property {?string} [message]
  */
@@ -348,11 +349,27 @@
 /**
  * @typedef {FlowStandardSettingCallbackParams} FlowStandardSettingsSetup
  * @property {FlowTag[]} tag_list
- * @property {string} setting_name
- * @property {string} selected_label
+ * @property {string} [setting_label]
+ * @property {string} [setting_description]
  * @property {?FlowStandardSettingCallback} [on_change_callback]
  * @property {?FlowStandardSettingCallback} [on_cancel_callback]
- * @property {?FlowStandardSettingCallback} [on_error_callback]
+ */
+
+
+
+/**
+ *
+ * @typedef {FlowBasicResponse} FlowSetProjectSettingResponse
+ * @property {?FlowTag} tag
+ * @property {?string} setting_name
+ * @property {?string} standard_name
+ * @property {?string} standard_value
+ */
+
+/**
+ *
+ * @callback FlowSetProjectSettingResponseCallback
+ * @param {FlowSetProjectSettingResponse} params
  */
 
 

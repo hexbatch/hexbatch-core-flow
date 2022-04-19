@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 
+use app\models\project\FlowProject;
 use app\models\standard\FlowTagStandardAttribute;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
@@ -109,6 +110,14 @@ return function (App $app) {
                     /** @uses \app\controllers\project\ProjectPages::upload_resource_file() */
                     $group->post('/resources', ['projectPages', 'upload_resource_file'])->setName('project_upload_resource_file');
                     $group->post('/resources_delete', ['projectPages', 'delete_resource_file'])->setName('project_delete_resource_file');
+
+                    /** @uses \app\controllers\project\ProjectPages::set_project_setting() */
+                    $project_setting_names =  implode('|',array_keys( FlowProject::STANDARD_SETTINGS));
+
+                    $group->post("/set_project_setting/{standard_name:$project_setting_names}",
+                        ['projectPages', 'set_project_setting'])->setName('set_project_setting');
+
+
                 })->add('checkLoggedInMiddleware');
 
                 $group->get('/tags', ['projectPages', 'edit_project_tags'])->setName('project_tags');

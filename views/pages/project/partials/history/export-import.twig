@@ -1,0 +1,83 @@
+<div class="container p-0 m-1 mb-3">
+
+    <div class="card" style="width: fit-content">
+
+        <h5 class="card-title">
+            Import and Export For {{ project.flow_project_title }}
+        </h5>
+
+        <div class="card-body flow-import-export-settings" >
+            <div class="row">
+                <div class="col-6">
+                    <div class="flow-git-import-here"></div>
+                </div>
+                <div class="col-6">
+                    <div class="flow-git-export-here"></div>
+                </div>
+            </div>
+        </div> <!-- card-body -->
+    </div> <!-- card -->
+</div> <!-- container -->
+
+<script>
+    jQuery(function($) {
+        let parent = $(`div.flow-import-export-settings`);
+        let git_tags = will_echo_tag_array({{ git_tags|to_json_string }});
+
+
+        let import_setting_place = parent.find(`.flow-git-import-here`);
+        let git_import_tag_setting = will_echo_tag_array([{{git_import_tag_setting|to_json_string}}])[0];
+
+        let import_setting_params = {
+            tag_list: git_tags,
+            standard_name: 'git',
+            tag_setting: git_import_tag_setting,
+            setting_label: "Git Import",
+            setting_description : "For importing changes from git to a project",
+            on_change_callback: function (ret) {
+                console.log('on change import',ret);
+            },
+            on_cancel_callback: function (ret) {
+                console.log('on cancel import',ret);
+            }
+        };
+
+        let import_jquery = make_flow_standard_selection_control(import_setting_params);
+        import_setting_place.append(import_jquery);
+
+
+
+        let export_setting_place = parent.find(`.flow-git-export-here`);
+        let git_export_tag_setting = will_echo_tag_array([{{git_export_tag_setting|to_json_string}}])[0];
+
+        let export_setting_params = {
+            tag_list: git_tags,
+            standard_name: 'git',
+            tag_setting: git_export_tag_setting,
+            setting_label: "Git Export",
+            setting_description : "For Exporting project changes to git ",
+            on_change_callback:
+                /**
+                 *
+                 * @param {FlowStandardSettingCallbackParams} ret
+                 */
+                function (ret) {
+                    console.log('on change export',ret);
+                    flow_set_project_setting(ret.setting_name,ret.chosen_tag.flow_tag_guid,
+                        function(back) {
+                            console.log("got back",back);
+                        },
+                        function(err) {
+                            console.error("got error",err);
+                        },
+                )
+            },
+            on_cancel_callback: function (ret) {
+                console.log('on cancel export',ret);
+            }
+        };
+
+        let export_jquery = make_flow_standard_selection_control(export_setting_params);
+        export_setting_place.append(export_jquery);
+    });
+</script>

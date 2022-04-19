@@ -9,6 +9,7 @@ use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\base\SearchParamBase;
 use app\models\entry\archive\FlowEntryArchive;
+use app\models\standard\IFlowTagStandardAttribute;
 use app\models\tag\brief\BriefCheckValidYaml;
 use app\models\tag\brief\BriefDiffFromYaml;
 use app\models\tag\brief\BriefUpdateFromYaml;
@@ -46,6 +47,21 @@ class FlowProject extends FlowBase implements JsonSerializable {
     const MAX_SIZE_EXPORT_URL = 200;
 
     const MAX_SIZE_READ_ME_IN_CHARACTERS = 4000000;
+
+    const GIT_IMPORT_SETTING_NAME = 'git-import';
+    const GIT_EXPORT_SETTING_NAME = 'git-export';
+
+    const STANDARD_SETTINGS = [
+        self::GIT_EXPORT_SETTING_NAME => [
+            'standard_attribute_name'=>IFlowTagStandardAttribute::STD_ATTR_NAME_GIT,
+            'tag_name' => 'git-settings'
+        ],
+
+        self::GIT_IMPORT_SETTING_NAME => [
+            'standard_attribute_name'=>IFlowTagStandardAttribute::STD_ATTR_NAME_GIT,
+            'tag_name' => 'git-settings'
+        ],
+    ];
 
 
 
@@ -1121,6 +1137,23 @@ class FlowProject extends FlowBase implements JsonSerializable {
             throw $e;
         }
 
+    }
+
+    /**
+     * @param string $name
+     * @return FlowTag
+     * @throws Exception
+     */
+    function get_tag_by_name(string $name) : FlowTag {
+        $all_tags = $this->get_all_owned_tags_in_project();
+        foreach ($all_tags as $tag) {
+            if ($tag->flow_tag_name === $name) { return $tag;}
+        }
+        $baby_steps = new FlowTag();
+        $baby_steps->flow_project_id = $this->id;
+        $baby_steps->flow_tag_name = $name;
+        $baby_steps->save();
+        return $baby_steps->clone_refresh();
     }
 
 }

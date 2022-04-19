@@ -45,5 +45,11 @@ div.standard-css-view-card  .inner-circle {
     margin: -3em 0 0 -3em;
 }
 
+/* section for standard*/
+
+div.flow-selection-dialog-card textarea.select2-search__field {
+    line-height: 18px;
+}
+
 
 

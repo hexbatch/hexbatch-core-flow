@@ -200,7 +200,7 @@ Interface IFlowTagStandardAttribute {
     public static function getStandardAttributeKeys(string $name, bool $b_ignore_non_enumerated = true) : array;
     public static function getStandardAttributeNames() : array;
     public static function isNameKey(string $key_name,bool $is_also_protected = false ) : bool;
-
+    public static function does_key_have_truthful_attribute(string $standard_name,string $target_key_name,string $attribute_name ) : bool;
 
 
     /**
