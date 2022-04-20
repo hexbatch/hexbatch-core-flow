@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 
+use app\models\project\FlowProject;
 use app\models\standard\FlowTagStandardAttribute;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
@@ -48,6 +49,7 @@ return function (App $app) {
 
         $group->group('/user', function (RouteCollectorProxy $group) {
 
+            /** @uses \app\controllers\user\UserPages::user_home() */
             $group->get('/home', ['userPages', 'user_home'])->setName('user_home');
             $group->get('/profile', ['userPages', 'user_settings'])->setName('user_settings');
 
@@ -108,6 +110,15 @@ return function (App $app) {
                     /** @uses \app\controllers\project\ProjectPages::upload_resource_file() */
                     $group->post('/resources', ['projectPages', 'upload_resource_file'])->setName('project_upload_resource_file');
                     $group->post('/resources_delete', ['projectPages', 'delete_resource_file'])->setName('project_delete_resource_file');
+
+                    /** @uses \app\controllers\project\ProjectPages::set_project_setting() */
+
+                    $group->post("/set_project_setting/{setting_name}",
+                        ['projectPages', 'set_project_setting'])->setName('set_project_setting');
+
+
+
+
                 })->add('checkLoggedInMiddleware');
 
                 $group->get('/tags', ['projectPages', 'edit_project_tags'])->setName('project_tags');

@@ -130,3 +130,59 @@ function add_tag_attributes_to_dom(tag_map,tags_here_jquery_or_string,b_allow_li
         }
     });
 }
+
+/**
+ *
+ * @param {FlowTagAttribute} attribute
+ * @return {string}
+ */
+function get_icon_html_for_attribute_pointee(attribute) {
+    let icon ;
+    if (attribute.points_to_flow_project_guid) {
+        icon = `<i class="bi bi-box"></i>`;
+    } else if (attribute.points_to_flow_user_guid) {
+        icon = `<i class="bi-person-circle"></i>`;
+    } else if (attribute.points_to_flow_tag_guid ) {
+        icon = `<i class="bi bi-tag"></i>`;
+    } else if (attribute.points_to_flow_entry_guid) {
+        icon = `<i class="bi bi-columns"></i>`;
+    } else {
+        icon = '';
+    }
+    return icon;
+}
+
+/**
+ *
+ * @param {FlowTagAttribute} attribute
+ * @return {string}
+ */
+function get_title_html_for_attribute_pointee(attribute) {
+    let pointee_title = '';
+    if (attribute.points_to_title) {
+        pointee_title = `<span class="ms-1">${attribute.points_to_title}</span>`;
+    }
+    return pointee_title;
+}
+
+
+
+/**
+ *
+ * @param {FlowTag} tag
+ * @returns {jQuery}
+ */
+function flow_tag_create_dom_name(tag) {
+    let tag_name_display = jQuery(`<span `+
+        `class="flow-tag-display small flow-attribute-inherited-from-tag flow-tag-show-edit-on-click d-inline-block"`+
+        ` data-tag_guid=""></span>`);
+
+    tag_name_display.text(tag.flow_tag_name);
+    tag_name_display.data('tag_guid', tag.flow_tag_guid);
+
+    let tag_map = {}
+    tag_map[tag.flow_tag_guid] = tag;
+    add_tag_attributes_to_dom(tag_map, tag_name_display, true);
+    return tag_name_display;
+
+}

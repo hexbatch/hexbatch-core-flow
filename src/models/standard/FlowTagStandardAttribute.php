@@ -263,6 +263,19 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
         return false;
     }
 
+    public static function does_key_have_truthful_attribute(string $standard_name,string $target_key_name,string $attribute_name ) : bool {
+        if (!in_array($target_key_name,static::getStandardAttributeKeys($standard_name))) {
+            throw new InvalidArgumentException("[isNameKeyRequired] $target_key_name is not part of $standard_name");
+        }
+
+        foreach ( static::STANDARD_ATTRIBUTES[$standard_name]['keys'] as $key_name  => $dets) {
+            if ($key_name !== $target_key_name) {continue;}
+            if ( isset($dets[$attribute_name])) { return true;}
+        }
+
+        return false;
+    }
+
     public function preProcessForGui() : IFlowTagStandardAttribute {
         if (!isset(IFlowTagStandardAttribute::STANDARD_ATTRIBUTES[$this->standard_name]['pre_process_for_gui'])) {
             return $this;

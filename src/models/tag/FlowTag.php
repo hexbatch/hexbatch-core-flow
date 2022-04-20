@@ -76,6 +76,13 @@ class FlowTag extends FlowBase implements JsonSerializable {
         return $this->standard_attributes;
     }
 
+    public function hasStandardAttribute(string $name) : ?IFlowTagStandardAttribute  {
+         foreach ($this->standard_attributes as $att) {
+             if ($att->getStandardName()=== $name) {return $att;}
+         }
+         return null;
+    }
+
     /**
      * @param IFlowTagStandardAttribute[] $what
      * @return void
@@ -88,6 +95,53 @@ class FlowTag extends FlowBase implements JsonSerializable {
             $processed[] = $s;
         }
         $this->standard_attributes = $processed;
+    }
+
+    public function get_or_create_attribute(string $attribute_name) {
+        foreach ($this->attributes as $existing_attribute) {
+            if ( $attribute_name === $existing_attribute->getTagAttributeName() ) {
+                return $existing_attribute;
+            }
+        }
+
+        $att = new FlowTagAttribute();
+        $att->setTagAttributeName($attribute_name);
+        $att->setFlowTagId($this->flow_tag_id);
+        $this->attributes[] = $att;
+        return $att;
+    }
+
+    public function set_standard_by_raw(string $standard_name, object $standard_value) {
+        $keys = FlowTagStandardAttribute::getStandardAttributeKeys($standard_name,false);
+        $white_list = [];
+        foreach ($keys as $key_name) {
+            if (property_exists($standard_value,$key_name)) {
+                $white_list[$key_name] = $standard_value->$key_name;
+            } else {
+                if (FlowTagStandardAttribute::does_key_have_truthful_attribute(
+                            $standard_name,$key_name,IFlowTagStandardAttribute::OPTION_REQUIRED)
+                ) {
+                    throw new InvalidArgumentException("Missing required key $key_name for standard $standard_name");
+                }
+            }
+        }
+
+
+        foreach ($this->attributes as $existing_attribute) {
+            if (isset($white_list[$existing_attribute->getTagAttributeName()])) {
+                $existing_attribute->setTagAttributeText($white_list[$existing_attribute->getTagAttributeName()]);
+                unset($white_list[$existing_attribute->getTagAttributeName()]);
+            }
+
+        }
+
+        foreach ($white_list as $attribute_key_to_add => $attribute_text_val_to_add) {
+            $att = new FlowTagAttribute();
+            $att->setTagAttributeName($attribute_key_to_add);
+            $att->setTagAttributeText($attribute_text_val_to_add);
+            $att->setFlowTagId($this->flow_tag_id);
+            $this->attributes[] = $att;
+        }
     }
 
 
@@ -347,6 +401,10 @@ class FlowTag extends FlowBase implements JsonSerializable {
                     $me_attribute->setPointsToProjectId(null);
                 }
 
+                if ($me_attribute->getPointsToTagId() && !$this_attribute->getPointsToFlowTagGuid()) {
+                    $me_attribute->setPointsToTagId(null);
+                }
+
                 $me_attribute->setPointsToFlowEntryGuid(
                     empty($this_attribute->getPointsToFlowEntryGuid())
                         ? null:  $this_attribute->getPointsToFlowEntryGuid()
@@ -358,6 +416,10 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 $me_attribute->setPointsToFlowProjectGuid(
                     empty($this_attribute->getPointsToFlowProjectGuid())?
                         null : $this_attribute->getPointsToFlowProjectGuid() );
+
+                $me_attribute->setPointsToFlowTagGuid(
+                    empty($this_attribute->getPointsToFlowTagGuid())?
+                        null : $this_attribute->getPointsToFlowTagGuid() );
 
                 $me_attribute->setTagAttributeName($this_attribute->getTagAttributeName());
 
@@ -546,6 +608,11 @@ class FlowTag extends FlowBase implements JsonSerializable {
                         if (isset($guid_map_old_to_new[$attribute->getPointsToFlowProjectGuid()])) {
                             $attribute->setPointsToFlowProjectGuid($guid_map_old_to_new[$attribute->getPointsToFlowProjectGuid()]);
                             $attribute->setPointsToProjectId(null) ;
+                        }
+
+                        if (isset($guid_map_old_to_new[$attribute->getPointsToFlowTagGuid()])) {
+                            $attribute->setPointsToFlowTagGuid($guid_map_old_to_new[$attribute->getPointsToFlowTagGuid()]);
+                            $attribute->setPointsToTagId(null) ;
                         }
 
                         if (isset($guid_map_old_to_new[$attribute->getPointsToFlowEntryGuid()])) {

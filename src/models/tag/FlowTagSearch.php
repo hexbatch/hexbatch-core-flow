@@ -156,6 +156,7 @@ class FlowTagSearch  extends FlowBase{
                     attribute.points_to_entry_id,
                     attribute.points_to_user_id,
                     attribute.points_to_project_id,
+                    attribute.points_to_tag_id,
                     attribute.created_at_ts                 as attribute_created_at_ts,
                     UNIX_TIMESTAMP(attribute.updated_at)    as attribute_updated_at_ts,
                     HEX(attribute.flow_tag_attribute_guid)  as flow_tag_attribute_guid,
@@ -166,18 +167,58 @@ class FlowTagSearch  extends FlowBase{
                     HEX(point_entry.flow_entry_guid)        as points_to_flow_entry_guid,
                     HEX(point_user.flow_user_guid)          as points_to_flow_user_guid,
                     HEX(point_project.flow_project_guid)    as points_to_flow_project_guid,
+                    HEX(point_tag.flow_tag_guid)            as points_to_flow_tag_guid,
        
                     IF(
-                        point_entry.flow_entry_title,
+                        point_entry.flow_entry_title IS NOT NULL,
                             point_entry.flow_entry_title,
-                            IF(point_user.flow_user_name,
+                            IF(point_user.flow_user_name IS NOT NULL,
                                 point_user.flow_user_name,
-                                point_project.flow_project_title
+                                IF (point_project.flow_project_title IS NOT NULL,
+                                   point_project.flow_project_title,
+                                   point_tag.flow_tag_name 
                                 )
+                            )
                         ) as points_to_title,
        
-                    HEX(point_project_admin.flow_user_guid) as points_to_admin_guid,
-                    point_project_admin.flow_user_name as points_to_admin_name
+       
+                    IF(
+                        point_entry_project.flow_project_guid IS NOT NULL,
+                            HEX(point_entry_project.flow_project_guid),
+                            IF(point_user.flow_user_name IS NOT NULL,
+                                NULL,
+                                IF (point_project.flow_project_title IS NOT NULL,
+                                   HEX(point_project.flow_project_guid),
+                                   HEX(point_tag_project.flow_project_guid) 
+                                )
+                            )
+                        ) as project_guid_of_pointee,
+       
+                    IF(
+                        point_entry_admin.flow_user_guid IS NOT NULL,
+                            HEX(point_entry_admin.flow_user_guid),
+                            IF(point_user.flow_user_name IS NOT NULL,
+                                NULL,
+                                IF (point_project_admin.flow_user_guid IS NOT NULL,
+                                   HEX(point_project_admin.flow_user_guid),
+                                   HEX(point_tag_admin.flow_user_guid) 
+                                )
+                            )
+                        ) as project_admin_guid_of_pointee,
+                    
+                    IF(
+                        point_entry_admin.flow_user_name IS NOT NULL,
+                            point_entry_admin.flow_user_name,
+                            IF(point_user.flow_user_name IS NOT NULL,
+                                NULL,
+                                IF (point_project_admin.flow_user_name IS NOT NULL,
+                                   point_project_admin.flow_user_name,
+                                   point_tag_admin.flow_user_name
+                                )
+                            )
+                        ) as project_admin_name_of_pointee
+       
+       
        
                 FROM flow_tags t
                 INNER JOIN  (
@@ -224,10 +265,20 @@ class FlowTagSearch  extends FlowBase{
                 INNER JOIN flow_projects project ON project.id = t.flow_project_id 
                 INNER JOIN flow_users admin_user ON admin_user.id = project.admin_flow_user_id 
                 LEFT JOIN flow_tag_attributes attribute on attribute.flow_tag_id = t.id
+                    
                 LEFT JOIN flow_entries point_entry on attribute.points_to_entry_id = point_entry.id
+                LEFT JOIN flow_projects point_entry_project on point_entry.flow_project_id = point_entry_project.id 
+                LEFT JOIN flow_users point_entry_admin on point_entry_admin.id = point_entry_project.admin_flow_user_id   
+                    
                 LEFT JOIN flow_users point_user on attribute.points_to_user_id = point_user.id 
+            
                 LEFT JOIN flow_projects point_project on attribute.points_to_project_id = point_project.id 
                 LEFT JOIN flow_users point_project_admin on point_project_admin.id = point_project.admin_flow_user_id
+            
+                LEFT JOIN flow_tags point_tag on attribute.points_to_tag_id = point_tag.id 
+                LEFT JOIN flow_projects point_tag_project on point_tag.flow_project_id = point_tag_project.id 
+                LEFT JOIN flow_users point_tag_admin on point_tag_admin.id = point_tag_project.admin_flow_user_id  
+                
                 WHERE 1 
                 ORDER BY flow_tag_id,flow_tag_attribute_id DESC ;
                 ";

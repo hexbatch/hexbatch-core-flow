@@ -375,7 +375,9 @@ function flow_tag_show_editor(tag,
 
 
             li.find('.flow-attribute-link').attr('href', attribute.points_to_url);
-            li.find('.flow-attribute-link-title').text(attribute.points_to_title);
+            let pointee_icon = get_icon_html_for_attribute_pointee(attribute);
+            let pointee_title = get_title_html_for_attribute_pointee(attribute);
+            li.find('.flow-attribute-link-title').html(pointee_icon + pointee_title);
             li.find('.flow-attribute-number-value').text(attribute.tag_attribute_long ?? '');
             li.find('.flow-attribute-text-value-preview').html(attribute.tag_attribute_text ?? '');
 
@@ -473,7 +475,7 @@ function flow_tag_show_editor(tag,
     }
 
 
-    // noinspection JSPotentiallyInvalidConstructorUsage,JSUnusedGlobalSymbols
+
     modal = new tingle.modal({
         footer: true,
         stickyFooter: false,

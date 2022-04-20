@@ -45,5 +45,34 @@ div.standard-css-view-card  .inner-circle {
     margin: -3em 0 0 -3em;
 }
 
+/* section for standard*/
+
+  textarea.select2-search__field {
+    line-height: 100px;
+}
+ .select2-selection.flow-selection-option-list {
+    padding: 0;
+     height: revert;
+}
+
+div.flow-selection-option-card {
+    cursor: pointer;
+}
+
+.flow-empty-view-selection {
+    height: 3em;
+    width: fit-content;
+    padding: 1em;
+    background-color: black;
+    color: yellow;
+    margin: 0.5em;
+    display: inline-block;
+    line-height: 1em;
+}
+
+.flow-no-max-hight {
+ max-height: none !important;
+}
+
 
 
