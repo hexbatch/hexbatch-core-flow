@@ -311,6 +311,7 @@
  * @property {?string} git_ssh_key
  * @property {?string} git_branch
  * @property {?string} git_notes
+ * @property {?string} git_automate_push
  * @property {?string} git_web_page
  */
 
@@ -329,7 +330,7 @@
 
 /**
  * @typedef {Object} FlowStandardSettingCallbackParams
- * @property {FlowTag} tag_setting
+ * @property {?FlowTag} tag_setting
  * @property {?FlowTag} [chosen_tag]
  * @property {string} standard_name
  * @property {string} setting_name
@@ -360,7 +361,9 @@
 /**
  *
  * @typedef {FlowBasicResponse} FlowSetProjectSettingResponse
- * @property {?FlowTag} tag
+ * @property {?FlowTagAttribute} holding_attribute
+ * @property {?FlowTag} holding_tag
+ * @property {?FlowTag} setting_tag
  * @property {?string} setting_name
  * @property {?string} standard_name
  * @property {?string} standard_value

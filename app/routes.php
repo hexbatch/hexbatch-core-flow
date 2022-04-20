@@ -112,10 +112,11 @@ return function (App $app) {
                     $group->post('/resources_delete', ['projectPages', 'delete_resource_file'])->setName('project_delete_resource_file');
 
                     /** @uses \app\controllers\project\ProjectPages::set_project_setting() */
-                    $project_setting_names =  implode('|',array_keys( FlowProject::STANDARD_SETTINGS));
 
-                    $group->post("/set_project_setting/{standard_name:$project_setting_names}",
+                    $group->post("/set_project_setting/{setting_name}",
                         ['projectPages', 'set_project_setting'])->setName('set_project_setting');
+
+
 
 
                 })->add('checkLoggedInMiddleware');

@@ -1,6 +1,6 @@
 <div class="container p-0 m-1 mb-3">
 
-    <div class="card" style="width: fit-content">
+    <div class="card" style="">
 
         <h5 class="card-title">
             Import and Export For {{ project.flow_project_title }}
@@ -30,12 +30,23 @@
 
         let import_setting_params = {
             tag_list: git_tags,
-            standard_name: 'git',
+            standard_name: "{{ constant('app\\models\\standard\\IFlowTagStandardAttribute::STD_ATTR_NAME_GIT') }}",
+            setting_name: "{{ constant('app\\models\\project\\FlowProject::GIT_IMPORT_SETTING_NAME') }}",
             tag_setting: git_import_tag_setting,
             setting_label: "Git Import",
             setting_description : "For importing changes from git to a project",
             on_change_callback: function (ret) {
                 console.log('on change import',ret);
+                let tag_guid = null;
+                if (ret.chosen_tag) { tag_guid = ret.chosen_tag.flow_tag_guid;}
+                flow_set_project_setting(ret.setting_name,tag_guid,
+                    function(back) {
+                        console.log("import got back",back);
+                    },
+                    function(err) {
+                        console.error("import got error",err);
+                    },
+                )
             },
             on_cancel_callback: function (ret) {
                 console.log('on cancel import',ret);
@@ -52,7 +63,8 @@
 
         let export_setting_params = {
             tag_list: git_tags,
-            standard_name: 'git',
+            standard_name: "{{ constant('app\\models\\standard\\IFlowTagStandardAttribute::STD_ATTR_NAME_GIT') }}",
+            setting_name: "{{ constant('app\\models\\project\\FlowProject::GIT_EXPORT_SETTING_NAME') }}",
             tag_setting: git_export_tag_setting,
             setting_label: "Git Export",
             setting_description : "For Exporting project changes to git ",
@@ -63,12 +75,14 @@
                  */
                 function (ret) {
                     console.log('on change export',ret);
-                    flow_set_project_setting(ret.setting_name,ret.chosen_tag.flow_tag_guid,
+                    let tag_guid = null;
+                    if (ret.chosen_tag) { tag_guid = ret.chosen_tag.flow_tag_guid;}
+                    flow_set_project_setting(ret.setting_name,tag_guid,
                         function(back) {
-                            console.log("got back",back);
+                            console.log("export got back",back);
                         },
                         function(err) {
-                            console.error("got error",err);
+                            console.error("export got error",err);
                         },
                 )
             },

@@ -84,6 +84,7 @@ Interface IFlowTagStandardAttribute {
     const GIT_KEY_BRANCH = 'git_branch';
     const GIT_KEY_NOTES = 'git_notes';
     const GIT_KEY_WEB_PAGE = 'git_web_page';
+    const GIT_KEY_AUTOMATE = 'git_automate_push';
 
     const STD_ATTR_TYPE_GIT = [
         'keys' => [
@@ -100,7 +101,10 @@ Interface IFlowTagStandardAttribute {
             ],
 
             self::GIT_KEY_NOTES => [],
-            self::GIT_KEY_WEB_PAGE => []
+            self::GIT_KEY_WEB_PAGE => [],
+            self::GIT_KEY_AUTOMATE => [
+                self::OPTION_DEFAULT=> 'false',
+            ]
         ],
         'name' => self::STD_ATTR_NAME_GIT,
         'converter' => ['app\models\standard\converters\GitConverter','convert'],

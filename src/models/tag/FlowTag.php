@@ -112,7 +112,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
     }
 
     public function set_standard_by_raw(string $standard_name, object $standard_value) {
-        $keys = FlowTagStandardAttribute::getStandardAttributeKeys($this->standard_name,false);
+        $keys = FlowTagStandardAttribute::getStandardAttributeKeys($standard_name,false);
         $white_list = [];
         foreach ($keys as $key_name) {
             if (property_exists($standard_value,$key_name)) {

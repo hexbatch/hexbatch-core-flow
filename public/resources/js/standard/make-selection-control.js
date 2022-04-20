@@ -67,37 +67,30 @@ function make_flow_standard_selection_control(setup) {
     /**
      * @type {Select2FlowStandardData[]} data
      */
-    let select_data = [];
+    let select2_data_array = [];
+
+    let dummy = {cant_touch_this: uuid.v4()};
 
     /**
      * @type {FlowStandardAttribute[]} selectable_standards
      */
     let selectable_standards = [];
-
+    let selection_made = false;
     for(let i = 0; i < tag_list.length; i++) {
         let tag_in_list = tag_list[i];
         if (tag_in_list.standard_attributes.hasOwnProperty(standard_name)) {
             let standard_found = tag_in_list.standard_attributes[standard_name];
             selectable_standards.push(standard_found)
-            let node = new Select2FlowStandardData(standard_found,tag_in_list,i);
-            if (_.isMatch(standard_found,chosen_standard)) {
+            let node = new Select2FlowStandardData(standard_found,tag_in_list,i + 2,standard_name);
+            if (!selection_made && _.isMatch(standard_found??dummy,chosen_standard??dummy)) {
                 node.selected = true;
+                selection_made = true;
             }
-            select_data.push(node);
+            select2_data_array.push(node);
         }
     }
 
 
-
-
-    for(let i = 0; i < selectable_standards.length; i++) {
-        let standard_found = selectable_standards[i];
-        standard_found.id = i;
-        standard_found.text = standard_found.standard_guid;
-        if (_.isMatch(chosen_standard,standard_found)) {
-            standard_found.selected = true;
-        }
-    }
 
 
     let view_div_id = 'selection-view-' + uuid.v4();
@@ -121,11 +114,13 @@ function make_flow_standard_selection_control(setup) {
 
         if (!chosen_standard && selectable_standards.length === 0) {
             view_div.find('.flow-selection-option-warning').removeClass('d-none');
+        } else if (!chosen_standard) {
+            view_div.find('.flow-selection-option-not-set').removeClass('d-none');
         }
 
         let qj_body = $('body');
         if (selectable_standards.length > 0) {
-            qj_body.on("click", `div#${view_div}`, display_selection_dialog);
+            qj_body.on("click", `div#${view_div_id}`, display_selection_dialog);
         }
 
         return view_div;
@@ -159,29 +154,12 @@ function make_flow_standard_selection_control(setup) {
             closeLabel: "Close",
             cssClass: ['flow-select-option-tingle'],
             onOpen: function () {
-                create_select_2_for_standard_options(bare_select_control,select_data);
+                create_select_2_for_standard_options(bare_select_control,select2_data_array);
                 refresh_auto_formatted_times();
             },
             onClose: function () {
-
                 utterly_destroy_select2(bare_select_control);
                 this.destroy();
-                if (on_change_callback && !_.isMatch(chosen_standard,selected_option) && select_data ) {
-                    on_change_callback({
-                        tag_setting:tag_setting,
-                        standard_name: standard_name,
-                        standard_value:selected_option,
-                        chosen_tag: selected_data.flow_tag,
-                        setting_name: setting_name
-                    });
-                } else if (on_cancel_callback ) {
-                    on_cancel_callback({
-                        tag_setting:tag_setting,
-                        standard_name: standard_name,
-                        standard_value:selected_option,
-                        setting_name: setting_name
-                    })
-                }
             },
 
             beforeClose: function () {
@@ -191,6 +169,54 @@ function make_flow_standard_selection_control(setup) {
 
         modal.setContent(edit_div[0]);
 
+        if (on_cancel_callback ) {
+            on_cancel_callback({
+                tag_setting:tag_setting,
+                standard_name: standard_name,
+                standard_value:selected_option,
+                setting_name: setting_name
+            })
+        }
+
+        modal.addFooterBtn('Clear Setting', 'tingle-btn tingle-btn--danger tingle-btn--pull-right', function () {
+            selected_option = null;
+            selected_data = null;
+            do_save_stuff();
+            modal.close();
+        });
+
+        modal.addFooterBtn('Save Setting', 'tingle-btn tingle-btn--primary', function () {
+            do_save_stuff();
+            modal.close();
+        });
+
+        function do_save_stuff() {
+            let view_thing = $(`div#${view_div_id}`);
+            let here = view_thing.find('.flow-selected-standard-view-here');
+            here.html('');
+
+            if (selected_data) {
+                view_thing.find('.flow-selection-option-not-set').addClass('d-none');
+                flow_standards_generate_view(standard_name,selected_data.flow_tag,here);
+            } else {
+
+                view_thing.find('.flow-selection-option-not-set').removeClass('d-none');
+            }
+
+            if (on_change_callback && !_.isMatch(chosen_standard??dummy,selected_option??dummy)  ) {
+                //update the view
+                let flow_tag = null;
+                if (selected_data) {flow_tag = selected_data.flow_tag;}
+                on_change_callback({
+                    tag_setting:tag_setting,
+                    standard_name: standard_name,
+                    standard_value:selected_option,
+                    chosen_tag: flow_tag,
+                    setting_name: setting_name
+                });
+            }
+        }
+
         bare_select_control.on('select2:select', function () {
             let data_array = bare_select_control.select2("data");
             if (data_array.length) {
@@ -198,8 +224,14 @@ function make_flow_standard_selection_control(setup) {
                  * @type {Select2FlowStandardData} data
                  */
                 let data = data_array[0];
-                selected_data = data;
-                selected_option = data.standard.standard_value;
+                if (data.flow_tag) {
+                    selected_data = data;
+                    selected_option = data.standard;
+                } else {
+                    selected_data = null;
+                    selected_option = null;
+                }
+
             } else {
                 selected_data = null;
                 selected_option = null;
@@ -212,6 +244,9 @@ function make_flow_standard_selection_control(setup) {
             selected_data = null;
             console.debug('standard un-selected', selected_option);
         });
+
+        // open modal
+        modal.open();
 
 
     }

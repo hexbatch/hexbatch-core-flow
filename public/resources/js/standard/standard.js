@@ -187,7 +187,7 @@ function flow_standards_get_inherited(standard_name,tag) {
 
 /**
  * @param {string} setting_name
- * @param {string} tag_guid
+ * @param {?string} tag_guid
  * @param {FlowSetProjectSettingResponseCallback} on_success_callback
  * @param {FlowSetProjectSettingResponseCallback} on_fail_callback
  */

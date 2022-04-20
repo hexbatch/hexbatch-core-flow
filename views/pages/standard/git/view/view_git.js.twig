@@ -39,6 +39,11 @@ function view_standard_git(tag) {
             da_ssh.removeClass('d-none').addClass('d-inline');
         }
 
+        if (git.git_automate_push) {
+            let da_pushy_push = git_node.find('.git_automate_push');
+            da_pushy_push.removeClass('d-none').addClass('d-inline');
+        }
+
         if (git.git_branch) {
             let da_branch = git_node.find('.da-branch');
             da_branch.removeClass('d-none').addClass('d-block');
