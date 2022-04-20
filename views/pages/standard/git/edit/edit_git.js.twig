@@ -30,7 +30,12 @@ function edit_standard_git(tag,success_callback,fail_callback) {
 
     for(let prop in git) {
         if (!git[prop]) {continue;}
-        card.find(`[name=${prop}]`).val(git[prop]);
+        if (prop === 'git_automate_push') {
+            card.find(`[name=${prop}]`).attr('checked',!!git[prop])
+        } else {
+            card.find(`[name=${prop}]`).val(git[prop]);
+        }
+
 
         if (inheritied.hasOwnProperty(prop)) {
             let tagger = flow_tag_create_dom_name(inheritied[prop].ancestor_tag);
@@ -42,7 +47,13 @@ function edit_standard_git(tag,success_callback,fail_callback) {
     let save_button = card.find(`button.action-git-save`);
     save_button.on('click',function() {
         for(let prop in git) {
-            let val = card.find(`[name=${prop}]`).val();
+            let val;
+            if (prop === 'git_automate_push') {
+                val = !!card.find(`[name=${prop}]`).is(':checked');
+            } else {
+                val = card.find(`[name=${prop}]`).val();
+            }
+
             if (!val) {val = null;}
             git[prop] = val;
         }

@@ -182,22 +182,19 @@ function flow_standards_get_inherited(standard_name,tag) {
     return ret;
 }
 
+
+
+
 /**
- *
- * @param {FlowTag} tag
- * @returns {jQuery}
+ * @param {string} setting_name
+ * @param {?string} tag_guid
+ * @param {FlowSetProjectSettingResponseCallback} on_success_callback
+ * @param {FlowSetProjectSettingResponseCallback} on_fail_callback
  */
-function flow_tag_create_dom_name(tag) {
-    let tag_name_display = jQuery(`<span `+
-            `class="flow-tag-display small flow-attribute-inherited-from-tag flow-tag-show-edit-on-click d-inline-block"`+
-            ` data-tag_guid=""></span>`);
+function flow_set_project_setting(setting_name,tag_guid,
+                              on_success_callback,on_fail_callback) {
+    let url = project_base_url + `/set_project_setting/${setting_name}`;
 
-    tag_name_display.text(tag.flow_tag_name);
-    tag_name_display.data('tag_guid', tag.flow_tag_guid);
-
-    let tag_map = {}
-    tag_map[tag.flow_tag_guid] = tag;
-    add_tag_attributes_to_dom(tag_map, tag_name_display, true);
-    return tag_name_display;
-
+    do_flow_ajax_action(url,{tag_guid:tag_guid},on_success_callback,on_fail_callback,
+        `Updated project setting of ${setting_name}`,`Could not update project setting of ${setting_name}`);
 }

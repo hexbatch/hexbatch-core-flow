@@ -371,6 +371,7 @@ class BriefDiffFromYaml {
                     $attribute->getPointsToFlowEntryGuid() !== $battribute->points_to_flow_entry_guid ||
                     $attribute->getPointsToFlowUserGuid() !== $battribute->points_to_flow_user_guid ||
                     $attribute->getPointsToFlowProjectGuid() !== $battribute->points_to_flow_project_guid ||
+                    $attribute->getPointsToFlowTagGuid() !== $battribute->points_to_flow_tag_guid ||
                     $attribute->getTagAttributeText() !== $battribute->tag_attribute_text ||
                     $attribute->getTagAttributeLong() !== $battribute->tag_attribute_long ||
                     $attribute->getTagAttributeName() !== $battribute->tag_attribute_name

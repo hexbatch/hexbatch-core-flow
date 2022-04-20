@@ -36,21 +36,23 @@ class FlowTagAttributes extends AbstractMigration
                 `points_to_entry_id` INT NULL DEFAULT NULL,
                 `points_to_user_id` INT NULL DEFAULT NULL ,
                 `points_to_project_id` INT  NULL DEFAULT NULL , 
+                `points_to_tag_id` INT  NULL DEFAULT NULL , 
                 `flow_tag_attribute_guid` BINARY(16) NOT NULL ,
                 `tag_attribute_name` VARCHAR(40) NULL DEFAULT NULL ,
                 `tag_attribute_long` BIGINT NULL DEFAULT NULL,
                 `tag_attribute_text` LONGTEXT NULL DEFAULT NULL,
-                PRIMARY KEY (`id`)
+                PRIMARY KEY (`id`),
+                INDEX idx_flow_tag_id (flow_tag_id),
+                INDEX idx_points_to_tag_id (points_to_tag_id),
+                INDEX idx_points_to_entry_id (points_to_entry_id),
+                INDEX idx_points_to_user_id (points_to_user_id),
+                INDEX idx_points_to_project_id (points_to_project_id)
            ) ENGINE = InnoDB COMMENT = 'Defines the attributes of tags and when they are applied';
 
        ");
 
-        $this->execute("ALTER TABLE `flow_tag_attributes` ADD INDEX `idx_flow_tag_id`  (`flow_tag_id`);");
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD UNIQUE `udx_flow_tag_guid` (`flow_tag_attribute_guid`);");
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD FULLTEXT `ft_flow_tag_name` (`tag_attribute_name`);");
-        $this->execute("ALTER TABLE `flow_tag_attributes` ADD INDEX `idx_points_to_entry_id`   (points_to_entry_id);");
-        $this->execute("ALTER TABLE `flow_tag_attributes` ADD INDEX `idx_points_to_user_id`   (`points_to_user_id`);");
-        $this->execute("ALTER TABLE `flow_tag_attributes` ADD INDEX `idx_points_to_project_id`   (`points_to_project_id`);");
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD FULLTEXT `ft_tag_attribute_text` (`tag_attribute_text`);");
 
 
@@ -65,6 +67,9 @@ class FlowTagAttributes extends AbstractMigration
 
         $this->execute("ALTER TABLE `flow_tag_attributes` ADD CONSTRAINT `fk_flow_tag_attributes_has_tag_id` 
             FOREIGN KEY (`flow_tag_id`) REFERENCES `flow_tags`(`id`) ON DELETE CASCADE ON UPDATE CASCADE ;");
+
+        $this->execute("ALTER TABLE `flow_tag_attributes` ADD CONSTRAINT `fk_flow_tag_attributes_has_pointee_tag_id` 
+            FOREIGN KEY (`points_to_tag_id`) REFERENCES `flow_tags`(`id`) ON DELETE SET NULL ON UPDATE CASCADE ;");
 
 
 
@@ -93,6 +98,7 @@ class FlowTagAttributes extends AbstractMigration
         $this->execute("ALTER TABLE `flow_tag_attributes` DROP FOREIGN KEY `fk_flow_tag_attributes_has_pointee_flow_user_id`");
         $this->execute("ALTER TABLE `flow_tag_attributes` DROP FOREIGN KEY `fk_flow_tag_attributes_has_pointee_project_id`");
         $this->execute("ALTER TABLE `flow_tag_attributes` DROP FOREIGN KEY `fk_flow_tag_attributes_has_pointee_entry_id`");
+        $this->execute("ALTER TABLE `flow_tag_attributes` DROP FOREIGN KEY `fk_flow_tag_attributes_has_pointee_tag_id`");
         $this->table('flow_tag_attributes')->drop();
     }
 }

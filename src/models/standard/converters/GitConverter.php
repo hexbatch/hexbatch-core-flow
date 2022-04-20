@@ -29,6 +29,10 @@ class GitConverter extends BaseConverter  {
                 }
                 return $outbound;
             }
+            case IFlowTagStandardAttribute::GIT_KEY_AUTOMATE: {
+                $outbound = parent::getFinalOfKey($key);
+                return (bool)$outbound;
+            }
         }
 
         return parent::getFinalOfKey($key);

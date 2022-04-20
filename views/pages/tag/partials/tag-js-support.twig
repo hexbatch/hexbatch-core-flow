@@ -17,6 +17,7 @@
 <script src="{{ root_url }}/public/resources/js/tags/create_select_2_for_tag_search.js"></script>
 
 {% if project.get_current_user_permissions().can_read %}
+    {% include 'standard/partials/selection_option.twig' %}
     {% include 'tag/partials/edit-a-tag.twig' %}
     {% include 'tag/partials/new-tag.twig' %}
     <script src="{{ root_url }}/public/resources/js/tags/proxy-attribute.js"></script>
@@ -28,6 +29,8 @@
     <script src="{{ root_url }}/public/resources/js/tags/create-applied.js"></script>
     <script src="{{ root_url }}/public/resources/js/tags/applied_control.js"></script>
     <script src="{{ root_url }}/public/resources/js/standard/standard.js"></script>
+    <script src="{{ root_url }}/public/resources/js/standard/create_select_2_for_standard_options.js"></script>
+    <script src="{{ root_url }}/public/resources/js/standard/make-selection-control.js"></script>
 
 
 {% endif %}

@@ -9,6 +9,7 @@ use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\base\SearchParamBase;
 use app\models\entry\archive\FlowEntryArchive;
+use app\models\standard\IFlowTagStandardAttribute;
 use app\models\tag\brief\BriefCheckValidYaml;
 use app\models\tag\brief\BriefDiffFromYaml;
 use app\models\tag\brief\BriefUpdateFromYaml;
@@ -46,6 +47,22 @@ class FlowProject extends FlowBase implements JsonSerializable {
     const MAX_SIZE_EXPORT_URL = 200;
 
     const MAX_SIZE_READ_ME_IN_CHARACTERS = 4000000;
+
+    const GIT_IMPORT_SETTING_NAME = 'git-import';
+    const GIT_EXPORT_SETTING_NAME = 'git-export';
+
+    //in the settings, the tag attribute of the same name as the setting points to the tag that holds the standard (or lack of it)
+    const STANDARD_SETTINGS = [
+        self::GIT_EXPORT_SETTING_NAME => [
+            'standard_attribute_name'=>IFlowTagStandardAttribute::STD_ATTR_NAME_GIT,
+            'tag_name' => 'git-settings'
+        ],
+
+        self::GIT_IMPORT_SETTING_NAME => [
+            'standard_attribute_name'=>IFlowTagStandardAttribute::STD_ATTR_NAME_GIT,
+            'tag_name' => 'git-settings'
+        ],
+    ];
 
 
 
@@ -1121,6 +1138,105 @@ class FlowProject extends FlowBase implements JsonSerializable {
             throw $e;
         }
 
+    }
+
+    /**
+     * @param string $name
+     * @return FlowTag
+     * @throws Exception
+     */
+    function get_tag_by_name(string $name) : FlowTag {
+        $all_tags = $this->get_all_owned_tags_in_project();
+        foreach ($all_tags as $tag) {
+            if ($tag->flow_tag_name === $name) { return $tag;}
+        }
+        $baby_steps = new FlowTag();
+        $baby_steps->flow_project_id = $this->id;
+        $baby_steps->flow_tag_name = $name;
+        $baby_steps->save();
+        return $baby_steps->clone_refresh();
+    }
+
+    /**
+     * Gets the tag that points to the tag with the setting data
+     * @param string $setting_name
+     * @return FlowTag|null
+     * @throws Exception
+     */
+    public function get_setting_holder_tag(string $setting_name) : ?FlowTag {
+        if (!isset(FlowProject::STANDARD_SETTINGS[$setting_name])) {
+            throw new InvalidArgumentException("[get_setting_tag] Unknown project setting: $setting_name");
+        }
+        $setting_node = FlowProject::STANDARD_SETTINGS[$setting_name];
+        if (!isset($setting_node['tag_name'])) {
+            throw new LogicException("[get_setting_tag] badly formed setting: $setting_name");
+        }
+        $tag_name_for_setting = $setting_node['tag_name'];
+
+        $pointee_tag = $this->get_tag_by_name($tag_name_for_setting);
+        return $pointee_tag;
+    }
+
+    /**
+     * Gets the tag that holds the setting data. This may be from another project
+     * @param string $setting_name
+     * @return FlowTag|null
+     * @throws Exception
+     */
+    public function get_setting_tag(string $setting_name) : ?FlowTag {
+
+        $pointee_tag = $this->get_setting_holder_tag($setting_name);
+        $pointee_attribute = $pointee_tag->get_or_create_attribute($setting_name);
+        $setting_tag_guid = $pointee_attribute->getPointsToFlowTagGuid();
+
+
+        if (!$setting_tag_guid) { return null;  }
+
+        $tag_params = new FlowTagSearchParams();
+        $tag_params->tag_guids[] = $setting_tag_guid;
+        $pointee_tag_array = FlowTagSearch::get_tags($tag_params);
+
+        if (empty($pointee_tag_array)) {
+            throw new LogicException("[get_setting_tag] pointee for $setting_name holds invalid pointer: $setting_tag_guid");
+        }
+        $pointee_tag = $pointee_tag_array[0];
+
+        if ($pointee_tag->flow_project_guid !== $this->flow_project_guid) {
+            //check for read permission
+            $other_project = ProjectHelper::get_project_helper()->get_project_with_permissions(
+                null,$pointee_tag->flow_project_admin_user_guid,$pointee_tag->flow_project_guid,
+                FlowProjectUser::PERMISSION_COLUMN_READ
+            );
+            if (!$other_project) {
+                throw new RuntimeException("[get_setting_tag] No permissions to read tag $setting_tag_guid for setting $setting_name");
+            }
+        }
+        return $pointee_tag;
+    }
+
+    /**
+     * @param string $setting_name
+     * @return IFlowTagStandardAttribute|null
+     * @throws Exception
+     */
+    public function get_setting_value(string $setting_name) : ?IFlowTagStandardAttribute {
+
+        $tag = $this->get_setting_tag($setting_name);
+        if (!$tag) {return null;}
+
+        $setting_node = FlowProject::STANDARD_SETTINGS[$setting_name];
+        if (!isset($setting_node['standard_attribute_name'])) {
+            throw new LogicException("[get_setting_tag] badly formed setting (standard name): $setting_name");
+        }
+        $standard_name = $setting_node['standard_attribute_name'];
+
+        $attributes =  $tag->getStandardAttributes();
+        foreach ($attributes as $standard) {
+            if ($standard->getStandardName() === $standard_name) {
+                return $standard;
+            }
+        }
+        return null;
     }
 
 }
