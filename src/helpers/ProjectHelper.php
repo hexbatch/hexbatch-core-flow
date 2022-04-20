@@ -44,7 +44,7 @@ class ProjectHelper extends BaseHelper {
     }
 
     /**
-     * @param ServerRequestInterface $request
+     * @param ServerRequestInterface|NULL $request
      * @param string|null $user_name_or_guid
      * @param string $project_name
      * @param string $permission read|write|admin
@@ -52,13 +52,18 @@ class ProjectHelper extends BaseHelper {
      * @throws
      */
     public  function get_project_with_permissions (
-        ServerRequestInterface $request,?string $user_name_or_guid, string $project_name, string $permission) : ?FlowProject
+        ?ServerRequestInterface $request,?string $user_name_or_guid, string $project_name, string $permission) : ?FlowProject
     {
 
         try {
             $project = $this->find_one($project_name,$user_name_or_guid,$permission,$this->user->flow_user_id);
         } catch (InvalidArgumentException $not_found) {
-            throw new HttpNotFoundException($request,sprintf("Cannot Find Project %s",$project_name));
+            if ($request) {
+                throw new HttpNotFoundException($request,sprintf("Cannot Find Project %s",$project_name));
+            } else {
+                throw new InvalidArgumentException(sprintf("Cannot Find Project %s",$project_name));
+            }
+
         }
 
         if ($this->user->flow_user_id) {

@@ -94,6 +94,7 @@
  * @property {?string} points_to_flow_entry_guid
  * @property {?string} points_to_flow_user_guid
  * @property {?string} points_to_flow_project_guid
+ * @property {?string} points_to_flow_tag_guid
  * @property {?string} tag_attribute_name
  * @property {?number} tag_attribute_long
  * @property {?string} tag_attribute_text
@@ -101,15 +102,16 @@
  * @property {?number} updated_at_ts
  * @property {?boolean} is_inherited
  * @property {?string} points_to_title
- * @property {?string} points_to_admin_guid
- * @property {?string} points_to_admin_name
+ * @property {?string} project_guid_of_pointee
+ * @property {?string} project_admin_guid_of_pointee
+ * @property {?string} project_admin_name_of_pointee
  * @property {?string} points_to_url
  */
 
 
 /**
  *
- * @typedef {Object} FlowStandardAttributes
+ * @typedef {Object} FlowStandardAttribute
  * @property {string?} standard_name
  * @property {Object?} standard_value
  * @property {int?} standard_updated_ts
@@ -118,6 +120,7 @@
  * @property {string?} standard_guid
 
  */
+
 
 
 
@@ -133,7 +136,7 @@
  * @property {number} created_at_ts
  * @property {number} updated_at_ts
  * @property {Object.<string, FlowTagAttribute>} attributes
- * @property {Object.<string, FlowStandardAttributes>} standard_attributes
+ * @property {Object.<string, FlowStandardAttribute>} standard_attributes
  * @property {Object.<string, string>} css
  * @property {?FlowTag} flow_tag_parent
  * @property {FlowTagApplied[]} applied
@@ -308,6 +311,7 @@
  * @property {?string} git_ssh_key
  * @property {?string} git_branch
  * @property {?string} git_notes
+ * @property {?string} git_automate_push
  * @property {?string} git_web_page
  */
 
@@ -321,6 +325,54 @@
  * @property {?string} css
  * @property {?string} backgroundColor
  * @property {?string} color
+ */
+
+
+/**
+ * @typedef {Object} FlowStandardSettingCallbackParams
+ * @property {?FlowTag} tag_setting
+ * @property {?FlowTag} [chosen_tag]
+ * @property {string} standard_name
+ * @property {string} setting_name
+ * @property {?Object} [standard_value]
+ * @property {?string} [message]
+ */
+
+
+
+/**
+ *
+ * @callback FlowStandardSettingCallback
+ * @param {FlowStandardSettingCallbackParams} params
+ */
+
+
+/**
+ * @typedef {FlowStandardSettingCallbackParams} FlowStandardSettingsSetup
+ * @property {FlowTag[]} tag_list
+ * @property {string} [setting_label]
+ * @property {string} [setting_description]
+ * @property {?FlowStandardSettingCallback} [on_change_callback]
+ * @property {?FlowStandardSettingCallback} [on_cancel_callback]
+ */
+
+
+
+/**
+ *
+ * @typedef {FlowBasicResponse} FlowSetProjectSettingResponse
+ * @property {?FlowTagAttribute} holding_attribute
+ * @property {?FlowTag} holding_tag
+ * @property {?FlowTag} setting_tag
+ * @property {?string} setting_name
+ * @property {?string} standard_name
+ * @property {?string} standard_value
+ */
+
+/**
+ *
+ * @callback FlowSetProjectSettingResponseCallback
+ * @param {FlowSetProjectSettingResponse} params
  */
 
 

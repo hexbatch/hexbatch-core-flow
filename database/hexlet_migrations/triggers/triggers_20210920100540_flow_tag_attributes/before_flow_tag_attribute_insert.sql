@@ -40,6 +40,10 @@ BEGIN
         SET number_pointees = number_pointees + 1;
     END IF;
 
+    IF NEW.points_to_tag_id THEN
+        SET number_pointees = number_pointees + 1;
+    END IF;
+
     IF number_pointees > 1 THEN
         SET msg := CONCAT('Tag Attributes can only point to one thing, not ',number_pointees);
         SIGNAL SQLSTATE '45000'

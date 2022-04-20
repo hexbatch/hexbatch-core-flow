@@ -3,10 +3,8 @@
 
         <div class="card" >
 
-            <div class="card-header">
-                <h4 class="">
-                     {{ dat_user.flow_user_name }}
-                </h4>
+            <div class="card-header p-0 d-flex justify-content-center bg-white pb-1 pt-1">
+                <div class="user-meta-here"></div>
             </div>
 
             <div class="card-body">
@@ -18,7 +16,7 @@
                     {{ project.flow_project_readme_html| raw }}
                 </div>
 
-                <div class="user-meta-here m-1 p-2"></div>
+
 
             </div>
         </div>
@@ -27,7 +25,7 @@
 
 <script>
     jQuery(function($){
-        let meta_tags = {{ meta_tags|to_json_string }};
+        let meta_tags = will_echo_tag_array({{ meta_tags|to_json_string }});
         let home = $(`.user-meta-here`);
         for(let i = 0; i < meta_tags.length ; i++) {
             let tag = meta_tags[i];

@@ -358,16 +358,19 @@ class UserPages extends BasePages {
      * @param ResponseInterface $response
      * @return ResponseInterface
      * @throws Exception
-     * @noinspection PhpUnused
+     *
      */
     public function user_home( ResponseInterface $response) :ResponseInterface {
         $user_home = $this->get_user_helper()->get_user_home_project();
+
+        $meta_tags = $this->get_user_helper()->get_user_meta_tags($this->user->flow_user_guid);
 
         return $this->view->render($response, 'main.twig', [
             'page_template_path' => 'user/user_home.twig',
             'page_title' => 'User Home',
             'page_description' => 'No Place Like Home',
-            'user_home_project' => $user_home
+            'project' => $user_home,
+            'meta_tags' => $meta_tags
         ]);
     }
 
@@ -400,12 +403,13 @@ class UserPages extends BasePages {
 
             $user_home = $this->get_user_helper()->get_user_home_project();
 
+
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'user/user_settings.twig',
                 'page_title' => 'User Home',
                 'page_description' => 'No Place Like Home',
                 'edit_user' => $form_in_progress,
-                'user_home_project' => $user_home
+                'user_home_project' => $user_home,
             ]);
         } catch (Exception $e) {
             $this->logger->error("Could not render user_home",['exception'=>$e]);
@@ -577,17 +581,8 @@ class UserPages extends BasePages {
             }
             $user_home = $this->get_user_helper()->get_user_home_project($dat_user->flow_user_guid);
             $user_home->get_admin_user();
-            $meta_tags = [];
-            $tags = $user_home->get_all_owned_tags_in_project();
-            foreach ($tags as $tag) {
-                $sa = $tag->getStandardAttributes();
-                foreach ($sa as $standard) {
-                    if ( $standard->getStandardName() === IFlowTagStandardAttribute::STD_ATTR_NAME_META) {
-                        $meta_tags[] = $tag;
-                    }
-                }
 
-            }
+            $meta_tags = $this->get_user_helper()->get_user_meta_tags($dat_user->flow_user_guid);
 
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'user/user_page.twig',

@@ -2,6 +2,14 @@
 
 function will_do_nothing() {}
 
+
+/**
+ * Fix for broken editor typechecking in twig
+ * @param {Array} what
+ * @returns {FlowTag[]}
+ */
+function will_echo_tag_array(what) {return what}
+
 function flow_check_if_promise (obj) {
     const normal = !!obj && typeof obj === 'object' &&
         ((obj.constructor && obj.constructor.name === 'Promise') || typeof obj.then === 'function');
