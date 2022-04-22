@@ -17,7 +17,7 @@ use Exception;
 use LogicException;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
-
+//todo creating new entry and erasing old in db with different guid, can see two entry folders in repo
 final class FlowEntryArchive extends FlowEntryArchiveMembers {
 
     const ALL_FILES_YAML_NAME = 'entry-summary.yaml';

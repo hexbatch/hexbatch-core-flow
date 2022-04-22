@@ -687,6 +687,7 @@ class PageProjectController extends BaseProjectController
 
             if (isset($call->args->tag_guid) && $call->args->tag_guid) {
                 //set setting
+
                 $setting_tag_guid = $call->args->tag_guid;
                 $tag_params = new FlowTagSearchParams();
                 $tag_params->tag_guids[] = $setting_tag_guid;
@@ -730,6 +731,8 @@ class PageProjectController extends BaseProjectController
 
             $ret_tag = $holding_tag->clone_refresh();
             $ret_attribute = $ret_tag->get_or_create_attribute($setting_name);
+
+            $project->save();
 
             $data = [
                 'success'=>true,

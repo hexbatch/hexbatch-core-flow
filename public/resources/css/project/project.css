@@ -39,8 +39,9 @@ div#flow-history-area .flow-grid-striped.row:nth-of-type(even) {
 }
 
 div#flow-history-area ul.flow-history-file-list li span.flow-commit-body {
-    white-space: pre;
+    white-space: pre-wrap;
     display: block;
+    word-break: break-word;
 }
 
 .row.flow-project-list-item {
