@@ -20,17 +20,21 @@
         <div class="card-body">
             <nav>
                 <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                    <button class="nav-link active" id="flow-clone-from-project" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
+                    <button class="nav-link active" id="flow-clone-from-project" data-bs-toggle="tab" data-bs-target="#nav-clone-from-project" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
                         Clone From a project you can read here
                     </button>
                     
-                    <button class="nav-link" id="flow-clone-from-git" data-bs-toggle="tab" data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile" aria-selected="false">
+                    <button class="nav-link" id="flow-clone-from-git" data-bs-toggle="tab" data-bs-target="#nav-clone-from-git" type="button" role="tab" aria-controls="nav-profile" aria-selected="false">
                         Clone from Git
+                    </button>
+
+                    <button class="nav-link" id="flow-clone-from-file" data-bs-toggle="tab" data-bs-target="#nav-clone-from-file" type="button" role="tab" aria-controls="nav-profile" aria-selected="false">
+                        Clone from File
                     </button>
                 </div>
             </nav>
             <div class="tab-content" id="nav-tabContent">
-                <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="flow-clone-from-project">
+                <div class="tab-pane fade show active" id="nav-clone-from-project" role="tabpanel" aria-labelledby="flow-clone-from-project">
                     <div class="row">
                         <div class="mt-2 col-12 col-md-6 col-xxl-3">
                             <label for="flow-select-project">
@@ -91,9 +95,13 @@
 
                 </div><!-- /.tab-pane -->
 
-                <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="flow-clone-from-git">
+                <div class="tab-pane fade" id="nav-clone-from-git" role="tabpanel" aria-labelledby="flow-clone-from-git">
 
+                    Git!
+                </div><!-- /.tab-pane -->
 
+                <div class="tab-pane fade" id="nav-clone-from-file" role="tabpanel" aria-labelledby="flow-clone-from-file">
+                    Hello
                 </div><!-- /.tab-pane -->
             </div> <!-- /.tab-content -->
         </div>

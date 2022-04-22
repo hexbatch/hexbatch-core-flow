@@ -507,6 +507,7 @@ class FlowProject extends FlowBase implements JsonSerializable {
             $tag_summary = $brief_changes->get_changed_tag_summary_line();
             $attribute_summary = $brief_changes->get_changed_attribute_summary_line();
             $applied_summary = $brief_changes->get_changed_applied_summary_line();
+            //todo message should only show changed tags (and not changed timestamps)
             if ($number_tag_changes === 1) {
                 $commit_message = $tag_summary .  $attribute_summary . $applied_summary;
             } else {
