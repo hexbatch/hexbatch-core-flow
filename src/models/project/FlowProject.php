@@ -1198,7 +1198,7 @@ class FlowProject extends FlowBase implements JsonSerializable {
         $maybe_standard = $this->get_setting_value($setting_name);
         if (!$maybe_standard) {
             $this->setting_cache[$setting_name] = null;
-            return null;
+            return new FlowProjectGitSettings();
         }
         $da_truthful_data = $maybe_standard->getStandardValue();
         $ret =  new FlowProjectGitSettings($da_truthful_data);

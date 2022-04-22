@@ -376,6 +376,13 @@
  */
 
 
+/**
+ *
+ * @typedef {FlowBasicResponse} FlowGitActionResponse
+ * @property {string[]} git_output
+ */
+
+
 
 
 

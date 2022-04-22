@@ -100,8 +100,8 @@ abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable
     {
         if (empty($this->entry->get_project_id()) && $this->entry->get_project_guid()) {
             $this->entry->set_project_id( $guid_map_to_ids[$this->entry->get_project_guid()] ?? null);}
-        if (empty($this->flow_entry_parent_id) && $this->entry->get_project_guid()) {
-            $this->entry->set_parent_id($guid_map_to_ids[$this->entry->get_project_guid()] ?? null);}
+        if (empty($this->flow_entry_parent_id) && $this->entry->get_parent_guid()) {
+            $this->entry->set_parent_id($guid_map_to_ids[$this->entry->get_parent_guid()] ?? null);}
     }
 
 
@@ -166,7 +166,7 @@ abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable
                     break;
                 }
                 case 'flow_project_guid': {
-                    $this->get_entry()->set_project_id($value);
+                    $this->get_entry()->set_project_guid($value);
                     break;
                 }
                 case 'entry_created_at_ts': {
@@ -175,6 +175,12 @@ abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable
                 }
                 case 'entry_updated_at_ts': {
                     $this->get_entry()->set_updated_at_ts($value);
+                    break;
+                }
+
+                case 'child_entries':
+                case 'entry_name':
+                case 'human_date_time': {
                     break;
                 }
                 default: {

@@ -14,6 +14,7 @@ use app\models\multi\GeneralSearch;
 use app\models\multi\GeneralSearchParams;
 use app\models\project\FlowProject;
 use Exception;
+use LogicException;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -161,13 +162,27 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
         }
 
         foreach ($entries_in_files_flat_array as $in_file_entry) {
-            $entries_in_files[$in_file_entry->get_guid()] = $in_file_entry;
+            if ($in_file_entry instanceof IFlowEntryArchive) {
+                $entries_in_files[$in_file_entry->get_entry()->get_guid()] = $in_file_entry;
+            } else if ($in_file_entry instanceof IFlowEntry) {
+                $entries_in_files[$in_file_entry->get_guid()] = $in_file_entry;
+            } else {
+                throw new LogicException("[update_all_entries_from_project_directory] Unknown interface ");
+            }
+
         }
 
 
         foreach ($entries_in_files as $guid => $entry) {
 
-            $archive = FlowEntryArchive::create_archive($entry);
+            if ($entry instanceof IFlowEntryArchive) {
+                $archive = FlowEntryArchive::create_archive($entry->get_entry());
+            } else if ($entry instanceof IFlowEntry) {
+                $archive = FlowEntryArchive::create_archive($entry);
+            } else {
+                throw new LogicException("[update_all_entries_from_project_directory B] Unknown interface ");
+            }
+
             $archive_map[$guid] = $archive;
             $guids = $archive->get_needed_guids_for_empty_ids();
             foreach ($guids as $guid) {
@@ -198,7 +213,14 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
             }
             //add all entry guids in the files in case children or members need them
             foreach ($entries_in_files as $guid => $entry) {
-                $guid_map_to_ids[$guid] = $entry->get_id();
+                if ($entry instanceof IFlowEntryArchive) {
+                    $guid_map_to_ids[$guid] = $entry->get_entry()->get_id();
+                } else if ($entry instanceof IFlowEntry) {
+                    $guid_map_to_ids[$guid] = $entry->get_id();
+                } else {
+                    throw new LogicException("[update_all_entries_from_project_directory D] Unknown interface ");
+                }
+
             }
 
 
@@ -206,7 +228,13 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
                 $archive = $archive_map[$guid];
                 $archive->fill_ids_from_guids($guid_map_to_ids);
                 if (count($archive->get_needed_guids_for_empty_ids())) {
-                    $title = $entry->get_title();
+                    if ($entry instanceof IFlowEntryArchive) {
+                        $title = $entry->get_entry()->get_title();
+                    } else if ($entry instanceof IFlowEntry) {
+                        $title = $entry->get_title();
+                    } else {
+                        throw new LogicException("[update_all_entries_from_project_directory C] Unknown interface ");
+                    }
                     throw new RuntimeException(
                         "[update_all_entries_from_project_directory] Missing some filled guids for $title");
 
@@ -216,7 +244,15 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
 
 
             foreach ($entries_in_files_flat_array as  $entry) {
-                $entry->save_entry(false,false);
+
+                if ($entry instanceof IFlowEntryArchive) {
+                    $entry->get_entry()->save_entry();
+                } else if ($entry instanceof IFlowEntry) {
+                    $entry->save_entry();
+                } else {
+                    throw new LogicException("[update_all_entries_from_project_directory C] Unknown interface ");
+                }
+
             }
 
             //delete last to minimize dependencies being mixed up

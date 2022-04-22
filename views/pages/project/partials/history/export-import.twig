@@ -12,7 +12,14 @@
                 <div class="col-4 md-col-3">
                     {% if project.get_current_user_permissions().can_edit %}
                         <div class="d-inline-block">
-                            <button type="button" class="btn btn-outline-primary py-0 flow-git-pull-now" >
+                            <button type="button"
+                                    class="btn btn-outline-primary py-0 flow-git-pull-now"
+                                    data-url="{{ url_for('pull_project_ajax',{
+                                        user_name: project.get_admin_user().flow_user_name ,
+                                        project_name: project.flow_project_title
+                                    } )
+                                    }}"
+                            >
                                 Pull Now
                             </button>
                         </div>
@@ -40,7 +47,14 @@
                 <div class="col-4 md-col-3">
                     {% if project.get_current_user_permissions().can_edit %}
                         <div class="d-inline-block">
-                            <button type="button" class="btn btn-outline-primary py-0 flow-git-push-now" >
+                            <button type="button"
+                                    class="btn btn-outline-primary py-0 flow-git-push-now"
+                                    data-url="{{ url_for('push_project_ajax',{
+                                        user_name: project.get_admin_user().flow_user_name ,
+                                        project_name: project.flow_project_title
+                                    } )
+                                    }}"
+                            >
                                 Push Now
                             </button>
                         </div>

@@ -108,10 +108,10 @@ return function (App $app) {
                     $group->get('/download_export', ['projectGit', 'download_export'])->setName('download_project_export');
 
                     /** @uses \app\controllers\project\GitProjectController::push_project()*/
-                    $group->get('/push_project', ['projectGit', 'push_project'])->setName('push_project_ajax');
+                    $group->post('/push_project', ['projectGit', 'push_project'])->setName('push_project_ajax');
 
                     /** @uses \app\controllers\project\GitProjectController::pull_project()*/
-                    $group->get('/pull_project', ['projectGit', 'pull_project'])->setName('pull_project_ajax');
+                    $group->post('/pull_project', ['projectGit', 'pull_project'])->setName('pull_project_ajax');
 
                 })->add('checkLoggedInMiddleware');
 

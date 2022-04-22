@@ -54,6 +54,7 @@ class StandardPages extends BasePages
 
 
             $new_tag = $tag->clone_refresh();
+            $call->project->save();
             $data = [
                 'success'=>true,'message'=>'ok','tag'=>$new_tag,'action'=> 'delete_tag_standard',
                 'standard_name'=>$standard_name,
@@ -115,6 +116,7 @@ class StandardPages extends BasePages
 
             $tag->save(true,true);
             $new_tag = $tag->clone_refresh();
+            $call->project->save();
             $data = ['success'=>true,'message'=>'ok','tag'=>$new_tag,'action'=> 'update_tag_standard',
                             'standard_name'=>$standard_name,'standard_data'=>$valid_update,'token'=> $call->new_token];
 

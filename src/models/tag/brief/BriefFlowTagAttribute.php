@@ -129,15 +129,15 @@ class BriefFlowTagAttribute  implements JsonSerializable {
             $b_standard = true;
         }
         $this->new_name = null;
-        $this->flow_tag_attribute_guid = $b_standard? $att->flow_tag_attribute_guid  :$att->getFlowTagAttributeGuid();
-        $this->flow_tag_guid = $b_standard? $att->flow_tag_guid :$att->getFlowTagGuid();
-        $this->points_to_flow_entry_guid = $b_standard? $att->points_to_flow_entry_guid : $att->getPointsToFlowEntryGuid();
-        $this->points_to_flow_user_guid = $b_standard? $att->points_to_flow_user_guid : $att->getPointsToFlowUserGuid();
-        $this->points_to_flow_project_guid = $b_standard? $att->points_to_flow_project_guid : $att->getPointsToFlowProjectGuid();
-        $this->points_to_flow_tag_guid = $b_standard? $att->points_to_flow_tag_guid : $att->getPointsToFlowTagGuid();
-        $this->tag_attribute_name = $b_standard? $att->tag_attribute_name : $att->getTagAttributeName();
-        $this->tag_attribute_long = (int)($b_standard? $att->tag_attribute_long : $att->getTagAttributeLong());
-        $this->tag_attribute_text = $b_standard? $att->tag_attribute_text : $att->getTagAttributeText();
+        $this->flow_tag_attribute_guid = $b_standard? $att->flow_tag_attribute_guid??null  :$att->getFlowTagAttributeGuid();
+        $this->flow_tag_guid = $b_standard? $att->flow_tag_guid??null :$att->getFlowTagGuid();
+        $this->points_to_flow_entry_guid = $b_standard? $att->points_to_flow_entry_guid??null : $att->getPointsToFlowEntryGuid();
+        $this->points_to_flow_user_guid = $b_standard? $att->points_to_flow_user_guid??null : $att->getPointsToFlowUserGuid();
+        $this->points_to_flow_project_guid = $b_standard? $att->points_to_flow_project_guid??null : $att->getPointsToFlowProjectGuid();
+        $this->points_to_flow_tag_guid = $b_standard? $att->points_to_flow_tag_guid??null : $att->getPointsToFlowTagGuid();
+        $this->tag_attribute_name = $b_standard? $att->tag_attribute_name??null : $att->getTagAttributeName();
+        $this->tag_attribute_long = (int)($b_standard? $att->tag_attribute_long??null : $att->getTagAttributeLong());
+        $this->tag_attribute_text = $b_standard? $att->tag_attribute_text??null : $att->getTagAttributeText();
         $this->attribute_created_at_ts =  $b_standard?
                             WillFunctions::value_from_property_names_or_default($att,['attribute_created_at_ts','created_at_ts']):
                                             $att->getAttributeCreatedAtTs();
