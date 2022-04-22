@@ -9,7 +9,7 @@
         <div class="card-body flow-import-export-settings" >
             <div class="row">
 
-                <div class="col-3">
+                <div class="col-4 md-col-3">
                     {% if project.get_current_user_permissions().can_edit %}
                         <div class="d-inline-block">
                             <button type="button" class="btn btn-outline-primary py-0 flow-git-pull-now" >
@@ -19,7 +19,7 @@
                     {% endif %} {# end can-edit #}
                 </div> <!--.col  -->
 
-                <div class="col-3">
+                <div class="col-4 md-col-3">
                     {% if project.get_current_user_permissions().can_read %}
                         <div class="" aria-current="page">
                             <a href="{{ url_for('download_project_export',{
@@ -37,7 +37,7 @@
 
 
 
-                <div class="col-3">
+                <div class="col-4 md-col-3">
                     {% if project.get_current_user_permissions().can_edit %}
                         <div class="d-inline-block">
                             <button type="button" class="btn btn-outline-primary py-0 flow-git-push-now" >
@@ -54,10 +54,10 @@
 
         <div class="card-body flow-import-export-settings" >
             <div class="row">
-                <div class="col-6">
+                <div class="col-12 col-md-6">
                     <div class="flow-git-import-here"></div>
                 </div>
-                <div class="col-6">
+                <div class="col-12 col-md-6 mt-2 mt-md-0">
                     <div class="flow-git-export-here"></div>
                 </div>
             </div>
