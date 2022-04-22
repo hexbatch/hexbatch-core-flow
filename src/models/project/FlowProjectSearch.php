@@ -212,17 +212,7 @@ class FlowProjectSearch extends FlowBase {
                 p.flow_project_title,
                 p.flow_project_blurb,
                 p.flow_project_readme,
-                p.flow_project_readme_bb_code,
-       
-                p.export_repo_do_auto_push,
-                p.export_repo_url,
-                p.export_repo_branch,
-                p.export_repo_key,
-       
-                p.import_repo_url,
-                p.import_repo_branch,
-                p.import_repo_key,
-                                 
+                p.flow_project_readme_bb_code,       
                 p.flow_project_special_flag,
                                  
                 u.id as owning_user_id                 

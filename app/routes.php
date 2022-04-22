@@ -2,7 +2,6 @@
 declare(strict_types=1);
 
 
-use app\models\project\FlowProject;
 use app\models\standard\FlowTagStandardAttribute;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
@@ -33,14 +32,25 @@ return function (App $app) {
 
         $group->group('/project', function (RouteCollectorProxy $group) use($container) {
 
+            /** @uses \app\controllers\project\PageProjectController::all_projects() */
             $group->get('/projects', ['projectPages', 'all_projects'])->setName('all_projects');
 
             $group->group('', function (RouteCollectorProxy $group) {
+
+                /** @uses \app\controllers\project\PageProjectController::create_project() */
                 $group->post('/create_project', ['projectPages', 'create_project'])->setName('create_project');
+
+                /** @uses \app\controllers\project\PageProjectController::new_project() */
                 $group->get('/new_project', ['projectPages', 'new_project'])->setName('new_project');
+
+                /** @uses \app\controllers\project\PageProjectController::clone_project() */
                 $group->get('/clone_project', ['projectPages', 'clone_project'])->setName('clone_project');
+
+                /** @uses \app\controllers\project\PageProjectController::clone_project_from_local() */
                 $group->post('/clone_project/from_local/{guid:[[:alnum:]\-]+}', ['projectPages', 'clone_project_from_local'])->setName('clone_project_from_local');
-                $group->post('/clone_project/from_git/{guid:[[:alnum:]\-]+}', ['projectPages', 'clone_project_from_git'])->setName('clone_project_from_git');
+
+                /** @uses \app\controllers\project\GitProjectController::clone_project_from_git() */
+                $group->post('/clone_project/from_git/{guid:[[:alnum:]\-]+}', ['projectResources', 'clone_project_from_git'])->setName('clone_project_from_git');
             })->add('checkLoggedInMiddleware');
 
         });
@@ -84,35 +94,65 @@ return function (App $app) {
         $group->group('/{user_name:[[:alnum:]\-]+}', function (RouteCollectorProxy $group) use($container) {
 
             $group->group('', function (RouteCollectorProxy $group) {
+
+                /** @uses \app\controllers\project\PageProjectController::single_project_home() */
                 $group->get('/{project_name:[[:alnum:]\-]+}', ['projectPages', 'single_project_home'])->setName('single_project_home');
             } );
 
             
             $group->group('/{project_name:[[:alnum:]\-]+}', function (RouteCollectorProxy $group) use ($container) {
 
+                $group->group('/git', function (RouteCollectorProxy $group) use ($container) {
+
+                    /** @uses \app\controllers\project\GitProjectController::download_export()*/
+                    $group->get('/download_export', ['projectGit', 'download_export'])->setName('download_project_export');
+
+                    /** @uses \app\controllers\project\GitProjectController::push_project()*/
+                    $group->get('/push_project', ['projectGit', 'push_project'])->setName('push_project_ajax');
+
+                    /** @uses \app\controllers\project\GitProjectController::pull_project()*/
+                    $group->get('/pull_project', ['projectGit', 'pull_project'])->setName('pull_project_ajax');
+
+                })->add('checkLoggedInMiddleware');
+
                 $group->group('', function (RouteCollectorProxy $group) use ($container) {
+                    /** @uses \app\controllers\project\PageProjectController::single_project_home() */
                     $group->get('/', ['projectPages', 'single_project_home'])->setName('single_project_home');
+
+                    /** @uses \app\controllers\project\PageProjectController::edit_project() */
                     $group->get('/edit', ['projectPages', 'edit_project'])->setName('edit_project');
+
+                    /** @uses \app\controllers\project\PageProjectController::update_project() */
                     $group->post('/edit', ['projectPages', 'update_project'])->setName('update_project');
+
+                    /** @uses \app\controllers\project\PageProjectController::destroy_project() */
                     $group->post('/destroy_ajax', ['projectPages', 'destroy_project'])->setName('destroy_project_ajax');
+
+                    /** @uses \app\controllers\project\PageProjectController::change_project_permissions() */
                     $group->post('/edit_permissions_ajax', ['projectPages', 'change_project_permissions'])->setName('edit_permissions_ajax');
+
+                    /** @uses \app\controllers\project\PageProjectController::edit_project_permissions() */
                     $group->get('/permissions', ['projectPages', 'edit_project_permissions'])->setName('project_permissions');
-                    $group->get('/history[/page/{page:[1-9]+[0-9]*}]', ['projectPages', 'project_history'])->setName('project_history');
-                    $group->post('/file_change_ajax', ['projectPages', 'get_file_change'])->setName('get_file_change_ajax');
-                    $group->get('/export', ['projectPages', 'export_view'])->setName('project_export');
-                    $group->post('/export', ['projectPages', 'update_export'])->setName('update_project_export');
-                    $group->get('/download_export', ['projectPages', 'download_export'])->setName('download_project_export');
-                    $group->get('/import', ['projectPages', 'import_view'])->setName('project_import');
-                    $group->post('/import', ['projectPages', 'import_from_git'])->setName('project_import_from_git');
-                    $group->post('/import_from_file', ['projectPages', 'import_from_file'])->setName('project_import_from_file');
-                    $group->get('/resources/', ['projectPages', 'resources'])->setName('project_resources');
 
-                    /** @uses \app\controllers\project\ProjectPages::upload_resource_file() */
-                    $group->post('/resources', ['projectPages', 'upload_resource_file'])->setName('project_upload_resource_file');
-                    $group->post('/resources_delete', ['projectPages', 'delete_resource_file'])->setName('project_delete_resource_file');
+                    /** @uses \app\controllers\project\GitProjectController::project_history()*/
+                    $group->get('/history[/page/{page:[1-9]+[0-9]*}]', ['projectGit', 'project_history'])->setName('project_history');
 
-                    /** @uses \app\controllers\project\ProjectPages::set_project_setting() */
+                    /** @uses \app\controllers\project\GitProjectController::get_file_change()*/
+                    $group->post('/file_change_ajax', ['projectGit', 'get_file_change'])->setName('get_file_change_ajax');
 
+                    /* @uses \app\controllers\project\ResourceProjectController::import_from_file() **/
+                    $group->post('/import_from_file', ['projectResources', 'import_from_file'])->setName('project_import_from_file');
+
+                    /** @uses \app\controllers\project\ResourceProjectController::upload_resource_file() */
+                    $group->get('/resources/', ['projectResources', 'resources'])->setName('project_resources');
+
+                    /** @uses \app\controllers\project\ResourceProjectController::upload_resource_file() */
+                    $group->post('/resources', ['projectResources', 'upload_resource_file'])->setName('project_upload_resource_file');
+
+                    /** @uses \app\controllers\project\ResourceProjectController::delete_resource_file() */
+                    $group->post('/resources_delete', ['projectResources', 'delete_resource_file'])->setName('project_delete_resource_file');
+
+                    /** @uses \app\controllers\project\PageProjectController::set_project_setting() */
                     $group->post("/set_project_setting/{setting_name}",
                         ['projectPages', 'set_project_setting'])->setName('set_project_setting');
 
@@ -121,9 +161,11 @@ return function (App $app) {
 
                 })->add('checkLoggedInMiddleware');
 
+                /** @uses \app\controllers\project\PageProjectController::edit_project_tags() */
                 $group->get('/tags', ['projectPages', 'edit_project_tags'])->setName('project_tags');
 
-                $group->get('/files/{resource}', ['projectPages', 'get_resource_file'])->setName('project_files');
+                /** @uses \app\controllers\project\ResourceProjectController::get_resource_file() */
+                $group->get('/files/{resource}', ['projectResources', 'get_resource_file'])->setName('project_files');
 
 
                 $group->group('/standard', function (RouteCollectorProxy $group) use($container){

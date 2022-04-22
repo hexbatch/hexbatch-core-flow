@@ -1,59 +1,44 @@
 <?php
 namespace app\controllers\project;
 
-use app\controllers\base\BasePages;
 use app\controllers\user\UserPages;
 use app\helpers\AjaxCallData;
-use app\helpers\ProjectHelper;
-use app\helpers\UserHelper;
 use app\hexlet\FlowAntiCSRF;
-use app\hexlet\GoodZipArchive;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
-use app\models\project\FlowGitFile;
 use app\models\project\FlowProject;
-use app\models\project\FlowProjectFiles;
 use app\models\project\FlowProjectUser;
-use app\models\standard\IFlowTagStandardAttribute;
 use app\models\tag\FlowTagSearch;
 use app\models\tag\FlowTagSearchParams;
 use app\models\user\FlowUser;
 
 use Exception;
-use finfo;
 use InvalidArgumentException;
 use LogicException;
 
 use ParagonIE\AntiCSRF\AntiCSRF;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use RuntimeException;
 use Slim\Exception\HttpForbiddenException;
-use Slim\Exception\HttpInternalServerErrorException;
 use Slim\Exception\HttpNotFoundException;
-use Slim\Exception\HttpNotImplementedException;
-use Slim\Psr7\Stream;
 use Slim\Routing\RouteContext;
 
 
 
-class ProjectPages extends BasePages
+class PageProjectController extends BaseProjectController
 {
 
     const REM_NEW_PROJECT_WITH_ERROR_SESSION_KEY = 'project_new_form_in_progress_has_error';
     const REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY = 'project_edit_form_in_progress_has_error';
-    const REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY = 'project_export_form_in_progress_has_error';
-    const REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY = 'project_import_git_form_in_progress_has_error';
 
 
-    protected function get_project_helper() : ProjectHelper {
-        return ProjectHelper::get_project_helper();
-    }
+
+
     /**
      * @param ResponseInterface $response
      * @return ResponseInterface
      * @throws
-     * @noinspection PhpUnused
+     * 
      */
     public function all_projects(  ResponseInterface $response) :ResponseInterface {
         if ($this->user->flow_user_id) {
@@ -67,7 +52,7 @@ class ProjectPages extends BasePages
      * @param ResponseInterface $response
      * @return ResponseInterface
      * @throws Exception
-     * @noinspection PhpUnused
+     * 
      */
     public function all_projects_overview_for_anon( ResponseInterface $response) :ResponseInterface {
         try {
@@ -112,7 +97,7 @@ class ProjectPages extends BasePages
      * @param string $project_name
      * @return ResponseInterface
      * @throws Exception
-     * @noinspection PhpUnused
+     * 
      */
     public function single_project_home( ServerRequestInterface $request,ResponseInterface $response,
                                         string $user_name, string $project_name) :ResponseInterface {
@@ -140,7 +125,7 @@ class ProjectPages extends BasePages
      * @param ResponseInterface $response
      * @return ResponseInterface
      * @throws Exception
-     * @noinspection PhpUnused
+     * 
      */
     public function new_project( ResponseInterface $response) :ResponseInterface {
         try {
@@ -176,7 +161,7 @@ class ProjectPages extends BasePages
      * @param ResponseInterface $response
      * @return ResponseInterface
      * @throws Exception
-     * @noinspection PhpUnused
+     * 
      */
     public function clone_project( ResponseInterface $response) :ResponseInterface {
         return $this->view->render($response, 'main.twig', [
@@ -194,7 +179,7 @@ class ProjectPages extends BasePages
      * @param string $guid
      * @return ResponseInterface
      * @throws Exception
-     * @noinspection PhpUnused
+     * 
      */
     public function clone_project_from_local(ServerRequestInterface $request, ResponseInterface $response, string $guid) :ResponseInterface {
         $project = null;
@@ -235,28 +220,13 @@ class ProjectPages extends BasePages
     }
 
 
-    /**
-     * makes new project and then redirects to new project page
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param string $project_name
-     * @return ResponseInterface
-     * @throws HttpNotImplementedException
-     * @noinspection PhpUnused
-     */
-    public function clone_project_from_git(ServerRequestInterface $request, ResponseInterface $response, string $project_name) :ResponseInterface {
-        WillFunctions::will_do_nothing($response,$project_name);
-        //todo implement project from git
-        throw new HttpNotImplementedException($request,"clone_project_from_git not implemented yet");
-    }
-
 
     /**
      * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
      * @throws Exception
-     * @noinspection PhpUnused
+     * 
      */
     public function create_project(ServerRequestInterface $request, ResponseInterface $response) :ResponseInterface
     {
@@ -316,7 +286,7 @@ class ProjectPages extends BasePages
      * @param string $project_name
      * @return ResponseInterface
      * @throws Exception
-     * @noinspection PhpUnused
+     * 
      */
     public function edit_project( ServerRequestInterface $request,ResponseInterface $response,
                                          string $user_name, string $project_name) :ResponseInterface {
@@ -360,7 +330,7 @@ class ProjectPages extends BasePages
      * @param string $project_name
      * @return ResponseInterface
      * @throws Exception
-     * @noinspection PhpUnused
+     * 
      */
     public function update_project(ServerRequestInterface $request,ResponseInterface $response,
                                    string $user_name, string $project_name) :ResponseInterface {
@@ -431,39 +401,7 @@ class ProjectPages extends BasePages
 
     }
 
-    /**
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param string $user_name
-     * @param string $project_name
-     * @return ResponseInterface
-     * @throws Exception
-     * @noinspection PhpUnused
-     */
-    public function resources( ServerRequestInterface $request,ResponseInterface $response,
-                                              string $user_name, string $project_name) :ResponseInterface {
-        try {
-            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, FlowProjectUser::PERMISSION_COLUMN_WRITE);
 
-            if (!$project) {
-                throw new HttpNotFoundException($request,"Project $project_name Not Found");
-            }
-
-            $resource_urls = $project->getFlowProjectFiles()->get_resource_urls();
-
-
-            return $this->view->render($response, 'main.twig', [
-                'page_template_path' => 'project/resources.twig',
-                'page_title' => "Project Resources for $project->flow_project_title",
-                'page_description' => 'View and upload publicly viewable resources for this project',
-                'project' => $project,
-                'resource_urls' => $resource_urls
-            ]);
-        } catch (Exception $e) {
-            $this->logger->error("Could not render resources page",['exception'=>$e]);
-            throw $e;
-        }
-    }
 
 
     /**
@@ -473,7 +411,7 @@ class ProjectPages extends BasePages
      * @param string $project_name
      * @return ResponseInterface
      * @throws Exception
-     * @noinspection PhpUnused
+     * 
      */
     public function edit_project_permissions( ServerRequestInterface $request,ResponseInterface $response,
                                   string $user_name, string $project_name) :ResponseInterface {
@@ -524,7 +462,7 @@ class ProjectPages extends BasePages
      * @param string $project_name
      * @return ResponseInterface
      * @throws Exception
-     * @noinspection PhpUnused
+     * 
      */
     public function change_project_permissions(ServerRequestInterface $request,ResponseInterface $response,
                                    string $user_name, string $project_name) :ResponseInterface {
@@ -676,7 +614,7 @@ class ProjectPages extends BasePages
      * @param string $project_name
      * @return ResponseInterface
      * @throws Exception
-     * @noinspection PhpUnused
+     * 
      */
     public function edit_project_tags( ServerRequestInterface $request,ResponseInterface $response,
                                               string $user_name, string $project_name) :ResponseInterface {
@@ -706,60 +644,7 @@ class ProjectPages extends BasePages
     }
 
 
-    /**
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param string $user_name
-     * @param string $project_name
-     * @param ?int  $page
-     * @return ResponseInterface
-     * @throws Exception
-     * @noinspection PhpUnused
-     */
-    public function project_history( ServerRequestInterface $request,ResponseInterface $response,
-                                       string $user_name, string $project_name,?int $page) :ResponseInterface {
-        try {
-            $project = $this->get_project_helper()->get_project_with_permissions(
-                $request,$user_name, $project_name, FlowProjectUser::PERMISSION_COLUMN_WRITE);
 
-            if (!$project) {
-                throw new HttpNotFoundException($request,"Project $project_name Not Found");
-            }
-
-            if (intval($page) < 1) {$page = 1;}
-
-            $status_array = $project->getFlowProjectFiles()->get_git_status();
-
-            $git_tags = UserHelper::get_user_helper()->
-                        get_user_tags_of_standard($this->user->flow_user_guid,IFlowTagStandardAttribute::STD_ATTR_NAME_GIT);
-
-
-
-            $git_import_tag_setting = $project->get_setting_tag(FlowProject::GIT_IMPORT_SETTING_NAME);
-            $git_export_tag_setting = $project->get_setting_tag(FlowProject::GIT_EXPORT_SETTING_NAME);
-
-
-
-            return $this->view->render($response, 'main.twig', [
-                'page_template_path' => 'project/project_history.twig',
-                'page_title' => "History for Project $project_name",
-                'page_description' => 'History',
-                'history_page_number' => $page,
-                'history_page_size' => 10,
-                'project' => $project,
-                'status' => $status_array,
-                'git_tags' => $git_tags,
-                'git_import_tag_setting' => $git_import_tag_setting,
-                'git_export_tag_setting' => $git_export_tag_setting
-            ]);
-
-
-
-        } catch (Exception $e) {
-            $this->logger->error("Could not render history page",['exception'=>$e]);
-            throw $e;
-        }
-    }
 
 
     /**
@@ -887,65 +772,7 @@ class ProjectPages extends BasePages
 
     }
 
-    /**
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param string $user_name
-     * @param string $project_name
-     * @return ResponseInterface
-     * @throws Exception
-     * @noinspection PhpUnused
-     */
-    public function get_file_change(ServerRequestInterface $request,ResponseInterface $response,
-                                    string $user_name, string $project_name) :ResponseInterface {
 
-
-        try {
-            $args = $request->getParsedBody();
-            if (empty($args)) {
-                throw new InvalidArgumentException("No data sent");
-            }
-
-
-            $x_header = $request->getHeader('X-Requested-With') ?? [];
-            if (empty($x_header) || $x_header[0] !== 'XMLHttpRequest') {
-                throw new InvalidArgumentException("Need the X-Requested-With header");
-            }
-
-            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, FlowProjectUser::PERMISSION_COLUMN_WRITE);
-
-
-            $file_path = $args['file_path'] ?? '';
-            //if (!$file_path) {throw new InvalidArgumentException("File Path needs to be set");}
-            $commit = $args['commit'] ?? '';
-            if (!$commit) {throw new InvalidArgumentException("Commit needs to be set");}
-
-            $b_show_all = (bool)intval($args['show_all'] ?? '1');
-
-            $project_directory = $project->getFlowProjectFiles()->get_project_directory();
-            $flow_file = new FlowGitFile($project_directory,$commit,$file_path);
-            $diff = $flow_file->show_diff($b_show_all);
-
-            $data = ['success'=>true,'message'=>'','diff'=>$diff,'token'=> null];
-            $payload = JsonHelper::toString($data);
-
-            $response->getBody()->write($payload);
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(200);
-
-
-        } catch (Exception $e) {
-            $data = ['success'=>false,'message'=>$e->getMessage(),'diff'=>null,'token'=> null];
-            $payload = JsonHelper::toString($data);
-
-            $response->getBody()->write($payload);
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(500);
-        }
-
-    }
 
 
     /**
@@ -955,7 +782,7 @@ class ProjectPages extends BasePages
      * @param string $project_name
      * @return ResponseInterface
      * @throws Exception
-     * @noinspection PhpUnused
+     * 
      */
     public function destroy_project(ServerRequestInterface $request,ResponseInterface $response,
                                     string $user_name, string $project_name) :ResponseInterface {
@@ -993,595 +820,5 @@ class ProjectPages extends BasePages
         }
 
     }
-
-
-
-    /**
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param string $user_name
-     * @param string $project_name
-     * @return ResponseInterface
-     * @throws Exception
-     * @noinspection PhpUnused
-     */
-    public function export_view( ServerRequestInterface $request,ResponseInterface $response,
-                                     string $user_name, string $project_name) :ResponseInterface {
-        try {
-            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, FlowProjectUser::PERMISSION_COLUMN_WRITE);
-
-            if (!$project) {
-                throw new HttpNotFoundException($request,"Project $project_name Not Found for export settings");
-            }
-
-
-            if (array_key_exists(static::REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY,$_SESSION)) {
-                /**
-                 * @var ?FlowProject $form_in_progress
-                 */
-                $form_in_progress = $_SESSION[static::REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY];
-                $_SESSION[static::REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY] = null;
-                if (empty($form_in_progress)) {
-                    $form_in_progress = $project;
-                }
-            } else {
-                $form_in_progress = $project;
-            }
-
-
-            return $this->view->render($response, 'main.twig', [
-                'page_template_path' => 'project/project_export.twig',
-                'page_title' => "Export Project $project_name",
-                'page_description' => 'Export',
-                'project' => $form_in_progress,
-            ]);
-
-        } catch (Exception $e) {
-            $this->logger->error("Could not render history page",['exception'=>$e]);
-            throw $e;
-        }
-    }
-
-    /**
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param string $user_name
-     * @param string $project_name
-     * @return ResponseInterface
-     * @throws Exception
-     * @noinspection PhpUnused
-     */
-    public function update_export(ServerRequestInterface $request,ResponseInterface $response,
-                                   string $user_name, string $project_name) :ResponseInterface {
-
-        $project = null;
-        try {
-            $csrf = new AntiCSRF;
-
-            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, FlowProjectUser::PERMISSION_COLUMN_WRITE);
-
-            $args = $request->getParsedBody();
-
-
-
-            $project->export_repo_url = $args['export_repo_url'];
-            $project->export_repo_key = $args['export_repo_key'];
-            $project->export_repo_branch = $args['export_repo_branch'];
-            $project->export_repo_do_auto_push = isset($args['export_repo_do_auto_push']) && intval($args['export_repo_do_auto_push']);
-
-            if (!empty($_POST)) {
-                if (!$csrf->validateRequest()) {
-                    throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
-                }
-            }
-
-
-            $project->save_export_settings();
-            $success_message = "Updated Project Export Settings "  . $project->flow_project_title;
-            if (array_key_exists('export-push-now',$args)) {
-                //do push now
-                $push_status = $project->push_repo();
-                $success_message = "Pushing to $project->export_repo_url "  . $project->flow_project_title . "<br>$push_status";
-            }
-            $_SESSION[static::REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY] = null;
-
-            try {
-                UserPages::add_flash_message('success',$success_message );
-                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-                $url = $routeParser->urlFor('project_history',[
-                    "user_name" => $project->get_admin_user()->flow_user_name,
-                    "project_name" => $project->flow_project_title
-                ]);
-                $response = $response->withStatus(302);
-                return $response->withHeader('Location', $url);
-            } catch (Exception $e) {
-                $this->logger->error("Could not redirect to all projects after successful update", ['exception' => $e]);
-                throw $e;
-            }
-        } catch (Exception $e) {
-            try {
-                UserPages::add_flash_message('warning', "Cannot update project export settings: <b>" . $e->getMessage().'</b>');
-                $_SESSION[static::REM_EXPORT_PROJECT_WITH_ERROR_SESSION_KEY] = $project;
-                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-                $url = $routeParser->urlFor('project_export',[
-                    "user_name" => $user_name ,
-                    "project_name" => $project_name
-                ]);
-                $response = $response->withStatus(302);
-                return $response->withHeader('Location', $url);
-            } catch (Exception $e) {
-                $this->logger->error("Could not redirect to project export settings after error", ['exception' => $e]);
-                throw $e;
-            }
-        }
-
-    }
-
-
-    /**
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param string $user_name
-     * @param string $project_name
-     * @return ResponseInterface
-     * @throws Exception
-     * @noinspection PhpUnused
-     */
-    public function download_export(ServerRequestInterface $request,ResponseInterface $response,
-                                   string $user_name, string $project_name) :ResponseInterface {
-
-        try {
-            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, FlowProjectUser::PERMISSION_COLUMN_WRITE);
-
-            if (!$project) {
-                throw new HttpNotFoundException($request,"Project $project_name Not Found");
-            }
-            $temp_file_path = tempnam(sys_get_temp_dir(), 'git-zip-');
-            $b_rename_ok = rename($temp_file_path, $temp_file_path .= '.zip');
-            if (!$b_rename_ok) {
-                throw new HttpInternalServerErrorException($request,"Cannot rename temp folder");
-            }
-
-            $project_directory_path = $project->getFlowProjectFiles()->get_project_directory();
-            new GoodZipArchive($project_directory_path,    $temp_file_path,$project->flow_project_title) ;
-            $file_size = filesize($temp_file_path);
-            if (!$file_size) {
-                throw new HttpInternalServerErrorException($request,"Cannot create zip folder for download");
-            }
-
-            $response = $response
-                ->withHeader('Content-Type', 'application/zip')
-                ->withHeader('Content-Length', $file_size)
-                ->withHeader('Content-Disposition', "attachment; filename=$project->flow_project_title.zip")
-                ->withAddedHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-                ->withHeader('Cache-Control', 'post-check=0, pre-check=0')
-                ->withHeader('Pragma', 'no-cache')
-                ->withBody((new Stream(fopen($temp_file_path, 'rb'))));
-
-            return $response;
-
-        } catch (Exception $e) {
-            $this->logger->error("Could not download project zip",['exception'=>$e]);
-            throw $e;
-        }
-
-
-    }
-
-    /**
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param string $user_name
-     * @param string $project_name
-     * @return ResponseInterface
-     * @throws Exception
-     * @noinspection PhpUnused
-     */
-    public function import_view( ServerRequestInterface $request,ResponseInterface $response,
-                                 string $user_name, string $project_name) :ResponseInterface {
-
-
-        try {
-            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, FlowProjectUser::PERMISSION_COLUMN_ADMIN);
-
-            if (!$project) {
-                throw new HttpNotFoundException($request,"Project $project_name Not Found for export settings");
-            }
-
-
-            if (array_key_exists(static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY,$_SESSION)) {
-                /**
-                 * @var ?FlowProject $form_in_progress
-                 */
-                $form_in_progress = $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY];
-                $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY] = null;
-                if (empty($form_in_progress)) {
-                    $form_in_progress = $project;
-                }
-            } else {
-                $form_in_progress = $project;
-            }
-
-
-            return $this->view->render($response, 'main.twig', [
-                'page_template_path' => 'project/project_import.twig',
-                'page_title' => "Import for Project $project_name",
-                'page_description' => 'Import for Project',
-                'project' => $form_in_progress,
-            ]);
-
-        } catch (Exception $e) {
-            $this->logger->error("Could not render history page",['exception'=>$e]);
-            throw $e;
-        }
-
-    }
-
-
-    /**
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param string $user_name
-     * @param string $project_name
-     * @return ResponseInterface
-     * @throws Exception
-     * @noinspection PhpUnused
-     */
-    public function import_from_git(ServerRequestInterface $request,ResponseInterface $response,
-                                  string $user_name, string $project_name) :ResponseInterface {
-
-        $project = null;
-        try {
-            $csrf = new AntiCSRF;
-
-            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, FlowProjectUser::PERMISSION_COLUMN_WRITE);
-
-            $args = $request->getParsedBody();
-
-
-
-            $project->import_repo_url = $args['import_repo_url'];
-            $project->import_repo_key = $args['import_repo_key'];
-            $project->import_repo_branch = $args['import_repo_branch'];
-
-            if (!empty($_POST)) {
-                if (!$csrf->validateRequest()) {
-                    throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
-                }
-            }
-
-
-            $project->save_import_settings();
-            $success_message = "Updated Project Import Settings "  . $project->flow_project_title;
-            if (array_key_exists('import-now',$args)) {
-                //do push now
-                $push_status = $project->import_pull_repo_from_git();
-                $success_message = "Pulling from $project->import_repo_url "  . $project->flow_project_title . "<br>$push_status";
-            }
-            $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY] = null;
-
-            try {
-                UserPages::add_flash_message('success',$success_message );
-                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-                $url = $routeParser->urlFor('project_history',[
-                    "user_name" => $project->get_admin_user()->flow_user_name,
-                    "project_name" => $project->flow_project_title
-                ]);
-                $response = $response->withStatus(302);
-                return $response->withHeader('Location', $url);
-            } catch (Exception $e) {
-                $this->logger->error("Could not redirect to all projects after successful import from git", ['exception' => $e]);
-                throw $e;
-            }
-        } catch (Exception $e) {
-            try {
-                UserPages::add_flash_message('warning', "Cannot update project import settings: <b>" . $e->getMessage().'</b>');
-                $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY] = $project;
-                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-                $url = $routeParser->urlFor('project_import',[
-                    "user_name" => $user_name ,
-                    "project_name" => $project_name
-                ]);
-                $response = $response->withStatus(302);
-                return $response->withHeader('Location', $url);
-            } catch (Exception $e) {
-                $this->logger->error("Could not redirect to project import settings after error", ['exception' => $e]);
-                throw $e;
-            }
-        }
-
-    }
-
-
-
-
-
-
-    /**
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param string $user_name
-     * @param string $project_name
-     * @return ResponseInterface
-     * @throws Exception
-     *
-     */
-    public function upload_resource_file(ServerRequestInterface $request,ResponseInterface $response,
-                                     string $user_name, string $project_name) :ResponseInterface {
-
-        $file_name = null;
-        $new_url = null;
-        $new_token = null;
-        try {
-            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, FlowProjectUser::PERMISSION_COLUMN_WRITE);
-
-            $args = $request->getParsedBody();
-            $b_rootless_auth = isset($args['b_use_rootless_auth']) && JsonHelper::var_to_boolean($args['b_use_rootless_auth']);
-
-            if ($b_rootless_auth) {
-                $csrf = new FlowAntiCSRF($args,$_SESSION,FlowAntiCSRF::$fake_server);
-                $new_token = $csrf->getTokenArray();
-            } else {
-                $csrf = new FlowAntiCSRF($args);
-            }
-            if (!$csrf->validateRequest()) {
-                throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
-            }
-
-
-
-
-            try {
-
-                $file_upload = $this->get_project_helper()->find_and_move_uploaded_file($request,'flow_resource_file');
-                $resource_base = $project->getFlowProjectFiles()->get_resource_directory();
-
-                $file_resource_path = $resource_base. DIRECTORY_SEPARATOR. $file_upload->getClientFilename();
-                $file_name = $file_upload->getClientFilename();
-
-                $file_upload->moveTo($file_resource_path);
-
-                $project->commit_changes("Added resource file $file_name\n\nFile path is $file_resource_path");
-
-                $new_urls = $project->getFlowProjectFiles()->get_resource_urls([$file_resource_path]);
-                $new_url = $new_urls[0];
-                $data = ['success'=>true,'message'=>'ok file upload','file_name'=>$file_name,'action' => 'upload_resource_file',
-                            'new_file_path'=>$file_resource_path,'new_file_url' => $new_urls[0]];
-
-                $data['token'] = $new_token;
-                $payload = JsonHelper::toString($data);
-
-                $response->getBody()->write($payload);
-                return $response
-                    ->withHeader('Content-Type', 'application/json')
-                    ->withStatus(200);
-            } catch (Exception $e) {
-                $this->logger->error("Cannot upload file", ['exception' => $e]);
-                throw $e;
-            }
-        } catch (Exception $e) {
-            try {
-                $data = ['success'=>false,'message'=>($file_name??'') .': '.$e->getMessage(),
-                            'file_name'=>($file_name??''),'action' => 'upload_resource_file',
-                            'new_file_path'=>($file_resource_path??''),'new_file_url' => $new_url
-
-                ];
-                $data['token'] = $new_token;
-                $payload = JsonHelper::toString($data);
-
-                $response->getBody()->write($payload);
-                return $response
-                    ->withHeader('Content-Type', 'application/json')
-                    ->withStatus(400);
-            } catch (Exception $e) {
-                $this->logger->error("Could not redirect to project resources after error", ['exception' => $e]);
-                throw $e;
-            }
-        }
-
-    }
-
-
-    /**
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param string $user_name
-     * @param string $project_name
-     * @return ResponseInterface
-     * @throws Exception
-     * @noinspection PhpUnused
-     */
-    public function delete_resource_file(ServerRequestInterface $request,ResponseInterface $response,
-                                               string $user_name, string $project_name) :ResponseInterface {
-
-        $token = null;
-        try {
-            $args = $request->getParsedBody();
-            if (empty($args)) {
-                throw new InvalidArgumentException("No data sent");
-            }
-            $csrf = new FlowAntiCSRF($args,$_SESSION,FlowAntiCSRF::$fake_server);
-            if (!$csrf->validateRequest()) {
-                throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
-            }
-
-            $x_header = $request->getHeader('X-Requested-With') ?? [];
-            if (empty($x_header) || $x_header[0] !== 'XMLHttpRequest') {
-                throw new InvalidArgumentException("Need the X-Requested-With header");
-            }
-
-            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, FlowProjectUser::PERMISSION_COLUMN_WRITE);
-            $token_lock_to = '';
-            $token = $csrf->getTokenArray($token_lock_to);
-
-
-            $file_url = $args['file_url'] ?? '';
-            if (!$file_url) {throw new InvalidArgumentException("Need a file url");}
-
-            $file_url_parts = array_reverse(explode('/',$file_url));
-            $backwards_parts = [];
-            foreach ($file_url_parts as $part) {
-                if (strpos($part,":") !== false) {break;}
-                $backwards_parts[] =$part;
-                if ($part === 'resources') {break;}
-            }
-            $file_part_path = implode(DIRECTORY_SEPARATOR,array_reverse($backwards_parts)) ;
-            $base_resource_file_path = $project->getFlowProjectFiles()->get_project_directory(); //no slash at end
-            $test_file_path = $base_resource_file_path . DIRECTORY_SEPARATOR . $file_part_path;
-            $real_file_path = realpath($test_file_path);
-            if (!$real_file_path) {
-                throw new RuntimeException("Could not find the file of $file_part_path in the project repo");
-            }
-            if (!is_writable($real_file_path)){
-                throw new RuntimeException("no system permissions to delete the file of $file_part_path in the project repo");
-            }
-            unlink($real_file_path);
-            $project->commit_changes("Deleted the resource $file_part_path");
-
-            $data = ['success'=>true,'message'=>'deleted file ','file_url'=>$file_url,'token'=> $token];
-            $payload = JsonHelper::toString($data);
-
-            $response->getBody()->write($payload);
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(201);
-
-
-        } catch (Exception $e) {
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $token];
-            $payload = JsonHelper::toString($data);
-
-            $response->getBody()->write($payload);
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(500);
-        }
-
-    }
-
-
-    /**
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param string $user_name
-     * @param string $project_name
-     * @return ResponseInterface
-     * @throws Exception
-     * @noinspection PhpUnused
-     */
-    public function import_from_file(ServerRequestInterface $request,ResponseInterface $response,
-                                    string $user_name, string $project_name) :ResponseInterface {
-
-        $project = null;
-        try {
-            $csrf = new AntiCSRF;
-
-            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, FlowProjectUser::PERMISSION_COLUMN_WRITE);
-
-            if (!empty($_POST)) {
-                if (!$csrf->validateRequest()) {
-                    throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
-                }
-            }
-
-
-            $file_upload = $this->get_project_helper()->find_and_move_uploaded_file($request,'repo_or_patch_file');
-            $file_name = $file_upload->getClientFilename();
-            $success_message = "Nothing Done "  . $project->flow_project_title;
-            $args = $request->getParsedBody();
-            if (array_key_exists('import-now',$args)) {
-                //do push now
-                $push_status = $project->update_repo_from_file($file_upload);
-                $success_message = "Merging from file $file_name to "  . $project->flow_project_title . "<br>$push_status";
-            }
-            $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY] = null;
-
-            try {
-                UserPages::add_flash_message('success',$success_message );
-                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-                $url = $routeParser->urlFor('project_history',[
-                    "user_name" => $project->get_admin_user()->flow_user_name,
-                    "project_name" => $project->flow_project_title
-                ]);
-                $response = $response->withStatus(302);
-                return $response->withHeader('Location', $url);
-            } catch (Exception $e) {
-                $this->logger->error("Could not redirect to all projects after successful merge from file", ['exception' => $e]);
-                throw $e;
-            }
-        } catch (Exception $e) {
-            try {
-                UserPages::add_flash_message('warning', "Cannot merge project from file: <b>" . $e->getMessage().'</b>');
-                $_SESSION[static::REM_IMPORT_PROJECT_GIT_WITH_ERROR_SESSION_KEY] = $project;
-                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-                $url = $routeParser->urlFor('project_import',[
-                    "user_name" => $user_name ,
-                    "project_name" => $project_name
-                ]);
-                $response = $response->withStatus(302);
-                return $response->withHeader('Location', $url);
-            } catch (Exception $e) {
-                $this->logger->error("Could not redirect to project import settings after error", ['exception' => $e]);
-                throw $e;
-            }
-        }
-
-    }
-
-    /**
-     * Permission protected project files
-    * @param ServerRequestInterface $request
-    * @param ResponseInterface $response
-    * @param string $user_name
-    * @param string $project_name
-    * @param string $resource
-    * @return ResponseInterface
-    * @throws Exception
-    * @noinspection PhpUnused
-    */
-    public function get_resource_file(ServerRequestInterface $request,ResponseInterface $response,
-                                      string $user_name, string $project_name,string $resource) :ResponseInterface {
-
-        try {
-            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, FlowProjectUser::PERMISSION_COLUMN_READ);
-
-            if (!$project) {
-                throw new HttpNotFoundException($request,"Project $project_name Not Found");
-            }
-
-
-            $resource_path = $project->getFlowProjectFiles()->get_project_directory(). DIRECTORY_SEPARATOR .
-                FlowProjectFiles::REPO_FILES_DIRECTORY . DIRECTORY_SEPARATOR . $resource ;
-            if (!is_readable($resource_path)) {
-                throw new HttpNotFoundException($request,"Resource $resource NOT found in the resources directory of $project_name");
-            }
-
-            $file_size = filesize($resource_path);
-            $fi = new finfo(FILEINFO_MIME_TYPE);
-            $mime_type = $fi->file($resource_path);
-
-
-            $response = $response
-                ->withHeader('Content-Type', $mime_type)
-                ->withHeader('Content-Length', $file_size)
-                ->withHeader('Content-Disposition', "attachment; filename=$resource_path")
-                ->withAddedHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-                ->withHeader('Cache-Control', 'post-check=0, pre-check=0')
-                ->withHeader('Pragma', 'no-cache')
-                ->withBody((new Stream(fopen($resource_path, 'rb'))));
-
-            return $response;
-
-        } catch (Exception $e) {
-            $this->logger->error("Could not download project resource",['exception'=>$e]);
-            throw $e;
-        }
-
-
-    }
-
-
-
-
 
 }

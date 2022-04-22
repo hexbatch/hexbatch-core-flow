@@ -9,6 +9,7 @@ use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\base\SearchParamBase;
 use app\models\entry\archive\FlowEntryArchive;
+use app\models\project\setting_models\FlowProjectGitSettings;
 use app\models\standard\IFlowTagStandardAttribute;
 use app\models\tag\brief\BriefCheckValidYaml;
 use app\models\tag\brief\BriefDiffFromYaml;
@@ -42,9 +43,6 @@ class FlowProject extends FlowBase implements JsonSerializable {
 
     const SPECIAL_FLAG_ADMIN = 'full_admin';
 
-
-
-    const MAX_SIZE_EXPORT_URL = 200;
 
     const MAX_SIZE_READ_ME_IN_CHARACTERS = 4000000;
 
@@ -87,16 +85,6 @@ class FlowProject extends FlowBase implements JsonSerializable {
     protected ?string $old_flow_project_readme_bb_code;
 
 
-    public ?string $export_repo_url;
-    public ?string $export_repo_key;
-    public ?string $export_repo_branch;
-    public ?int $export_repo_do_auto_push;
-
-
-    public ?string $import_repo_url;
-    public ?string $import_repo_key;
-    public ?string $import_repo_branch;
-
     /**
      * @var FlowProjectUser[] $project_users
      */
@@ -105,6 +93,8 @@ class FlowProject extends FlowBase implements JsonSerializable {
     protected ?FlowUser $admin_user ;
 
     protected ?FlowProjectFiles $project_files;
+
+    protected array $setting_cache = [];
 
     /**
      * @return FlowProjectFiles
@@ -378,6 +368,7 @@ class FlowProject extends FlowBase implements JsonSerializable {
      * @throws Exception
      */
     public function __construct($object=null){
+        $this->setting_cache = [];
         $this->admin_user = null;
         $this->b_did_applied_for_owned_tags = false;
         $this->flow_project_readme_html = null;
@@ -399,13 +390,6 @@ class FlowProject extends FlowBase implements JsonSerializable {
             $this->old_flow_project_readme_bb_code = null;
             $this->old_flow_project_title = null;
 
-            $this->export_repo_do_auto_push = null;
-            $this->export_repo_key = null;
-            $this->export_repo_url = null;
-            $this->export_repo_branch = null;
-            $this->import_repo_key = null;
-            $this->import_repo_url = null;
-            $this->import_repo_branch = null;
             return;
         }
         $this->project_users = [];
@@ -419,139 +403,6 @@ class FlowProject extends FlowBase implements JsonSerializable {
         $this->old_flow_project_blurb = $this->flow_project_blurb;
         $this->old_flow_project_readme_bb_code = $this->flow_project_readme_bb_code;
         $this->old_flow_project_title = $this->flow_project_title;
-    }
-
-
-
-
-    /**
-     * @throws Exception
-     */
-    public function save_export_settings() {
-        try {
-            if (empty($this->export_repo_do_auto_push)) {
-                $this->export_repo_do_auto_push = 0;
-            }
-
-            if (empty($this->export_repo_key)) {
-                $this->export_repo_key =null;
-                $this->export_repo_do_auto_push = 0;
-            }
-
-            if (empty($this->export_repo_url)) {
-                $this->export_repo_url =null;
-                $this->export_repo_do_auto_push = 0;
-            }
-
-            if (empty($this->export_repo_branch)) {
-                $this->export_repo_branch =null;
-                $this->export_repo_do_auto_push = 0;
-            }
-
-
-
-            if ($this->export_repo_url && (mb_strlen($this->export_repo_url) > static::MAX_SIZE_EXPORT_URL)) {
-                throw new InvalidArgumentException("Project Export Repo cannot be more than " . static::MAX_SIZE_EXPORT_URL . " characters");
-            }
-
-
-
-            $db = static::get_connection();
-            $db->update(static::TABLE_NAME, [
-                'export_repo_do_auto_push' => $this->export_repo_do_auto_push,
-                'export_repo_url' => $this->export_repo_url,
-                'export_repo_branch' => $this->export_repo_branch,
-                'export_repo_key' => $this->export_repo_key
-            ], [
-                'id' => $this->id
-            ]);
-
-            //see if we are changing the remote
-
-            try {
-                $remote_url = $this->getFlowProjectFiles()->do_git_command("config --get remote.origin.url");
-            } catch (Exception $e) {
-                $remote_url = '';
-            }
-
-            if ( $this->export_repo_url && ($remote_url !== $this->export_repo_url)) {
-                if ($remote_url) {
-                    //change the origin
-                    $this->getFlowProjectFiles()->do_git_command("remote set-url origin $this->export_repo_url");
-                } else {
-                    //set the origin to the url
-                    $this->getFlowProjectFiles()->do_git_command("remote add origin $this->export_repo_url");
-                }
-            }
-
-
-
-        } catch (Exception $e) {
-            static::get_logger()->alert("Project export settings cannot save ",['exception'=>$e]);
-            throw $e;
-        }
-    }
-
-
-
-    /**
-     * @throws Exception
-     */
-    public function save_import_settings() {
-        try {
-
-
-            if (empty($this->import_repo_key)) {
-                $this->import_repo_key =null;
-            }
-
-            if (empty($this->import_repo_url)) {
-                $this->import_repo_url =null;
-            }
-
-            if (empty($this->import_repo_branch)) {
-                $this->export_repo_branch =null;
-            }
-
-            if ($this->import_repo_url && (mb_strlen($this->import_repo_url) > static::MAX_SIZE_EXPORT_URL)) {
-                throw new InvalidArgumentException("Project Import Repo cannot be more than " . static::MAX_SIZE_EXPORT_URL . " characters");
-            }
-
-
-
-            $db = static::get_connection();
-            $db->update('flow_projects', [
-                'import_repo_url' => $this->import_repo_url,
-                'import_repo_branch' => $this->import_repo_branch,
-                'import_repo_key' => $this->import_repo_key
-            ], [
-                'id' => $this->id
-            ]);
-
-            //see if we are changing the remote
-
-            try {
-                $remote_url = $this->getFlowProjectFiles()->do_git_command("config --get remote.import.url");
-            } catch (Exception $e) {
-                $remote_url = '';
-            }
-
-            if ( $this->import_repo_url && ($remote_url !== $this->import_repo_url)) {
-                if ($remote_url) {
-                    //change the import
-                    $this->getFlowProjectFiles()->do_git_command("remote set-url import $this->import_repo_url");
-                } else {
-                    //set the origin to the url
-                    $this->getFlowProjectFiles()->do_git_command("remote add import $this->import_repo_url");
-                }
-            }
-
-
-
-        } catch (Exception $e) {
-            static::get_logger()->alert("Project import settings cannot save ",['exception'=>$e]);
-            throw $e;
-        }
     }
 
 
@@ -625,7 +476,7 @@ class FlowProject extends FlowBase implements JsonSerializable {
                 $user_info = "$logged_in_user->flow_user_guid <$logged_in_user->flow_user_email>";
                 $this->getFlowProjectFiles()->do_git_command("commit --amend --author='$user_info' --no-edit");
             }
-            if ($this->export_repo_do_auto_push) {
+            if ($this->getGitExportSettings()->isGitAutomatePush()) {
                 $this->push_repo();
             }
         }
@@ -889,9 +740,12 @@ class FlowProject extends FlowBase implements JsonSerializable {
             throw $e;
         }
 
-        if ($this->export_repo_do_auto_push) {
+        if ($this->getGitExportSettings()->isGitAutomatePush()) {
             $push_info = $this->push_repo();
-            return "Saved and pushed to $this->export_repo_url<br>$push_info";
+            return sprintf("Saved and pushed to %s<br>%s",
+                                $this->getGitExportSettings()->getGitUrl(),
+                                implode("\n<br>",$push_info)
+            );
         }
         return "Saved";
     }
@@ -942,10 +796,10 @@ class FlowProject extends FlowBase implements JsonSerializable {
      * @param string $private_key
      * @param string $to_ssh_url
      * @param string $git_command
-     * @return string
+     * @return string[]
      * @throws
      */
-    protected function do_key_command_with_private_key(string $private_key,string $to_ssh_url,string $git_command) : string {
+    protected function do_key_command_with_private_key(string $private_key,string $to_ssh_url,string $git_command) : array {
 
         WillFunctions::will_do_nothing($to_ssh_url); //reserved for future use
         $temp_file_path = null;
@@ -972,7 +826,7 @@ class FlowProject extends FlowBase implements JsonSerializable {
             if ($result_code) {
                 throw new RuntimeException("Cannot do $git_command,  returned code of $result_code : " . implode("<br>\n",$output));
             }
-            return implode("<br>\n",$output);
+            return $output;
 
         } finally {
             if ($temp_file_path) {
@@ -999,35 +853,36 @@ class FlowProject extends FlowBase implements JsonSerializable {
     /**
      * @throws Exception
      */
-    public function push_repo() : string  {
-        if (!$this->export_repo_url) {
+    public function push_repo() : array  {
+        $push_settings = $this->getGitExportSettings();
+        if (!$push_settings->getGitUrl()) {
             throw new RuntimeException("Export Repo Url not set");
         }
-        if (!$this->export_repo_key) {
+        if (!$push_settings->getGitSshKey()) {
             throw new RuntimeException("Export Repo Key not set");
         }
 
-        if (!$this->export_repo_branch) {
+        if (!$push_settings->getGitBranch()) {
             throw new RuntimeException("Export Repo Branch not set");
         }
 
-        $command = "push -u origin $this->export_repo_branch";
-        return $this->do_key_command_with_private_key($this->export_repo_key,$this->export_repo_url,$command);
+        $command = sprintf("push -u origin %s",$push_settings->getGitBranch());
+        return $this->do_key_command_with_private_key($push_settings->getGitSshKey(),$push_settings->getGitUrl(),$command);
     }
 
     /**
-     * @return string
+     * @return array
      * @throws Exception
      */
-    function import_pull_repo_from_git() :string {
-        if (!$this->import_repo_url) {
+    function import_pull_repo_from_git() :array {
+        if (!$this->getGitImportSettings()->getGitUrl()) {
             throw new RuntimeException("Import Repo Url not set");
         }
-        if (!$this->import_repo_key) {
+        if (!$this->getGitImportSettings()->getGitSshKey()) {
             throw new RuntimeException("Import Repo Key not set");
         }
 
-        if (!$this->import_repo_branch) {
+        if (!$this->getGitImportSettings()->getGitBranch()) {
             throw new RuntimeException("Import Repo Branch not set");
         }
 
@@ -1040,9 +895,12 @@ class FlowProject extends FlowBase implements JsonSerializable {
             throw new RuntimeException($message);
         }
 
-        $command = "pull import $this->import_repo_branch";
+        $command = "pull import ".$this->getGitImportSettings()->getGitBranch();
         try {
-            $git_ret =  $this->do_key_command_with_private_key($this->import_repo_key,$this->import_repo_url,$command);
+            $git_ret =  $this->do_key_command_with_private_key(
+                $this->getGitImportSettings()->getGitSshKey(),
+                $this->getGitImportSettings()->getGitUrl(),
+                $command);
         } catch (Exception $e) {
             $maybe_changes = $this->getFlowProjectFiles()->do_git_command('diff');
             $message = $e->getMessage();
@@ -1237,6 +1095,115 @@ class FlowProject extends FlowBase implements JsonSerializable {
             }
         }
         return null;
+    }
+
+    /**
+     * @return FlowProjectGitSettings|null
+     * @throws Exception
+     */
+    public function getGitExportSettings() : ?FlowProjectGitSettings {
+        $settings =  $this->findGitSetting(static::GIT_EXPORT_SETTING_NAME,$b_was_cached );
+
+        if ($b_was_cached ) {
+            return $settings;
+        }
+        //see if we are changing the remote
+
+        try {
+            try {
+                $remote_url = $this->getFlowProjectFiles()->do_git_command("config --get remote.origin.url");
+            } catch (Exception $e) {
+                $remote_url = '';
+            }
+
+            if ($settings && $settings->getGitUrl()) {
+                if ($remote_url !== $settings->getGitUrl()) {
+                    if ($remote_url) {
+                        //change the origin
+                        $this->getFlowProjectFiles()->do_git_command("remote set-url origin " . $settings->getGitUrl());
+                    } else {
+                        //set the origin to the url
+                        $this->getFlowProjectFiles()->do_git_command("remote add origin " . $settings->getGitUrl());
+                    }
+                }
+            } else {
+                if ($remote_url) {
+                    $this->getFlowProjectFiles()->do_git_command("remote remove origin ");
+                }
+            }
+        } catch (Exception $e) {
+            static::get_logger()->alert("Project git export settings cannot save remote ",['exception'=>$e]);
+            throw $e;
+        }
+
+        return $settings;
+    }
+
+    /**
+     * @return FlowProjectGitSettings|null
+     * @throws Exception
+     */
+    public function getGitImportSettings() : ?FlowProjectGitSettings {
+        $settings =  $this->findGitSetting(static::GIT_IMPORT_SETTING_NAME,$b_was_cached );
+
+        if ($b_was_cached) {
+            return $settings;
+        }
+        //see if we are changing the remote
+
+
+
+        try {
+            try {
+                $remote_url = $this->getFlowProjectFiles()->do_git_command("config --get remote.import.url");
+            } catch (Exception $e) {
+                $remote_url = '';
+            }
+
+            if ($settings && $settings->getGitUrl()) {
+                if ($remote_url !== $settings->getGitUrl()) {
+                    if ($remote_url) {
+                        //change the import
+                        $this->getFlowProjectFiles()->do_git_command("remote set-url import " . $settings->getGitUrl());
+                    } else {
+                        //set the origin to the url
+                        $this->getFlowProjectFiles()->do_git_command("remote add import " . $settings->getGitUrl());
+                    }
+                }
+            } else {
+                if ($remote_url) {
+                    $this->getFlowProjectFiles()->do_git_command("remote remove import ");
+                }
+            }
+        } catch (Exception $e) {
+            static::get_logger()->alert("Project git import settings cannot change remote ",['exception'=>$e]);
+            throw $e;
+        }
+
+        return $settings;
+    }
+
+    /**
+     * @param string $setting_name
+     * @param bool $was_cached
+     * @return FlowProjectGitSettings|null
+     * @throws Exception
+     */
+    protected function findGitSetting(string $setting_name, ?bool &$was_cached) : ?FlowProjectGitSettings {
+        if (array_key_exists($setting_name,$this->setting_cache)) {
+            $was_cached = true;
+            return $this->setting_cache[$setting_name];
+        }
+        $was_cached = false;
+        $maybe_standard = $this->get_setting_value($setting_name);
+        if (!$maybe_standard) {
+            $this->setting_cache[$setting_name] = null;
+            return null;
+        }
+        $da_truthful_data = $maybe_standard->getStandardValue();
+        $ret =  new FlowProjectGitSettings($da_truthful_data);
+        $this->setting_cache[$setting_name] = $ret;
+        return $ret;
     }
 
 }

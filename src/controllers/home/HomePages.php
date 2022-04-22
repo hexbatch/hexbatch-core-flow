@@ -2,7 +2,7 @@
 namespace app\controllers\home;
 
 use app\controllers\base\BasePages;
-use app\controllers\project\ProjectPages;
+use app\controllers\project\PageProjectController;
 use app\controllers\user\UserPages;
 use app\hexlet\JsonHelper;
 use app\models\entry\FlowEntrySearch;
@@ -105,7 +105,7 @@ class HomePages extends BasePages
                     $project_name = $project->flow_project_guid;
 
                     /**
-                     * @var ProjectPages $project_pages
+                     * @var PageProjectController $project_pages
                      */
                     $project_pages = $this->container->get('projectPages');
                     return $project_pages->single_project_home($request,$response,$user_name,$project_name);
