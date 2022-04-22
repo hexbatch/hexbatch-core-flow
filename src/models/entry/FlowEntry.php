@@ -40,6 +40,7 @@ final class FlowEntry extends FlowEntryMembers  {
             if (empty($old_id)) {
                 $action = "Created";
             }
+            //todo only commit here if b_do_transaction is true else the parent caller can do it at once
             $this->get_project()->commit_changes("$action Entry $title");
         } catch (Exception $e) {
             if ($b_do_transaction && $db) {

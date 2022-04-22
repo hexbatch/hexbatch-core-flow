@@ -185,7 +185,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                     VALUES (?,?,?,UNHEX(?),?,?,?,?)
                     ON DUPLICATE KEY UPDATE flow_project_id =           VALUES(flow_project_id),
                                             flow_entry_parent_id =      VALUES(flow_entry_parent_id),
-                                            flow_entry_guid =           VALUES(flow_entry_guid) ,      
+                                                  
                                             flow_entry_title =          VALUES(flow_entry_title) ,      
                                             flow_entry_blurb =          VALUES(flow_entry_blurb) ,      
                                             flow_entry_body_bb_code =   VALUES(flow_entry_body_bb_code) ,      
@@ -202,7 +202,26 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                         $this->get_text()
                     ];
                     $db->safeQuery($insert_sql, $insert_params, PDO::FETCH_BOTH, true);
-                    $this->set_id($db->lastInsertId());
+                    $maybe_new_id = (int)$db->lastInsertId();
+                    if ($maybe_new_id && ($maybe_new_id !== $this->get_id())) {
+                        $this->set_id($maybe_new_id);
+                    } else {
+                        if (!$this->get_id()) {
+                            //find id via guid
+                            $find_id_sql = "SELECT e.id as entry_id FROM flow_entries e WHERE flow_entry_guid = UNHEX(?)";
+                            $id_info = $db->safeQuery($find_id_sql,[$this->get_guid()],PDO::FETCH_OBJ);
+                            if (empty($id_info)) {
+                                throw new RuntimeException("Could not get entry id from guid of " . $this->get_guid());
+                            }
+                            $new_id = (int)$id_info[0]->entry_id??null;
+                            if (empty($new_id)) {
+                                throw new RuntimeException("Could not get entry id (b) from guid of " . $this->get_guid());
+                            }
+                            $this->set_id($new_id);
+
+                        }
+                    }
+
                 } else {
                     $db->insert('flow_entries', $save_info);
                     $this->set_id($db->lastInsertId());
@@ -217,7 +236,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                     $this->get_id());
 
                 if (empty($update_info)) {
-                    throw new RuntimeException("Could not get entry refresh data using id of " . $this->get_id);
+                    throw new RuntimeException("Could not get entry refresh data using id of " . $this->get_id());
                 }
 
                 $this->set_guid($update_info['flow_entry_guid']);

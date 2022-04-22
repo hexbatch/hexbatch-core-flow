@@ -467,6 +467,7 @@ class FlowProject extends FlowBase implements JsonSerializable {
         }
         if ($b_commit) {
             $this->getFlowProjectFiles()->do_git_command("add .");
+            //todo see if anything in staged if not, do not commit
             $this->getFlowProjectFiles()->do_git_command("commit  -m '$commit_message'");
             if (isset($_SESSION[FlowUser::SESSION_USER_KEY])) {
                 /**
@@ -507,7 +508,6 @@ class FlowProject extends FlowBase implements JsonSerializable {
             $tag_summary = $brief_changes->get_changed_tag_summary_line();
             $attribute_summary = $brief_changes->get_changed_attribute_summary_line();
             $applied_summary = $brief_changes->get_changed_applied_summary_line();
-            //todo message should only show changed tags (and not changed timestamps)
             if ($number_tag_changes === 1) {
                 $commit_message = $tag_summary .  $attribute_summary . $applied_summary;
             } else {
@@ -868,6 +868,7 @@ class FlowProject extends FlowBase implements JsonSerializable {
         }
 
         $command = sprintf("push -u origin %s",$push_settings->getGitBranch());
+        //todo get hash of this and hash of origin, see if same, if same do not push and report nothing new to push
         return $this->do_key_command_with_private_key($push_settings->getGitSshKey(),$push_settings->getGitUrl(),$command);
     }
 
@@ -888,6 +889,7 @@ class FlowProject extends FlowBase implements JsonSerializable {
         }
 
         $old_head = $this->getFlowProjectFiles()->get_head_commit_hash();
+        //todo get hash of import, see if same, if same just report nothing to change
         try {
             $this->getFlowProjectFiles()->do_git_command('reset --hard'); //clear up any earlier bugs or crashes
         } catch (Exception $e) {

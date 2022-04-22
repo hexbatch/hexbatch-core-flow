@@ -189,6 +189,8 @@ class ResourceProjectController extends BaseProjectController {
 
 
     /**
+     * todo make working file import
+     * @deprecated
      * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @param string $user_name

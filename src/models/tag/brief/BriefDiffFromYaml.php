@@ -373,7 +373,7 @@ class BriefDiffFromYaml {
                     $attribute->getPointsToFlowProjectGuid() !== $battribute->points_to_flow_project_guid ||
                     $attribute->getPointsToFlowTagGuid() !== $battribute->points_to_flow_tag_guid ||
                     $attribute->getTagAttributeText() !== $battribute->tag_attribute_text ||
-                    $attribute->getTagAttributeLong() !== $battribute->tag_attribute_long ||
+                    intval($attribute->getTagAttributeLong()) !== intval($battribute->tag_attribute_long) ||
                     $attribute->getTagAttributeName() !== $battribute->tag_attribute_name
                 ) {
                     if ($b_changed_is_set_from_file) {
