@@ -78,7 +78,7 @@ class HomePages extends BasePages
 
                     $route_to_go_to = $routeParser->urlFor('show_entry',[
                         "user_name" => $entry_project->get_admin_user()->flow_user_guid,
-                        "project_name" => $entry_project->flow_project_guid,
+                        "project_name" => $entry_project->get_project_guid(),
                         "entry_name" => $entry->get_guid()
                     ]);
 
@@ -102,7 +102,7 @@ class HomePages extends BasePages
                     $user_class = $project->get_admin_user();
                     $user_name = '';
                     if ($user_class) { $user_name = $user_class->flow_user_guid; }
-                    $project_name = $project->flow_project_guid;
+                    $project_name = $project->get_project_guid();
 
                     /**
                      * @var PageProjectController $project_pages

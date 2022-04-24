@@ -13,7 +13,7 @@
 
         {% include 'tag/partials/applied-control.twig' with{
             'tags_of_applied': project.get_applied_tags(),
-            'applied_target_guid':project.flow_project_guid,
+            'applied_target_guid':project.get_project_guid(),
             'applied_target_type': 'project'
         } %}
     </div><!-- /.col -->

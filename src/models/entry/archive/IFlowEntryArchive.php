@@ -4,7 +4,7 @@ namespace app\models\entry\archive;
 
 
 use app\models\entry\IFlowEntry;
-use app\models\project\FlowProject;
+use app\models\project\IFlowProject;
 use Exception;
 
 Interface IFlowEntryArchive {
@@ -67,21 +67,21 @@ Interface IFlowEntryArchive {
     /**
      * reads a yaml file at the project root that is a list of all the stored entrees with the guid and title
      * verifies that the folders exist, and return the guid strings
-     * @param FlowProject $project
+     * @param IFlowProject $project
      * @return string[]
      * @throws
      */
-    public static function discover_all_archived_entries(FlowProject $project) :array;
+    public static function discover_all_archived_entries(IFlowProject $project) :array;
 
 
 
     /**
      * Writes a yaml file at the project root that is a list of all the stored entrees with the guid and title and last modified timestamp
      * To be run whenever an entry is saved, created, updated, deleted, etc
-     * @param FlowProject $project
+     * @param IFlowProject $project
      * @throws
      */
-    public static function record_all_stored_entries(FlowProject $project) : void ;
+    public static function record_all_stored_entries(IFlowProject $project) : void ;
 
     /**
      * Removes all archives from the cache; but only if the cache has been finalized first, otherwise exception

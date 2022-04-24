@@ -5,7 +5,7 @@ namespace app\models\entry;
 
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\IFlowEntryArchive;
-use app\models\project\FlowProject;
+use app\models\project\IFlowProject;
 use Exception;
 
 /**
@@ -24,10 +24,10 @@ abstract class FlowEntryChildren extends FlowEntryFiles  {
 
     /**
      * @param array|object|FlowEntryBase|IFlowEntryArchive|null $object
-     * @param FlowProject|null $project
+     * @param IFlowProject|null $project
      * @throws Exception
      */
-    public function __construct($object,?FlowProject $project){
+    public function __construct($object,?IFlowProject $project){
         parent::__construct($object,$project);
 
         $this->child_entries = [];

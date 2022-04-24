@@ -12,12 +12,14 @@ use app\models\entry\FlowEntrySummary;
 use app\models\entry\IFlowEntry;
 use app\models\multi\GeneralSearch;
 use app\models\multi\GeneralSearchParams;
-use app\models\project\FlowProject;
+use app\models\project\IFlowProject;
 use Exception;
 use LogicException;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 //todo creating new entry and erasing old in db with different guid, can see two entry folders in repo
+
+//todo change entry folders to use name with guid, make sure name of folder is in the entry.yaml, rename folder when name change
 final class FlowEntryArchive extends FlowEntryArchiveMembers {
 
     const ALL_FILES_YAML_NAME = 'entry-summary.yaml';
@@ -33,11 +35,11 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
     /**
      * reads a yaml file at the project root that is a list of all the stored entrees with the guid and title
      * verifies that the folders exist, and return the guid strings
-     * @param FlowProject $project
+     * @param IFlowProject $project
      * @return string[]
      * @throws
      */
-    public static function discover_all_archived_entries(FlowProject $project) :array {
+    public static function discover_all_archived_entries(IFlowProject $project) :array {
         $b_already_created = false;
         $project_directory = $project->getFlowProjectFiles()->get_project_directory($b_already_created);
         $yaml_path = $project_directory. DIRECTORY_SEPARATOR . self::ALL_FILES_YAML_NAME;
@@ -67,10 +69,10 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
     }
 
     /**
-     * @param FlowProject $project
+     * @param IFlowProject $project
      * @throws
      */
-    public static function record_all_stored_entries(FlowProject $project) : void {
+    public static function record_all_stored_entries(IFlowProject $project) : void {
 
         $stuff = FlowEntrySummary::get_entry_summaries_for_project($project);
         $pigs_in_space = JsonHelper::toString($stuff);
@@ -118,13 +120,13 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
     }
 
     /**
-     * @param FlowProject $project
+     * @param IFlowProject $project
      * @throws Exception
      */
-    public static function update_all_entries_from_project_directory(FlowProject $project) {
+    public static function update_all_entries_from_project_directory(IFlowProject $project) {
         $entries_in_files_flat_array = FlowEntry::load($project); //sorted by parent, with parent first
         $search = new FlowEntrySearchParams();
-        $search->owning_project_guid = $project->flow_project_guid;
+        $search->owning_project_guid = $project->get_project_guid();
         $search->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
         $entries_in_db_flat_array = FlowEntrySearch::search($search);
 

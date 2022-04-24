@@ -6,7 +6,7 @@ namespace app\models\tag;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
-use app\models\project\FlowProject;
+use app\models\project\IFlowProject;
 use app\models\standard\FlowTagStandardAttribute;
 use app\models\standard\IFlowTagStandardAttribute;
 use app\models\tag\brief\BriefFlowTag;
@@ -26,7 +26,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
     public ?int $flow_tag_id;
     public ?int $flow_project_id;
 
-    public ?FlowProject $flow_project;
+    public ?IFlowProject $flow_project;
 
     public ?int $parent_tag_id;
     public ?int $tag_created_at_ts;

@@ -6,7 +6,7 @@ use app\models\base\SearchParamBase;
 use app\models\multi\GeneralSearch;
 use app\models\multi\GeneralSearchParams;
 use app\models\multi\GeneralSearchResult;
-use app\models\project\FlowProject;
+use app\models\project\IFlowProject;
 use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
 use app\models\tag\FlowTagAttribute;
@@ -16,7 +16,7 @@ use Symfony\Component\Yaml\Yaml;
 
 class BriefDiffFromYaml {
 
-    public FlowProject $project;
+    public IFlowProject $project;
 
     /**
      * @var BriefFlowTag[] $changed_tags
@@ -233,12 +233,12 @@ class BriefDiffFromYaml {
 
 
     /**
-     * @param FlowProject $project
+     * @param IFlowProject $project
      * @param string|null $yaml_file
      * @param bool $b_changed_is_set_from_file
      * @throws Exception
      */
-    public function __construct(FlowProject $project,?string $yaml_file=null,bool $b_changed_is_set_from_file = false){
+    public function __construct(IFlowProject $project,?string $yaml_file=null,bool $b_changed_is_set_from_file = false){
         $this->project = $project;
         $this->changed_tags = [];
         $this->added_tags = [];

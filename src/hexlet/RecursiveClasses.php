@@ -226,7 +226,6 @@ class RecursiveClasses {
                     else unlink   ($dir."/".$object);
                 }
             }
-            reset($objects);
             rmdir($dir);
         }
     }

@@ -2,7 +2,7 @@
 
 namespace app\models\entry;
 
-use app\models\project\FlowProject;
+use app\models\project\IFlowProject;
 use Exception;
 
 
@@ -11,12 +11,12 @@ final class FlowEntry extends FlowEntryMembers  {
 
 
     /**
-     * @param FlowProject $project
+     * @param IFlowProject $project
      * @param object|array|IFlowEntry
      * @return IFlowEntry
      * @throws
      */
-    public static function create_entry(FlowProject $project, $object): IFlowEntry
+    public static function create_entry(IFlowProject $project, $object): IFlowEntry
     {
         return new FlowEntry($object,$project);
     }
@@ -40,8 +40,10 @@ final class FlowEntry extends FlowEntryMembers  {
             if (empty($old_id)) {
                 $action = "Created";
             }
-            //todo only commit here if b_do_transaction is true else the parent caller can do it at once
-            $this->get_project()->commit_changes("$action Entry $title");
+            if ($b_do_transaction) {
+                $this->get_project()->commit_changes("$action Entry $title");
+            }
+
         } catch (Exception $e) {
             if ($b_do_transaction && $db) {
                 if ($db->inTransaction()) {
@@ -49,7 +51,7 @@ final class FlowEntry extends FlowEntryMembers  {
                 }
             }
             if ($this->get_project()) {
-                $this->get_project()->reset_local_files();
+                $this->get_project()->reset_project_repo_files();
             }
             throw $e;
         }

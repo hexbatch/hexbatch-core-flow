@@ -10,6 +10,7 @@ use app\models\project\FlowProjectFiles;
 use app\models\project\FlowProjectSearch;
 use app\models\project\FlowProjectSearchParams;
 use app\models\project\FlowProjectUser;
+use app\models\project\IFlowProject;
 use app\models\user\FlowUser;
 use DI\DependencyException;
 use DI\NotFoundException;
@@ -48,11 +49,11 @@ class ProjectHelper extends BaseHelper {
      * @param string|null $user_name_or_guid
      * @param string $project_name
      * @param string $permission read|write|admin
-     * @return FlowProject|null
+     * @return IFlowProject|null
      * @throws
      */
     public  function get_project_with_permissions (
-        ?ServerRequestInterface $request,?string $user_name_or_guid, string $project_name, string $permission) : ?FlowProject
+        ?ServerRequestInterface $request,?string $user_name_or_guid, string $project_name, string $permission) : ?IFlowProject
     {
 
         try {
@@ -68,7 +69,7 @@ class ProjectHelper extends BaseHelper {
 
         if ($this->user->flow_user_id) {
             $user_permissions = FlowUser::find_users_by_project(true,
-                $project->flow_project_guid, null, true, $this->user->flow_user_guid);
+                $project->get_project_guid(), null, true, $this->user->flow_user_guid);
 
             if (empty($user_permissions)) {
                 throw new InvalidArgumentException("No permissions set for this");
@@ -93,11 +94,11 @@ class ProjectHelper extends BaseHelper {
      * @param ?string $user_name_guid_or_id
      * @param string|null $permission_type
      * @param null $permission_user_check
-     * @return FlowProject|null
+     * @return IFlowProject|null
      * @throws Exception
      */
     public function find_one(?string $project_title_guid_or_id, ?string $user_name_guid_or_id = null,
-                             ?string$permission_type=null, $permission_user_check = null ): ?FlowProject
+                             ?string$permission_type=null, $permission_user_check = null ): ?IFlowProject
     {
         if (!in_array($permission_type,FlowProjectUser::PERMISSION_COLUMNS)) {
             throw new LogicException("Wrong permission type here ".$permission_type);
@@ -133,11 +134,11 @@ class ProjectHelper extends BaseHelper {
     /**
      * @param ServerRequestInterface $request
      * @param string $project_guid
-     * @return FlowProject
+     * @return IFlowProject
      * @throws HttpNotFoundException
      * @throws Exception
      */
-    public function copy_project_from_guid(ServerRequestInterface $request,string $project_guid) : FlowProject {
+    public function copy_project_from_guid(ServerRequestInterface $request,string $project_guid) : IFlowProject {
 
         $origonal_project = $this->get_project_with_permissions($request,null, $project_guid, FlowProjectUser::PERMISSION_COLUMN_READ);
 
@@ -150,15 +151,15 @@ class ProjectHelper extends BaseHelper {
         try {
             $this->get_connection()->beginTransaction();
             $new_project = new FlowProject();
-            $new_project->flow_project_type = FlowProject::FLOW_PROJECT_TYPE_TOP;
-            $new_project->parent_flow_project_id = null;
-            $new_project->admin_flow_user_id = FlowUser::get_logged_in_user()->flow_user_id;
+            $new_project->set_project_type(IFlowProject::FLOW_PROJECT_TYPE_TOP);
 
-            $new_project->flow_project_title = $args['flow_project_title']?? $origonal_project->flow_project_title;
-            $new_project->flow_project_blurb = $origonal_project->flow_project_blurb;
-            $new_project->is_public = $origonal_project->is_public;
+            $new_project->set_admin_user_id(FlowUser::get_logged_in_user()->flow_user_id);
+
+            $new_project->set_project_title($args['flow_project_title']?? $origonal_project->get_project_title());
+            $new_project->set_project_blurb($origonal_project->get_project_blurb());
+            $new_project->set_public($origonal_project->is_public());
             $new_project->save(false); //save first to get the directory ok
-            $new_project->set_read_me($origonal_project->flow_project_readme_bb_code);
+            $new_project->set_read_me($origonal_project->get_readme_bb_code());
 
             $new_project->save(false);
 
@@ -166,11 +167,11 @@ class ProjectHelper extends BaseHelper {
              * @var array<string,string>
              */
             $guid_map = [];
-            $guid_map[$origonal_project->flow_project_guid] = $new_project->flow_project_guid;
+            $guid_map[$origonal_project->get_project_guid()] = $new_project->get_project_guid();
 
             //copy entries
             $entry_search_params = new FlowEntrySearchParams();
-            $entry_search_params->owning_project_guid = $origonal_project->flow_project_guid;
+            $entry_search_params->owning_project_guid = $origonal_project->get_project_guid();
             $entry_search_params->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
             $entries = FlowEntrySearch::search($entry_search_params);
             foreach ($entries as $entry) {
@@ -196,7 +197,7 @@ class ProjectHelper extends BaseHelper {
                 $new_tag = $tag->clone_change_project($guid_map);
                 $guid_map[$tag->flow_tag_guid] = $new_tag->flow_tag_guid;
             }
-            $new_project->save_tag_yaml_and_commit();
+            $new_project->do_tag_save_and_commit();
 
 
 
@@ -285,7 +286,7 @@ class ProjectHelper extends BaseHelper {
 
     /**
      * @param int|null $flow_user_id
-     * @return FlowProject[]
+     * @return IFlowProject[]
      * @throws
      */
     public function get_all_top_projects(?int $flow_user_id) : array {
@@ -293,7 +294,7 @@ class ProjectHelper extends BaseHelper {
 
         try {
             $params = new FlowProjectSearchParams();
-            $params->setFlowProjectType(FlowProject::FLOW_PROJECT_TYPE_TOP);
+            $params->setFlowProjectType(IFlowProject::FLOW_PROJECT_TYPE_TOP);
             $params->setPermissionUserNameOrGuidOrId($flow_user_id);
             $params->setCanRead(true);
             $params->setPage(1);
@@ -303,7 +304,7 @@ class ProjectHelper extends BaseHelper {
             if ($this->user->flow_user_id) {
                 foreach ($ret as $project) {
                     $user_permissions = FlowUser::find_users_by_project(true,
-                        $project->flow_project_guid, null, true, $this->user->flow_user_guid);
+                        $project->get_project_guid(), null, true, $this->user->flow_user_guid);
                     if (empty($user_permissions)) {
                         throw new InvalidArgumentException("No permissions set for this");
                     }

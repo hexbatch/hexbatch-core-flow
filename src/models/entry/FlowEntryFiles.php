@@ -7,7 +7,7 @@ use app\helpers\ProjectHelper;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\IFlowEntryArchive;
-use app\models\project\FlowProject;
+use app\models\project\IFlowProject;
 use Exception;
 use RuntimeException;
 
@@ -26,10 +26,10 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
 
     /**
      * @param array|object|IFlowEntry|IFlowEntryArchive|null $object
-     * @param FlowProject|null $project
+     * @param IFlowProject|null $project
      * @throws Exception
      */
-    public function __construct($object,?FlowProject $project){
+    public function __construct($object,?IFlowProject $project){
         parent::__construct($object,$project);
         $this->flow_entry_body_html = null;
         $this->flow_entry_body_bb_code = null;
@@ -154,12 +154,12 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
 
 
     /**
-     * @param FlowProject $project
-     * @param FlowProject|null $new_project
+     * @param IFlowProject $project
+     * @param IFlowProject|null $new_project
      * @return IFlowEntry
      * @throws Exception
      */
-    public function clone_with_missing_data(FlowProject $project,?FlowProject $new_project = null ) : IFlowEntry {
+    public function clone_with_missing_data(IFlowProject $project,?IFlowProject $new_project = null ) : IFlowEntry {
 
         $ret = parent::clone_with_missing_data($project,$new_project);
         $ret->set_body_bb_code($this->flow_entry_body_bb_code);

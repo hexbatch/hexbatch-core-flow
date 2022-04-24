@@ -95,6 +95,7 @@ function view_standard_css(tag,on_start) {
         let no_thang = card.find('.no-css');
         no_thang.removeClass('d-none');
     }
+
     card.on('click',function() {
         if (on_start) {
             on_start(
@@ -106,7 +107,7 @@ function view_standard_css(tag,on_start) {
                 }
             );
         }
-    })
+    });
 
 
     return card;

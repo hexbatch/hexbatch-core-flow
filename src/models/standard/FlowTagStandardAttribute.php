@@ -200,7 +200,7 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
 
         if ($b_user_project_only) {
             $home_project = UserHelper::get_user_helper()->get_user_home_project();
-            $params->addOwningProject($home_project->flow_project_guid);
+            $params->addOwningProject($home_project->get_project_guid());
         }
 
         $ret = StandardAttributeSearch::search($params);

@@ -86,7 +86,7 @@ class TagPages extends BasePages
             $page_size = GeneralSearch::DEFAULT_PAGE_SIZE;
             $args = $request->getQueryParams();
             $search_params = new FlowTagSearchParams();
-            $search_params->owning_project_guid = $project->flow_project_guid;
+            $search_params->owning_project_guid = $project->get_project_guid();
             if (isset($args['search'])) {
 
                 if (isset($args['search']['tag_guid'])) {
@@ -117,7 +117,7 @@ class TagPages extends BasePages
                 }
 
                 if (isset($args['search']['b_all_tags_in_project']) && $args['search']['b_all_tags_in_project']) {
-                    $search_params->owning_project_guid = $project->flow_project_guid;
+                    $search_params->owning_project_guid = $project->get_project_guid();
                     $page_size = SearchParamBase::UNLIMITED_RESULTS_PER_PAGE;
                 }
 
@@ -203,7 +203,7 @@ class TagPages extends BasePages
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name);
 
             $baby_steps = new FlowTag($call->args);
-            $baby_steps->flow_project_id = $call->project->id;
+            $baby_steps->flow_project_id = $call->project->get_id();
             $tag = $baby_steps->clone_with_missing_data();
             if ($tag->flow_tag_id || $tag->flow_tag_guid) {
                 throw new InvalidArgumentException("Can only create new tags with this action. Do not set id or guid");
@@ -220,7 +220,7 @@ class TagPages extends BasePages
             $tag->save(true);
             $saved_tag = $tag->clone_refresh();
 
-            $call->project->do_tag_save();
+            $call->project->do_tag_save_and_commit();
             $data = ['success'=>true,'message'=>'ok','tag'=>$saved_tag,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
 
@@ -266,7 +266,7 @@ class TagPages extends BasePages
                 unset($call->args->flow_tag_parent);
             }
             $baby_steps = new FlowTag($call->args);
-            $baby_steps->flow_project_id = $call->project->id;
+            $baby_steps->flow_project_id = $call->project->get_id();
             $tag = $baby_steps->clone_with_missing_data();
             if (!$tag->flow_tag_id || !$tag->flow_tag_guid) {
                 throw new InvalidArgumentException("Can only edit tags when found id and guid with this action");
@@ -283,7 +283,7 @@ class TagPages extends BasePages
                 $matt->set_link_for_pointee($routeParser);
             }
 
-            $call->project->do_tag_save();
+            $call->project->do_tag_save_and_commit();
 
             $data = ['success'=>true,'message'=>'ok','tag'=>$saved_tag,'attribute'=>null,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
@@ -327,7 +327,7 @@ class TagPages extends BasePages
             $option->note = 'delete_tag';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
             $call->tag->delete_tag();
-            $call->project->do_tag_save();
+            $call->project->do_tag_save_and_commit();
             $data = ['success'=>true,'message'=>'ok','tag'=>$call->tag,'attribute'=>null,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
 
@@ -395,7 +395,7 @@ class TagPages extends BasePages
                 $matt->set_link_for_pointee($routeParser);
             }
 
-            $call->project->do_tag_save();
+            $call->project->do_tag_save_and_commit();
             $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$new_attribute,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
 
@@ -457,7 +457,7 @@ class TagPages extends BasePages
                 $matt->set_link_for_pointee($routeParser);
             }
 
-            $call->project->do_tag_save();
+            $call->project->do_tag_save_and_commit();
 
             $data = ['success'=>true,'message'=>'ok attribute','tag'=>$altered_tag,'attribute'=>$new_attribute,'token'=> $call->new_token];
 
@@ -526,7 +526,7 @@ class TagPages extends BasePages
                 $matt->set_link_for_pointee($routeParser);
             }
 
-            $call->project->do_tag_save();
+            $call->project->do_tag_save_and_commit();
 
             $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$call->attribute,'token'=> $call->new_token];
             $payload = JsonHelper::toString($data);
@@ -583,7 +583,7 @@ class TagPages extends BasePages
                 $matt->set_link_for_pointee($routeParser);
             }
 
-            $call->project->do_tag_save();
+            $call->project->do_tag_save_and_commit();
             $data = [
                 'success'=>true,'message'=>'ok','tag'=>$tag,'attribute'=>null,'applied'=>$applied_to_return,
                 'token'=> $call->new_token
@@ -631,7 +631,7 @@ class TagPages extends BasePages
             $applied_to_be_deleted = FlowAppliedTag::reconstitute($applied_that_was_given,$call->tag);
             $applied_to_be_deleted->delete_applied();
 
-            $call->project->do_tag_save();
+            $call->project->do_tag_save_and_commit();
 
             $tag = $call->tag->clone_refresh();
 

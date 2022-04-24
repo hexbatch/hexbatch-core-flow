@@ -2,8 +2,8 @@
 
 namespace app\helpers;
 
-use app\models\project\FlowProject;
 use app\models\project\FlowProjectUser;
+use app\models\project\IFlowProject;
 use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
 use app\models\tag\FlowTagAttribute;
@@ -14,7 +14,7 @@ class AjaxCallData {
     public ?string $note = null;
 
     public ?stdClass $args = null;
-    public ?FlowProject $project;
+    public ?IFlowProject $project;
     public ?array $new_token = [];
 
     const OPTION_MAKE_NEW_TOKEN = 'make_new_token';
@@ -51,7 +51,7 @@ class AjaxCallData {
     public ?string $permission_mode;
 
 
-    function __construct(array $options = [], ?stdClass $args = null ,?FlowProject $project = null ,?array $new_token = null ){
+    function __construct(array $options = [], ?stdClass $args = null ,?IFlowProject $project = null ,?array $new_token = null ){
         $this->args = $args;
         $this->project = $project;
         $this->new_token = $new_token;

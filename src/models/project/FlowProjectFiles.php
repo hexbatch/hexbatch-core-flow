@@ -87,7 +87,7 @@ class FlowProjectFiles extends FlowBase {
      * @return string|null
      * @throws Exception
      */
-    public function get_project_directory(bool &$b_already_created = false) : ?string {
+    public function get_project_directory(?bool &$b_already_created = false) : ?string {
         if (empty($this->flow_project_guid) || empty($this->owner_user_guid)) {return null;}
         $check =  $this->get_projects_base_directory(). DIRECTORY_SEPARATOR .
             $this->owner_user_guid . DIRECTORY_SEPARATOR . $this->flow_project_guid;

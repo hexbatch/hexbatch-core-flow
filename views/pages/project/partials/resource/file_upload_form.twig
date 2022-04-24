@@ -1,7 +1,7 @@
 
 {% set url_to_action = url_for('project_upload_resource_file',{
                                                             user_name: project.get_admin_user().flow_user_name ,
-                                                            project_name: project.flow_project_title
+                                                            project_name: project.get_project_title()
                                                         } )
 %}
 

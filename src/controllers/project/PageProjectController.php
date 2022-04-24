@@ -8,6 +8,7 @@ use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\project\FlowProject;
 use app\models\project\FlowProjectUser;
+use app\models\project\IFlowProject;
 use app\models\tag\FlowTagSearch;
 use app\models\tag\FlowTagSearchParams;
 use app\models\user\FlowUser;
@@ -109,7 +110,7 @@ class PageProjectController extends BaseProjectController
             }
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/single_project_home.twig',
-                'page_title' => 'Project ' . $project->flow_project_title,
+                'page_title' => 'Project ' . $project->get_project_title(),
                 'page_description' => 'Shows projects for user',
                 'project' => $project
             ]);
@@ -131,7 +132,7 @@ class PageProjectController extends BaseProjectController
         try {
             if (array_key_exists(static::REM_NEW_PROJECT_WITH_ERROR_SESSION_KEY,$_SESSION)) {
                 /**
-                 * @var ?FlowProject $form_in_progress
+                 * @var ?IFlowProject $form_in_progress
                  */
                 $form_in_progress = $_SESSION[static::REM_NEW_PROJECT_WITH_ERROR_SESSION_KEY];
                 $_SESSION[static::REM_NEW_PROJECT_WITH_ERROR_SESSION_KEY] = null;
@@ -141,7 +142,7 @@ class PageProjectController extends BaseProjectController
             } else {
                 $form_in_progress = new FlowProject();
             }
-            $form_in_progress->admin_flow_user_id = $this->user->flow_user_id;
+            $form_in_progress->set_admin_user_id( $this->user->flow_user_id);
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/new_project.twig',
                 'page_title' => 'Make A New Project',
@@ -192,11 +193,11 @@ class PageProjectController extends BaseProjectController
             $project = $this->get_project_helper()->copy_project_from_guid($request,$guid);
 
             try {
-                UserPages::add_flash_message('success', "Created Project " . $project->flow_project_title);
+                UserPages::add_flash_message('success', "Created Project " . $project->get_project_title());
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
                 $url = $routeParser->urlFor('single_project_home',[
                     "user_name" => $project->get_admin_user()->flow_user_name,
-                    "project_name" => $project->flow_project_title
+                    "project_name" => $project->get_project_title()
                 ]);
                 $response = $response->withStatus(302);
                 return $response->withHeader('Location', $url);
@@ -239,20 +240,19 @@ class PageProjectController extends BaseProjectController
                 }
             }
             $project = new FlowProject();
-            $project->flow_project_type = FlowProject::FLOW_PROJECT_TYPE_TOP;
-            $project->parent_flow_project_id = null;
-            $project->admin_flow_user_id = FlowUser::get_logged_in_user()->flow_user_id;
+            $project->set_project_type( IFlowProject::FLOW_PROJECT_TYPE_TOP);
+            $project->set_admin_user_id( FlowUser::get_logged_in_user()->flow_user_id);
 
             $args = $request->getParsedBody();
-            $project->flow_project_title = $args['flow_project_title'];
-            $project->flow_project_blurb = $args['flow_project_blurb'];
-            $project->is_public = isset($args['is_public']) && intval($args['is_public']);
+            $project->set_project_title($args['flow_project_title']);
+            $project->set_project_blurb($args['flow_project_blurb']);
+            $project->set_public(isset($args['is_public']) && intval($args['is_public']));
             $project->set_read_me($args['flow_project_readme_bb_code']);
 
             $project->save();
             $_SESSION[static::REM_NEW_PROJECT_WITH_ERROR_SESSION_KEY] = null;
             try {
-                UserPages::add_flash_message('success', "Created Project " . $project->flow_project_title);
+                UserPages::add_flash_message('success', "Created Project " . $project->get_project_title());
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
                 $url = $routeParser->urlFor('all_projects');
                 $response = $response->withStatus(302);
@@ -299,7 +299,7 @@ class PageProjectController extends BaseProjectController
 
             if (array_key_exists(static::REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY,$_SESSION)) {
                 /**
-                 * @var ?FlowProject $form_in_progress
+                 * @var ?IFlowProject $form_in_progress
                  */
                 $form_in_progress = $_SESSION[static::REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY];
                 $_SESSION[static::REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY] = null;
@@ -344,9 +344,9 @@ class PageProjectController extends BaseProjectController
             $args = $request->getParsedBody();
 
 
-            $project->flow_project_title = $args['flow_project_title'];
-            $project->flow_project_blurb = $args['flow_project_blurb'];
-            $project->is_public = isset($args['is_public']) && intval($args['is_public']);
+            $project->set_project_title($args['flow_project_title']);
+            $project->set_project_blurb($args['flow_project_blurb']);
+            $project->set_public(isset($args['is_public']) && intval($args['is_public']));
             $project->set_read_me($args['flow_project_readme_bb_code']);
 
             if (!empty($_POST)) {
@@ -366,15 +366,15 @@ class PageProjectController extends BaseProjectController
                 throw new InvalidArgumentException("Git hash is too old, project was saved since this page loaded");
             }
 
-            $save_words = $project->save();
+            $project->save();
             $_SESSION[static::REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY] = null;
 
             try {
-                UserPages::add_flash_message('success', "Updated Project  " . $project->flow_project_title. " <br> $save_words");
+                UserPages::add_flash_message('success', "Updated Project  " . $project->get_project_title(). " <br> Saved");
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
                 $url = $routeParser->urlFor('single_project_home',[
                     "user_name" => $project->get_admin_user()->flow_user_name,
-                    "project_name" => $project->flow_project_title
+                    "project_name" => $project->get_project_title()
                 ]);
                 $response = $response->withStatus(302);
                 return $response->withHeader('Location', $url);
@@ -521,7 +521,7 @@ class PageProjectController extends BaseProjectController
                         $perm->can_read = false;
                         $perm->can_admin = false;
                         $perm->flow_user_id = $target_user->flow_user_id;
-                        $perm->flow_project_id = $project->id;
+                        $perm->flow_project_id = $project->get_id();
                     } else {
                         $perm = $target_user_array[0]->get_permissions()[0];
                     }
@@ -574,7 +574,7 @@ class PageProjectController extends BaseProjectController
 
                 }
                 case 'permission_public_set': {
-                    $project->is_public = isset($args['is_public']) && intval($args['is_public']);
+                    $project->set_public(isset($args['is_public']) && intval($args['is_public']));
                     $project->save();
                     $inner_data = $project;
                     break;
@@ -679,10 +679,10 @@ class PageProjectController extends BaseProjectController
             }
 
 
-            if (!isset(FlowProject::STANDARD_SETTINGS[$setting_name])) {
+            if (!isset(IFlowProject::STANDARD_SETTINGS[$setting_name])) {
                 throw new InvalidArgumentException("[set_standard_name] $setting_name is not a valid setting for projects");
             }
-            $setting_details = FlowProject::STANDARD_SETTINGS[$setting_name];
+            $setting_details = IFlowProject::STANDARD_SETTINGS[$setting_name];
             $standard_attribute_name = $setting_details['standard_attribute_name'];
 
             if (isset($call->args->tag_guid) && $call->args->tag_guid) {
@@ -698,7 +698,7 @@ class PageProjectController extends BaseProjectController
 
                 $setting_tag = $setting_tag_array[0];
                 //make sure can read the tag
-                if ($setting_tag->flow_project_guid !== $project->flow_project_guid) {
+                if ($setting_tag->flow_project_guid !== $project->get_project_guid()) {
                     $setting_project = $this->get_project_helper()->get_project_with_permissions(
                         $request,$setting_tag->flow_project_admin_user_guid,$setting_tag->flow_project_guid,
                         FlowProjectUser::PERMISSION_COLUMN_READ);
@@ -804,7 +804,7 @@ class PageProjectController extends BaseProjectController
             $project->destroy_project();
 
 
-            $data = ['success'=>true,'message'=>'','flow_project_guid'=>$project->flow_project_guid,'token'=> $token];
+            $data = ['success'=>true,'message'=>'','flow_project_guid'=>$project->get_project_guid(),'token'=> $token];
             $payload = JsonHelper::toString($data);
             $response->getBody()->write($payload);
             return $response

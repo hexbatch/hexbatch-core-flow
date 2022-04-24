@@ -14,7 +14,7 @@ class FlowProjectSearch extends FlowBase {
      * Optionally limit these to having a user name or guid too
      * Optionally limit to type, special flag and put page and limit
      * @param FlowProjectSearchParams $params
-     * @return FlowProject[]
+     * @return IFlowProject[]
      *
      * @throws Exception
      */

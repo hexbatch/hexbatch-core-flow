@@ -4,7 +4,7 @@ namespace app\models\entry;
 
 use app\hexlet\JsonHelper;
 use app\models\base\FlowBase;
-use app\models\project\FlowProject;
+use app\models\project\IFlowProject;
 use Carbon\Carbon;
 use Exception;
 use JsonSerializable;
@@ -51,9 +51,9 @@ class FlowEntrySummary extends FlowBase implements JsonSerializable{
         }
     }
 
-    public static function get_entry_summaries_for_project(FlowProject $project) :array {
+    public static function get_entry_summaries_for_project(IFlowProject $project) :array {
         $db = static::get_connection();
-        $args = [$project->id];
+        $args = [$project->get_id()];
         $sql = "SELECT 
                     e.flow_entry_title as title,
                     UNIX_TIMESTAMP(e.updated_at) as updated_at_ts,

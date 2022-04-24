@@ -7,8 +7,8 @@ use app\hexlet\GoodZipArchive;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\project\FlowGitFile;
-use app\models\project\FlowProject;
 use app\models\project\FlowProjectUser;
+use app\models\project\IFlowProject;
 use app\models\standard\IFlowTagStandardAttribute;
 use Exception;
 use InvalidArgumentException;
@@ -41,6 +41,7 @@ class GitProjectController extends BaseProjectController {
             if (!$project) {
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");
             }
+            $project_title = $project->get_project_title();
             $temp_file_path = tempnam(sys_get_temp_dir(), 'git-zip-');
             $b_rename_ok = rename($temp_file_path, $temp_file_path .= '.zip');
             if (!$b_rename_ok) {
@@ -48,16 +49,16 @@ class GitProjectController extends BaseProjectController {
             }
 
             $project_directory_path = $project->getFlowProjectFiles()->get_project_directory();
-            new GoodZipArchive($project_directory_path,    $temp_file_path,$project->flow_project_title) ;
+            new GoodZipArchive($project_directory_path,    $temp_file_path,$project->get_project_title()) ;
             $file_size = filesize($temp_file_path);
             if (!$file_size) {
-                throw new HttpInternalServerErrorException($request,"Cannot create zip folder for download");
+                throw new HttpInternalServerErrorException($request,"Cannot create zip folder for $project_title download");
             }
 
             $response = $response
                 ->withHeader('Content-Type', 'application/zip')
                 ->withHeader('Content-Length', $file_size)
-                ->withHeader('Content-Disposition', "attachment; filename=$project->flow_project_title.zip")
+                ->withHeader('Content-Disposition', "attachment; filename=$project_title.zip")
                 ->withAddedHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
                 ->withHeader('Cache-Control', 'post-check=0, pre-check=0')
                 ->withHeader('Pragma', 'no-cache')
@@ -164,8 +165,8 @@ class GitProjectController extends BaseProjectController {
 
 
 
-            $git_import_tag_setting = $project->get_setting_tag(FlowProject::GIT_IMPORT_SETTING_NAME);
-            $git_export_tag_setting = $project->get_setting_tag(FlowProject::GIT_EXPORT_SETTING_NAME);
+            $git_import_tag_setting = $project->get_setting_tag(IFlowProject::GIT_IMPORT_SETTING_NAME);
+            $git_export_tag_setting = $project->get_setting_tag(IFlowProject::GIT_EXPORT_SETTING_NAME);
 
 
 

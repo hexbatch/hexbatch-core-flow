@@ -1,7 +1,7 @@
 <script>
     let flow_project_get_file_change_ajax_url = "{{-  url_for('get_file_change_ajax',{
         user_name: project.get_admin_user().flow_user_name ,
-        project_name: project.flow_project_title
+        project_name: project.get_project_title()
     }) -}}";
 
 </script>
@@ -11,7 +11,7 @@
     <div class="card" style="width: fit-content">
 
         <h5 class="card-title">
-            History For {{ project.flow_project_title }}
+            History For {{ project.get_project_title() }}
         </h5>
 
 
@@ -38,7 +38,7 @@
         {{ include('main/partials/paginition.twig'  , {
             'link_template': url_for('project_history',{
                                         user_name: project.get_admin_user().flow_user_name ,
-                                        project_name: project.flow_project_title}) ~ '/page/%page%',
+                                        project_name: project.get_project_title()}) ~ '/page/%page%',
 
             'page_number' : history_page_number,
             'total_pages' : total_pages
@@ -48,7 +48,7 @@
         }}
 
         <div class="card-header">
-           <h4>Status For {{ project.flow_project_title }}</h4>
+           <h4>Status For {{ project.get_project_title() }}</h4>
         </div>
         <div class="card-body">
             <ul class="list-group d-inline">

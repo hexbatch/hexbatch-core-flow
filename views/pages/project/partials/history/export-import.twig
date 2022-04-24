@@ -3,7 +3,7 @@
     <div class="card" style="">
 
         <h5 class="card-title">
-            Import and Export For {{ project.flow_project_title }}
+            Import and Export For {{ project.get_project_title() }}
         </h5>
 
         <div class="card-body flow-import-export-settings" >
@@ -16,7 +16,7 @@
                                     class="btn btn-outline-primary py-0 flow-git-pull-now"
                                     data-url="{{ url_for('pull_project_ajax',{
                                         user_name: project.get_admin_user().flow_user_name ,
-                                        project_name: project.flow_project_title
+                                        project_name: project.get_project_title()
                                     } )
                                     }}"
                             >
@@ -31,7 +31,7 @@
                         <div class="" aria-current="page">
                             <a href="{{ url_for('download_project_export',{
                                 user_name: project.get_admin_user().flow_user_name ,
-                                project_name: project.flow_project_title
+                                project_name: project.get_project_title()
                             } )
                             }}"
                                class="btn btn-outline-info py-0"
@@ -51,7 +51,7 @@
                                     class="btn btn-outline-primary py-0 flow-git-push-now"
                                     data-url="{{ url_for('push_project_ajax',{
                                         user_name: project.get_admin_user().flow_user_name ,
-                                        project_name: project.flow_project_title
+                                        project_name: project.get_project_title()
                                     } )
                                     }}"
                             >

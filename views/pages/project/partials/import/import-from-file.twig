@@ -4,14 +4,14 @@
             <div class=" bg-light mt-3 px-4">
                 <form method="post" action="{{-  url_for('project_import_from_file',{
                     user_name: project.get_admin_user().flow_user_name ,
-                    project_name: project.flow_project_title
+                    project_name: project.get_project_title()
                 } ) -}}"
                       class="row g-3"
                       enctype="multipart/form-data"
                 >
                     {{ form_token(  url_for('project_import_from_file',{
                         user_name: project.get_admin_user().flow_user_name ,
-                        project_name: project.flow_project_title
+                        project_name: project.get_project_title()
                     } )) }}
 
                     <input type="hidden" name="flow_project_git_hash" value="{{ project.getFlowProjectFiles().get_head_commit_hash() }}">

@@ -748,47 +748,39 @@ class JsonHelper {
 
         //strikethrough
         $parser->addCodeDefinition( CodeDefinition::construct("s",
-            '<span style="text-decoration: line-through">{param}</span>',
-            false
+            '<span style="text-decoration: line-through">{param}</span>'
         ));
 
         // alignment
         $parser->addCodeDefinition( CodeDefinition::construct("center",
-            '<div style="text-align: center;display: inline-block">{param}</div>',
-            false
+            '<div style="text-align: center;display: inline-block">{param}</div>'
         ));
 
         $parser->addCodeDefinition( CodeDefinition::construct("left",
-            '<div style="text-align: left;display: inline-block">{param}</div>',
-            false
+            '<div style="text-align: left;display: inline-block">{param}</div>'
         ));
 
         $parser->addCodeDefinition( CodeDefinition::construct("right",
-            '<div style="text-align: right;display: inline-block">{param}</div>',
-            false
+            '<div style="text-align: right;display: inline-block">{param}</div>'
         ));
 
         $parser->addCodeDefinition( CodeDefinition::construct("justify",
-            '<div style="text-align: justify;display: inline-block">{param}</div>',
-            false
+            '<div style="text-align: justify;display: inline-block">{param}</div>'
         ));
 
         $parser->addCodeDefinition( CodeDefinition::construct("quote",
-            '<div style="background-color:#fff7d9; margin: 0.25em;border-left: .3em solid #f4e59f;padding:0.25em">{param}</div>',
-            false
+            '<div style="background-color:#fff7d9; margin: 0.25em;border-left: .3em solid #f4e59f;padding:0.25em">{param}</div>'
         ));
 
 
         $parser->addCodeDefinition( CodeDefinition::construct("code",
-            '<pre class="flow-code-highlight">{param}</pre>',
-            false
+            '<pre class="flow-code-highlight">{param}</pre>'
         ));
 
 
         //strikethrough
         $parser->addCodeDefinition( CodeDefinition::construct("img",
-            /** @lang text */ '<img src="{param}" alt="bb image">',
-            false
+            /** @lang text */ '<img src="{param}" alt="bb image">'
         ));
 
 

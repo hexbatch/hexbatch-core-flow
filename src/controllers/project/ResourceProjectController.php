@@ -216,12 +216,12 @@ class ResourceProjectController extends BaseProjectController {
 
             $file_upload = $this->get_project_helper()->find_and_move_uploaded_file($request,'repo_or_patch_file');
             $file_name = $file_upload->getClientFilename();
-            $success_message = "Nothing Done "  . $project->flow_project_title;
+            $success_message = "Nothing Done "  . $project->get_project_title();
             $args = $request->getParsedBody();
             if (array_key_exists('import-now',$args)) {
                 //do push now
                 $push_status = $project->update_repo_from_file($file_upload);
-                $success_message = "Merging from file $file_name to "  . $project->flow_project_title . "<br>$push_status";
+                $success_message = "Merging from file $file_name to "  . $project->get_project_title() . "<br>$push_status";
             }
 
             try {
@@ -229,7 +229,7 @@ class ResourceProjectController extends BaseProjectController {
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
                 $url = $routeParser->urlFor('project_history',[
                     "user_name" => $project->get_admin_user()->flow_user_name,
-                    "project_name" => $project->flow_project_title
+                    "project_name" => $project->get_project_title()
                 ]);
                 $response = $response->withStatus(302);
                 return $response->withHeader('Location', $url);
@@ -329,10 +329,10 @@ class ResourceProjectController extends BaseProjectController {
 
             $resource_urls = $project->getFlowProjectFiles()->get_resource_urls();
 
-
+            $project_title = $project->get_project_title();
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/resources.twig',
-                'page_title' => "Project Resources for $project->flow_project_title",
+                'page_title' => "Project Resources for $project_title",
                 'page_description' => 'View and upload publicly viewable resources for this project',
                 'project' => $project,
                 'resource_urls' => $resource_urls

@@ -5,7 +5,6 @@ namespace app\helpers;
 use app\common\BaseConnection;
 use app\hexlet\FlowAntiCSRF;
 use app\hexlet\JsonHelper;
-use app\models\project\FlowProjectUser;
 use app\models\tag\FlowAppliedTag;
 use InvalidArgumentException;
 use Psr\Http\Message\ServerRequestInterface;
