@@ -202,29 +202,39 @@ class TagPages extends BasePages
             $option->note = 'create_tag';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name);
 
-            $baby_steps = new FlowTag($call->args);
-            $baby_steps->flow_project_id = $call->project->get_id();
-            $tag = $baby_steps->clone_with_missing_data();
-            if ($tag->flow_tag_id || $tag->flow_tag_guid) {
-                throw new InvalidArgumentException("Can only create new tags with this action. Do not set id or guid");
-            }
-            $tags_already_in_project = $call->project->get_all_owned_tags_in_project();
+            $db = $this->get_connection();
+            try {
 
-            foreach ($tags_already_in_project as $look_tag) {
-                if ($look_tag->flow_tag_name === $tag->flow_tag_name) {
-                    throw new InvalidArgumentException(
-                        "Cannot create tag because a tag already has the same name '$tag->flow_tag_name' in this project");
+                $db->beginTransaction();
+                $baby_steps = new FlowTag($call->args);
+                $baby_steps->flow_project_id = $call->project->get_id();
+                $tag = $baby_steps->clone_with_missing_data();
+                if ($tag->flow_tag_id || $tag->flow_tag_guid) {
+                    throw new InvalidArgumentException("Can only create new tags with this action. Do not set id or guid");
                 }
+                $tags_already_in_project = $call->project->get_all_owned_tags_in_project();
+
+                foreach ($tags_already_in_project as $look_tag) {
+                    if ($look_tag->flow_tag_name === $tag->flow_tag_name) {
+                        throw new InvalidArgumentException(
+                            "Cannot create tag because a tag already has the same name '$tag->flow_tag_name' in this project");
+                    }
+                }
+
+                $tag->save(true);
+                $saved_tag = $tag->clone_refresh();
+
+                $call->project->do_tag_save_and_commit();
+                $data = ['success'=>true,'message'=>'ok','tag'=>$saved_tag,'token'=> $call->new_token];
+                $payload = JsonHelper::toString($data);
+
+                $response->getBody()->write($payload);
+                $db->commit();
+            } catch (Exception $inner_exception) {
+                $db->rollBack();
+                throw $inner_exception;
             }
 
-            $tag->save(true);
-            $saved_tag = $tag->clone_refresh();
-
-            $call->project->do_tag_save_and_commit();
-            $data = ['success'=>true,'message'=>'ok','tag'=>$saved_tag,'token'=> $call->new_token];
-            $payload = JsonHelper::toString($data);
-
-            $response->getBody()->write($payload);
             return $response
                 ->withHeader('Content-Type', 'application/json')
                 ->withStatus(201);
@@ -262,33 +272,45 @@ class TagPages extends BasePages
             $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX,AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'edit_tag';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
-            if (property_exists($call->args,'flow_tag_parent')) {
-                unset($call->args->flow_tag_parent);
+
+            $db = $this->get_connection();
+            try {
+
+                $db->beginTransaction();
+                if (property_exists($call->args,'flow_tag_parent')) {
+                    unset($call->args->flow_tag_parent);
+                }
+                $baby_steps = new FlowTag($call->args);
+                $baby_steps->flow_project_id = $call->project->get_id();
+                $tag = $baby_steps->clone_with_missing_data();
+                if (!$tag->flow_tag_id || !$tag->flow_tag_guid) {
+                    throw new InvalidArgumentException("Can only edit tags when found id and guid with this action");
+                }
+                $tag->save();
+                $saved_tag = $tag->clone_refresh();
+
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                foreach ( $saved_tag->applied as $mapp) {
+                    $mapp->set_link_for_tagged($routeParser);
+                }
+
+                foreach ( $saved_tag->attributes as $matt) {
+                    $matt->set_link_for_pointee($routeParser);
+                }
+
+                $call->project->do_tag_save_and_commit();
+
+                $data = ['success'=>true,'message'=>'ok','tag'=>$saved_tag,'attribute'=>null,'token'=> $call->new_token];
+                $payload = JsonHelper::toString($data);
+
+                $response->getBody()->write($payload);
+                $db->commit();
+            } catch (Exception $inner_exception) {
+                $db->rollBack();
+                throw $inner_exception;
             }
-            $baby_steps = new FlowTag($call->args);
-            $baby_steps->flow_project_id = $call->project->get_id();
-            $tag = $baby_steps->clone_with_missing_data();
-            if (!$tag->flow_tag_id || !$tag->flow_tag_guid) {
-                throw new InvalidArgumentException("Can only edit tags when found id and guid with this action");
-            }
-            $tag->save();
-            $saved_tag = $tag->clone_refresh();
 
-            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-            foreach ( $saved_tag->applied as $mapp) {
-                $mapp->set_link_for_tagged($routeParser);
-            }
 
-            foreach ( $saved_tag->attributes as $matt) {
-                $matt->set_link_for_pointee($routeParser);
-            }
-
-            $call->project->do_tag_save_and_commit();
-
-            $data = ['success'=>true,'message'=>'ok','tag'=>$saved_tag,'attribute'=>null,'token'=> $call->new_token];
-            $payload = JsonHelper::toString($data);
-
-            $response->getBody()->write($payload);
             return $response
                 ->withHeader('Content-Type', 'application/json')
                 ->withStatus(201);
@@ -326,12 +348,23 @@ class TagPages extends BasePages
             $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX,AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'delete_tag';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
-            $call->tag->delete_tag();
-            $call->project->do_tag_save_and_commit();
-            $data = ['success'=>true,'message'=>'ok','tag'=>$call->tag,'attribute'=>null,'token'=> $call->new_token];
-            $payload = JsonHelper::toString($data);
 
-            $response->getBody()->write($payload);
+            $db = $this->get_connection();
+            try {
+
+                $db->beginTransaction();
+                $call->tag->delete_tag();
+                $call->project->do_tag_save_and_commit();
+                $data = ['success'=>true,'message'=>'ok','tag'=>$call->tag,'attribute'=>null,'token'=> $call->new_token];
+                $payload = JsonHelper::toString($data);
+
+                $response->getBody()->write($payload);
+                $db->commit();
+            } catch (Exception $inner_exception) {
+                $db->rollBack();
+                throw $inner_exception;
+            }
+
             return $response
                 ->withHeader('Content-Type', 'application/json')
                 ->withStatus(201);
@@ -372,34 +405,46 @@ class TagPages extends BasePages
             $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'create_attribute';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
-            $attribute_data = $call->args ?? null;
-            $attribute_to_add = new FlowTagAttribute($attribute_data);
-            $attribute_to_add->setFlowTagId($call->tag->flow_tag_id)  ;
-            if (!$attribute_to_add->has_enough_data_set()) {
-                throw new InvalidArgumentException("Need mo' data for attribute");
-            }
-            foreach ($call->tag->attributes as $look_at) {
-                if ($look_at->getTagAttributeName() === $attribute_to_add->getTagAttributeName()) {
-                    throw new InvalidArgumentException("The attribute name of ".$look_at->getTagAttributeName()." is already used in the tag");
+
+            $db = $this->get_connection();
+            try {
+
+                $db->beginTransaction();
+                $attribute_data = $call->args ?? null;
+                $attribute_to_add = new FlowTagAttribute($attribute_data);
+                $attribute_to_add->setFlowTagId($call->tag->flow_tag_id)  ;
+                if (!$attribute_to_add->has_enough_data_set()) {
+                    throw new InvalidArgumentException("Need mo' data for attribute");
                 }
+                foreach ($call->tag->attributes as $look_at) {
+                    if ($look_at->getTagAttributeName() === $attribute_to_add->getTagAttributeName()) {
+                        throw new InvalidArgumentException("The attribute name of ".$look_at->getTagAttributeName()." is already used in the tag");
+                    }
+                }
+                $call->tag->attributes[] = $attribute_to_add;
+                $altered_tag = $call->tag->save_tag_return_clones($attribute_to_add->getTagAttributeName(),$new_attribute);
+
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                foreach ( $altered_tag->applied as $mapp) {
+                    $mapp->set_link_for_tagged($routeParser);
+                }
+
+                foreach ( $altered_tag->attributes as $matt) {
+                    $matt->set_link_for_pointee($routeParser);
+                }
+
+                $call->project->do_tag_save_and_commit();
+                $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$new_attribute,'token'=> $call->new_token];
+                $payload = JsonHelper::toString($data);
+
+                $response->getBody()->write($payload);
+                $db->commit();
+            } catch (Exception $inner_exception) {
+                $db->rollBack();
+                throw $inner_exception;
             }
-            $call->tag->attributes[] = $attribute_to_add;
-            $altered_tag = $call->tag->save_tag_return_clones($attribute_to_add->getTagAttributeName(),$new_attribute);
 
-            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-            foreach ( $altered_tag->applied as $mapp) {
-                $mapp->set_link_for_tagged($routeParser);
-            }
 
-            foreach ( $altered_tag->attributes as $matt) {
-                $matt->set_link_for_pointee($routeParser);
-            }
-
-            $call->project->do_tag_save_and_commit();
-            $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$new_attribute,'token'=> $call->new_token];
-            $payload = JsonHelper::toString($data);
-
-            $response->getBody()->write($payload);
             return $response
                 ->withHeader('Content-Type', 'application/json')
                 ->withStatus(201);
@@ -438,33 +483,45 @@ class TagPages extends BasePages
             $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'edit_attribute';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name,$attribute_name);
-            $attribute_data = $call->args ?? null;
-            $attribute_to_edit = new FlowTagAttribute($attribute_data);
-            $attribute_to_edit->setFlowTagId($call->tag->flow_tag_id);
-            if (!$attribute_to_edit->has_enough_data_set()) {
-                throw new InvalidArgumentException("Edited attribute does not have enough data set");
+
+            $db = $this->get_connection();
+            try {
+
+                $db->beginTransaction();
+                $attribute_data = $call->args ?? null;
+                $attribute_to_edit = new FlowTagAttribute($attribute_data);
+                $attribute_to_edit->setFlowTagId($call->tag->flow_tag_id);
+                if (!$attribute_to_edit->has_enough_data_set()) {
+                    throw new InvalidArgumentException("Edited attribute does not have enough data set");
+                }
+
+                $call->attribute->update_fields_with_public_data($attribute_to_edit);
+                $altered_tag = $call->tag->save_tag_return_clones($attribute_to_edit->getTagAttributeName(),$new_attribute);
+
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                foreach ( $altered_tag->applied as $mapp) {
+                    $mapp->set_link_for_tagged($routeParser);
+                }
+
+                foreach ( $altered_tag->attributes as $matt) {
+                    $matt->set_link_for_pointee($routeParser);
+                }
+
+                $call->project->do_tag_save_and_commit();
+
+                $data = ['success'=>true,'message'=>'ok attribute','tag'=>$altered_tag,'attribute'=>$new_attribute,'token'=> $call->new_token];
+
+
+                $payload = JsonHelper::toString($data);
+
+                $response->getBody()->write($payload);
+                $db->commit();
+            } catch (Exception $inner_exception) {
+                $db->rollBack();
+                throw $inner_exception;
             }
 
-            $call->attribute->update_fields_with_public_data($attribute_to_edit);
-            $altered_tag = $call->tag->save_tag_return_clones($attribute_to_edit->getTagAttributeName(),$new_attribute);
 
-            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-            foreach ( $altered_tag->applied as $mapp) {
-                $mapp->set_link_for_tagged($routeParser);
-            }
-
-            foreach ( $altered_tag->attributes as $matt) {
-                $matt->set_link_for_pointee($routeParser);
-            }
-
-            $call->project->do_tag_save_and_commit();
-
-            $data = ['success'=>true,'message'=>'ok attribute','tag'=>$altered_tag,'attribute'=>$new_attribute,'token'=> $call->new_token];
-
-
-            $payload = JsonHelper::toString($data);
-
-            $response->getBody()->write($payload);
             return $response
                 ->withHeader('Content-Type', 'application/json')
                 ->withStatus(201);
@@ -503,35 +560,44 @@ class TagPages extends BasePages
             $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'delete_attribute';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name,$attribute_name);
+            $db = $this->get_connection();
+            try {
 
+                $db->beginTransaction();
+                //remove attribute from tag object
+                $new_attribute_list = [];
+                foreach ($call->tag->attributes as $byby) {
+                    if ($byby->getFlowTagAttributeGuid() === $call->attribute->getFlowTagAttributeGuid()) { continue;}
+                    $new_attribute_list[] = $byby;
+                }
+                $call->tag->attributes = $new_attribute_list;
 
-            //remove attribute from tag object
-            $new_attribute_list = [];
-            foreach ($call->tag->attributes as $byby) {
-                if ($byby->getFlowTagAttributeGuid() === $call->attribute->getFlowTagAttributeGuid()) { continue;}
-                $new_attribute_list[] = $byby;
+                $call->attribute->delete_attribute();
+
+                $altered_tag = $call->tag->save_tag_return_clones(null,$new_attribute);
+
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                foreach ( $altered_tag->applied as $mapp) {
+                    $mapp->set_link_for_tagged($routeParser);
+                }
+
+                foreach ( $altered_tag->attributes as $matt) {
+                    $matt->set_link_for_pointee($routeParser);
+                }
+
+                $call->project->do_tag_save_and_commit();
+
+                $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$call->attribute,'token'=> $call->new_token];
+                $payload = JsonHelper::toString($data);
+
+                $response->getBody()->write($payload);
+                $db->commit();
+            } catch (Exception $inner_exception) {
+                $db->rollBack();
+                throw $inner_exception;
             }
-            $call->tag->attributes = $new_attribute_list;
 
-            $call->attribute->delete_attribute();
 
-            $altered_tag = $call->tag->save_tag_return_clones(null,$new_attribute);
-
-            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-            foreach ( $altered_tag->applied as $mapp) {
-                $mapp->set_link_for_tagged($routeParser);
-            }
-
-            foreach ( $altered_tag->attributes as $matt) {
-                $matt->set_link_for_pointee($routeParser);
-            }
-
-            $call->project->do_tag_save_and_commit();
-
-            $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$call->attribute,'token'=> $call->new_token];
-            $payload = JsonHelper::toString($data);
-
-            $response->getBody()->write($payload);
             return $response
                 ->withHeader('Content-Type', 'application/json')
                 ->withStatus(201);
@@ -567,30 +633,43 @@ class TagPages extends BasePages
             $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'create_applied';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
-            $new_applied = new FlowAppliedTag($call->args);
-            $new_applied->flow_tag_id = $call->tag->flow_tag_id;
-            $new_applied->save();
-            $applied_to_return = FlowAppliedTag::reconstitute($new_applied->id,$call->tag);
 
-            $tag = $call->tag->clone_refresh();
+            $db = $this->get_connection();
+            try {
 
-            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-            foreach ( $tag->applied as $mapp) {
-                $mapp->set_link_for_tagged($routeParser);
+                $db->beginTransaction();
+
+                $new_applied = new FlowAppliedTag($call->args);
+                $new_applied->flow_tag_id = $call->tag->flow_tag_id;
+                $new_applied->save();
+                $applied_to_return = FlowAppliedTag::reconstitute($new_applied->id,$call->tag);
+
+                $tag = $call->tag->clone_refresh();
+
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                foreach ( $tag->applied as $mapp) {
+                    $mapp->set_link_for_tagged($routeParser);
+                }
+
+                foreach ( $tag->attributes as $matt) {
+                    $matt->set_link_for_pointee($routeParser);
+                }
+
+                $call->project->do_tag_save_and_commit();
+                $data = [
+                    'success'=>true,'message'=>'ok','tag'=>$tag,'attribute'=>null,'applied'=>$applied_to_return,
+                    'token'=> $call->new_token
+                ];
+                $payload = JsonHelper::toString($data);
+
+                $response->getBody()->write($payload);
+                $db->commit();
+            } catch (Exception $inner_exception) {
+                $db->rollBack();
+                throw $inner_exception;
             }
 
-            foreach ( $tag->attributes as $matt) {
-                $matt->set_link_for_pointee($routeParser);
-            }
 
-            $call->project->do_tag_save_and_commit();
-            $data = [
-                'success'=>true,'message'=>'ok','tag'=>$tag,'attribute'=>null,'applied'=>$applied_to_return,
-                'token'=> $call->new_token
-            ];
-            $payload = JsonHelper::toString($data);
-
-            $response->getBody()->write($payload);
             return $response
                 ->withHeader('Content-Type', 'application/json')
                 ->withStatus(201);
@@ -627,30 +706,42 @@ class TagPages extends BasePages
             $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'delete_applied';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
-            $applied_that_was_given = new FlowAppliedTag($call->args);
-            $applied_to_be_deleted = FlowAppliedTag::reconstitute($applied_that_was_given,$call->tag);
-            $applied_to_be_deleted->delete_applied();
 
-            $call->project->do_tag_save_and_commit();
+            $db = $this->get_connection();
+            try {
 
-            $tag = $call->tag->clone_refresh();
+                $db->beginTransaction();
+                $applied_that_was_given = new FlowAppliedTag($call->args);
+                $applied_to_be_deleted = FlowAppliedTag::reconstitute($applied_that_was_given,$call->tag);
+                $applied_to_be_deleted->delete_applied();
 
-            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-            foreach ( $tag->applied as $mapp) {
-                $mapp->set_link_for_tagged($routeParser);
+                $call->project->do_tag_save_and_commit();
+
+                $tag = $call->tag->clone_refresh();
+
+                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+                foreach ( $tag->applied as $mapp) {
+                    $mapp->set_link_for_tagged($routeParser);
+                }
+
+                foreach ( $tag->attributes as $matt) {
+                    $matt->set_link_for_pointee($routeParser);
+                }
+
+                $data = [
+                    'success'=>true,'message'=>'ok','tag'=>$tag,'attribute'=>null,'applied'=>$call->applied,
+                    'token'=> $call->new_token
+                ];
+                $payload = JsonHelper::toString($data);
+
+                $response->getBody()->write($payload);
+                $db->commit();
+            } catch (Exception $inner_exception) {
+                $db->rollBack();
+                throw $inner_exception;
             }
 
-            foreach ( $tag->attributes as $matt) {
-                $matt->set_link_for_pointee($routeParser);
-            }
 
-            $data = [
-                'success'=>true,'message'=>'ok','tag'=>$tag,'attribute'=>null,'applied'=>$call->applied,
-                'token'=> $call->new_token
-            ];
-            $payload = JsonHelper::toString($data);
-
-            $response->getBody()->write($payload);
             return $response
                 ->withHeader('Content-Type', 'application/json')
                 ->withStatus(201);

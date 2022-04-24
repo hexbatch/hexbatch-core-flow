@@ -4,7 +4,11 @@ namespace app\models\project\levels;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\FlowEntryArchive;
+use app\models\project\exceptions\NothingToPullException;
+use app\models\project\exceptions\NothingToPushException;
 use app\models\project\FlowGitHistory;
+use app\models\project\IFlowProject;
+use app\models\project\setting_models\FlowProjectGitSettings;
 use app\models\tag\brief\BriefCheckValidYaml;
 use app\models\tag\brief\BriefDiffFromYaml;
 use app\models\tag\brief\BriefUpdateFromYaml;
@@ -19,6 +23,8 @@ use Symfony\Component\Yaml\Yaml;
 
 class FlowProjectGitLevel extends FlowProjectSettingLevel {
 
+    const IMPORT_REMOTE_NAME = 'import';
+    const PUSH_REMOTE_NAME = 'origin';
     /**
      * @var FlowGitHistory[] $project_history
      */
@@ -46,7 +52,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
     public function history(?int $start_at = null, ?int $limit = null,  bool $b_refresh= false, bool $b_public = false): array
     {
         if ($b_refresh || empty($this->project_history)) {
-            $this->project_history = FlowGitHistory::get_history($this->getFlowProjectFiles()->get_project_directory());
+            $this->project_history = FlowGitHistory::get_history($this->get_project_directory());
         }
         $history_to_scan = $this->project_history;
         if ($b_public) {
@@ -101,7 +107,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
      * @throws Exception
      */
     public function get_tag_yaml_path() : string {
-        $dir = $this->getFlowProjectFiles()->get_project_directory();
+        $dir = $this->get_project_directory();
         if (!is_readable($dir)) {
             throw new LogicException("Project directory of $dir not created before saving tags");
         }
@@ -140,9 +146,14 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
     /**
      * @throws Exception
      */
-    public function reset_project_repo_files() {
-        $this->getFlowProjectFiles()->do_git_command('add .');
-        $this->getFlowProjectFiles()->do_git_command('reset --hard');
+    public function reset_project_repo_files(?string $commit_hash = null) {
+        $this->do_git_command('add .');
+        if (empty($commit_hash)) {
+            $commit_part = '';
+        } else {
+            $commit_part = "";
+        }
+        $this->do_git_command("reset --hard $commit_part");
     }
 
 
@@ -154,23 +165,33 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
      */
     public function commit_changes(string $commit_message,bool $b_commit = true,bool $b_log_message = false): void  {
 
+        if (!$this->are_files_dirty()) {
+            throw new NothingToPushException("No tracked files changed, will not try to push");
+        }
         if ($b_log_message) {
             static::get_logger()->debug(" Commit message",['message'=>$commit_message]);
         }
         if ($b_commit) {
-            $this->getFlowProjectFiles()->do_git_command("add .");
-            //todo see if anything in staged if not, do not commit
-            $this->getFlowProjectFiles()->do_git_command("commit  -m '$commit_message'");
-            if (isset($_SESSION[FlowUser::SESSION_USER_KEY])) {
-                /**
-                 * @var FlowUser $logged_in_user
-                 */
-                $logged_in_user = $_SESSION[FlowUser::SESSION_USER_KEY];
-                $user_info = "$logged_in_user->flow_user_guid <$logged_in_user->flow_user_email>";
-                $this->getFlowProjectFiles()->do_git_command("commit --amend --author='$user_info' --no-edit");
-            }
-            if ($this->getGitExportSettings()->isGitAutomatePush()) {
-                $this->push_repo();
+            $old_head = null;
+            try {
+                $old_head = $this->get_head_commit_hash();
+                $this->do_git_command("add .");
+
+                $this->do_git_command("commit  -m '$commit_message'");
+                if (isset($_SESSION[FlowUser::SESSION_USER_KEY])) {
+                    /**
+                     * @var FlowUser $logged_in_user
+                     */
+                    $logged_in_user = $_SESSION[FlowUser::SESSION_USER_KEY];
+                    $user_info = "$logged_in_user->flow_user_guid <$logged_in_user->flow_user_email>";
+                    $this->do_git_command("commit --amend --author='$user_info' --no-edit");
+                }
+                if ($this->getGitExportSettings()->isGitAutomatePush()) {
+                    $this->push_repo();
+                }
+            } catch (Exception $e) {
+                $this->reset_project_repo_files($old_head); //reset -- hard to previous
+                throw $e;
             }
         }
     }
@@ -208,7 +229,12 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
                 if ($attribute_summary) {$commit_message .= "\n$attribute_summary";}
                 if ($applied_summary) {$commit_message .= "\n$applied_summary";}
             }
-            $this->commit_changes($commit_message,$b_commit,$b_log_message);
+            try {
+                $this->commit_changes($commit_message,$b_commit,$b_log_message);
+            } catch (NothingToPushException $no_push) {
+                //ignore if no file changes
+            }
+
 
         }
 
@@ -240,7 +266,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             //save private key as temp file, and set permissions to owner only
             $temp_file_path = tempnam(sys_get_temp_dir(), 'git-key-');
             file_put_contents($temp_file_path,$private_key);
-            $directory = $this->getFlowProjectFiles()->get_project_directory();
+            $directory = $this->get_project_directory();
             $command = "ssh-agent bash -c ' ".
                 "cd $directory; ".
                 "ssh-add $temp_file_path; ".
@@ -286,8 +312,10 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             throw new RuntimeException("Export Repo Branch not set");
         }
 
-        $command = sprintf("push -u origin %s",$push_settings->getGitBranch());
-        //todo get hash of this and hash of origin, see if same, if same do not push and report nothing new to push
+        if ($this->get_head_commit_hash() === $this->get_push_head_commit_hash()) {return [];}
+
+        $push_remote_name = static::PUSH_REMOTE_NAME;
+        $command = sprintf("push -u $push_remote_name %s",$push_settings->getGitBranch());
         return $this->do_key_command_with_private_key($push_settings->getGitSshKey(),$push_settings->getGitUrl(),$command);
     }
 
@@ -307,28 +335,32 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             throw new RuntimeException("Import Repo Branch not set");
         }
 
-        $old_head = $this->getFlowProjectFiles()->get_head_commit_hash();
-        //todo get hash of import, see if same, if same just report nothing to change
+        $old_head = $this->get_head_commit_hash();
+        if ($this->get_pull_head_commit_hash() === $old_head) {
+            throw new NothingToPullException("Import head is same as local head: $old_head");
+        }
+
         try {
-            $this->getFlowProjectFiles()->do_git_command('reset --hard'); //clear up any earlier bugs or crashes
+            $this->reset_project_repo_files();//clear up any earlier bugs or crashes
         } catch (Exception $e) {
             $message = "Could not do a hard reset";
             $message.="<br>{$e->getMessage()}\n";
             throw new RuntimeException($message);
         }
 
-        $command = "pull import ".$this->getGitImportSettings()->getGitBranch();
+
+        $command = "pull ".static::IMPORT_REMOTE_NAME ." ".$this->getGitImportSettings()->getGitBranch();
         try {
             $git_ret =  $this->do_key_command_with_private_key(
                 $this->getGitImportSettings()->getGitSshKey(),
                 $this->getGitImportSettings()->getGitUrl(),
                 $command);
         } catch (Exception $e) {
-            $maybe_changes = $this->getFlowProjectFiles()->do_git_command('diff');
+            $maybe_changes = $this->do_git_command('diff');
             $message = $e->getMessage();
             if (!empty(trim($maybe_changes))) {
                 try {
-                    $this->getFlowProjectFiles()->do_git_command('merge --abort');
+                    $this->do_git_command('merge --abort');
                     $message.="<br>Aborted Merge\n";
                 } catch (Exception $oh_no) {
                     $message.="<br>{$oh_no->getMessage()}\n";
@@ -338,14 +370,14 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             throw new RuntimeException($message);
         }
 
-        $new_head = $this->getFlowProjectFiles()->get_head_commit_hash();
+        $new_head = $this->get_head_commit_hash();
         try {
             $this->check_integrity();
             $this->set_db_from_file_state();
         } catch (Exception $e) {
             //do not use commit just imported, and remove any changes to files
             if ($old_head !== $new_head) {
-                $this->getFlowProjectFiles()->do_git_command("reset --hard $old_head");
+                $this->reset_project_repo_files($old_head);
             }
             throw $e;
         }
@@ -432,7 +464,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             parent::save(false);
 
             $b_already_created = false;
-            $dir = $this->getFlowProjectFiles()->get_project_directory($b_already_created);
+            $dir = $this->get_project_directory($b_already_created);
             $make_first_commit = !$b_already_created;
 
             $yaml_path = $dir . DIRECTORY_SEPARATOR . 'flow_project.yaml';
@@ -453,8 +485,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
 
             if ($make_first_commit) {
                 $commit_title = "First Commit";
-                $this->getFlowProjectFiles()->do_git_command("add .");
-                $this->getFlowProjectFiles()->do_git_command("commit  -m '$commit_title'");
+                $this->commit_changes($commit_title);
             }
 
 
@@ -480,7 +511,6 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             if (empty($commit_title_array) && empty($commit_message_array)) {
                 return ; //nothing to commit
             }
-            $this->getFlowProjectFiles()->do_git_command("add .");
 
             $commit_title = implode('; ',$commit_title_array);
             $commit_body = implode('\n',$commit_message_array);
@@ -491,16 +521,10 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             $commit_message_full = str_replace("'","\'",$commit_message_full);
 
 
-
-            $this->getFlowProjectFiles()->do_git_command("commit  -m '$commit_message_full'");
-
-            if (isset($_SESSION[FlowUser::SESSION_USER_KEY])) {
-                /**
-                 * @var FlowUser $logged_in_user
-                 */
-                $logged_in_user = $_SESSION[FlowUser::SESSION_USER_KEY];
-                $user_info = "$logged_in_user->flow_user_guid <$logged_in_user->flow_user_email>";
-                $this->getFlowProjectFiles()->do_git_command("commit --amend --author='$user_info' --no-edit");
+            try {
+                $this->commit_changes($commit_message_full);
+            } catch (NothingToPushException $no_push) {
+              //ignore if no file changes
             }
 
 
@@ -513,6 +537,166 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
         if ($this->getGitExportSettings()->isGitAutomatePush()) {
             $this->push_repo();
         }
+    }
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    protected function get_push_head_commit_hash() : ?string {
+        try {
+            $git_push_settings = $this->getGitExportSettings();
+            if (!$git_push_settings->getGitUrl()) {return null;}
+
+            $branch = $git_push_settings->getGitBranch();
+            if (!$branch) {return null;}
+            $push_remote_name = static::PUSH_REMOTE_NAME;
+            return $this->do_git_command("git rev-parse $push_remote_name/$branch HEAD");
+        } catch (Exception $e) {
+            return '';
+        }
+    }
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    protected function get_pull_head_commit_hash() : ?string {
+        try {
+            $git_pull_settings = $this->getGitImportSettings();
+            if (!$git_pull_settings->getGitUrl()) {return null;}
+
+            $branch = $git_pull_settings->getGitBranch();
+            if (!$branch) {return null;}
+
+            $remote_name = static::IMPORT_REMOTE_NAME;
+            return $this->do_git_command("git rev-parse $remote_name/$branch HEAD");
+        } catch (Exception $e) {
+            return '';
+        }
+    }
+
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    public function get_head_commit_hash() : string {
+        try {
+            return $this->do_git_command('rev-parse HEAD');
+        } catch (Exception $e) {
+            return '';
+        }
+    }
+
+    /**
+     * @return array
+     * @throws Exception
+     */
+    public function get_git_status(): array  {
+        $what =  $this->do_git_command("status");
+        return explode("\n",$what);
+    }
+
+    /**
+     * @return int
+     * @throws Exception
+     */
+    protected function are_files_dirty() : int {
+        $what =  $this->do_git_command("status -s -uno | wc -l");
+        return (int)$what;
+    }
+
+    /**
+     * @param string $command
+     * @param string|null $pre_command
+     * @param  bool $b_include_git_word  default true
+     * @return string
+     * @throws Exception
+     */
+    public  function do_git_command( string $command,bool $b_include_git_word = true,?string $pre_command = null) : string {
+        $dir = $this->get_project_directory();
+        if (!$dir) {
+            throw new RuntimeException("Project Directory is not created yet");
+        }
+        return FlowGitHistory::do_git_command($dir,$command,$b_include_git_word,$pre_command);
+    }
+
+    /**
+     * @param string $repo_path
+     * @throws Exception
+     */
+    protected function create_project_repo(string $repo_path) {
+        parent::create_project_repo($repo_path);
+        $this->do_git_command("init");
+    }
+
+    /**
+     * @param string $remote_name
+     * @param FlowProjectGitSettings|null $settings
+     * @return void
+     * @throws Exception
+     */
+    protected function set_up_remote(string $remote_name,?FlowProjectGitSettings $settings) : void {
+        //see if we are changing the remote
+        try {
+            try {
+                $remote_url = $this->do_git_command("config --get remote.$remote_name.url");
+            } catch (Exception $e) {
+                $remote_url = '';
+            }
+
+            if ($settings && $settings->getGitUrl()) {
+                if ($remote_url !== $settings->getGitUrl()) {
+                    if ($remote_url) {
+                        //change the remote
+                        $this->do_git_command("remote set-url $remote_name " . $settings->getGitUrl());
+                    } else {
+                        //set the remote to the url
+                        $this->do_git_command("remote add $remote_name " . $settings->getGitUrl());
+                    }
+                }
+            } else {
+                if ($remote_url) {
+                    $this->do_git_command("remote remove $remote_name ");
+                }
+            }
+        } catch (Exception $e) {
+            static::get_logger()->alert("Project git export settings cannot save remote ",['exception'=>$e]);
+            throw $e;
+        }
+    }
+
+    /**
+     * @return FlowProjectGitSettings|null
+     * @throws Exception
+     */
+    protected function getGitExportSettings() : ?FlowProjectGitSettings {
+        $settings =  $this->findGitSetting(IFlowProject::GIT_EXPORT_SETTING_NAME,$b_was_cached );
+
+        if ($b_was_cached ) {
+            return $settings;
+        }
+        $this->set_up_remote(static::PUSH_REMOTE_NAME,$settings);
+
+        return $settings;
+    }
+
+    /**
+     * @return FlowProjectGitSettings|null
+     * @throws Exception
+     */
+    protected function getGitImportSettings() : ?FlowProjectGitSettings {
+        $settings =  $this->findGitSetting(IFlowProject::GIT_IMPORT_SETTING_NAME,$b_was_cached );
+
+        if ($b_was_cached) {
+            return $settings;
+        }
+        //see if we are changing the remote
+
+        $this->set_up_remote(static::IMPORT_REMOTE_NAME,$settings);
+
+        return $settings;
     }
 
 

@@ -6,11 +6,11 @@ use app\models\base\SearchParamBase;
 use app\models\entry\FlowEntrySearch;
 use app\models\entry\FlowEntrySearchParams;
 use app\models\project\FlowProject;
-use app\models\project\FlowProjectFiles;
 use app\models\project\FlowProjectSearch;
 use app\models\project\FlowProjectSearchParams;
 use app\models\project\FlowProjectUser;
 use app\models\project\IFlowProject;
+use app\models\project\levels\FlowProjectFileLevel;
 use app\models\user\FlowUser;
 use DI\DependencyException;
 use DI\NotFoundException;
@@ -202,21 +202,21 @@ class ProjectHelper extends BaseHelper {
 
 
             //copy resource folder
-            $original_file_resource_path = $origonal_project->getFlowProjectFiles()->get_resource_directory();
-            $new_file_resource_path = $new_project->getFlowProjectFiles()->get_resource_directory();
+            $original_file_resource_path = $origonal_project->get_resource_directory();
+            $new_file_resource_path = $new_project->get_resource_directory();
             //cp -rT src target
             $this->do_command("cp -rT $original_file_resource_path $new_file_resource_path");
-            $find_files = $new_project->getFlowProjectFiles()->get_resource_file_paths();
+            $find_files = $new_project->get_resource_file_paths();
             if (count($find_files)) {
                 $new_project->commit_changes("Added resources from original project");
             }
 
             //copy files folder
-            $original_file_resource_path = $origonal_project->getFlowProjectFiles()->get_files_directory();
-            $new_file_resource_path = $new_project->getFlowProjectFiles()->get_files_directory();
+            $original_file_resource_path = $origonal_project->get_files_directory();
+            $new_file_resource_path = $new_project->get_files_directory();
             //cp -rT src target
             $this->do_command("cp -rT $original_file_resource_path $new_file_resource_path");
-            $find_files = $new_project->getFlowProjectFiles()->get_resource_file_paths(true);
+            $find_files = $new_project->get_resource_file_paths(true);
             if (count($find_files)) {
                 $new_project->commit_changes("Added protected files from original project");
             }
@@ -328,38 +328,70 @@ class ProjectHelper extends BaseHelper {
     }
 
     /**
-     * @param FlowProjectFiles $project_files
+     * @param IFlowProject $project
      * @param string|null $text
      * @return string|null
      * @throws Exception
      */
-    public function stub_from_file_paths(FlowProjectFiles $project_files, string $text) : string {
+    public function stub_from_file_paths(IFlowProject $project, string $text) : string {
         if (!$text) {return $text;}
-        $start_of_resources_url = $project_files->get_resource_url() . '/';
+        $start_of_resources_url = $project->get_resource_url() . '/';
 
         $text =
-            str_replace($start_of_resources_url,FlowProjectFiles::RESOURCE_PATH_STUB,$text);
+            str_replace($start_of_resources_url,IFlowProject::RESOURCE_PATH_STUB,$text);
 
 
-        $start_of_files_url = $project_files->get_files_url() . '/';
+        $start_of_files_url = $project->get_files_url() . '/';
         $text =
-            str_replace($start_of_files_url,FlowProjectFiles::FILES_PATH_STUB,$text);
+            str_replace($start_of_files_url,IFlowProject::FILES_PATH_STUB,$text);
         return $text;
 
     }
 
     /**
-     * @param FlowProjectFiles $project_files
+     * @param string $owner_user_guid
+     * @param string $flow_project_guid
+     * @param string|null $text
+     * @return string|null
+     */
+    public function stub_from_file_paths_calculated(string $owner_user_guid,string $flow_project_guid, string $text) : string {
+        if (!$text) {return $text;}
+        $start_of_resources_url = FlowProjectFileLevel::calculate_resource_url($owner_user_guid,$flow_project_guid) . '/';
+        $text = str_replace($start_of_resources_url,IFlowProject::RESOURCE_PATH_STUB,$text);
+        $start_of_files_url = FlowProjectFileLevel::calculate_files_url($owner_user_guid,$flow_project_guid) . '/';
+        $text = str_replace($start_of_files_url,IFlowProject::FILES_PATH_STUB,$text);
+        return $text;
+
+    }
+
+    /**
+     * @param IFlowProject $project
      * @param string|null $text
      * @return string|null
      * @throws Exception
      */
-    public function stub_to_file_paths(FlowProjectFiles $project_files, string $text) : string {
+    public function stub_to_file_paths(IFlowProject $project, string $text) : string {
         if (!$text) {return $text;}
-        $start_of_resources_url = $project_files->get_resource_url() . '/';
-        $start_of_files_url = $project_files->get_files_url() . '/';
-        $text = str_replace(FlowProjectFiles::RESOURCE_PATH_STUB,$start_of_resources_url,$text);
-        $text = str_replace(FlowProjectFiles::FILES_PATH_STUB,$start_of_files_url,$text);
+        $start_of_resources_url = $project->get_resource_url() . '/';
+        $start_of_files_url = $project->get_files_url() . '/';
+        $text = str_replace(IFlowProject::RESOURCE_PATH_STUB,$start_of_resources_url,$text);
+        $text = str_replace(IFlowProject::FILES_PATH_STUB,$start_of_files_url,$text);
+        return $text;
+    }
+
+    /**
+     * @param string $owner_user_guid
+     * @param string $flow_project_guid
+     * @param string|null $text
+     * @return string|null
+     */
+    public function stub_to_file_paths_calculated(string $owner_user_guid,string $flow_project_guid, string $text) : string {
+
+        if (!$text) {return $text;}
+        $start_of_resources_url = FlowProjectFileLevel::calculate_resource_url($owner_user_guid,$flow_project_guid) . '/';
+        $start_of_files_url = FlowProjectFileLevel::calculate_files_url($owner_user_guid,$flow_project_guid) . '/';
+        $text = str_replace(IFlowProject::RESOURCE_PATH_STUB,$start_of_resources_url,$text);
+        $text = str_replace(IFlowProject::FILES_PATH_STUB,$start_of_files_url,$text);
         return $text;
     }
 

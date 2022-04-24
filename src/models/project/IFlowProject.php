@@ -36,6 +36,19 @@ interface IFlowProject {
     ];
 
 
+    const REPO_FILES_DIRECTORY = 'files';
+    const REPO_RESOURCES_DIRECTORY = 'resources';
+    const REPO_RESOURCES_VALID_TYPES = [
+        'png',
+        'jpeg',
+        'jpg',
+        'pdf'
+    ];
+
+    const RESOURCE_PATH_STUB = '@resource@';
+    const FILES_PATH_STUB = '@file@';
+
+
     public function get_readme_bb_code() : ?string ;
     public function get_project_blurb() : ?string ;
     public function get_project_title() : ?string ;
@@ -65,12 +78,18 @@ interface IFlowProject {
     public function get_flow_project_users() : array;
 
     public function get_admin_user(): ?FlowUser;
+    public function get_owner_user_guid() : string;
 
     public function get_read_me_bb_code_with_paths(): string;
     public function set_read_me(string $bb_code) : void;
     public function delete_project_directory() : void;
-    public function getFlowProjectFiles() : FlowProjectFiles;
     public function get_html() : ?string;
+
+    public function get_project_directory(?bool &$b_already_created = false) : ?string;
+    public function get_files_directory() : ?string;
+    public function get_resource_directory() : ?string;
+    public function get_files_url() : string;
+    public function get_resource_url() : string;
 
     /**
      * @param bool $b_refresh  if true will not use previous value if set
@@ -103,6 +122,10 @@ interface IFlowProject {
     public function get_tag_yaml_path() : string;
     public function raw_history(): array;
     public function count_total_public_history(bool $b_refresh= false) : int;
+
+    public function get_head_commit_hash() : string;
+    public function get_git_status(): array;
+    public function do_git_command( string $command,bool $b_include_git_word = true,?string $pre_command = null) : string;
 
     /**
      * @param int|null $start_at

@@ -41,7 +41,7 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
      */
     public static function discover_all_archived_entries(IFlowProject $project) :array {
         $b_already_created = false;
-        $project_directory = $project->getFlowProjectFiles()->get_project_directory($b_already_created);
+        $project_directory = $project->get_project_directory($b_already_created);
         $yaml_path = $project_directory. DIRECTORY_SEPARATOR . self::ALL_FILES_YAML_NAME;
         $data_array = Yaml::parseFile($yaml_path);
         $ret = [];
@@ -80,7 +80,7 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
 
         $stuff_yaml = Yaml::dump($stuff_serialized);
         $b_already_created = false;
-        $project_directory = $project->getFlowProjectFiles()->get_project_directory($b_already_created);
+        $project_directory = $project->get_project_directory($b_already_created);
         $yaml_path = $project_directory. DIRECTORY_SEPARATOR . self::ALL_FILES_YAML_NAME;
         $b_ok = file_put_contents($yaml_path,$stuff_yaml);
         if ($b_ok === false) {throw new RuntimeException("Could not write to $yaml_path");}

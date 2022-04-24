@@ -2,6 +2,7 @@
 
 namespace app\models\entry;
 
+use app\models\project\exceptions\NothingToPushException;
 use app\models\project\IFlowProject;
 use Exception;
 
@@ -41,7 +42,12 @@ final class FlowEntry extends FlowEntryMembers  {
                 $action = "Created";
             }
             if ($b_do_transaction) {
-                $this->get_project()->commit_changes("$action Entry $title");
+                try {
+                    $this->get_project()->commit_changes("$action Entry $title");
+                } catch (NothingToPushException $no_push) {
+                    //ignore if no file changes
+                }
+
             }
 
         } catch (Exception $e) {

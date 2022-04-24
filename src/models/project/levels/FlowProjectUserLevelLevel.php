@@ -54,6 +54,13 @@ abstract class FlowProjectUserLevelLevel extends FlowProjectDataLevel {
         return $this->admin_user;
     }
 
+    /**
+     * @return string
+     * @throws Exception
+     */
+    public function get_owner_user_guid() : string {
+        return $this->get_admin_user()->flow_user_guid;
+    }
 
     /**
      * @return FlowUser[]

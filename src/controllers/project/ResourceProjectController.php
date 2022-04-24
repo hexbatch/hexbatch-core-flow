@@ -4,7 +4,6 @@ namespace app\controllers\project;
 use app\controllers\user\UserPages;
 use app\hexlet\FlowAntiCSRF;
 use app\hexlet\JsonHelper;
-use app\models\project\FlowProjectFiles;
 use app\models\project\FlowProjectUser;
 use Exception;
 use finfo;
@@ -62,7 +61,7 @@ class ResourceProjectController extends BaseProjectController {
             try {
 
                 $file_upload = $this->get_project_helper()->find_and_move_uploaded_file($request,'flow_resource_file');
-                $resource_base = $project->getFlowProjectFiles()->get_resource_directory();
+                $resource_base = $project->get_resource_directory();
 
                 $file_resource_path = $resource_base. DIRECTORY_SEPARATOR. $file_upload->getClientFilename();
                 $file_name = $file_upload->getClientFilename();
@@ -71,7 +70,7 @@ class ResourceProjectController extends BaseProjectController {
 
                 $project->commit_changes("Added resource file $file_name\n\nFile path is $file_resource_path");
 
-                $new_urls = $project->getFlowProjectFiles()->get_resource_urls([$file_resource_path]);
+                $new_urls = $project->get_resource_urls([$file_resource_path]);
                 $new_url = $new_urls[0];
                 $data = ['success'=>true,'message'=>'ok file upload','file_name'=>$file_name,'action' => 'upload_resource_file',
                     'new_file_path'=>$file_resource_path,'new_file_url' => $new_urls[0]];
@@ -154,7 +153,7 @@ class ResourceProjectController extends BaseProjectController {
                 if ($part === 'resources') {break;}
             }
             $file_part_path = implode(DIRECTORY_SEPARATOR,array_reverse($backwards_parts)) ;
-            $base_resource_file_path = $project->getFlowProjectFiles()->get_project_directory(); //no slash at end
+            $base_resource_file_path = $project->get_project_directory(); //no slash at end
             $test_file_path = $base_resource_file_path . DIRECTORY_SEPARATOR . $file_part_path;
             $real_file_path = realpath($test_file_path);
             if (!$real_file_path) {
@@ -277,8 +276,7 @@ class ResourceProjectController extends BaseProjectController {
             }
 
 
-            $resource_path = $project->getFlowProjectFiles()->get_project_directory(). DIRECTORY_SEPARATOR .
-                FlowProjectFiles::REPO_FILES_DIRECTORY . DIRECTORY_SEPARATOR . $resource ;
+            $resource_path = $project->get_resource_directory() . DIRECTORY_SEPARATOR . $resource ;
             if (!is_readable($resource_path)) {
                 throw new HttpNotFoundException($request,"Resource $resource NOT found in the resources directory of $project_name");
             }
@@ -327,7 +325,7 @@ class ResourceProjectController extends BaseProjectController {
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");
             }
 
-            $resource_urls = $project->getFlowProjectFiles()->get_resource_urls();
+            $resource_urls = $project->get_resource_urls();
 
             $project_title = $project->get_project_title();
             return $this->view->render($response, 'main.twig', [

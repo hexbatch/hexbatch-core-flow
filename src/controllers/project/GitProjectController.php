@@ -6,6 +6,7 @@ use app\helpers\UserHelper;
 use app\hexlet\GoodZipArchive;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
+use app\models\project\exceptions\NothingToPullException;
 use app\models\project\FlowGitFile;
 use app\models\project\FlowProjectUser;
 use app\models\project\IFlowProject;
@@ -48,7 +49,7 @@ class GitProjectController extends BaseProjectController {
                 throw new HttpInternalServerErrorException($request,"Cannot rename temp folder");
             }
 
-            $project_directory_path = $project->getFlowProjectFiles()->get_project_directory();
+            $project_directory_path = $project->get_project_directory();
             new GoodZipArchive($project_directory_path,    $temp_file_path,$project->get_project_title()) ;
             $file_size = filesize($temp_file_path);
             if (!$file_size) {
@@ -110,7 +111,7 @@ class GitProjectController extends BaseProjectController {
 
             $b_show_all = (bool)intval($args['show_all'] ?? '1');
 
-            $project_directory = $project->getFlowProjectFiles()->get_project_directory();
+            $project_directory = $project->get_project_directory();
             $flow_file = new FlowGitFile($project_directory,$commit,$file_path);
             $diff = $flow_file->show_diff($b_show_all);
 
@@ -158,7 +159,7 @@ class GitProjectController extends BaseProjectController {
 
             if (intval($page) < 1) {$page = 1;}
 
-            $status_array = $project->getFlowProjectFiles()->get_git_status();
+            $status_array = $project->get_git_status();
 
             $git_tags = UserHelper::get_user_helper()->
             get_user_tags_of_standard($this->user->flow_user_guid,IFlowTagStandardAttribute::STD_ATTR_NAME_GIT);
@@ -318,7 +319,22 @@ class GitProjectController extends BaseProjectController {
                 ->withHeader('Content-Type', 'application/json')
                 ->withStatus(201);
 
-        } catch (Exception $e) {
+        }
+        catch (NothingToPullException $no_pull) {
+            $data = [
+                'success'=>false,
+                'message'=>$no_pull->getMessage(),
+                'git_output'=>$git_out,
+                'token'=> $call->new_token?? null
+            ];
+            $payload = JsonHelper::toString($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(200);
+        }
+        catch (Exception $e) {
             $this->logger->error("Could not pull_project: ".$e->getMessage(),['exception'=>$e]);
             $data = [
                 'success'=>false,

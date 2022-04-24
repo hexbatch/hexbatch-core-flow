@@ -204,7 +204,7 @@ abstract class FlowProjectDataLevel extends FlowBase implements JsonSerializable
         $db = static::get_connection();
         try {
             if ($b_do_transaction && !$db->inTransaction()) { $db->beginTransaction();}
-            $db->delete(static::TABLE_NAME,[
+            $db->delete(IFlowProject::TABLE_NAME,[
                 'id' => $this->id
             ]);
             $this->id = null;
