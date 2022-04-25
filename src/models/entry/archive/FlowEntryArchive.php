@@ -17,7 +17,6 @@ use Exception;
 use LogicException;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
-//todo creating new entry and erasing old in db with different guid, can see two entry folders in repo
 
 //todo change entry folders to use name with guid, make sure name of folder is in the entry.yaml, rename folder when name change
 final class FlowEntryArchive extends FlowEntryArchiveMembers {

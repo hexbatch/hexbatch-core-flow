@@ -26,7 +26,7 @@ final class FlowEntry extends FlowEntryMembers  {
     {
         $db = null;
         try {
-            $old_id = $this->get_id();
+            $old_guid = $this->get_guid();
             $db = FlowEntry::get_connection();
             if ($b_do_transaction) {
                 $db->beginTransaction();
@@ -38,7 +38,7 @@ final class FlowEntry extends FlowEntryMembers  {
             }
             $title = $this->get_title();
             $action = "Updated";
-            if (empty($old_id)) {
+            if (empty($old_guid)) {
                 $action = "Created";
             }
             if ($b_do_transaction) {

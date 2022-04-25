@@ -137,6 +137,8 @@ class RecursiveClasses {
      */
     public static function rsearch_for_paths(string $folder, string $pattern): array
     {
+        $real_folder = realpath($folder);
+        if (!$real_folder) return [];
         $dir = new RecursiveDirectoryIterator($folder);
         $ite = new RecursiveIteratorIterator($dir);
         $files = new RegexIterator($ite, $pattern, RegexIterator::GET_MATCH);

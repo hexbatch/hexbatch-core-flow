@@ -17,6 +17,8 @@ return function (App $app) {
         $group->get('/thing_management', ['adminPages', 'thing_management'])->setName('thing_management');
         $group->get('/db/redo_triggers', ['adminPages', 'redo_triggers'])->setName('redo_triggers');
         $group->get('/phpinfo', ['adminPages', 'php_info'])->setName('phpinfo');
+
+        /** @uses \app\controllers\home\AdminPages::test() */
         $group->get('/test', ['adminPages', 'test'])->setName('admin_test');
     })->add('checkAdminMiddleware')->add($container->get('twigMiddleware'))->add('pingUserMiddleware');
 

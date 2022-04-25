@@ -3,7 +3,6 @@
 namespace app\helpers;
 
 
-use app\hexlet\WillFunctions;
 use app\models\project\FlowProject;
 use app\models\project\FlowProjectSearch;
 use app\models\project\FlowProjectSearchParams;
@@ -11,6 +10,7 @@ use app\models\project\IFlowProject;
 use DI\Container;
 use DI\DependencyException;
 use DI\NotFoundException;
+use DirectoryIterator;
 use Exception;
 use PDO;
 use Psr\Http\Message\ServerRequestInterface;
@@ -102,21 +102,15 @@ class AdminHelper extends BaseHelper {
      * @throws Exception
      */
     public  function admin_test(ServerRequestInterface $request) : array  {
-        WillFunctions::will_do_nothing($request);
-        $project = ProjectHelper::get_project_helper()->find_one($this->get_admin_project_guid());
-        $resource_files = $project->get_resource_file_paths();
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-        $base_project_url = $routeParser->urlFor('single_project_home',[
-            "user_name" => $project->get_admin_user()->flow_user_guid,
-            "project_name" => $project->get_project_guid()
-        ]);
-        $base_resource_file_path = $project->get_project_directory(); //no slash at end
-
-        $resource_urls = [];
-        foreach ($resource_files as $full_path_file) {
-            $resource_urls[] = str_replace($base_resource_file_path,$base_project_url,$full_path_file);
+        $path = "/var/www/current";
+        $dir = new DirectoryIterator($path);
+        $ret = [];
+        foreach ($dir as $fileinfo) {
+            if ($fileinfo->isDir() && !$fileinfo->isDot()) {
+                $ret[] =  $fileinfo->getFilename();
+            }
         }
-        return $resource_urls;
+        return $ret;
     }
 
 

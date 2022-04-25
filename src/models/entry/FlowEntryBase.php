@@ -484,6 +484,10 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
      * @throws
      */
     public static function load(IFlowProject $project,array $only_these_guids = []) : array {
+
+        //todo scan all top level directories, see if yaml is in there, if not write .flow-ignored with human date
+        // for each of the valid yaml directories, return a list of guids
+
         $archive_list = [];
         $guid_list = $only_these_guids;
         if (empty($guid_list)) {

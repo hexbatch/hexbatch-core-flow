@@ -53,7 +53,7 @@
                         <textarea type="text" id="flow_project_blurb" name="flow_project_blurb"
                                   class="form-control" placeholder="Blurb" required autofocus
                                   rows="3"
-                                  maxlength="{{ constant('app\\models\\project\\FlowBase::MAX_SIZE_BLURB') }}"
+                                  maxlength="{{ constant('app\\models\\base\\FlowBase::MAX_SIZE_BLURB') }}"
                         >{{ project.get_project_blurb() }}</textarea>
                     </div>
 

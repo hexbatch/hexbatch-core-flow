@@ -161,8 +161,8 @@ Interface IFlowEntry {
      */
     public function to_public_json() : IFlowEntryJson ;
 
-    public function get_entry_folder() : ?string;
-
+    public function get_entry_folder(?string $new_folder_name = null) : ?string;
+    public function get_calculated_entry_folder() : ?string; //returns what the folder should be
 
 
     /**
@@ -188,5 +188,6 @@ Interface IFlowEntry {
      * @throws
      */
     public static function load(IFlowProject $project,array $only_these_guids = []) : array;
+
 
 }
