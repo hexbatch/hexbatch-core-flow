@@ -556,7 +556,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
             ];
 
 
-            if ($b_do_transaction) {$db->beginTransaction();}
+            if ($b_do_transaction && !$db->inTransaction()) {$db->beginTransaction();}
             if ($this->flow_tag_guid && $this->flow_tag_id) {
 
                 $db->update('flow_tags',$save_info,[
@@ -653,7 +653,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 }
             }
             $this->update_standard_attibutes();
-            if ($b_do_transaction) {$db->commit(); }
+            if ($b_do_transaction && $db->inTransaction()) {$db->commit(); }
 
 
         } catch (Exception $e) {

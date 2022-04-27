@@ -80,7 +80,7 @@ class Utilities extends BaseHelper {
         return JsonHelper::fromString($json,true,false);
     }
 
-    public  function deep_copy($what) {
+    public static function deep_copy($what) {
         if (!(is_array($what) || is_object($what))) { return $what; } //will copy if primitive
         $json = JsonHelper::toString($what);
         $b_to_array = false;

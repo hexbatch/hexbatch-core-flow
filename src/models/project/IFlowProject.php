@@ -78,14 +78,14 @@ interface IFlowProject {
     public function get_flow_project_users() : array;
 
     public function get_admin_user(): ?FlowUser;
-    public function get_owner_user_guid() : string;
+    public function get_owner_user_guid() : ?string;
 
     public function get_read_me_bb_code_with_paths(): string;
     public function set_read_me(string $bb_code) : void;
     public function delete_project_directory() : void;
     public function get_html() : ?string;
 
-    public function get_project_directory(?bool &$b_already_created = false) : ?string;
+    public function get_project_directory() : ?string;
     public function get_files_directory() : ?string;
     public function get_resource_directory() : ?string;
     public function get_files_url() : string;

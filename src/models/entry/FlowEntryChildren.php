@@ -126,7 +126,7 @@ abstract class FlowEntryChildren extends FlowEntryFiles  {
         try {
            if ($b_save_children) {
                $db = static::get_connection();
-               if ($b_do_transaction) {$db->beginTransaction(); }
+               if ($b_do_transaction && !$db->inTransaction()) {$db->beginTransaction(); }
                foreach ($this->child_entries as $child_guid => $child) {
                    WillFunctions::will_do_nothing($child_guid);
                    $child->save_entry();

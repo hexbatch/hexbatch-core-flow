@@ -4,6 +4,7 @@ namespace app\models\project\levels;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\FlowEntryArchive;
+use app\models\entry\FlowEntryYaml;
 use app\models\project\exceptions\NothingToPullException;
 use app\models\project\exceptions\NothingToPushException;
 use app\models\project\FlowGitHistory;
@@ -13,7 +14,6 @@ use app\models\tag\brief\BriefCheckValidYaml;
 use app\models\tag\brief\BriefDiffFromYaml;
 use app\models\tag\brief\BriefUpdateFromYaml;
 use app\models\user\FlowUser;
-use Carbon\Carbon;
 use Exception;
 use InvalidArgumentException;
 use LogicException;
@@ -165,9 +165,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
      */
     public function commit_changes(string $commit_message,bool $b_commit = true,bool $b_log_message = false): void  {
 
-        if (!$this->are_files_dirty()) {
-            throw new NothingToPushException("No tracked files changed, will not try to push");
-        }
+
         if ($b_log_message) {
             static::get_logger()->debug(" Commit message",['message'=>$commit_message]);
         }
@@ -176,6 +174,10 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             try {
                 $old_head = $this->get_head_commit_hash();
                 $this->do_git_command("add .");
+
+                if (!$this->are_files_dirty()) {
+                    throw new NothingToPushException("No tracked files changed, will not try to push");
+                }
 
                 $this->do_git_command("commit  -m '$commit_message'");
                 if (isset($_SESSION[FlowUser::SESSION_USER_KEY])) {
@@ -422,7 +424,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
         $db = null;
         try {
             $db = static::get_connection();
-            $db->beginTransaction();
+            If(!$db->inTransaction()) {$db->beginTransaction(); }
 
             $db->update('flow_projects',[
                 'flow_project_type' => $this->flow_project_type,
@@ -439,7 +441,13 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             $tags = new BriefUpdateFromYaml($this);
             WillFunctions::will_do_nothing($tags); //for debugging
 
-            $db->commit();
+            //mark all ignored folders in the project directory
+            FlowEntryYaml::mark_invalid_folders_in_project_folder($this,true);
+
+            if ($db->inTransaction()) {
+                $db->commit();
+            }
+
 
 
         } catch (Exception $e) {
@@ -463,27 +471,9 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             if ($b_do_transaction && !$db->inTransaction()) { $db->beginTransaction();}
             parent::save(false);
 
-            $b_already_created = false;
-            $dir = $this->get_project_directory($b_already_created);
-            $make_first_commit = !$b_already_created;
-
-            $yaml_path = $dir . DIRECTORY_SEPARATOR . 'flow_project.yaml';
 
 
-
-            $yaml_array = [
-                'timestamp' => time(),
-                'flow_project_guid' => $this->flow_project_guid,
-                'title' => $this->flow_project_title,
-                'author' => $this->get_admin_user()->flow_user_name,
-                'human_date_time' => Carbon::now()->toIso8601String()
-            ];
-
-            $yaml = Yaml::dump($yaml_array);
-            $b_ok = file_put_contents($yaml_path,$yaml);
-            if ($b_ok === false) {throw new RuntimeException("Could not write to $yaml_path");}
-
-            if ($make_first_commit) {
+            if ($this->b_new_project) {
                 $commit_title = "First Commit";
                 $this->commit_changes($commit_title);
             }
@@ -508,24 +498,24 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
                 $commit_title_array[] = "Tags";
             }
 
-            if (empty($commit_title_array) && empty($commit_message_array)) {
-                return ; //nothing to commit
+            if (!empty($commit_title_array) || !empty($commit_message_array)) {
+                $commit_title = implode('; ',$commit_title_array);
+                $commit_body = implode('\n',$commit_message_array);
+
+                $commit_message_full =  "$commit_title\n\n$commit_body";
+
+                //if any ` in there, then escape them
+                $commit_message_full = str_replace("'","\'",$commit_message_full);
+
+
+                try {
+                    $this->commit_changes($commit_message_full);
+                } catch (NothingToPushException $no_push) {
+                    //ignore if no file changes
+                }
             }
 
-            $commit_title = implode('; ',$commit_title_array);
-            $commit_body = implode('\n',$commit_message_array);
 
-            $commit_message_full =  "$commit_title\n\n$commit_body";
-
-            //if any ` in there, then escape them
-            $commit_message_full = str_replace("'","\'",$commit_message_full);
-
-
-            try {
-                $this->commit_changes($commit_message_full);
-            } catch (NothingToPushException $no_push) {
-              //ignore if no file changes
-            }
 
 
             if ($b_do_transaction && $db->inTransaction()) { $db->commit();}
@@ -671,7 +661,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
      * @return FlowProjectGitSettings|null
      * @throws Exception
      */
-    protected function getGitExportSettings() : ?FlowProjectGitSettings {
+    protected function getGitExportSettings() : FlowProjectGitSettings {
         $settings =  $this->findGitSetting(IFlowProject::GIT_EXPORT_SETTING_NAME,$b_was_cached );
 
         if ($b_was_cached ) {
@@ -686,7 +676,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
      * @return FlowProjectGitSettings|null
      * @throws Exception
      */
-    protected function getGitImportSettings() : ?FlowProjectGitSettings {
+    protected function getGitImportSettings() : FlowProjectGitSettings {
         $settings =  $this->findGitSetting(IFlowProject::GIT_IMPORT_SETTING_NAME,$b_was_cached );
 
         if ($b_was_cached) {

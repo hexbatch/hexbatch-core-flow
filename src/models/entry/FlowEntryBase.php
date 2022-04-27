@@ -169,7 +169,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
             ];
 
             try {
-                if ($b_do_transaction) {
+                if ($b_do_transaction && !$db->inTransaction()) {
                     $db->beginTransaction();
                 }
                 if ($this->get_guid() && $this->get_id()) {
@@ -485,14 +485,13 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
      */
     public static function load(IFlowProject $project,array $only_these_guids = []) : array {
 
-        //todo scan all top level directories, see if yaml is in there, if not write .flow-ignored with human date
-        // for each of the valid yaml directories, return a list of guids
-
         $archive_list = [];
         $guid_list = $only_these_guids;
         if (empty($guid_list)) {
             $guid_list = FlowEntryArchive::discover_all_archived_entries($project);
         }
+        //mark all ignored folders in the project directory
+        FlowEntryYaml::mark_invalid_folders_in_project_folder($project,false);
         foreach ($guid_list as $guid) {
             $node = FlowEntry::create_entry($project,null);
             $node->set_guid($guid);

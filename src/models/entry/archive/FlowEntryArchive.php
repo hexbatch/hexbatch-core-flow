@@ -2,13 +2,13 @@
 
 namespace app\models\entry\archive;
 
-use app\hexlet\JsonHelper;
+use app\helpers\Utilities;
 use app\hexlet\WillFunctions;
 use app\models\base\SearchParamBase;
 use app\models\entry\FlowEntry;
 use app\models\entry\FlowEntrySearch;
 use app\models\entry\FlowEntrySearchParams;
-use app\models\entry\FlowEntrySummary;
+use app\models\entry\FlowEntryYaml;
 use app\models\entry\IFlowEntry;
 use app\models\multi\GeneralSearch;
 use app\models\multi\GeneralSearchParams;
@@ -18,7 +18,6 @@ use LogicException;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
-//todo change entry folders to use name with guid, make sure name of folder is in the entry.yaml, rename folder when name change
 final class FlowEntryArchive extends FlowEntryArchiveMembers {
 
     const ALL_FILES_YAML_NAME = 'entry-summary.yaml';
@@ -39,32 +38,13 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
      * @throws
      */
     public static function discover_all_archived_entries(IFlowProject $project) :array {
-        $b_already_created = false;
-        $project_directory = $project->get_project_directory($b_already_created);
-        $yaml_path = $project_directory. DIRECTORY_SEPARATOR . self::ALL_FILES_YAML_NAME;
-        $data_array = Yaml::parseFile($yaml_path);
-        $ret = [];
-        $blank = FlowEntry::create_entry($project,null);
-        foreach ($data_array as $data) {
-            try {
-                $node = new FlowEntrySummary($data);
-            } catch (Exception $whooo) {
-                FlowEntryArchive::get_logger()->warning("Could not calculate archive entry for record",['exception'=>$whooo]);
-                continue;
-            }
 
-            if ($node->guid) {
-                $blank->set_guid($node->guid);
-                $entry_folder_path = $blank->get_entry_folder();
-                if (is_readable($entry_folder_path)) {
-                    $ret[] = $node->guid;
-                } else {
-                    FlowEntryArchive::get_logger()->warning("[discover_all_archived_entries] Could not read the entry folder $entry_folder_path");
-                }
-            }
+        $found_from_folders = FlowEntryYaml::get_yaml_data_from_directory($project);
+        $ret = [];
+        foreach ($found_from_folders as $yaml_info) {
+            $ret[] = $yaml_info->getFlowEntryGuid();
         }
         return $ret;
-
     }
 
     /**
@@ -73,13 +53,9 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
      */
     public static function record_all_stored_entries(IFlowProject $project) : void {
 
-        $stuff = FlowEntrySummary::get_entry_summaries_for_project($project);
-        $pigs_in_space = JsonHelper::toString($stuff);
-        $stuff_serialized = JsonHelper::fromString($pigs_in_space);
-
-        $stuff_yaml = Yaml::dump($stuff_serialized);
-        $b_already_created = false;
-        $project_directory = $project->get_project_directory($b_already_created);
+        $stuff = FlowEntryYaml::get_yaml_data_from_database($project);
+        $stuff_yaml = Yaml::dump(Utilities::deep_copy($stuff));
+        $project_directory = $project->get_project_directory();
         $yaml_path = $project_directory. DIRECTORY_SEPARATOR . self::ALL_FILES_YAML_NAME;
         $b_ok = file_put_contents($yaml_path,$stuff_yaml);
         if ($b_ok === false) {throw new RuntimeException("Could not write to $yaml_path");}

@@ -5,10 +5,12 @@ use app\helpers\ProjectHelper;
 use app\hexlet\JsonHelper;
 use app\hexlet\RecursiveClasses;
 use app\models\project\IFlowProject;
+use Carbon\Carbon;
 use Exception;
 use InvalidArgumentException;
 use LogicException;
 use RuntimeException;
+use Symfony\Component\Yaml\Yaml;
 
 abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
 
@@ -157,7 +159,7 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
             parent::save(false);
 
 
-            $dir = $this->get_project_directory($b_already_created);
+            $dir = $this->get_project_directory();
 
 
             $read_me_path_bb = $dir . DIRECTORY_SEPARATOR . 'flow_project_readme_bb_code.bbcode';
@@ -176,6 +178,24 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
 
             $b_ok = file_put_contents($title_path,$this->flow_project_title);
             if ($b_ok === false) {throw new RuntimeException("Could not write to $title_path");}
+
+            $dir = $this->get_project_directory();
+
+            $yaml_path = $dir . DIRECTORY_SEPARATOR . 'flow_project.yaml';
+
+
+
+            $yaml_array = [
+                'timestamp' => time(),
+                'flow_project_guid' => $this->flow_project_guid,
+                'title' => $this->flow_project_title,
+                'author' => $this->get_admin_user()->flow_user_name,
+                'human_date_time' => Carbon::now()->toIso8601String()
+            ];
+
+            $yaml = Yaml::dump($yaml_array);
+            $b_ok = file_put_contents($yaml_path,$yaml);
+            if ($b_ok === false) {throw new RuntimeException("Could not write to $yaml_path");}
 
             if ($b_do_transaction && $db->inTransaction()) { $db->commit();}
         } catch (Exception $e) {
@@ -339,17 +359,14 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
     }
 
     /**
-     * @param bool $b_already_created optional, OUTREF, set to true if already created
      * @return string|null
      * @throws Exception
      */
-    public function get_project_directory(?bool &$b_already_created = false) : ?string {
+    public function get_project_directory() : ?string {
         if (empty($this->flow_project_guid) || empty($this->get_owner_user_guid())) {return null;}
         $check =  $this->get_projects_base_directory(). DIRECTORY_SEPARATOR .
             $this->get_owner_user_guid() . DIRECTORY_SEPARATOR . $this->flow_project_guid;
-        $b_already_created = true;
         if (!is_readable($check)) {
-            $b_already_created = false;
             $this->create_project_repo($check);
         }
         $real = realpath($check);
@@ -375,8 +392,9 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
                 throw new RuntimeException("Could not make a readable directory of $repo_path");
             }
         }
+        $git_ignore_template_path = HEXLET_BASE_PATH . '/src/models/project/repo/gitignore.txt';
         //have a directory, now need to add the .gitignore
-        $ignore = file_get_contents(__DIR__. DIRECTORY_SEPARATOR . 'repo'. DIRECTORY_SEPARATOR . 'gitignore.txt');
+        $ignore = file_get_contents($git_ignore_template_path);
         file_put_contents($repo_path.DIRECTORY_SEPARATOR.'.gitignore',$ignore);
     }
 

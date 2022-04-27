@@ -221,7 +221,7 @@ class TagPages extends BasePages
                     }
                 }
 
-                $tag->save(true);
+                $tag->save();
                 $saved_tag = $tag->clone_refresh();
 
                 $call->project->do_tag_save_and_commit();

@@ -3,6 +3,7 @@
 namespace app\models\user;
 use app\models\base\FlowBase;
 use app\models\project\FlowProjectUser;
+use Delight\Auth\AuthError;
 use Delight\Auth\EmailNotVerifiedException;
 use Delight\Auth\InvalidEmailException;
 use Delight\Auth\InvalidPasswordException;
@@ -152,9 +153,15 @@ class FlowUser extends FlowBase implements JsonSerializable {
     }
 
     /**
-     * @throws Exception
+     * @param bool $b_do_transaction
+     * @throws EmailNotVerifiedException
+     * @throws InvalidEmailException
+     * @throws NotLoggedInException
+     * @throws TooManyRequestsException
+     * @throws UserAlreadyExistsException
+     * @throws AuthError
      */
-    public function save() {
+    public function save(bool $b_do_transaction = true) {
         $db = null;
 
         $b_match = static::check_valid_title($this->flow_user_name);
@@ -166,7 +173,7 @@ class FlowUser extends FlowBase implements JsonSerializable {
         }
         try {
             $db = static::get_connection();
-            $db->beginTransaction();
+            if ($b_do_transaction && !$db->inTransaction()) {$db->beginTransaction();}
             if ($this->flow_user_guid) {
 
 
@@ -212,8 +219,10 @@ class FlowUser extends FlowBase implements JsonSerializable {
                     'base_user_id' => $this->base_user_id
                 ]);
             }
+            if ($b_do_transaction && $db->inTransaction()) {
+                $db->commit();
+            }
 
-            $db->commit();
 
 
         } catch (Exception $e) {

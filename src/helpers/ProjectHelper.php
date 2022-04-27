@@ -333,7 +333,7 @@ class ProjectHelper extends BaseHelper {
      * @return string|null
      * @throws Exception
      */
-    public function stub_from_file_paths(IFlowProject $project, string $text) : string {
+    public function stub_from_file_paths(IFlowProject $project, ?string $text) : ?string {
         if (!$text) {return $text;}
         $start_of_resources_url = $project->get_resource_url() . '/';
 
@@ -354,7 +354,7 @@ class ProjectHelper extends BaseHelper {
      * @param string|null $text
      * @return string|null
      */
-    public function stub_from_file_paths_calculated(string $owner_user_guid,string $flow_project_guid, string $text) : string {
+    public function stub_from_file_paths_calculated(string $owner_user_guid,string $flow_project_guid, ?string $text) : ?string {
         if (!$text) {return $text;}
         $start_of_resources_url = FlowProjectFileLevel::calculate_resource_url($owner_user_guid,$flow_project_guid) . '/';
         $text = str_replace($start_of_resources_url,IFlowProject::RESOURCE_PATH_STUB,$text);
@@ -370,7 +370,7 @@ class ProjectHelper extends BaseHelper {
      * @return string|null
      * @throws Exception
      */
-    public function stub_to_file_paths(IFlowProject $project, string $text) : string {
+    public function stub_to_file_paths(IFlowProject $project, ?string $text) : ?string {
         if (!$text) {return $text;}
         $start_of_resources_url = $project->get_resource_url() . '/';
         $start_of_files_url = $project->get_files_url() . '/';
@@ -385,7 +385,7 @@ class ProjectHelper extends BaseHelper {
      * @param string|null $text
      * @return string|null
      */
-    public function stub_to_file_paths_calculated(string $owner_user_guid,string $flow_project_guid, string $text) : string {
+    public function stub_to_file_paths_calculated(string $owner_user_guid,string $flow_project_guid, ?string $text) : ?string {
 
         if (!$text) {return $text;}
         $start_of_resources_url = FlowProjectFileLevel::calculate_resource_url($owner_user_guid,$flow_project_guid) . '/';

@@ -50,7 +50,7 @@ abstract class FlowProjectDataLevel extends FlowBase implements JsonSerializable
     protected ?string $old_flow_project_blurb;
     protected ?string $old_flow_project_readme_bb_code;
 
-
+    protected bool $b_new_project;
 
 
 
@@ -60,7 +60,7 @@ abstract class FlowProjectDataLevel extends FlowBase implements JsonSerializable
      * @throws Exception
      */
     public function __construct($object=null){
-
+        $this->b_new_project = false;
 
         if (empty($object)) {
             $this->admin_flow_user_id = null;
@@ -89,6 +89,9 @@ abstract class FlowProjectDataLevel extends FlowBase implements JsonSerializable
         $this->old_flow_project_blurb = $this->flow_project_blurb;
         $this->old_flow_project_readme_bb_code = $this->flow_project_readme_bb_code;
         $this->old_flow_project_title = $this->flow_project_title;
+        if (!$this->id) {
+            $this->b_new_project = true;
+        }
     }
 
 
@@ -138,7 +141,7 @@ abstract class FlowProjectDataLevel extends FlowBase implements JsonSerializable
 
 
             $db = static::get_connection();
-            if ($b_do_transaction) {
+            if ($b_do_transaction && !$db->inTransaction()) {
                 $db->beginTransaction();
             }
 
@@ -155,7 +158,7 @@ abstract class FlowProjectDataLevel extends FlowBase implements JsonSerializable
                 ],[
                     'id' => $this->id
                 ]);
-
+                $this->b_new_project = false;
 
 
             } else {
@@ -170,6 +173,7 @@ abstract class FlowProjectDataLevel extends FlowBase implements JsonSerializable
                     'flow_project_readme_bb_code' => $this->flow_project_readme_bb_code,
                 ]);
                 $this->id = $db->lastInsertId();
+                $this->b_new_project = true;
             }
 
             if (!$this->flow_project_guid) {

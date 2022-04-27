@@ -115,10 +115,10 @@ abstract class FlowProjectSettingLevel extends FlowProjectTagLevel {
     /**
      * @param string $setting_name
      * @param bool $was_cached
-     * @return FlowProjectGitSettings|null
+     * @return FlowProjectGitSettings
      * @throws Exception
      */
-    protected function findGitSetting(string $setting_name, ?bool &$was_cached) : ?FlowProjectGitSettings {
+    protected function findGitSetting(string $setting_name, ?bool &$was_cached) : FlowProjectGitSettings {
         if (array_key_exists($setting_name,$this->setting_cache)) {
             $was_cached = true;
             return $this->setting_cache[$setting_name];
@@ -126,8 +126,9 @@ abstract class FlowProjectSettingLevel extends FlowProjectTagLevel {
         $was_cached = false;
         $maybe_standard = $this->get_setting_value($setting_name);
         if (!$maybe_standard) {
-            $this->setting_cache[$setting_name] = null;
-            return new FlowProjectGitSettings();
+            $node = new FlowProjectGitSettings();
+            $this->setting_cache[$setting_name] = $node;
+            return $node;
         }
         $da_truthful_data = $maybe_standard->getStandardValue();
         $ret =  new FlowProjectGitSettings($da_truthful_data);

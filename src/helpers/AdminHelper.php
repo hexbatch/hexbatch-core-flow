@@ -14,7 +14,6 @@ use DirectoryIterator;
 use Exception;
 use PDO;
 use Psr\Http\Message\ServerRequestInterface;
-use Slim\Routing\RouteContext;
 
 class AdminHelper extends BaseHelper {
 
@@ -102,6 +101,11 @@ class AdminHelper extends BaseHelper {
      * @throws Exception
      */
     public  function admin_test(ServerRequestInterface $request) : array  {
+
+        $tests = ['a','b'];
+        foreach ($tests as $test) {
+            print_r($test,true);
+        }
         $path = "/var/www/current";
         $dir = new DirectoryIterator($path);
         $ret = [];

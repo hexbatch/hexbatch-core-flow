@@ -36,7 +36,7 @@ class StandardPages extends BasePages
             $db = $this->get_connection();
 
             try {
-                $db->beginTransaction();
+                if(!$db->inTransaction()){$db->beginTransaction();}
                 $deleted_attributes = [];
                 foreach ($tag->attributes as $existing_attribute) {
                     if (isset($valid_update[$existing_attribute->getTagAttributeName()])) {
@@ -44,9 +44,9 @@ class StandardPages extends BasePages
                     }
                 }
                 $tag->save(false,true);
-                $db->commit();
+                if ($db->inTransaction()) {$db->commit();}
             } catch (Exception $e) {
-                $db->rollBack();
+                if ($db->inTransaction()) {$db->rollBack();}
                 throw $e;
             }
 

@@ -28,26 +28,28 @@ final class FlowEntry extends FlowEntryMembers  {
         try {
             $old_guid = $this->get_guid();
             $db = FlowEntry::get_connection();
-            if ($b_do_transaction) {
+            if ($b_do_transaction && !$db->inTransaction()) {
                 $db->beginTransaction();
             }
             parent::save_entry(false, $b_save_children);
             $this->on_after_save_entry();
-            if ($b_do_transaction) {
-                $db->commit();
-            }
+
             $title = $this->get_title();
             $action = "Updated";
             if (empty($old_guid)) {
                 $action = "Created";
             }
-            if ($b_do_transaction) {
+            if ($b_do_transaction && $db->inTransaction()) {
                 try {
                     $this->get_project()->commit_changes("$action Entry $title");
                 } catch (NothingToPushException $no_push) {
                     //ignore if no file changes
                 }
 
+            }
+
+            if ($b_do_transaction && $db->inTransaction()) {
+                $db->commit();
             }
 
         } catch (Exception $e) {
