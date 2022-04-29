@@ -8,10 +8,7 @@ use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\entry\FlowEntryYaml;
 use app\models\entry\IFlowEntry;
-use Carbon\Carbon;
 use JsonSerializable;
-use RuntimeException;
-use Symfony\Component\Yaml\Yaml;
 
 abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable, IFlowEntryArchive {
     
@@ -123,22 +120,7 @@ abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable
      * Writes the entry, and its children , to the archive
      */
     public function write_archive() : void {
-        //create folder if not existing
-        $path = $this->get_entry()->get_entry_folder();
-        if (!is_readable($path)) {
-            $b_ok = mkdir($path,0777,false);
-            if (!$b_ok) {
-                throw new RuntimeException("Could not create entry base folder of  $path");
-            }
-        }
-
-
-        $stuff = new FlowEntryYaml($this->get_entry());
-        $stuff_yaml = Yaml::dump($stuff->toArray());
-
-        $yaml_path = $path. DIRECTORY_SEPARATOR . static::BASE_YAML_FILE_NAME;
-        $b_ok = file_put_contents($yaml_path,$stuff_yaml);
-        if ($b_ok === false) {throw new RuntimeException("Could not write to $yaml_path");}
+        FlowEntryYaml::write_yaml_entry($this->get_entry());
     }
 
 
@@ -146,47 +128,13 @@ abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable
      * sets any data found in archive into this, over-writing data in entry object
      */
     public function read_archive() : void  {
-        $path = $this->get_entry()->get_entry_folder();
-        $yaml_path = $path. DIRECTORY_SEPARATOR . static::BASE_YAML_FILE_NAME;
-        if (!is_readable($yaml_path)) {
-            throw new RuntimeException("Could not read $yaml_path");
-        }
 
-        $saved = Yaml::parseFile($yaml_path);
-        foreach ($saved as $key => $value) {
-
-            switch ($key) {
-                case 'flow_entry_guid': {
-                    $this->get_entry()->set_guid($value);
-                    break;
-                }
-                case 'flow_entry_parent_guid': {
-                    $this->get_entry()->set_parent_guid($value);
-                    break;
-                }
-                case 'flow_project_guid': {
-                    $this->get_entry()->set_project_guid($value);
-                    break;
-                }
-                case 'entry_created_at_ts': {
-                    $this->get_entry()->set_created_at_ts($value);
-                    break;
-                }
-                case 'entry_updated_at_ts': {
-                    $this->get_entry()->set_updated_at_ts($value);
-                    break;
-                }
-
-                case 'child_entries':
-                case 'entry_name':
-                case 'human_date_time': {
-                    break;
-                }
-                default: {
-                    throw new RuntimeException("read_archive: Did not recognize the key of $key");
-                }
-            }
-        }
+        $yaml_entry = FlowEntryYaml::read_yaml_entry($this->get_entry());
+        $this->get_entry()->set_guid($yaml_entry->get_guid());
+        $this->get_entry()->set_parent_guid($yaml_entry->get_project_guid());
+        $this->get_entry()->set_project_guid($yaml_entry->get_project_guid());
+        $this->get_entry()->set_created_at_ts($yaml_entry->get_created_at_ts());
+        $this->get_entry()->set_updated_at_ts($yaml_entry->get_updated_at_ts());
     }
 
 

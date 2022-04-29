@@ -473,12 +473,13 @@ class FlowTag extends FlowBase implements JsonSerializable {
     /**
      * @param string|null $attribute_name
      * @param FlowTagAttribute|null $attribute
+     * @param bool $b_do_transaction
      * @return $this|FlowTag
      * @throws Exception
      */
-    public  function save_tag_return_clones(?string $attribute_name, FlowTagAttribute &$attribute = null): FlowTag
+    public  function save_tag_return_clones(?string $attribute_name, FlowTagAttribute &$attribute = null,bool $b_do_transaction=false): FlowTag
     {
-        $this->save(true,true);
+        $this->save($b_do_transaction,true);
         $altered_tag = $this->clone_refresh();
 
         if ($attribute_name) {

@@ -14,9 +14,10 @@ use DirectoryIterator;
 use InvalidArgumentException;
 use JsonSerializable;
 use PDO;
+use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
-class FlowEntryYaml extends FlowBase implements JsonSerializable {
+class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadBasicProperties {
 
     const FILENAME_TO_MARK_INVALID = '.flow-ignored';
 
@@ -29,15 +30,57 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable {
     protected ?string $human_date_time;
     protected ?string $folder_hash;
     /**
-     * @var FlowEntryYaml[] $child_entries
+     * @var FlowEntryYaml[] $dese_child_entries
      */
-    protected array $child_entries = [];
+    protected array $dese_child_entries = [];
 
     protected ?string $folder_path;
 
+    public function get_parent_guid(): ?string {
+       return $this->flow_entry_parent_guid ;
+    }
+
+    public function get_parent_id(): ?int{
+        return null ;
+    }
+
+    public function get_created_at_ts(): ?int {
+        return $this->entry_created_at_ts ;
+    }
+
+    public function get_updated_at_ts(): ?int {
+        return $this->entry_updated_at_ts ;
+    }
+
+    public function get_id(): ?int {
+        return null ;
+    }
+
+    public function get_guid(): ?string {
+        return $this->flow_entry_guid ;
+    }
+
+    public function get_title(): ?string {
+        return $this->entry_name ;
+    }
+
+    public function get_blurb(): ?string {
+        return null ;
+    }
+
+    public function get_project_guid(): ?string {
+        return $this->flow_project_guid ;
+    }
+
+    public function get_project_id(): ?int {
+        return null ;
+    }
+
+
+
     public function __construct($object) {
-        $this->folder_path = null;
         $this->folder_hash = null;
+        $this->folder_path = null;
         if (is_array($object)) {
             $object = Utilities::convert_to_object($object);
         }
@@ -55,17 +98,17 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable {
             $this->entry_created_at_ts = $object->get_created_at_ts() ;
             $this->entry_updated_at_ts = $object->get_updated_at_ts() ;
             $this->human_date_time = Carbon::now()->toIso8601String() ;
-            $this->child_entries = [] ;
+            $this->dese_child_entries = [] ;
             foreach ($object->get_children() as $child_entry) {
-                $this->child_entries[] = new static($child_entry);
+                $this->dese_child_entries[] = new static($child_entry);
             }
-            $this->folder_path = realpath(dirname($object->get_entry_folder()));
+            $this->folder_path = $object->get_entry_folder();
         } else {
             foreach ($object as $key => $val) {
                 if (property_exists($this,$key)) {
                     if ($key === 'child_entries') {
                         foreach ($val as $child_info) {
-                            $this->child_entries[] = new static($child_info);
+                            $this->dese_child_entries[] = new static($child_info);
                         }
                     } else {
                         $this->$key = $val;
@@ -75,22 +118,12 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable {
         }
 
 
-
-
-
         if (empty($this->entry_updated_at_ts)) {
             $this->entry_updated_at_ts = $this->entry_created_at_ts;
         }
         $this->setFolderPath($this->folder_path);
     }
 
-    /**
-     * @return string|null
-     */
-    public function getFlowEntryGuid(): ?string
-    {
-        return $this->flow_entry_guid;
-    }
 
     /**
      * @param string|null $folder_path
@@ -112,6 +145,31 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable {
 
     public function get_folder_path() : ?string { return $this->folder_path;}
 
+    public static function read_yaml_entry(IFlowEntry $e) : FlowEntryYaml {
+        $yaml_path = $e->get_entry_folder(). DIRECTORY_SEPARATOR .  IFlowEntryArchive::BASE_YAML_FILE_NAME;
+        if (!is_readable($yaml_path)) {
+            throw new RuntimeException("[read_yaml_entry] Could not read $yaml_path");
+        }
+        $goods = Yaml::parseFile($yaml_path);
+        $node = new static($goods);
+        $node->setFolderPath($yaml_path);
+        if (!$node->is_valid()) {
+            throw new RuntimeException("[read_yaml_entry] Cannot read enough information from the yaml path");
+        }
+        return $node;
+    }
+
+    public static function write_yaml_entry(IFlowEntry $e) : FlowEntryYaml {
+
+        $stuff = new FlowEntryYaml($e);
+        $stuff_yaml = Yaml::dump($stuff->toArray());
+
+        $yaml_path = $e->get_entry_folder(). DIRECTORY_SEPARATOR . IFlowEntryArchive::BASE_YAML_FILE_NAME;
+        $b_ok = file_put_contents($yaml_path,$stuff_yaml);
+        if ($b_ok === false) {throw new RuntimeException("[write_yaml_entry] Could not write to $yaml_path");}
+        return $stuff;
+    }
+
     /**
      * @param IFlowProject $project
      * @return FlowEntryYaml[]
@@ -129,15 +187,15 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable {
         $pattern = "/.+($yaml_name)\$/";
         $yaml_found =  RecursiveClasses::rsearch_for_paths($folder_path,$pattern);
         foreach ($yaml_found as $yaml_path) {
-            if ($folder_path === dirname($yaml_path) ) {
+            if ($folder_path === dirname($yaml_path,2) ) {
                 $goods = Yaml::parseFile($yaml_path);
                 $node = new static($goods);
                 $node->setFolderPath($yaml_path);
                 if ($node->is_valid()) {
-                    if (!isset($guid_hash[$node->getFlowEntryGuid()])) {
-                        $guid_hash[$node->getFlowEntryGuid()] = [];
+                    if (!isset($guid_hash[$node->get_guid()])) {
+                        $guid_hash[$node->get_guid()] = [];
                     }
-                    $guid_hash[$node->getFlowEntryGuid()][] = $node;
+                    $guid_hash[$node->get_guid()][] = $node;
                 }
             }
         }
@@ -171,10 +229,15 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable {
         $db = static::get_connection();
         $args = [$project->get_id()];
         $sql = "SELECT 
-                    e.flow_entry_title as title,
-                    UNIX_TIMESTAMP(e.updated_at) as updated_at_ts,
-                    HEX(e.flow_entry_guid) as guid
-                FROM flow_entries e WHERE e.flow_project_id = ?";
+                    e.id as flow_entry_id,
+                    e.flow_entry_title as flow_entry_title,
+                    e.created_at_ts as entry_created_at_ts,
+                    UNIX_TIMESTAMP(e.updated_at) as entry_updated_at_ts,
+                    HEX(e.flow_entry_guid) as flow_entry_guid,
+                    HEX(fp.flow_project_guid) as flow_project_guid
+                FROM flow_entries e 
+                INNER JOIN flow_projects fp on e.flow_project_id = fp.id
+                WHERE e.flow_project_id = ? AND e.flow_entry_parent_id IS NULL";
 
         $res = $db->safeQuery($sql, $args, PDO::FETCH_OBJ);
         $entries = [];
@@ -201,10 +264,12 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable {
         if (!$folder_path) {
             throw new InvalidArgumentException("[scan_project_folder] Project folder cannot be found or made");
         }
+
         //make list of valid directories
         $valid = [
             $project->get_resource_directory(),
             $project->get_files_directory(),
+            $project->get_project_directory() . DIRECTORY_SEPARATOR . '.git'
         ];
 
         if ($b_use_db) {
@@ -230,7 +295,7 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable {
         $invalid = [];
         foreach ($dir as $fileinfo) {
             if ($fileinfo->isDir() && !$fileinfo->isDot()) {
-                $maybe_path =   $fileinfo->getFilename();
+                $maybe_path =   $fileinfo->getPathname();
                 if (!in_array($maybe_path,$valid)) {
                     $invalid[] = $maybe_path;
                 }
@@ -259,17 +324,21 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable {
             'entry_updated_at_ts' => $this->entry_updated_at_ts,
             'human_date_time' => $this->human_date_time,
             'folder_hash' => $this->folder_hash,
-            'child_entries' => $this->child_entries,
+            'child_entries' => $this->dese_child_entries,
         ];
     }
 
     /**
-     * @param string $directory
+     * @param string|null $directory
      * @return string|null
      * @author https://jonlabelle.com/snippets/view/php/generate-md5-hash-for-directory
      */
-    protected function md5_hash_for_directory(string $directory) : ?string
+    protected function md5_hash_for_directory(?string $directory) : ?string
     {
+        if (empty($directory)) {
+            return null;
+        }
+
         if (! is_dir($directory))
         {
             return null;
@@ -299,4 +368,6 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable {
         if (empty($ret)) {$ret = null;}
         return $ret;
     }
+
+
 }

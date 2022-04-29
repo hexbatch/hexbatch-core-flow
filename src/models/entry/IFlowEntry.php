@@ -6,7 +6,7 @@ use app\models\entry\public_json\IFlowEntryJson;
 use app\models\project\IFlowProject;
 use Exception;
 
-Interface IFlowEntry {
+Interface IFlowEntry extends IFlowEntryReadBasicProperties {
 
     const LENGTH_ENTRY_TITLE = 40;
     const LENGTH_ENTRY_BLURB = 120;
@@ -15,28 +15,13 @@ Interface IFlowEntry {
     public function get_max_title_length() : int;
     public function get_max_blurb_length() : int;
 
-    public function get_parent_guid() : ?string;
-    public function get_parent_id() : ?int;
     public function get_parent() : ?IFlowEntry;
-
-    public function get_created_at_ts() : ?int;
-    public function get_updated_at_ts() : ?int;
-
-    public function get_id() : ?int;
-    public function get_guid() : ?string;
-    public function get_title() : ?string;
-    public function get_blurb() : ?string;
-
+    public function get_project() : IFlowProject;
 
     public function get_bb_code() : ?string;
     public function get_html() : ?string;
 
     public function get_text() : ?string;
-
-
-    public function get_project_guid() : ?string;
-    public function get_project_id() : ?int;
-    public function get_project() : IFlowProject;
 
     /**
      * @return string[]

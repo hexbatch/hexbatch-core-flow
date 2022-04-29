@@ -5,6 +5,7 @@ use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\FlowEntryArchive;
 use app\models\entry\FlowEntryYaml;
+use app\models\project\exceptions\FlowProjectGitException;
 use app\models\project\exceptions\NothingToPullException;
 use app\models\project\exceptions\NothingToPushException;
 use app\models\project\FlowGitHistory;
@@ -314,7 +315,9 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             throw new RuntimeException("Export Repo Branch not set");
         }
 
-        if ($this->get_head_commit_hash() === $this->get_push_head_commit_hash()) {return [];}
+        if ($this->get_head_commit_hash() === $this->get_push_head_commit_hash()) {
+            return [];
+        }
 
         $push_remote_name = static::PUSH_REMOTE_NAME;
         $command = sprintf("push -u $push_remote_name %s",$push_settings->getGitBranch());
@@ -378,8 +381,10 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             $this->set_db_from_file_state();
         } catch (Exception $e) {
             //do not use commit just imported, and remove any changes to files
-            if ($old_head !== $new_head) {
+            if ($old_head !== $new_head) {//todo see what is up with these two numbers?
                 $this->reset_project_repo_files($old_head);
+            } else {
+                $this->reset_project_repo_files();
             }
             throw $e;
         }
@@ -409,7 +414,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
         if (!$valid_tags->is_valid()) {
             throw new InvalidArgumentException("tags.yaml does not have minimal information for each thing in it: \n<br>".
                 implode("\n<br>",$valid_tags->issues));
-        }
+        } //todo add check for entry integrity
     }
 
     /**
@@ -541,9 +546,25 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             $branch = $git_push_settings->getGitBranch();
             if (!$branch) {return null;}
             $push_remote_name = static::PUSH_REMOTE_NAME;
-            return $this->do_git_command("git rev-parse $push_remote_name/$branch HEAD");
-        } catch (Exception $e) {
-            return '';
+            return $this->do_git_command("rev-parse $push_remote_name/$branch");
+        }
+        catch (FlowProjectGitException $e) {
+            try {
+                $git_pull_settings = $this->getGitExportSettings();
+                $git_url = $git_pull_settings->getGitUrl();
+                if (!$git_url) {return null;}
+                $branch = $git_pull_settings->getGitBranch();
+                if (!$branch) {return null;}
+                return $this->do_git_command("ls-remote $git_url $branch | awk '{ print $1}'");
+
+            } catch (Exception $f) {
+                static::get_logger()->error("cannot get push head " . $f->getMessage());
+                throw $e;
+            }
+
+        } catch (Exception $g) {
+            static::get_logger()->error("cannot get push head " . $g->getMessage());
+            throw $g;
         }
     }
 
@@ -560,9 +581,26 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             if (!$branch) {return null;}
 
             $remote_name = static::IMPORT_REMOTE_NAME;
-            return $this->do_git_command("git rev-parse $remote_name/$branch HEAD");
-        } catch (Exception $e) {
-            return '';
+            return $this->do_git_command("rev-parse $remote_name/$branch");
+        }
+
+        catch (FlowProjectGitException $e) {
+            try {
+                $git_pull_settings = $this->getGitImportSettings();
+                $git_url = $git_pull_settings->getGitUrl();
+                if (!$git_url) {return null;}
+                $branch = $git_pull_settings->getGitBranch();
+                if (!$branch) {return null;}
+                return $this->do_git_command("ls-remote $git_url $branch | awk '{ print $1}'");
+
+            } catch (Exception $f) {
+                static::get_logger()->error("cannot get push head " . $f->getMessage());
+                throw $e;
+            }
+
+        } catch (Exception $g) {
+            static::get_logger()->error("cannot get push head " . $g->getMessage());
+            throw $g;
         }
     }
 
@@ -575,7 +613,8 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
         try {
             return $this->do_git_command('rev-parse HEAD');
         } catch (Exception $e) {
-            return '';
+            static::get_logger()->error("cannot get our head " . $e->getMessage());
+            throw $e;
         }
     }
 

@@ -51,5 +51,15 @@ div#flow-history-area ul.flow-history-file-list li span.flow-commit-body {
     background: #eeefff;
 }
 
+div.flow-import-export-settings .list-group-item.git-repo {
+    color: revert;
+    background-color: revert;
+}
+
+div.flow-import-export-settings .list-group-item.da-notes {
+    color: revert;
+    background-color: revert;
+}
+
 
 

@@ -141,7 +141,7 @@ function flow_tag_show_editor(tag,
                         toggle_action_spinner(me, 'normal');
                         my_swal.fire(
                             'Oh No!',
-                            'The tag could not be deleted \n<br> ' + ret.message,
+                            'The tag could not change its parent \n<br> ' + ret.message,
                             'error'
                         )
                     })
@@ -225,7 +225,7 @@ function flow_tag_show_editor(tag,
                 editing_div.find('.flow-edit-tag-attribute-content').removeClass('show active');
                 editing_div.find('.flow-edit-tag-applied-content').addClass('show active');
             } else if (that.hasClass('flow-edit-tag-standard-tab')) {
-                triggers.applied.show();
+                triggers.standards.show();
                 editing_div.find('.flow-edit-tag-standard-content').addClass('show active');
                 editing_div.find('.flow-edit-tag-attribute-content').removeClass('show active');
                 editing_div.find('.flow-edit-tag-applied-content').removeClass('show active');

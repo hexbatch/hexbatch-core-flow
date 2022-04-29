@@ -4,6 +4,7 @@ namespace app\models\project;
 
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\IFlowEntryArchive;
+use app\models\entry\FlowEntryYaml;
 use Exception;
 
 class FlowGitFile {
@@ -77,6 +78,7 @@ class FlowGitFile {
         if (strpos($this->file,IFlowEntryArchive::BLURB_FILE_NAME) !== false) {return 'Entry Blurb';}
         if (strpos($this->file,IFlowEntryArchive::BB_CODE_FILE_NAME) !== false) {return 'Entry BB Code';}
         if (strpos($this->file,IFlowEntryArchive::BASE_YAML_FILE_NAME) !== false) {return 'Entry Yaml';}
+        if (strpos($this->file,FlowEntryYaml::FILENAME_TO_MARK_INVALID) !== false) {return 'Marked Ignored';}
         return "Other Entry File";
     }
 

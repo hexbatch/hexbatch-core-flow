@@ -76,7 +76,7 @@ abstract class FlowEntryChildren extends FlowEntryFiles  {
     public function get_children_guids(): array {
 
         $ret = [];
-        array_walk($this->child_guids,
+        array_walk($this->child_entries,
 
             function(IFlowEntry $x)  use(&$ret)
             {
@@ -91,7 +91,7 @@ abstract class FlowEntryChildren extends FlowEntryFiles  {
      */
     public function get_children_ids() : array {
         $ret = [];
-        array_walk($this->child_guids,
+        array_walk($this->child_entries,
 
             function(IFlowEntry $x)  use(&$ret)
             {

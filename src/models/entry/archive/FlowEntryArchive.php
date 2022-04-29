@@ -30,22 +30,6 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
         return new FlowEntryArchive($entry);
     }
 
-    /**
-     * reads a yaml file at the project root that is a list of all the stored entrees with the guid and title
-     * verifies that the folders exist, and return the guid strings
-     * @param IFlowProject $project
-     * @return string[]
-     * @throws
-     */
-    public static function discover_all_archived_entries(IFlowProject $project) :array {
-
-        $found_from_folders = FlowEntryYaml::get_yaml_data_from_directory($project);
-        $ret = [];
-        foreach ($found_from_folders as $yaml_info) {
-            $ret[] = $yaml_info->getFlowEntryGuid();
-        }
-        return $ret;
-    }
 
     /**
      * @param IFlowProject $project

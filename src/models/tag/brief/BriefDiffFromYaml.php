@@ -216,9 +216,6 @@ class BriefDiffFromYaml {
             $tag = $this->brief_tag_map[$app->flow_tag_guid];
             $tag_name_to_use = $tag->new_name ?? $tag->flow_tag_name;
             $tagged_guid = $app->get_tagged_guid();
-            if (!array_key_exists($tagged_guid,$target_map)) {
-                throw new LogicException("[get_changed_applied_summary_line:removed] target guid $tagged_guid is not in map ");
-            }
             $target_name = $target_map[$tagged_guid]->title;
             $target_type = $target_map[$tagged_guid]->type;
             $changes[] = "Removed applied $tag_name_to_use from $target_type $target_name";

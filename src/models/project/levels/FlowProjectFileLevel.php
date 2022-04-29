@@ -4,6 +4,7 @@ namespace app\models\project\levels;
 use app\helpers\ProjectHelper;
 use app\hexlet\JsonHelper;
 use app\hexlet\RecursiveClasses;
+use app\models\entry\FlowEntryYaml;
 use app\models\project\IFlowProject;
 use Carbon\Carbon;
 use Exception;
@@ -196,6 +197,9 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
             $yaml = Yaml::dump($yaml_array);
             $b_ok = file_put_contents($yaml_path,$yaml);
             if ($b_ok === false) {throw new RuntimeException("Could not write to $yaml_path");}
+
+            //mark all ignored folders in the project directory
+            FlowEntryYaml::mark_invalid_folders_in_project_folder($this,true);
 
             if ($b_do_transaction && $db->inTransaction()) { $db->commit();}
         } catch (Exception $e) {

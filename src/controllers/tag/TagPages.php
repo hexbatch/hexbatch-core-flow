@@ -280,6 +280,10 @@ class TagPages extends BasePages
                 if (property_exists($call->args,'flow_tag_parent')) {
                     unset($call->args->flow_tag_parent);
                 }
+
+                if (property_exists($call->args,'flow_project')) {
+                    unset($call->args->flow_project); //gui passes it in as a standard object
+                }
                 $baby_steps = new FlowTag($call->args);
                 $baby_steps->flow_project_id = $call->project->get_id();
                 $tag = $baby_steps->clone_with_missing_data();
