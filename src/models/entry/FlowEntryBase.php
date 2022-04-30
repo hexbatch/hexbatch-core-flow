@@ -25,6 +25,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     public function get_max_title_length() : int { return static::LENGTH_ENTRY_TITLE;}
     public function get_max_blurb_length() : int { return static::LENGTH_ENTRY_BLURB;}
 
+    public function get_entry() : IFlowEntry {return $this;}
 
     protected ?int $flow_entry_id;
     protected ?int $flow_entry_parent_id;
@@ -490,7 +491,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
 
 
         foreach ($found_from_folders as $found) {
-            $node = FlowEntry::create_entry($project,$found); //todo issue when getting child from this yaml object
+            $node = FlowEntry::create_entry($project,$found);
             $archive_list[] = FlowEntryArchive::create_archive($node);
         }
         $mutex = new FlockMutex(fopen(__FILE__, "r"));

@@ -123,7 +123,7 @@ interface IFlowProject {
     public function raw_history(): array;
     public function count_total_public_history(bool $b_refresh= false) : int;
 
-    public function get_head_commit_hash() : string;
+    public function get_head_commit_hash() : ?string;
     public function get_git_status(): array;
     public function do_git_command( string $command,bool $b_include_git_word = true,?string $pre_command = null) : string;
 

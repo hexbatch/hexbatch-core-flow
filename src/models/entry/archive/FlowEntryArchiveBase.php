@@ -108,10 +108,15 @@ abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable
      * @throws
      */
     public function delete_archive() : void {
-        $path = $this->get_entry()->get_entry_folder();
+        $path = $this->get_entry()->get_calculated_entry_folder();
         if (!is_readable($path)) {
-            static::get_logger()->warning("Could not delete entry base folder of $path because it does not exist");
-            return;
+            static::get_logger()->warning("Could not find calculated entry base folder of $path ");
+            $path = $this->get_entry()->deduce_existing_entry_folder();
+            if (!is_readable($path)) {
+                static::get_logger()->warning("Could not find entry base folder of $path ");
+                return;
+            }
+
         }
         RecursiveClasses::rrmdir($path);
     }
@@ -131,7 +136,7 @@ abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable
 
         $yaml_entry = FlowEntryYaml::read_yaml_entry($this->get_entry());
         $this->get_entry()->set_guid($yaml_entry->get_guid());
-        $this->get_entry()->set_parent_guid($yaml_entry->get_project_guid());
+        $this->get_entry()->set_parent_guid($yaml_entry->get_parent_guid());
         $this->get_entry()->set_project_guid($yaml_entry->get_project_guid());
         $this->get_entry()->set_created_at_ts($yaml_entry->get_created_at_ts());
         $this->get_entry()->set_updated_at_ts($yaml_entry->get_updated_at_ts());

@@ -152,7 +152,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
         if (empty($commit_hash)) {
             $commit_part = '';
         } else {
-            $commit_part = "";
+            $commit_part = $commit_hash;
         }
         $this->do_git_command("reset --hard $commit_part");
     }
@@ -193,7 +193,10 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
                     $this->push_repo();
                 }
             } catch (Exception $e) {
-                $this->reset_project_repo_files($old_head); //reset -- hard to previous
+                if ($old_head) {
+                    $this->reset_project_repo_files($old_head); //reset -- hard to previous
+                }
+
                 throw $e;
             }
         }
@@ -341,7 +344,8 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
         }
 
         $old_head = $this->get_head_commit_hash();
-        if ($this->get_pull_head_commit_hash() === $old_head) {
+        $import_head = $this->get_pull_head_commit_hash();
+        if ($import_head === $old_head) {
             throw new NothingToPullException("Import head is same as local head: $old_head");
         }
 
@@ -375,17 +379,12 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             throw new RuntimeException($message);
         }
 
-        $new_head = $this->get_head_commit_hash();
         try {
             $this->check_integrity();
             $this->set_db_from_file_state();
+            $this->save();
         } catch (Exception $e) {
-            //do not use commit just imported, and remove any changes to files
-            if ($old_head !== $new_head) {//todo see what is up with these two numbers?
-                $this->reset_project_repo_files($old_head);
-            } else {
-                $this->reset_project_repo_files();
-            }
+            $this->reset_project_repo_files($old_head);
             throw $e;
         }
 
@@ -503,6 +502,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
                 $commit_title_array[] = "Tags";
             }
 
+            $commit_message_full = 'Automatic commit';
             if (!empty($commit_title_array) || !empty($commit_message_array)) {
                 $commit_title = implode('; ',$commit_title_array);
                 $commit_body = implode('\n',$commit_message_array);
@@ -513,11 +513,12 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
                 $commit_message_full = str_replace("'","\'",$commit_message_full);
 
 
-                try {
-                    $this->commit_changes($commit_message_full);
-                } catch (NothingToPushException $no_push) {
-                    //ignore if no file changes
-                }
+            }
+
+            try {
+                $this->commit_changes($commit_message_full);
+            } catch (NothingToPushException $no_push) {
+                //ignore if no file changes
             }
 
 
@@ -546,6 +547,11 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             $branch = $git_push_settings->getGitBranch();
             if (!$branch) {return null;}
             $push_remote_name = static::PUSH_REMOTE_NAME;
+            $fetch_stuff =  $this->do_key_command_with_private_key(
+                $this->getGitExportSettings()->getGitSshKey(),
+                $this->getGitExportSettings()->getGitUrl(),
+                "fetch $push_remote_name");
+            WillFunctions::will_do_nothing($fetch_stuff);
             return $this->do_git_command("rev-parse $push_remote_name/$branch");
         }
         catch (FlowProjectGitException $e) {
@@ -581,6 +587,11 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             if (!$branch) {return null;}
 
             $remote_name = static::IMPORT_REMOTE_NAME;
+            $fetch_stuff =  $this->do_key_command_with_private_key(
+                $this->getGitImportSettings()->getGitSshKey(),
+                $this->getGitImportSettings()->getGitUrl(),
+                "fetch $remote_name");
+            WillFunctions::will_do_nothing($fetch_stuff);
             return $this->do_git_command("rev-parse $remote_name/$branch");
         }
 
@@ -604,17 +615,26 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
         }
     }
 
+    protected function is_repo_created() : bool {
+        if (!$this->get_project_guid()) {return false;}
+        try {
+            return $this->do_git_command('status');
+        } catch (Exception $e) {
+            return false ;
+        }
+    }
 
     /**
      * @return string
      * @throws Exception
      */
-    public function get_head_commit_hash() : string {
+    public function get_head_commit_hash() : ?string {
+        if (!$this->get_project_guid()) {return null;}
+        if (!$this->is_repo_created()) {return null;}
         try {
             return $this->do_git_command('rev-parse HEAD');
         } catch (Exception $e) {
-            static::get_logger()->error("cannot get our head " . $e->getMessage());
-            throw $e;
+            return null;
         }
     }
 

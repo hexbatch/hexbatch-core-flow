@@ -48,12 +48,28 @@ class FlowEntryJsonBase implements IFlowEntryJson,JsonSerializable {
     {
         $data = [];
         $data[] = ['id' => 0, 'parent' => -1, 'title' => 'dummy_root','tag'=>null];
+
+        /**
+         * @var array<string,int> $hash_fake_ids
+         */
+        $hash_fake_ids = [];
+        $count_id = 10;
+        foreach ($entry_array_to_sort as $thing) {
+            $hash_fake_ids[$thing->get_entry()->get_guid()] = $count_id++;
+        }
+
         foreach ($entry_array_to_sort as $entry) {
             if ($entry instanceof IFlowEntryArchive) {
 
+                if(!$entry->get_entry()->get_parent_guid()) { $parent_id = 0;}
+                elseif (isset($hash_fake_ids[$entry->get_entry()->get_parent_guid()])) {
+                    $parent_id = $hash_fake_ids[$entry->get_entry()->get_parent_guid()];
+                }
+                else {$parent_id = 0;  }
+
                 $data[] = [
-                    'id' => $entry->get_entry()->get_id(),
-                    'parent' => $entry->get_entry()->get_parent_id()??0,
+                    'id' => $hash_fake_ids[$entry->get_entry()->get_guid()],
+                    'parent' => $parent_id ,
                     'title' => $entry->get_entry()->get_title(),
                     'entry'=>$entry
                 ];

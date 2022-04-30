@@ -17,6 +17,7 @@ Interface IFlowEntry extends IFlowEntryReadBasicProperties {
 
     public function get_parent() : ?IFlowEntry;
     public function get_project() : IFlowProject;
+    public function get_entry() : IFlowEntry;
 
     public function get_bb_code() : ?string;
     public function get_html() : ?string;
@@ -147,6 +148,7 @@ Interface IFlowEntry extends IFlowEntryReadBasicProperties {
     public function to_public_json() : IFlowEntryJson ;
 
     public function get_entry_folder(?string $new_folder_name = null) : ?string;
+    public function deduce_existing_entry_folder() : ?string;
     public function get_calculated_entry_folder() : ?string; //returns what the folder should be
 
 

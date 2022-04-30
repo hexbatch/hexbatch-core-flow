@@ -9,6 +9,7 @@ use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\IFlowEntryArchive;
 use app\models\project\IFlowProject;
+use DirectoryIterator;
 use Exception;
 use InvalidArgumentException;
 use RuntimeException;
@@ -70,6 +71,40 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
         return $calculated_path;
     }
 
+
+    public function deduce_existing_entry_folder() : ?string {
+        $calculated_path = $this->get_calculated_entry_folder();
+        if (!$calculated_path) {return null;}
+        if (is_dir($calculated_path)) {
+            //look inside of it
+            $yaml = FlowEntryYaml::maybe_read_yaml_in_folder($calculated_path);
+            if ($yaml) {return $calculated_path;}
+        }
+
+        $project_dir = $this->project->get_project_directory();
+        $older_version_calculated_path = $project_dir . DIRECTORY_SEPARATOR . static::ENTRY_FOLDER_PREFIX . $this->flow_entry_guid;
+        if (is_dir($older_version_calculated_path)) {
+            $yaml = FlowEntryYaml::maybe_read_yaml_in_folder($older_version_calculated_path);
+            if ($yaml) {return $older_version_calculated_path;}
+        }
+
+        //find any top level directory that has this guid in it
+
+        $dir = new DirectoryIterator($project_dir);
+
+        foreach ($dir as $fileinfo) {
+            if ($fileinfo->isDir() && !$fileinfo->isDot()) {
+                $maybe_path =   $fileinfo->getPathname();
+                $file_name =   $fileinfo->getFilename();
+                if (strpos($file_name,$this->get_guid()) !== false) {
+                    //look inside of it
+                    $yaml = FlowEntryYaml::maybe_read_yaml_in_folder($maybe_path);
+                    if ($yaml) {return $maybe_path;}
+                }
+            }
+        }
+        return null;
+    }
     /**
      * returns folder with no trailing slash
      *
@@ -80,72 +115,75 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
 
         $calculated_path = $this->get_calculated_entry_folder();
         if (!$calculated_path) {return null;}
-        $project_dir = $this->project->get_project_directory();
-        $older_version_calculated_path = $project_dir . DIRECTORY_SEPARATOR . static::ENTRY_FOLDER_PREFIX . $this->flow_entry_guid;
-        if ($new_folder_name) {
-            
-            if (dirname($new_folder_name)) {
-                //is a path
-                if (dirname($new_folder_name) !== $project_dir) {
-                    throw new InvalidArgumentException(
-                        "[get_entry_folder]  must be in the project directory as top level folder:".
-                        " given/project $new_folder_name $project_dir");
-                }
-                $given_entry_folder_path = $new_folder_name;
+        //see if existing folder
+        $deduced_path = $this->deduce_existing_entry_folder();
+
+        //if no existing path found, and we are not using the given folder, then make default calculated and return with it
+        if (!$new_folder_name) {
+            if ($deduced_path) {
+                return realpath($deduced_path);
             } else {
-                //is a folder name
-                $given_entry_folder_path = $project_dir . DIRECTORY_SEPARATOR . $new_folder_name;
-            }
-
-            if (is_readable($given_entry_folder_path) && is_dir($given_entry_folder_path)) {
-                return realpath($given_entry_folder_path); //if given a readable dir just use it no matter what
-            } elseif (is_readable($given_entry_folder_path) && !is_dir($given_entry_folder_path)) {
-                throw new InvalidArgumentException("[get_entry_folder] Cannot give an entry a folder path that is a file : ".
-                                                        $given_entry_folder_path);
-            } else {
-                if (is_readable($calculated_path)) {
-                    //rename calculated path to the given path
-                    $b_ok = rename($calculated_path,$given_entry_folder_path);
-                    if (!$b_ok) {
-                        throw new RuntimeException("[get_entry_folder] Could not rename dir from ".
-                                                                "$calculated_path, to $given_entry_folder_path");
-                    }
-                } else {
-                    //make new directory with given
-                    $check =  mkdir($given_entry_folder_path,0777,true);
-                    if (!$check) {
-                        throw new RuntimeException("[get_entry_folder]  Could not create the directory of $given_entry_folder_path");
-                    }
-
-                    if (!is_readable($given_entry_folder_path)) {
-                        throw new RuntimeException("[get_entry_folder]  Could not make a readable directory of $given_entry_folder_path");
-                    }
-                }
-                return realpath($given_entry_folder_path);
-            }
-        } else {
-            //return the calculated path, making it if needed
-            //first upgrade it for name change in 0.5.2
-            if (is_dir($older_version_calculated_path) && !is_readable($calculated_path)) {
-                $b_ok = rename($older_version_calculated_path,$calculated_path);
-                if (!$b_ok) {
-                    throw new RuntimeException("[get_entry_folder] Could not rename older version path from ".
-                        "$older_version_calculated_path, to $calculated_path");
-                }
-            }
-
-            if (!is_readable($calculated_path)) {
-                $check =  mkdir($calculated_path,0777,true);
-                if (!$check) {
-                    throw new RuntimeException("[get_entry_folder] Could not create the calculated directory of $calculated_path");
-                }
-
                 if (!is_readable($calculated_path)) {
-                    throw new RuntimeException("[get_entry_folder] Could not make a readable calculated directory of $calculated_path");
+                    $check =  mkdir($calculated_path,0777,true);
+                    if (!$check) {
+                        throw new RuntimeException("[get_entry_folder] Could not create the calculated directory of $calculated_path");
+                    }
+
+                    if (!is_readable($calculated_path)) {
+                        throw new RuntimeException("[get_entry_folder] Could not make a readable calculated directory of $calculated_path");
+                    }
                 }
+                return realpath($calculated_path);
             }
-            return realpath($calculated_path);
         }
+
+
+
+        $project_dir = $this->project->get_project_directory();
+
+        if (dirname($new_folder_name)) {
+            //is a path
+            if (dirname($new_folder_name) !== $project_dir) {
+                throw new InvalidArgumentException(
+                    "[get_entry_folder]  must be in the project directory as top level folder:".
+                    " given/project $new_folder_name $project_dir");
+            }
+            $given_entry_folder_path = $new_folder_name;
+        } else {
+            //is a folder name
+            $given_entry_folder_path = $project_dir . DIRECTORY_SEPARATOR . $new_folder_name;
+        }
+
+        if (dirname($given_entry_folder_path) !== $project_dir) {
+            throw new InvalidArgumentException(
+                "[get_entry_folder]  must be in the project directory as top level folder:".
+                " given/project $given_entry_folder_path $project_dir");
+        }
+
+        if (!is_readable($given_entry_folder_path) || !is_dir($given_entry_folder_path)) {
+
+            //make new directory with given
+            $check = mkdir($given_entry_folder_path, 0777, true);
+            if (!$check) {
+                throw new RuntimeException("[get_entry_folder]  Could not create the directory of $given_entry_folder_path");
+            }
+
+            if (!is_readable($given_entry_folder_path)) {
+                throw new RuntimeException("[get_entry_folder]  Could not make a readable directory of $given_entry_folder_path");
+            }
+        }
+        $given_entry_folder_path =  realpath($given_entry_folder_path);
+
+        if ($deduced_path) {
+            //rename to given
+            $b_ok = rename($deduced_path,$given_entry_folder_path);
+            if (!$b_ok) {
+                throw new RuntimeException("[get_entry_folder] Could not rename dir from ".
+                    "$deduced_path, to $given_entry_folder_path");
+            }
+        }
+        return $given_entry_folder_path;
+
 
     }
 

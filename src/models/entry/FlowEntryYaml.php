@@ -6,6 +6,7 @@ namespace app\models\entry;
 
 use app\helpers\Utilities;
 use app\hexlet\RecursiveClasses;
+use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\entry\archive\IFlowEntryArchive;
 use app\models\project\IFlowProject;
@@ -102,7 +103,7 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
             foreach ($object->get_children() as $child_entry) {
                 $this->dese_child_entries[] = new static($child_entry);
             }
-            $this->folder_path = $object->get_entry_folder();
+            $this->folder_path = $object->deduce_existing_entry_folder();
         } else {
             foreach ($object as $key => $val) {
                 if (property_exists($this,$key)) {
@@ -122,6 +123,18 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
             $this->entry_updated_at_ts = $this->entry_created_at_ts;
         }
         $this->setFolderPath($this->folder_path);
+
+        if ($this->flow_entry_guid && ! WillFunctions::is_valid_guid_format($this->flow_entry_guid)) {
+            throw new InvalidArgumentException("flow_entry_guid is not a valid guid: ".$this->flow_entry_guid);
+        }
+
+        if ($this->flow_project_guid && ! WillFunctions::is_valid_guid_format($this->flow_project_guid)) {
+            throw new InvalidArgumentException("flow_project_guid is not a valid guid: ".$this->flow_project_guid);
+        }
+
+        if ($this->flow_entry_parent_guid && ! WillFunctions::is_valid_guid_format($this->flow_entry_parent_guid)) {
+            throw new InvalidArgumentException("flow_entry_parent_guid is not a valid guid: ".$this->flow_entry_parent_guid);
+        }
     }
 
 
@@ -139,14 +152,37 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
         if (empty($this->entry_name)) {return false;}
         if (empty($this->flow_entry_guid)) {return false;}
         if (empty($this->flow_project_guid)) {return false;}
-        if (empty($this->folder_path)) {return false;}
         return true;
     }
 
     public function get_folder_path() : ?string { return $this->folder_path;}
 
+    public static function maybe_read_yaml_in_folder(string $folder_path) : ?FlowEntryYaml {
+        if (empty($folder_path) || !is_dir($folder_path)) {return null;}
+        $real_path = realpath($folder_path);
+        if (!$real_path) {return null;}
+        $maybe_yaml_path = $real_path. DIRECTORY_SEPARATOR . IFlowEntryArchive::BASE_YAML_FILE_NAME;
+        if (!is_readable($maybe_yaml_path)) {
+            return null;
+        }
+
+        $goods = Yaml::parseFile($maybe_yaml_path);
+        $node = new static($goods);
+        $node->setFolderPath($maybe_yaml_path);
+        if (!$node->is_valid()) {return null;}
+        return $node;
+    }
+
     public static function read_yaml_entry(IFlowEntry $e) : FlowEntryYaml {
-        $yaml_path = $e->get_entry_folder(). DIRECTORY_SEPARATOR .  IFlowEntryArchive::BASE_YAML_FILE_NAME;
+
+        $maybe_folder = $e->deduce_existing_entry_folder();
+
+        if (!$maybe_folder) {
+            throw new RuntimeException("[read_yaml_entry] Could not read entry folder for ". $e->get_guid() .
+                                                ' '. $e->get_title());
+        }
+
+        $yaml_path = $maybe_folder. DIRECTORY_SEPARATOR .  IFlowEntryArchive::BASE_YAML_FILE_NAME;
         if (!is_readable($yaml_path)) {
             throw new RuntimeException("[read_yaml_entry] Could not read $yaml_path");
         }
@@ -279,7 +315,9 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
         }
 
         foreach ($found_ones as $foundling) {
-            $valid[] = $foundling->get_folder_path();
+            if ($foundling->get_folder_path()) {
+                $valid[] = $foundling->get_folder_path();
+            }
         }
 
         //remove mark from valid, if exists
