@@ -22,6 +22,11 @@ use Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
 use Slim\Exception\HttpBadRequestException;
 use Slim\Exception\HttpNotFoundException;
+use splitbrain\PHPArchive\ArchiveCorruptedException;
+use splitbrain\PHPArchive\ArchiveIllegalCompressionException;
+use splitbrain\PHPArchive\ArchiveIOException;
+use splitbrain\PHPArchive\Tar;
+use splitbrain\PHPArchive\Zip;
 
 class ProjectHelper extends BaseHelper {
 
@@ -398,6 +403,102 @@ class ProjectHelper extends BaseHelper {
     public function get_allowed_git_sites() : array {
         $program = $this->get_settings()->git ?? (object)[];
         return $program->supported_hosts ?? [];
+    }
+
+    /**
+     * @since 0.5.2
+     * @param string $archive_file_path
+     * @param string $target_directory assumes already created
+     * @return void
+     * @throws ArchiveCorruptedException
+     * @throws ArchiveIOException
+     * @throws ArchiveIllegalCompressionException
+     */
+    public function extract_archive_from_zip_or_tar(string $archive_file_path,string $target_directory) {
+        $is_zip_file = function($file_path) {
+            $fh = @fopen($file_path, "r");
+
+            if (!$fh) {
+                return false;
+            }
+            $blob = fgets($fh, 5);
+            fclose($fh);
+            if (strpos($blob, 'PK') !== false) {
+                return true;
+            }
+
+            return false;
+        };
+
+        if ($is_zip_file($archive_file_path)) {
+            //unzip it
+            $lib = new Zip();
+        } else {
+            //assume its a tar
+            $lib = new Tar();
+        }
+        $lib->open($archive_file_path);
+        $lib->extract($target_directory);
+    }
+    /**
+     * @since 0.5.2
+     * @param string $directory
+     * @return array<string,string>  returns keyed output for each command
+     */
+    public function clean_directory_from_possible_bad_things(string $directory) : array  {
+
+        $ret = [];
+
+        /**
+         * strip out any html files
+         */
+        exec("find $directory \( -type d -name .git -prune \) -type f -iname \"*.html\" -delete 2>&1",$output,$result_code);
+        if ($result_code) {
+            throw new RuntimeException("Could not remote html files: code of $result_code : " . implode("\n",$output));
+        }
+        $ret['delete-html'] =   implode("\n",$output);
+
+
+        /**
+         * replace any <?php or <?= with html entities
+         * @link https://stackoverflow.com/a/1583282/2420206
+         */
+
+        $search_php = preg_quote('<?php');
+        $replace_php = htmlentities('<?php');
+        exec(
+            "find $directory \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i 's/$search_php/$replace_php/g' 2>&1",
+            $output,$result_code);
+        if ($result_code) {
+            throw new RuntimeException("Could not encode $search_php to $replace_php: code of $result_code : " .
+                implode("\n",$output));
+        }
+        $ret['encode-?-php'] =   implode("\n",$output);
+
+
+        $search_php = preg_quote('<?=');
+        $replace_php = htmlentities('<?=');
+        exec(
+            "find $directory \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i 's/$search_php/$replace_php/g' 2>&1",
+            $output,$result_code);
+        if ($result_code) {
+            throw new RuntimeException("Could not encode $search_php to $replace_php: code of $result_code : " .
+                implode("\n",$output));
+        }
+        $ret['encode-?-php'] =   implode("\n",$output);
+
+        /**
+         * Turn off any files that have executable bit set
+         * @link https://superuser.com/a/234657
+         */
+
+        exec("find $directory \( -type d -name .git -prune \) -type f -exec chmod -x {} \; 2>&1",$output,$result_code);
+        if ($result_code) {
+            throw new RuntimeException("Could not remote html files: code of $result_code : " . implode("\n",$output));
+        }
+        $ret['no-x-on-files'] =   implode("\n",$output);
+
+        return $ret;
     }
 
 

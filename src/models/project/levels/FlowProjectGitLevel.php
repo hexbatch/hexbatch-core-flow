@@ -1,6 +1,7 @@
 <?php
 namespace app\models\project\levels;
 
+use app\helpers\ProjectHelper;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\FlowEntryArchive;
@@ -328,6 +329,51 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
     }
 
     /**
+     * @param string $patch_file_path
+     * @return string[]
+     * @throws Exception
+     */
+    public function apply_patch(string $patch_file_path) :array {
+        $old_head = $this->get_head_commit_hash();
+
+        try {
+            $this->reset_project_repo_files();//clear up any earlier bugs or crashes
+        } catch (Exception $e) {
+            $message = "Could not do a hard reset";
+            $message.="<br>{$e->getMessage()}\n";
+            throw new RuntimeException($message);
+        }
+
+        try {
+            $git_ret =  $this->do_git_command("am $patch_file_path");
+        } catch (Exception $e) {
+            $maybe_changes = $this->do_git_command('diff');
+            $message = $e->getMessage();
+            if (!empty(trim($maybe_changes))) {
+                try {
+                    $this->do_git_command('git am --abort');
+                    $message.="<br>Aborted Patch\n";
+                } catch (Exception $oh_no) {
+                    $message.="<br>{$oh_no->getMessage()}\n";
+                }
+
+            }
+            throw new RuntimeException($message);
+        }
+
+        try {
+            $this->check_integrity();
+            $this->set_db_from_file_state();
+            ProjectHelper::get_project_helper()->clean_directory_from_possible_bad_things($this->get_project_directory());
+            $this->save();
+        } catch (Exception $e) {
+            $this->reset_project_repo_files($old_head);
+            throw $e;
+        }
+
+        return explode("\n",$git_ret);
+    }
+    /**
      * @return array
      * @throws Exception
      */
@@ -382,6 +428,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
         try {
             $this->check_integrity();
             $this->set_db_from_file_state();
+            ProjectHelper::get_project_helper()->clean_directory_from_possible_bad_things($this->get_project_directory());
             $this->save();
         } catch (Exception $e) {
             $this->reset_project_repo_files($old_head);
