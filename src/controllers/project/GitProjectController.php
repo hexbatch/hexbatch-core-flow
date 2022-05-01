@@ -8,11 +8,13 @@ use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\project\exceptions\NothingToPullException;
 use app\models\project\FlowGitFile;
+use app\models\project\FlowProject;
 use app\models\project\FlowProjectUser;
 use app\models\project\IFlowProject;
 use app\models\standard\IFlowTagStandardAttribute;
 use Exception;
 use InvalidArgumentException;
+use LogicException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Exception\HttpInternalServerErrorException;
@@ -348,6 +350,165 @@ class GitProjectController extends BaseProjectController {
             return $response
                 ->withHeader('Content-Type', 'application/json')
                 ->withStatus(500);
+        }
+
+    }
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $user_name
+     * @param string $project_name
+     * @return ResponseInterface
+     * @throws Exception
+     *
+     */
+    public function patch_from_file(ServerRequestInterface $request, ResponseInterface $response,
+                                    string                 $user_name, string $project_name) :ResponseInterface {
+
+        $temp_file_name_with_extension = null;
+        $patch_status = [];
+        try {
+            $option = new AjaxCallData([
+                AjaxCallData::OPTION_VALIDATE_TOKEN
+            ]);
+
+            $option->note = 'patch_from_file';
+            $option->permission_mode = FlowProjectUser::PERMISSION_COLUMN_WRITE;
+            $call = $this->get_project_helper()->validate_ajax_call($option, $request, 'yes', $user_name, $project_name);
+
+            $project = $call->project;
+
+
+            $file_upload = $this->get_project_helper()->pre_process_uploaded_file($request,'patch_file');
+            $tmpfname = tempnam(sys_get_temp_dir(), $project->get_project_title().'-');
+            $temp_file_name_with_extension  = $tmpfname. '.patch';
+            $b_rename = rename($tmpfname, $temp_file_name_with_extension );
+            if (!$b_rename) {throw new LogicException("Cannot rename $tmpfname, $temp_file_name_with_extension ");}
+            $file_name = $file_upload->getClientFilename();
+            $file_upload->moveTo($temp_file_name_with_extension);
+            //do patch now
+            $patch_status = $project->apply_patch($temp_file_name_with_extension);
+            $success_message = "Applied patch from file $file_name to "  . $project->get_project_title();
+
+
+            $data = [
+                'success'=>true,
+                'message'=>$success_message,
+                'git_output'=>$patch_status,
+                'token'=> $call->new_token
+            ];
+            $payload = JsonHelper::toString($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(201);
+
+        }
+        catch (NothingToPullException $no_pull) {
+            $data = [
+                'success'=>false,
+                'message'=>$no_pull->getMessage(),
+                'git_output'=>$patch_status,
+                'token'=> $call->new_token?? null
+            ];
+            $payload = JsonHelper::toString($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(200);
+        }
+        catch (Exception $e) {
+            $this->logger->error("Could not pull_project: ".$e->getMessage(),['exception'=>$e]);
+            $data = [
+                'success'=>false,
+                'message'=>$e->getMessage(),
+                'git_output'=>$patch_status,
+                'token'=> $call->new_token?? null
+            ];
+            $payload = JsonHelper::toString($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(500);
+        } finally {
+            if ($temp_file_name_with_extension) {unlink($temp_file_name_with_extension);}
+        }
+
+    }
+
+
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     * @throws Exception
+     *
+     */
+    public function create_from_upload(ServerRequestInterface $request, ResponseInterface $response) :ResponseInterface {
+
+        $temp_file_name_with_extension = null;
+        $project = null;
+        try {
+            $option = new AjaxCallData([
+                AjaxCallData::OPTION_VALIDATE_TOKEN
+            ]);
+
+            $option->note = 'create_from_upload';
+
+            $call = $this->get_project_helper()->validate_ajax_call($option, $request, 'yes');
+
+
+            $file_upload = $this->get_project_helper()->pre_process_uploaded_file($request,'archive_file');
+            $tmpfname = tempnam(sys_get_temp_dir(), 'project-upload-');
+
+            $client_file_name = $file_upload->getClientFilename();
+            $temp_file_name_with_extension  = $tmpfname. '-'. $client_file_name;
+            $b_rename = rename($tmpfname, $temp_file_name_with_extension );
+            if (!$b_rename) {throw new LogicException("Cannot rename $tmpfname, $temp_file_name_with_extension ");}
+            $file_upload->moveTo($temp_file_name_with_extension);
+
+
+            //do copy now
+            $project = FlowProject::create_project_from_upload(
+                                    $temp_file_name_with_extension,$call->args->flow_project_title);
+            $success_message = "Copied upload from file $client_file_name to "  . $project->get_project_title();
+
+
+            $data = [
+                'success'=>true,
+                'message'=>$success_message,
+                'project'=>$project,
+                'token'=> $call->new_token
+            ];
+            $payload = JsonHelper::toString($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(201);
+
+        }
+        catch (Exception $e) {
+            $this->logger->error("Could not copy project: ".$e->getMessage(),['exception'=>$e]);
+            $data = [
+                'success'=>false,
+                'message'=>$e->getMessage(),
+                'project'=>$project,
+                'token'=> $call->new_token?? null
+            ];
+            $payload = JsonHelper::toString($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(500);
+        } finally {
+            if ($temp_file_name_with_extension) {unlink($temp_file_name_with_extension);}
         }
 
     }

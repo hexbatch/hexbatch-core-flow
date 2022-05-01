@@ -383,6 +383,13 @@
  */
 
 
+/**
+ *
+ * @typedef {FlowBasicResponse} FlowCopyProjectActionResponse
+ * @property {FlowProject} project
+ */
+
+
 
 
 

@@ -19,16 +19,16 @@ class BaseHelper extends BaseConnection {
      * @param AjaxCallData $options
      * @param ServerRequestInterface $request
      * @param string|null $route_name
-     * @param string $user_name
-     * @param string $project_name
+     * @param string|null $user_name
+     * @param string|null $project_name
      * @param ?string $tag_name
      * @param string|null $attribute_name
      * @return AjaxCallData
      * @throws
      */
     public function validate_ajax_call(AjaxCallData $options, ServerRequestInterface $request,
-                                       ?string      $route_name, string $user_name,
-                                       string       $project_name, ?string $tag_name = null ,
+                                       ?string      $route_name, ?string $user_name = null,
+                                       ?string       $project_name = null , ?string $tag_name = null ,
                                        ?string      $attribute_name = null) : AjaxCallData
     {
 
@@ -66,12 +66,16 @@ class BaseHelper extends BaseConnection {
         }
 
 
-        $project_helper = ProjectHelper::get_project_helper();
+        $project = null;
+        if ($project_name && $user_name) {
+            $project_helper = ProjectHelper::get_project_helper();
 
-        $project = $project_helper->get_project_with_permissions($request,$user_name, $project_name, $options->permission_mode);
-        if (!$project) {
-            throw new HttpNotFoundException($request,"Project $project_name Not Found");
+            $project = $project_helper->get_project_with_permissions($request,$user_name, $project_name, $options->permission_mode);
+            if (!$project) {
+                throw new HttpNotFoundException($request,"Project $project_name Not Found");
+            }
         }
+
 
 
         if ($csrf && $options->has_option(AjaxCallData::OPTION_MAKE_NEW_TOKEN) ) {
@@ -99,7 +103,7 @@ class BaseHelper extends BaseConnection {
 
         $ret = new  AjaxCallData([],$args_as_object,$project,$token);
 
-        if ($tag_name) {
+        if ($project && $tag_name) {
             $tags = $project->get_all_owned_tags_in_project($options->has_option(AjaxCallData::OPTION_GET_APPLIED));
 
             foreach ($tags as $look_tag) {

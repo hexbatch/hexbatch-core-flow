@@ -1,21 +1,18 @@
 <?php
 namespace app\controllers\project;
 
-use app\controllers\user\UserPages;
 use app\hexlet\FlowAntiCSRF;
 use app\hexlet\JsonHelper;
 use app\models\project\FlowProjectUser;
 use Exception;
 use finfo;
 use InvalidArgumentException;
-use ParagonIE\AntiCSRF\AntiCSRF;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use Slim\Exception\HttpForbiddenException;
 use Slim\Exception\HttpNotFoundException;
 use Slim\Psr7\Stream;
-use Slim\Routing\RouteContext;
 
 /**
  * @since 0.5.2
@@ -60,7 +57,7 @@ class ResourceProjectController extends BaseProjectController {
 
             try {
 
-                $file_upload = $this->get_project_helper()->find_and_move_uploaded_file($request,'flow_resource_file');
+                $file_upload = $this->get_project_helper()->pre_process_uploaded_file($request,'flow_resource_file');
                 $resource_base = $project->get_resource_directory();
 
                 $file_resource_path = $resource_base. DIRECTORY_SEPARATOR. $file_upload->getClientFilename();
@@ -187,72 +184,7 @@ class ResourceProjectController extends BaseProjectController {
     }
 
 
-    /**
-     * todo make working file import
-     * @deprecated
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param string $user_name
-     * @param string $project_name
-     * @return ResponseInterface
-     * @throws Exception
-     * 
-     */
-    public function import_from_file(ServerRequestInterface $request,ResponseInterface $response,
-                                     string $user_name, string $project_name) :ResponseInterface {
 
-        try {
-            $csrf = new AntiCSRF;
-
-            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, FlowProjectUser::PERMISSION_COLUMN_WRITE);
-
-            if (!empty($_POST)) {
-                if (!$csrf->validateRequest()) {
-                    throw new HttpForbiddenException($request,"Bad Request. Refresh Page") ;
-                }
-            }
-
-
-            $file_upload = $this->get_project_helper()->find_and_move_uploaded_file($request,'repo_or_patch_file');
-            $file_name = $file_upload->getClientFilename();
-            $success_message = "Nothing Done "  . $project->get_project_title();
-            $args = $request->getParsedBody();
-            if (array_key_exists('import-now',$args)) {
-                //do push now
-                $push_status = $project->update_repo_from_file($file_upload);
-                $success_message = "Merging from file $file_name to "  . $project->get_project_title() . "<br>$push_status";
-            }
-
-            try {
-                UserPages::add_flash_message('success',$success_message );
-                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-                $url = $routeParser->urlFor('project_history',[
-                    "user_name" => $project->get_admin_user()->flow_user_name,
-                    "project_name" => $project->get_project_title()
-                ]);
-                $response = $response->withStatus(302);
-                return $response->withHeader('Location', $url);
-            } catch (Exception $e) {
-                $this->logger->error("Could not redirect to all projects after successful merge from file", ['exception' => $e]);
-                throw $e;
-            }
-        } catch (Exception $e) {
-            try {
-                UserPages::add_flash_message('warning', "Cannot upload file file: <b>" . $e->getMessage().'</b>');
-                $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-                $url = $routeParser->urlFor('project_resources',[
-                    "user_name" => $user_name ,
-                    "project_name" => $project_name
-                ]);
-                $response = $response->withStatus(302);
-                return $response->withHeader('Location', $url);
-            } catch (Exception $e) {
-                $this->logger->error("Could not redirect to project import settings after error", ['exception' => $e]);
-                throw $e;
-            }
-        }
-
-    }
 
     /**
      * Permission protected project files

@@ -3,6 +3,7 @@ namespace app\models\project\levels;
 
 use app\helpers\ProjectHelper;
 use app\hexlet\JsonHelper;
+use app\hexlet\RecursiveClasses;
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\FlowEntryArchive;
 use app\models\entry\FlowEntryYaml;
@@ -10,6 +11,7 @@ use app\models\project\exceptions\FlowProjectGitException;
 use app\models\project\exceptions\NothingToPullException;
 use app\models\project\exceptions\NothingToPushException;
 use app\models\project\FlowGitHistory;
+use app\models\project\FlowProject;
 use app\models\project\IFlowProject;
 use app\models\project\setting_models\FlowProjectGitSettings;
 use app\models\tag\brief\BriefCheckValidYaml;
@@ -19,7 +21,6 @@ use app\models\user\FlowUser;
 use Exception;
 use InvalidArgumentException;
 use LogicException;
-use Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -304,6 +305,67 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
 
 
     /**
+     * @param string $archive_file_path
+     * @param string $flow_project_title
+     * @return IFlowProject
+     * @throws
+     */
+    public static function create_project_from_upload(string $archive_file_path,string $flow_project_title) :IFlowProject{
+
+        /**
+         * @var IFlowProject $project
+         */
+        $project = null;
+
+        try {
+            $project = new FlowProject();
+            $project->set_project_type( IFlowProject::FLOW_PROJECT_TYPE_TOP);
+            $project->set_admin_user_id( FlowUser::get_logged_in_user()->flow_user_id);
+
+            $project->set_project_title($flow_project_title);
+            $project->set_project_blurb('');
+            $project->set_read_me('');
+            $project->set_public(false);
+            //create a mostly empty project, and create its folder (and repo)
+            $project->save();
+
+            //delete the project git folder, then copy in the zip, then save project
+            $project_directory = $project->get_project_directory();
+            //$git_folder_path = $project_directory . DIRECTORY_SEPARATOR . '.git';
+            $command = "rm -rf $project_directory 2>&1";
+            exec($command,$output,$result_code);
+            if ($result_code) {
+                throw new RuntimeException("Cannot do $command ,  returned code of $result_code : " . implode("<br>\n",$output));
+            }
+            ProjectHelper::get_project_helper()->extract_archive_from_zip_or_tar($archive_file_path,$project_directory);
+            $project->create_project_repo($project_directory);
+
+            if (is_readable($project->get_bb_code_path())) {
+                $blurb = file_get_contents($project->get_bb_code_path());
+                $project->set_read_me($blurb);
+            }
+
+            if (is_readable($project->get_blurb_path())) {
+                $blurb = file_get_contents($project->get_blurb_path());
+                $project->set_project_blurb($blurb);
+            }
+            $project->check_integrity();
+            $project->set_db_from_file_state();
+            ProjectHelper::get_project_helper()->clean_directory_from_possible_bad_things($project->get_project_directory());
+            $project->save();
+            return $project;
+        } catch (Exception $e) {
+            if ($project) {
+                $project->destroy_project();
+            }
+            throw $e;
+        }
+
+    }
+
+
+
+    /**
      * @throws Exception
      */
     public function push_repo() : array  {
@@ -345,20 +407,20 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
         }
 
         try {
-            $git_ret =  $this->do_git_command("am $patch_file_path");
+            $git_ret =  $this->do_git_command("apply $patch_file_path");
         } catch (Exception $e) {
             $maybe_changes = $this->do_git_command('diff');
-            $message = $e->getMessage();
             if (!empty(trim($maybe_changes))) {
                 try {
-                    $this->do_git_command('git am --abort');
-                    $message.="<br>Aborted Patch\n";
+                    $this->reset_project_repo_files($old_head);
                 } catch (Exception $oh_no) {
-                    $message.="<br>{$oh_no->getMessage()}\n";
+                    $message = "Failed to reset project to $old_head after error of ". $e->getMessage()
+                        . ' '. $e->getFile() .' '. $e->getLine();
+                    throw new RuntimeException($message);
                 }
-
             }
-            throw new RuntimeException($message);
+            throw $e;
+
         }
 
         try {
@@ -373,6 +435,9 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
 
         return explode("\n",$git_ret);
     }
+
+
+
     /**
      * @return array
      * @throws Exception
@@ -436,11 +501,6 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
         }
 
         return $git_ret;
-    }
-
-    function update_repo_from_file(UploadedFileInterface $uploaded_file) :string {
-        WillFunctions::will_do_nothing($uploaded_file);
-        return 'stub updated repo from file';
     }
 
     /**
@@ -524,7 +584,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
 
 
 
-            if ($this->b_new_project) {
+            if ($this->b_new_project || !is_dir($this->get_project_directory() . DIRECTORY_SEPARATOR . '.git')) {
                 $commit_title = "First Commit";
                 $this->commit_changes($commit_title);
             }

@@ -126,7 +126,8 @@ class HttpErrorHandler extends ErrorHandler
             'error' => [
                 'type' => $type,
                 'title' => $error_title,
-                'description' => $description,
+                'message' => $description,
+                'success'=>false,
             ],
         ];
 

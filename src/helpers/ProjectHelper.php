@@ -246,7 +246,7 @@ class ProjectHelper extends BaseHelper {
      * @throws
      * @return UploadedFileInterface
      */
-    public function find_and_move_uploaded_file(ServerRequestInterface $request,string $file_form_name) : UploadedFileInterface {
+    public function pre_process_uploaded_file(ServerRequestInterface $request, string $file_form_name) : UploadedFileInterface {
         $uploadedFiles = $request->getUploadedFiles();
         if (!array_key_exists($file_form_name,$uploadedFiles)) {
             throw new HttpBadRequestException($request,"Need the file named $file_form_name");
@@ -452,7 +452,7 @@ class ProjectHelper extends BaseHelper {
         /**
          * strip out any html files
          */
-        exec("find $directory \( -type d -name .git -prune \) -type f -iname \"*.html\" -delete 2>&1",$output,$result_code);
+        exec("find $directory -type f -name '*.html' -delete 2>&1",$output,$result_code);
         if ($result_code) {
             throw new RuntimeException("Could not remote html files: code of $result_code : " . implode("\n",$output));
         }
@@ -485,7 +485,7 @@ class ProjectHelper extends BaseHelper {
             throw new RuntimeException("Could not encode $search_php to $replace_php: code of $result_code : " .
                 implode("\n",$output));
         }
-        $ret['encode-?-php'] =   implode("\n",$output);
+        $ret['encode-?=-php'] =   implode("\n",$output);
 
         /**
          * Turn off any files that have executable bit set

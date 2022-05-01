@@ -152,6 +152,30 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
 
     }
 
+    /**
+     * @return string
+     * @throws Exception
+     */
+    protected function get_title_path() : string {
+        return $this->get_project_directory() . DIRECTORY_SEPARATOR . 'flow_project_title';
+    }
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    protected function get_blurb_path() : string {
+        return $this->get_project_directory() . DIRECTORY_SEPARATOR . 'flow_project_blurb';
+    }
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    protected function get_bb_code_path() : string {
+        return $this->get_project_directory() . DIRECTORY_SEPARATOR . 'flow_project_readme_bb_code.bbcode';
+    }
+
     public function save(bool $b_do_transaction = true): void
     {
         $db = static::get_connection();
@@ -160,13 +184,10 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
             parent::save(false);
 
 
-            $dir = $this->get_project_directory();
-
-
-            $read_me_path_bb = $dir . DIRECTORY_SEPARATOR . 'flow_project_readme_bb_code.bbcode';
+            $read_me_path_bb = $this->get_bb_code_path();
             $read_me_path_html = $this->get_html_path();
-            $blurb_path = $dir . DIRECTORY_SEPARATOR . 'flow_project_blurb';
-            $title_path = $dir . DIRECTORY_SEPARATOR . 'flow_project_title';
+            $blurb_path = $this->get_blurb_path();
+            $title_path = $this->get_title_path();
 
             $b_ok = file_put_contents($read_me_path_bb,$this->flow_project_readme_bb_code);
             if ($b_ok === false) {throw new RuntimeException("Could not write to $read_me_path_bb");}
@@ -370,9 +391,11 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
         if (empty($this->flow_project_guid) || empty($this->get_owner_user_guid())) {return null;}
         $check =  $this->get_projects_base_directory(). DIRECTORY_SEPARATOR .
             $this->get_owner_user_guid() . DIRECTORY_SEPARATOR . $this->flow_project_guid;
-        if (!is_readable($check)) {
+
+        if (!is_readable($check) ) {
             $this->create_project_repo($check);
         }
+
         $real = realpath($check);
         if (!$real) {
             throw new LogicException("Could not find project directory at $check");
@@ -401,6 +424,9 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
         $ignore = file_get_contents($git_ignore_template_path);
         file_put_contents($repo_path.DIRECTORY_SEPARATOR.'.gitignore',$ignore);
     }
+
+
+
 
 
 }

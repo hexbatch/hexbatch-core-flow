@@ -49,10 +49,11 @@ return function (App $app) {
                 $group->get('/clone_project', ['projectPages', 'clone_project'])->setName('clone_project');
 
                 /** @uses \app\controllers\project\PageProjectController::clone_project_from_local() */
-                $group->post('/clone_project/from_local/{guid:[[:alnum:]\-]+}', ['projectPages', 'clone_project_from_local'])->setName('clone_project_from_local');
+                $group->post('/clone_project/from_local/{guid:[[:alnum:]\-]+}',
+                                    ['projectPages', 'clone_project_from_local'])->setName('clone_project_from_local');
 
-                /** @uses \app\controllers\project\GitProjectController::clone_project_from_git() */
-                $group->post('/clone_project/from_git/{guid:[[:alnum:]\-]+}', ['projectResources', 'clone_project_from_git'])->setName('clone_project_from_git');
+
+
             })->add('checkLoggedInMiddleware');
 
         });
@@ -101,6 +102,20 @@ return function (App $app) {
                 $group->get('/{project_name:[[:alnum:]\-]+}', ['projectPages', 'single_project_home'])->setName('single_project_home');
             } );
 
+            $group->group('/clone_project', function (RouteCollectorProxy $group) {
+
+                /** @uses \app\controllers\project\GitProjectController::clone_project_from_git() */
+                $group->post('/from_git',
+                    ['projectGit', 'clone_project_from_git'])->setName('clone_project_from_git');
+
+
+                /** @uses \app\controllers\project\GitProjectController::create_from_upload() */
+                $group->post('/upload',
+                    ['projectGit', 'create_from_upload'])->setName('create_from_upload_ajax');
+
+            })->add('checkLoggedInMiddleware');
+
+
             
             $group->group('/{project_name:[[:alnum:]\-]+}', function (RouteCollectorProxy $group) use ($container) {
 
@@ -115,6 +130,10 @@ return function (App $app) {
                     /** @uses \app\controllers\project\GitProjectController::pull_project()*/
                     $group->post('/pull_project', ['projectGit', 'pull_project'])->setName('pull_project_ajax');
 
+                    /* @uses \app\controllers\project\GitProjectController::patch_from_file() **/
+                    $group->post('/patch',
+                        ['projectGit', 'patch_from_file'])->setName('patch_project_ajax');
+
                 })->add('checkLoggedInMiddleware');
 
                 $group->group('', function (RouteCollectorProxy $group) use ($container) {
@@ -128,22 +147,25 @@ return function (App $app) {
                     $group->post('/edit', ['projectPages', 'update_project'])->setName('update_project');
 
                     /** @uses \app\controllers\project\PageProjectController::destroy_project() */
-                    $group->post('/destroy_ajax', ['projectPages', 'destroy_project'])->setName('destroy_project_ajax');
+                    $group->post('/destroy_ajax',
+                                        ['projectPages', 'destroy_project'])->setName('destroy_project_ajax');
 
                     /** @uses \app\controllers\project\PageProjectController::change_project_permissions() */
-                    $group->post('/edit_permissions_ajax', ['projectPages', 'change_project_permissions'])->setName('edit_permissions_ajax');
+                    $group->post('/edit_permissions_ajax',
+                                        ['projectPages', 'change_project_permissions'])->setName('edit_permissions_ajax');
 
                     /** @uses \app\controllers\project\PageProjectController::edit_project_permissions() */
-                    $group->get('/permissions', ['projectPages', 'edit_project_permissions'])->setName('project_permissions');
+                    $group->get('/permissions',
+                                    ['projectPages', 'edit_project_permissions'])->setName('project_permissions');
 
                     /** @uses \app\controllers\project\GitProjectController::project_history()*/
-                    $group->get('/history[/page/{page:[1-9]+[0-9]*}]', ['projectGit', 'project_history'])->setName('project_history');
+                    $group->get('/history[/page/{page:[1-9]+[0-9]*}]',
+                                    ['projectGit', 'project_history'])->setName('project_history');
 
                     /** @uses \app\controllers\project\GitProjectController::get_file_change()*/
                     $group->post('/file_change_ajax', ['projectGit', 'get_file_change'])->setName('get_file_change_ajax');
 
-                    /* @uses \app\controllers\project\ResourceProjectController::import_from_file() **/
-                    $group->post('/import_from_file', ['projectResources', 'import_from_file'])->setName('project_import_from_file');
+
 
                     /** @uses \app\controllers\project\ResourceProjectController::upload_resource_file() */
                     $group->get('/resources/', ['projectResources', 'resources'])->setName('project_resources');

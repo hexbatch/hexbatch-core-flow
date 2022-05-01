@@ -1,0 +1,112 @@
+
+{% set patch_url = url_for('patch_project_ajax',{
+                                                            user_name: project.get_admin_user().flow_user_name ,
+                                                            project_name: project.get_project_title()
+                                                        } )
+%}
+
+<div class="d-none"  id="flow-git-patch-upload-form-holder">
+    <div class="card flow-git-patch-upload-form">
+
+        <div class="card-header p-3 ">
+            Upload a patch for
+            {{ project.get_project_title()}}
+            <span class="badge rounded-pill bg-secondary text-white">
+                {{ project.history( 0,1)[0].abbreviated_commit }}
+            </span>
+        </div>
+        <div class="card-body ">
+            <form action="{{ patch_url }}" class="dropzone w-100 flow-git-patch-upload-form"  style="min-height: 20em">
+
+                {{ form_token( patch_url)  }}
+
+                <!--  fallback form -->
+                <div class="fallback"> <!-- This div will be removed if the fallback is not necessary -->
+                    <input type="file" name="patch_file" />
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    jQuery(function($){
+
+        function create_dropzone_for_form(form_id) {
+            let myDropzone = new Dropzone(`form#${form_id}`, {
+                url: "{{ patch_url }}",
+                paramName: "patch_file", // The name that will be used to transfer the file
+                maxFilesize: 30 // MB
+
+            });
+
+            myDropzone.on("error", function (file, response) {
+                let message;
+                if ($.type(response) === "string") {
+                    message = response;
+                } else {
+                    message = response.message
+                }
+
+                my_swal.fire(
+                    'Oh No!',
+                    'Patch could not be uploaded<br>\n ' + message,
+                    'error'
+                ).then(() => {
+                    window.location.reload();
+                });
+
+            });
+
+            myDropzone.on("success",
+                /**
+                 *
+                 * @param file
+                 * @param {FlowGitActionResponse} response
+                 */
+                function (file, response) {
+                    my_swal.fire(
+                        'Patch applied',
+                        response.message +
+                        '<br>\n ' + response.git_output.join('\n<br>'),
+                        'success'
+                    ).then(() => {
+                        window.location.reload();
+                    });
+                });
+        }
+
+        $(`button.flow-show-upload-patch-dialog`).on('click',function() {
+            let editing_div = $("div#flow-git-patch-upload-form-holder div.flow-git-patch-upload-form ").clone();
+            let editing_div_id = 'patch-upload-' + uuid.v4();
+            editing_div.attr('id',editing_div_id);
+
+            let form_id = 'form-upload-' + uuid.v4();
+            editing_div.find('form.flow-git-patch-upload-form').attr('id',form_id);
+
+
+            let modal = new tingle.modal({
+                footer: true,
+                stickyFooter: false,
+                closeMethods: ['overlay', 'button', 'escape'],
+                closeLabel: "Close",
+                cssClass: ['flow-tag-edit-tingle'],
+                onOpen: function () {
+                    create_dropzone_for_form(form_id);
+                },
+                onClose: function () {
+
+                },
+
+                beforeClose: function () {
+                    return true;
+                }
+            });
+
+            modal.setContent(editing_div[0]);
+            modal.open();
+        });
+
+    });
+</script>

@@ -91,6 +91,9 @@ interface IFlowProject {
     public function get_files_url() : string;
     public function get_resource_url() : string;
 
+
+    public static function create_project_from_upload(string $archive_file_path,string $flow_project_title) :IFlowProject;
+
     /**
      * @param bool $b_refresh  if true will not use previous value if set
      * @return FlowTag[]
@@ -113,9 +116,9 @@ interface IFlowProject {
 
     public function get_setting_holder_tag(string $setting_name) : ?FlowTag;
 
-    function update_repo_from_file(UploadedFileInterface $uploaded_file) :string;
     function import_pull_repo_from_git() :array;
     function apply_patch(string $patch_file_path) :array;
+
     public function push_repo() : array;
     public function do_tag_save_and_commit();
     public function commit_changes(string $commit_message,bool $b_commit = true,bool $b_log_message = false): void;

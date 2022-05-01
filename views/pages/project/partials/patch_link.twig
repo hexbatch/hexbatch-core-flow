@@ -8,20 +8,17 @@
 
         <div class="card-text text-center">
 
-            <a href="{{ url_for('project_permissions',{
-                            user_name: project.get_admin_user().flow_user_name ,
-                            project_name: project.get_project_title()
-                        } )
-                    }}"
-               class="btn btn-outline-info py-0"
+            <button
+               class="btn btn-outline-info py-0 flow-show-upload-patch-dialog"
             >
-                Load Patch {# todo change link to new route for patch later #}
-            </a>
+                Load Patch
+            </button>
 
 
 
         </div> <!-- /.card-text -->
     </div>  <!-- /.card-body -->
 </div> <!-- /.card -->
+    {{ include('project/partials/import/patch_upload_form.twig')}}
 
 {% endif %} {# end can_admin #}

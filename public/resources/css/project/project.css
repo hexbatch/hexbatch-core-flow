@@ -61,5 +61,9 @@ div.flow-import-export-settings .list-group-item.da-notes {
     background-color: revert;
 }
 
+.flow-clone-project-tabs .dropzone .dz-preview .dz-details .dz-filename {
+    margin-top: 2em;
+}
+
 
 
