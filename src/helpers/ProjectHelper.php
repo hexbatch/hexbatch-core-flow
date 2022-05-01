@@ -22,11 +22,6 @@ use Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
 use Slim\Exception\HttpBadRequestException;
 use Slim\Exception\HttpNotFoundException;
-use splitbrain\PHPArchive\ArchiveCorruptedException;
-use splitbrain\PHPArchive\ArchiveIllegalCompressionException;
-use splitbrain\PHPArchive\ArchiveIOException;
-use splitbrain\PHPArchive\Tar;
-use splitbrain\PHPArchive\Zip;
 
 class ProjectHelper extends BaseHelper {
 
@@ -409,36 +404,18 @@ class ProjectHelper extends BaseHelper {
      * @since 0.5.2
      * @param string $archive_file_path
      * @param string $target_directory assumes already created
-     * @return void
-     * @throws ArchiveCorruptedException
-     * @throws ArchiveIOException
-     * @throws ArchiveIllegalCompressionException
+     * @return string[]
      */
-    public function extract_archive_from_zip_or_tar(string $archive_file_path,string $target_directory) {
-        $is_zip_file = function($file_path) {
-            $fh = @fopen($file_path, "r");
+    public function extract_archive_from_zip_or_tar(string $archive_file_path,string $target_directory) :array {
 
-            if (!$fh) {
-                return false;
-            }
-            $blob = fgets($fh, 5);
-            fclose($fh);
-            if (strpos($blob, 'PK') !== false) {
-                return true;
-            }
-
-            return false;
-        };
-
-        if ($is_zip_file($archive_file_path)) {
-            //unzip it
-            $lib = new Zip();
-        } else {
-            //assume its a tar
-            $lib = new Tar();
+        $command = "bsdtar --strip-components=1 -xvf $archive_file_path -C $target_directory";
+        exec($command,$output,$result_code);
+        if ($result_code) {
+            throw new RuntimeException("Cannot do $command ,  returned code of $result_code : " . implode("<br>\n",$output));
         }
-        $lib->open($archive_file_path);
-        $lib->extract($target_directory);
+
+        return $output;
+
     }
     /**
      * @since 0.5.2

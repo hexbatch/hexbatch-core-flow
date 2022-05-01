@@ -303,6 +303,7 @@ class BriefDiffFromYaml {
         foreach ($saved as $btag) {
 
             $btag_object = new BriefFlowTag($btag);
+            $btag_object->flow_project_guid = $project->get_project_guid();
             $b_tag_map[$btag_object->flow_tag_guid] = $btag_object;
             $this->brief_tag_map[$btag_object->flow_tag_guid] = $btag_object;
             $this->from_yaml_as_brief_tag_map[$btag_object->flow_tag_guid] = $btag_object;

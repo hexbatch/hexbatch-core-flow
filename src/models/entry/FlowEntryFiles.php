@@ -77,14 +77,14 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
         if (!$calculated_path) {return null;}
         if (is_dir($calculated_path)) {
             //look inside of it
-            $yaml = FlowEntryYaml::maybe_read_yaml_in_folder($calculated_path);
+            $yaml = FlowEntryYaml::maybe_read_yaml_in_folder($calculated_path,$this->get_project());
             if ($yaml) {return $calculated_path;}
         }
 
         $project_dir = $this->project->get_project_directory();
         $older_version_calculated_path = $project_dir . DIRECTORY_SEPARATOR . static::ENTRY_FOLDER_PREFIX . $this->flow_entry_guid;
         if (is_dir($older_version_calculated_path)) {
-            $yaml = FlowEntryYaml::maybe_read_yaml_in_folder($older_version_calculated_path);
+            $yaml = FlowEntryYaml::maybe_read_yaml_in_folder($older_version_calculated_path,$this->get_project());
             if ($yaml) {return $older_version_calculated_path;}
         }
 
@@ -98,11 +98,29 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
                 $file_name =   $fileinfo->getFilename();
                 if (strpos($file_name,$this->get_guid()) !== false) {
                     //look inside of it
-                    $yaml = FlowEntryYaml::maybe_read_yaml_in_folder($maybe_path);
+                    $yaml = FlowEntryYaml::maybe_read_yaml_in_folder($maybe_path,$this->get_project());
                     if ($yaml) {return $maybe_path;}
                 }
             }
         }
+
+        //if not guid, look for name
+
+        $dir = new DirectoryIterator($project_dir);
+
+        foreach ($dir as $fileinfo) {
+            if ($fileinfo->isDir() && !$fileinfo->isDot()) {
+                $maybe_path =   $fileinfo->getPathname();
+                $yaml = FlowEntryYaml::maybe_read_yaml_in_folder($maybe_path,$this->get_project());
+                if ($yaml) {
+                    if ($yaml->get_title() === $this->get_title()) {
+                        return $maybe_path;
+                    }
+                }
+
+            }
+        }
+
         return null;
     }
     /**
@@ -121,7 +139,21 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
         //if no existing path found, and we are not using the given folder, then make default calculated and return with it
         if (!$new_folder_name) {
             if ($deduced_path) {
-                return realpath($deduced_path);
+                if ($deduced_path === $calculated_path) {
+                    return realpath($deduced_path);
+                } else {
+                    //rename to calculated
+                    $b_ok = rename($deduced_path,$calculated_path);
+                    if (!$b_ok) {
+                        throw new RuntimeException("[get_entry_folder] Could not rename dir from ".
+                            "$deduced_path, to $calculated_path");
+                    }
+                    if (!is_readable($calculated_path)) {
+                        throw new RuntimeException("Could not find folder $calculated_path after renaming it from $deduced_path");
+                    }
+                    return realpath($calculated_path);
+                }
+
             } else {
                 if (!is_readable($calculated_path)) {
                     $check =  mkdir($calculated_path,0777,true);

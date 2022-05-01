@@ -336,7 +336,7 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
         if (!$project_directory) {return null;}
         $resource_directory = $project_directory.DIRECTORY_SEPARATOR. IFlowProject::REPO_RESOURCES_DIRECTORY;
         $real = realpath($resource_directory);
-        if (!$real) {
+        if (!$real || !is_readable($resource_directory)) {
             $b_made = mkdir($resource_directory);
             if (!$b_made) {
                 throw new RuntimeException("Cannot make resource directory at $real");
@@ -358,7 +358,7 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
         if (!$project_directory) {return null;}
         $resource_directory = $project_directory.DIRECTORY_SEPARATOR. IFlowProject::REPO_FILES_DIRECTORY;
         $real = realpath($resource_directory);
-        if (!$real) {
+        if (!$real || !is_readable($resource_directory)) {
             $b_made = mkdir($resource_directory);
             if (!$b_made) {
                 throw new RuntimeException("Cannot make files directory at $real");

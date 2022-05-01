@@ -1,6 +1,7 @@
 <?php
 namespace app\models\project;
 
+use app\models\project\setting_models\FlowProjectGitSettings;
 use app\models\standard\IFlowTagStandardAttribute;
 use app\models\tag\FlowTag;
 use app\models\user\FlowUser;
@@ -92,7 +93,7 @@ interface IFlowProject {
     public function get_resource_url() : string;
 
 
-    public static function create_project_from_upload(string $archive_file_path,string $flow_project_title) :IFlowProject;
+    public static function create_project_from_upload(string $archive_file_path,string $flow_project_title,?FlowProjectGitSettings $settings) :IFlowProject;
 
     /**
      * @param bool $b_refresh  if true will not use previous value if set

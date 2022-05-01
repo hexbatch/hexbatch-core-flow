@@ -79,7 +79,7 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
 
 
 
-    public function __construct($object) {
+    public function __construct($object,? IFlowProject $project = null ) {
         $this->folder_hash = null;
         $this->folder_path = null;
         if (is_array($object)) {
@@ -109,7 +109,7 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
                 if (property_exists($this,$key)) {
                     if ($key === 'child_entries') {
                         foreach ($val as $child_info) {
-                            $this->dese_child_entries[] = new static($child_info);
+                            $this->dese_child_entries[] = new static($child_info,$project);
                         }
                     } else {
                         $this->$key = $val;
@@ -128,6 +128,7 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
             throw new InvalidArgumentException("flow_entry_guid is not a valid guid: ".$this->flow_entry_guid);
         }
 
+        if ($project) {$this->flow_project_guid = $project->get_project_guid();}
         if ($this->flow_project_guid && ! WillFunctions::is_valid_guid_format($this->flow_project_guid)) {
             throw new InvalidArgumentException("flow_project_guid is not a valid guid: ".$this->flow_project_guid);
         }
@@ -157,7 +158,7 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
 
     public function get_folder_path() : ?string { return $this->folder_path;}
 
-    public static function maybe_read_yaml_in_folder(string $folder_path) : ?FlowEntryYaml {
+    public static function maybe_read_yaml_in_folder(string $folder_path,?IFlowProject $project = null) : ?FlowEntryYaml {
         if (empty($folder_path) || !is_dir($folder_path)) {return null;}
         $real_path = realpath($folder_path);
         if (!$real_path) {return null;}
@@ -167,7 +168,7 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
         }
 
         $goods = Yaml::parseFile($maybe_yaml_path);
-        $node = new static($goods);
+        $node = new static($goods,$project);
         $node->setFolderPath($maybe_yaml_path);
         if (!$node->is_valid()) {return null;}
         return $node;
@@ -187,7 +188,7 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
             throw new RuntimeException("[read_yaml_entry] Could not read $yaml_path");
         }
         $goods = Yaml::parseFile($yaml_path);
-        $node = new static($goods);
+        $node = new static($goods,$e->get_project());
         $node->setFolderPath($yaml_path);
         if (!$node->is_valid()) {
             throw new RuntimeException("[read_yaml_entry] Cannot read enough information from the yaml path");
@@ -225,7 +226,7 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
         foreach ($yaml_found as $yaml_path) {
             if ($folder_path === dirname($yaml_path,2) ) {
                 $goods = Yaml::parseFile($yaml_path);
-                $node = new static($goods);
+                $node = new static($goods,$project);
                 $node->setFolderPath($yaml_path);
                 if ($node->is_valid()) {
                     if (!isset($guid_hash[$node->get_guid()])) {

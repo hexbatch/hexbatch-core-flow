@@ -153,7 +153,7 @@ class ResourceProjectController extends BaseProjectController {
             $base_resource_file_path = $project->get_project_directory(); //no slash at end
             $test_file_path = $base_resource_file_path . DIRECTORY_SEPARATOR . $file_part_path;
             $real_file_path = realpath($test_file_path);
-            if (!$real_file_path) {
+            if (!$real_file_path || !is_readable($test_file_path)) {
                 throw new RuntimeException("Could not find the file of $file_part_path in the project repo");
             }
             if (!is_writable($real_file_path)){

@@ -101,7 +101,6 @@ https://github.com/php-lock/lock for making sure only one thing at a time can do
 
 https://carbon.nesbot.com for date/time strings
 
-https://github.com/splitbrain/php-archive for unpacking zips and tars
 
 ## Javascript Libraries Used
 

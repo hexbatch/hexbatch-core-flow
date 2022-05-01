@@ -3,7 +3,6 @@ namespace app\models\project\levels;
 
 use app\helpers\ProjectHelper;
 use app\hexlet\JsonHelper;
-use app\hexlet\RecursiveClasses;
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\FlowEntryArchive;
 use app\models\entry\FlowEntryYaml;
@@ -260,57 +259,62 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
 
     /**
      * Saves the private key to a file, and deletes it after, and might take care of ssh local host issues
-     * @param string $private_key
-     * @param string $to_ssh_url
+     * @param FlowProjectGitSettings $settings
      * @param string $git_command
      * @return string[]
-     * @throws
+     * @throws Exception
      */
-    protected function do_key_command_with_private_key(string $private_key,string $to_ssh_url,string $git_command) : array {
+    protected function do_git_command_with_settings(FlowProjectGitSettings $settings, string $git_command) : array {
 
-        WillFunctions::will_do_nothing($to_ssh_url); //reserved for future use
-        $temp_file_path = null;
-        try {
-            //save private key as temp file, and set permissions to owner only
-            $temp_file_path = tempnam(sys_get_temp_dir(), 'git-key-');
-            file_put_contents($temp_file_path,$private_key);
-            $directory = $this->get_project_directory();
-            $command = "ssh-agent bash -c ' ".
-                "cd $directory; ".
-                "ssh-add $temp_file_path; ".
-                "git $git_command'".
-                " 2>&1";
+        $private_key = $settings->getGitSshKey();
 
-            /*
-             * The way the current linux setup; need to have the base url of the remote in the known hosts first
-             * this is done at the dockerfile with
-             * (host=github.com; ssh-keyscan -H $host; for ip in $(dig @8.8.8.8 github.com +short); do ssh-keyscan -H $host,$ip; ssh-keyscan -H $ip; done) 2> /dev/null >> /home/www-data/.ssh/known_hosts
-             * but should be able to add others as needed by using regex to get the host base url, and running this
-             *
-             */
+        if ($private_key) {
+            $temp_file_path = null;
+            try {
+                //save private key as temp file, and set permissions to owner only
+                $temp_file_path = tempnam(sys_get_temp_dir(), 'git-key-');
+                file_put_contents($temp_file_path, $private_key);
+                $directory = $this->get_project_directory();
+                $command = "ssh-agent bash -c ' " .
+                    "cd $directory; " .
+                    "ssh-add $temp_file_path; " .
+                    "git $git_command'" .
+                    " 2>&1";
 
-            exec($command,$output,$result_code);
-            if ($result_code) {
-                throw new RuntimeException("Cannot do $git_command,  returned code of $result_code : " . implode("<br>\n",$output));
+                /*
+                 * The way the current linux setup; need to have the base url of the remote in the known hosts first
+                 * this is done at the dockerfile with
+                 * (host=github.com; ssh-keyscan -H $host; for ip in $(dig @8.8.8.8 github.com +short); do ssh-keyscan -H $host,$ip; ssh-keyscan -H $ip; done) 2> /dev/null >> /home/www-data/.ssh/known_hosts
+                 * but should be able to add others as needed by using regex to get the host base url, and running this
+                 *
+                 */
+
+                exec($command, $output, $result_code);
+                if ($result_code) {
+                    throw new RuntimeException("Cannot do $git_command,  returned code of $result_code : " . implode("<br>\n", $output));
+                }
+                return $output;
+
+            } finally {
+                if ($temp_file_path) {
+                    unlink($temp_file_path);
+                }
             }
-            return $output;
-
-        } finally {
-            if ($temp_file_path) {
-                unlink($temp_file_path);
-            }
+        } else {
+             $out_string =  $this->do_git_command($git_command);
+             return explode("\n",$out_string);
         }
     }
 
 
-
     /**
-     * @param string $archive_file_path
+     * @param string|null $archive_file_path
      * @param string $flow_project_title
+     * @param FlowProjectGitSettings|null $settings
      * @return IFlowProject
-     * @throws
+     * @throws Exception
      */
-    public static function create_project_from_upload(string $archive_file_path,string $flow_project_title) :IFlowProject{
+    public static function create_project_from_upload(?string $archive_file_path,string $flow_project_title,?FlowProjectGitSettings $settings = null ) :IFlowProject{
 
         /**
          * @var IFlowProject $project
@@ -337,17 +341,40 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             if ($result_code) {
                 throw new RuntimeException("Cannot do $command ,  returned code of $result_code : " . implode("<br>\n",$output));
             }
-            ProjectHelper::get_project_helper()->extract_archive_from_zip_or_tar($archive_file_path,$project_directory);
-            $project->create_project_repo($project_directory);
+            $project->create_project_repo($project_directory,false);
+            if ($archive_file_path) {
+                ProjectHelper::get_project_helper()->extract_archive_from_zip_or_tar($archive_file_path,$project_directory);
+            } elseif ($settings) {
+                if (!$settings->getGitUrl()) {
+                    throw new InvalidArgumentException("[create_project_from_upload] needs settings to have the git url");
+                }
+                $project->do_git_command_with_settings($settings,sprintf("clone %s %s  ",$settings->getGitUrl(),$project_directory));
+            } else {
+                throw new InvalidArgumentException("[create_project_from_upload] need archive path or settings");
+            }
 
+
+
+
+            $project->create_project_repo($project_directory); //in case not repo imported
             if (is_readable($project->get_bb_code_path())) {
-                $blurb = file_get_contents($project->get_bb_code_path());
-                $project->set_read_me($blurb);
+                $bb_code = file_get_contents($project->get_bb_code_path());
+                $project->set_read_me(trim($bb_code));
             }
 
             if (is_readable($project->get_blurb_path())) {
                 $blurb = file_get_contents($project->get_blurb_path());
-                $project->set_project_blurb($blurb);
+                $project->set_project_blurb(trim($blurb));
+            }
+
+            if (is_readable($project->get_title_path())) {
+                $title = file_get_contents($project->get_title_path());
+                $project->set_project_title($title);
+            } else {
+                $b_ok = file_put_contents($project->get_title_path(),$project->get_project_title());
+                if ($b_ok === false) {
+                    throw new RuntimeException("[create_project_from_upload] Could not write to".
+                        $project->get_title_path());}
             }
             $project->check_integrity();
             $project->set_db_from_file_state();
@@ -387,7 +414,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
 
         $push_remote_name = static::PUSH_REMOTE_NAME;
         $command = sprintf("push -u $push_remote_name %s",$push_settings->getGitBranch());
-        return $this->do_key_command_with_private_key($push_settings->getGitSshKey(),$push_settings->getGitUrl(),$command);
+        return $this->do_git_command_with_settings($push_settings,$command);
     }
 
     /**
@@ -471,9 +498,8 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
 
         $command = "pull ".static::IMPORT_REMOTE_NAME ." ".$this->getGitImportSettings()->getGitBranch();
         try {
-            $git_ret =  $this->do_key_command_with_private_key(
-                $this->getGitImportSettings()->getGitSshKey(),
-                $this->getGitImportSettings()->getGitUrl(),
+            $git_ret =  $this->do_git_command_with_settings(
+                $this->getGitImportSettings(),
                 $command);
         } catch (Exception $e) {
             $maybe_changes = $this->do_git_command('diff');
@@ -654,9 +680,8 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             $branch = $git_push_settings->getGitBranch();
             if (!$branch) {return null;}
             $push_remote_name = static::PUSH_REMOTE_NAME;
-            $fetch_stuff =  $this->do_key_command_with_private_key(
-                $this->getGitExportSettings()->getGitSshKey(),
-                $this->getGitExportSettings()->getGitUrl(),
+            $fetch_stuff =  $this->do_git_command_with_settings(
+                $this->getGitExportSettings(),
                 "fetch $push_remote_name");
             WillFunctions::will_do_nothing($fetch_stuff);
             return $this->do_git_command("rev-parse $push_remote_name/$branch");
@@ -694,9 +719,8 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             if (!$branch) {return null;}
 
             $remote_name = static::IMPORT_REMOTE_NAME;
-            $fetch_stuff =  $this->do_key_command_with_private_key(
-                $this->getGitImportSettings()->getGitSshKey(),
-                $this->getGitImportSettings()->getGitUrl(),
+            $fetch_stuff =  $this->do_git_command_with_settings(
+                $this->getGitImportSettings(),
                 "fetch $remote_name");
             WillFunctions::will_do_nothing($fetch_stuff);
             return $this->do_git_command("rev-parse $remote_name/$branch");
@@ -773,18 +797,25 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
     public  function do_git_command( string $command,bool $b_include_git_word = true,?string $pre_command = null) : string {
         $dir = $this->get_project_directory();
         if (!$dir) {
-            throw new RuntimeException("Project Directory is not created yet");
+            throw new FlowProjectGitException("Project Directory is not created yet");
         }
         return FlowGitHistory::do_git_command($dir,$command,$b_include_git_word,$pre_command);
     }
 
     /**
      * @param string $repo_path
+     * @param bool $b_do_git
      * @throws Exception
      */
-    protected function create_project_repo(string $repo_path) {
+    protected function create_project_repo(string $repo_path,bool $b_do_git = true) {
         parent::create_project_repo($repo_path);
-        $this->do_git_command("init");
+        if (!$b_do_git) {return;}
+        try {
+            $this->do_git_command("init");
+        } catch (FlowProjectGitException $f) {
+            static::get_logger()->info('[create_project_repo] ignoring'.$f->getMessage());
+        }
+
     }
 
     /**
