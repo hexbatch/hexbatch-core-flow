@@ -5,7 +5,6 @@ use app\models\project\setting_models\FlowProjectGitSettings;
 use app\models\standard\IFlowTagStandardAttribute;
 use app\models\tag\FlowTag;
 use app\models\user\FlowUser;
-use Psr\Http\Message\UploadedFileInterface;
 
 
 interface IFlowProject {
@@ -86,6 +85,7 @@ interface IFlowProject {
     public function delete_project_directory() : void;
     public function get_html() : ?string;
 
+    public function get_calculated_project_directory() : ?string;
     public function get_project_directory() : ?string;
     public function get_files_directory() : ?string;
     public function get_resource_directory() : ?string;
@@ -131,7 +131,11 @@ interface IFlowProject {
 
     public function get_head_commit_hash() : ?string;
     public function get_git_status(): array;
-    public function do_git_command( string $command,bool $b_include_git_word = true,?string $pre_command = null) : string;
+
+    public function do_git_command( string $command,bool $b_include_git_word = true,?string $pre_command = null,
+                                    bool $b_create_directory_if_empty = true,
+                                    bool $b_cd_into_project = true
+    ) : string;
 
     /**
      * @param int|null $start_at

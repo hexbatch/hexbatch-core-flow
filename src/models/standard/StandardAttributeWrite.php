@@ -219,14 +219,17 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
         foreach ($raw_by_attribute_names_by_tag_guid as $tag_guid => &$raw_ancestor_list_by_attribute_names) {
             $tag_parent_guid = $tag_guid_map_to_parent_tag_guid[$tag_guid];
             while($tag_parent_guid) {
-                $their_attributes = $raw_by_attribute_names_by_tag_guid[$tag_parent_guid];
-                foreach ($their_attributes as $their_attribute_name => $their_raw_array) {
-                    if (!isset($raw_ancestor_list_by_attribute_names[$their_attribute_name])) {
-                        $raw_ancestor_list_by_attribute_names[$their_attribute_name] = $their_raw_array;
+                if (isset($raw_by_attribute_names_by_tag_guid[$tag_parent_guid])) {
+                    $their_attributes = $raw_by_attribute_names_by_tag_guid[$tag_parent_guid];
+                    foreach ($their_attributes as $their_attribute_name => $their_raw_array) {
+                        if (!isset($raw_ancestor_list_by_attribute_names[$their_attribute_name])) {
+                            $raw_ancestor_list_by_attribute_names[$their_attribute_name] = $their_raw_array;
+                        }
                     }
                 }
 
-                $tag_parent_guid = $tag_guid_map_to_parent_tag_guid[$tag_parent_guid];
+                $tag_parent_guid = $tag_guid_map_to_parent_tag_guid[$tag_parent_guid] ?? null;
+
             }
         }
         unset($raw_ancestor_list_by_attribute_names);

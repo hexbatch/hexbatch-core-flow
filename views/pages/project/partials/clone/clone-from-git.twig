@@ -158,7 +158,7 @@ jQuery(function($) {
     $(`button.flow-clone-from-git-action`).on('click',function() {
         let data = $(`form#flow-clone-from-git-form`).serializeObject();
 
-        do_flow_ajax_action({{clone_from_git_url}},data,
+        do_flow_ajax_action("{{clone_from_git_url}}",data,
 
             /** @param {FlowCopyProjectActionResponse} response */
             function(response) {
@@ -179,7 +179,10 @@ jQuery(function($) {
                     'Project could not be cloned<br>\n ' + response.message ,
                     'error'
                 ).then(() => {
-                    window.location.reload();
+                    if (!response.hasOwnProperty('token') || ! response.token) {
+                        window.location.reload();
+                    }
+
                 });
             } ,
             "Cloned Project",

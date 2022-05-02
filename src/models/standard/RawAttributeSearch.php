@@ -189,15 +189,18 @@ class RawAttributeSearch extends FlowBase {
                 //loop by parent going down
                 $parent_tag_guid = $raw->getParentTagGuid();
                 while($parent_tag_guid) {
-                    $parent_of_mine_attributes = $map_raw_by_tag_guid[$parent_tag_guid];
-                    foreach ($parent_of_mine_attributes as $maybe_parent_attribute) {
-                        if ($maybe_parent_attribute->getAttributeName() === $raw->getAttributeName()) {
-                            $raw->setParentAttributeGuid($maybe_parent_attribute->getAttributeGuid());
-                            $raw->setParentAttributeID($maybe_parent_attribute->getAttributeID());
-                            break 2;
+                    if (isset($map_raw_by_tag_guid[$parent_tag_guid])) {
+                        $parent_of_mine_attributes = $map_raw_by_tag_guid[$parent_tag_guid];
+                        foreach ($parent_of_mine_attributes as $maybe_parent_attribute) {
+                            if ($maybe_parent_attribute->getAttributeName() === $raw->getAttributeName()) {
+                                $raw->setParentAttributeGuid($maybe_parent_attribute->getAttributeGuid());
+                                $raw->setParentAttributeID($maybe_parent_attribute->getAttributeID());
+                                break 2;
+                            }
                         }
                     }
-                    $parent_tag_guid = $map_tag_parent_guid_by_tag_guid[$parent_tag_guid];
+                    $parent_tag_guid = $map_tag_parent_guid_by_tag_guid[$parent_tag_guid] ?? null;
+
                 }
 
             }
@@ -218,15 +221,30 @@ class RawAttributeSearch extends FlowBase {
      */
     protected static function sort_raw_array_by_parent_tag(array $raw_array_to_sort) : array {
 
+        $all_tag_ids = [];
+        foreach ($raw_array_to_sort as $raw_parent) {
+            if (!in_array($raw_parent->getTagID(),$all_tag_ids)) {
+                $all_tag_ids[] =  $raw_parent->getTagID();
+            }
+        }
+
         $data = [];
         $data[] = ['id' => 0, 'parent' => -1, 'title' => 'dummy_root','raw'=>null];
         $map = [];
         foreach ($raw_array_to_sort as $raw) {
             $map[$raw->getTagGuid()][] = $raw;
             if (count($map[$raw->getTagGuid()]) > 1) { continue;}
+
+            $found_parent_id = 0;
+            if ($raw->getParentTagID()) {
+                if (in_array($raw->getParentTagID(),$all_tag_ids)) {
+                    $found_parent_id = $raw->getParentTagID();
+                }
+            }
+
             $data[] = [
                 'id' => $raw->getTagID(),
-                'parent' => $raw->getParentTagID()??0,
+                'parent' => $found_parent_id,
                 'title' => $raw->getTagGuid(),
                 'raw'=>$raw];
         }

@@ -441,12 +441,14 @@ class GitProjectController extends BaseProjectController {
         $project = null;
         try {
             $option = new AjaxCallData([
+                AjaxCallData::OPTION_IS_AJAX,
+                AjaxCallData::OPTION_MAKE_NEW_TOKEN,
                 AjaxCallData::OPTION_VALIDATE_TOKEN
             ]);
 
-            $option->note = 'create_from_upload';
+            $option->note = 'clone_project_from_git';
 
-            $call = $this->get_project_helper()->validate_ajax_call($option, $request, 'yes');
+            $call = $this->get_project_helper()->validate_ajax_call($option, $request);
 
             if (!property_exists($call->args,'git_choice') || empty($call->args->git_choice)) {
                 throw new InvalidArgumentException("[clone_project_from_git] Need git_choice set");
@@ -476,20 +478,20 @@ class GitProjectController extends BaseProjectController {
                     }
 
                     //make sure setting tag has the proper data
-                    $setting_standard_value = $setting_tag->hasStandardAttribute(IFlowTagStandardAttribute::STD_ATTR_NAME_GIT);
-                    if (!$setting_standard_value) {
+                    $setting_standard_object = $setting_tag->hasStandardAttribute(IFlowTagStandardAttribute::STD_ATTR_NAME_GIT);
+                    if (!$setting_standard_object) {
                         throw new LogicException(
                             "[clone_project_from_git] Could not find git standard attribute for tag ".
                             $setting_tag->flow_tag_guid);
                     }
-                    $setting = new FlowProjectGitSettings($setting_standard_value);
+                    $setting = new FlowProjectGitSettings($setting_standard_object->getStandardValue());
                     break;
                 }
 
                 case 'url': {
                     $url = $call->args->public_repo_url??null;
                     if (!$url) {throw new InvalidArgumentException("[clone_project_from_git] need url for this option");}
-                    $setting = new FlowProjectGitSettings(["url"=>$url]);
+                    $setting = new FlowProjectGitSettings([IFlowTagStandardAttribute::GIT_KEY_REPO_URL=>$url]);
                     break;
                 }
 

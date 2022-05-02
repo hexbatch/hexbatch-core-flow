@@ -3,6 +3,7 @@
 namespace app\models\tag;
 
 
+use app\helpers\Utilities;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
@@ -10,6 +11,7 @@ use app\models\project\IFlowProject;
 use app\models\standard\FlowTagStandardAttribute;
 use app\models\standard\IFlowTagStandardAttribute;
 use app\models\tag\brief\BriefFlowTag;
+use Error;
 use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
@@ -236,8 +238,42 @@ class FlowTag extends FlowBase implements JsonSerializable {
         foreach ($object as $key => $val) {
             if ($key === 'attributes') {continue;}
             if ($key === 'applied') {continue;}
+            if ($key === 'standard_attributes') {
+                if (!is_array($val)) {
+                    if (! $val instanceof IFlowTagStandardAttribute) {
+                        if (is_object($val)) {
+                            foreach ($val as $standard_name => $standard_value) {
+                                $args_for_standard = [
+                                  'standard_name' =>   $standard_name,
+                                  'standard_value' =>   $standard_value
+                                ];
+                                $param_node = new FlowTagStandardAttribute( Utilities::convert_to_object($args_for_standard));
+                                $this->standard_attributes[] = $param_node;
+                            }
+                        } else {
+                            if (!empty($val)) {
+                                throw new InvalidArgumentException(
+                                    "[FlowTag Constructor] standard_attributes is not array, object or empty: "
+                                    . print_r($val, true)
+                                );
+                            }
+                        }
+
+                    } else {
+                        $this->standard_attributes[] = $val;
+                    }
+                } else {
+                    $this->standard_attributes = $val;
+                }
+            }
             else if (property_exists($this,$key)) {
-                $this->$key = $val;
+                try {
+                    $this->$key = $val;
+                } catch (Error $help) {
+                    static::get_logger()->info("key $key",['message'=>$help->getMessage(),'value'=>$val]);
+                    throw $help;
+                }
+
             }
         }
 

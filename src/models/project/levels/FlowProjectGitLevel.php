@@ -261,10 +261,16 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
      * Saves the private key to a file, and deletes it after, and might take care of ssh local host issues
      * @param FlowProjectGitSettings $settings
      * @param string $git_command
+     * @param bool $b_create_directory_if_empty
+     * @param bool $b_cd_into_project
      * @return string[]
      * @throws Exception
      */
-    protected function do_git_command_with_settings(FlowProjectGitSettings $settings, string $git_command) : array {
+    protected function do_git_command_with_settings(FlowProjectGitSettings $settings, string $git_command,
+                                                    bool $b_create_directory_if_empty = true,
+                                                    bool $b_cd_into_project = true
+
+    ) : array {
 
         $private_key = $settings->getGitSshKey();
 
@@ -274,9 +280,19 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
                 //save private key as temp file, and set permissions to owner only
                 $temp_file_path = tempnam(sys_get_temp_dir(), 'git-key-');
                 file_put_contents($temp_file_path, $private_key);
-                $directory = $this->get_project_directory();
+                if ($b_create_directory_if_empty) {
+                    $directory = $this->get_project_directory();
+                } else {
+                    $directory = $this->get_calculated_project_directory();
+                }
+
+                $cd_command = '';
+                if ($b_cd_into_project) {
+                    $cd_command = "cd $directory; ";
+                }
+
                 $command = "ssh-agent bash -c ' " .
-                    "cd $directory; " .
+                    $cd_command .
                     "ssh-add $temp_file_path; " .
                     "git $git_command'" .
                     " 2>&1";
@@ -291,7 +307,8 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
 
                 exec($command, $output, $result_code);
                 if ($result_code) {
-                    throw new RuntimeException("Cannot do $git_command,  returned code of $result_code : " . implode("<br>\n", $output));
+                    throw new RuntimeException("Cannot do $git_command,  returned code of $result_code : "
+                                                    . implode("<br>\n", $output));
                 }
                 return $output;
 
@@ -301,7 +318,8 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
                 }
             }
         } else {
-             $out_string =  $this->do_git_command($git_command);
+             $out_string =  $this->do_git_command($git_command,true,null,
+                 $b_create_directory_if_empty,$b_cd_into_project);
              return explode("\n",$out_string);
         }
     }
@@ -336,20 +354,27 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
 
             //delete the project git folder, then copy in the zip, then save project
             $project_directory = $project->get_project_directory();
-            //$git_folder_path = $project_directory . DIRECTORY_SEPARATOR . '.git';
+
             $command = "rm -rf $project_directory 2>&1";
             exec($command,$output,$result_code);
             if ($result_code) {
                 throw new RuntimeException("Cannot do $command ,  returned code of $result_code : " . implode("<br>\n",$output));
             }
-            $project->create_project_repo($project_directory,false);
+
+
             if ($archive_file_path) {
+                $project->create_project_repo($project_directory,false);
                 ProjectHelper::get_project_helper()->extract_archive_from_zip_or_tar($archive_file_path,$project_directory);
             } elseif ($settings) {
                 if (!$settings->getGitUrl()) {
                     throw new InvalidArgumentException("[create_project_from_upload] needs settings to have the git url");
                 }
-                $project->do_git_command_with_settings($settings,sprintf("clone %s %s  ",$settings->getGitUrl(),$project_directory));
+                $project->do_git_command_with_settings(
+                    $settings,
+                    sprintf("clone %s %s  ",$settings->getGitUrl(),$project_directory),
+                    false,
+                    false
+                );
             } else {
                 throw new InvalidArgumentException("[create_project_from_upload] need archive path or settings");
             }
@@ -790,17 +815,28 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
 
     /**
      * @param string $command
+     * @param bool $b_include_git_word default true
      * @param string|null $pre_command
-     * @param  bool $b_include_git_word  default true
+     * @param bool $b_create_directory_if_empty
+     * @param bool $b_cd_into_project
      * @return string
      * @throws Exception
      */
-    public  function do_git_command( string $command,bool $b_include_git_word = true,?string $pre_command = null) : string {
-        $dir = $this->get_project_directory();
+    public  function do_git_command( string $command,bool $b_include_git_word = true,
+                                     ?string $pre_command = null,
+                                     bool $b_create_directory_if_empty = true,
+                                     bool $b_cd_into_project = true
+    ) : string {
+        if ($b_create_directory_if_empty) {
+            $dir = $this->get_project_directory();
+        } else {
+            $dir = $this->get_calculated_project_directory();
+        }
+
         if (!$dir) {
             throw new FlowProjectGitException("Project Directory is not created yet");
         }
-        return FlowGitHistory::do_git_command($dir,$command,$b_include_git_word,$pre_command);
+        return FlowGitHistory::do_git_command($dir,$command,$b_include_git_word,$pre_command, $b_cd_into_project);
     }
 
     /**

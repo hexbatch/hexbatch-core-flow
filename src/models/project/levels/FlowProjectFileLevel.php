@@ -72,8 +72,10 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
      */
     public function delete_project_directory() : void {
         $folder_to_remove = $this->get_project_directory();
-        if ($folder_to_remove) {
-            RecursiveClasses::rrmdir($folder_to_remove);
+        $command = "rm -rf $folder_to_remove 2>&1";
+        exec($command,$output,$result_code);
+        if ($result_code) {
+            throw new RuntimeException("[delete_project_directory]Cannot do $command ,  returned code of $result_code : " . implode("<br>\n",$output));
         }
     }
 
@@ -387,10 +389,19 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
      * @return string|null
      * @throws Exception
      */
-    public function get_project_directory() : ?string {
+    public function get_calculated_project_directory() : ?string {
         if (empty($this->flow_project_guid) || empty($this->get_owner_user_guid())) {return null;}
         $check =  $this->get_projects_base_directory(). DIRECTORY_SEPARATOR .
             $this->get_owner_user_guid() . DIRECTORY_SEPARATOR . $this->flow_project_guid;
+        return $check;
+    }
+    /**
+     * @return string|null
+     * @throws Exception
+     */
+    public function get_project_directory() : ?string {
+        $check =  $this->get_calculated_project_directory();
+        if (!$check) {return null;}
 
         if (!is_readable($check) ) {
             $this->create_project_repo($check);
