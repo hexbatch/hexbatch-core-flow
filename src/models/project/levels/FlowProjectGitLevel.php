@@ -314,7 +314,8 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
      * @return IFlowProject
      * @throws Exception
      */
-    public static function create_project_from_upload(?string $archive_file_path,string $flow_project_title,?FlowProjectGitSettings $settings = null ) :IFlowProject{
+    public static function create_project_from_upload(?string $archive_file_path,string $flow_project_title,
+                                                      ?FlowProjectGitSettings $settings ) :IFlowProject{
 
         /**
          * @var IFlowProject $project

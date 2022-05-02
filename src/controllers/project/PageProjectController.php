@@ -3,12 +3,14 @@ namespace app\controllers\project;
 
 use app\controllers\user\UserPages;
 use app\helpers\AjaxCallData;
+use app\helpers\UserHelper;
 use app\hexlet\FlowAntiCSRF;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\project\FlowProject;
 use app\models\project\FlowProjectUser;
 use app\models\project\IFlowProject;
+use app\models\standard\IFlowTagStandardAttribute;
 use app\models\tag\FlowTagSearch;
 use app\models\tag\FlowTagSearchParams;
 use app\models\user\FlowUser;
@@ -165,9 +167,15 @@ class PageProjectController extends BaseProjectController
      * 
      */
     public function clone_project( ResponseInterface $response) :ResponseInterface {
+
+        $git_tags = UserHelper::get_user_helper()->
+        get_user_tags_of_standard($this->user->flow_user_guid,IFlowTagStandardAttribute::STD_ATTR_NAME_GIT);
+
         return $this->view->render($response, 'main.twig', [
             'page_template_path' => 'project/clone_project.twig',
             'page_title' => 'Clone Project',
+            'git_tags' => $git_tags,
+            'project' => UserHelper::get_user_helper()->get_user_home_project(),
             'page_description' => 'Clone a project from a repo'
 
         ]);

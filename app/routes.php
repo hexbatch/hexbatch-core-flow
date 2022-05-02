@@ -99,7 +99,8 @@ return function (App $app) {
             $group->group('', function (RouteCollectorProxy $group) {
 
                 /** @uses \app\controllers\project\PageProjectController::single_project_home() */
-                $group->get('/{project_name:[[:alnum:]\-]+}', ['projectPages', 'single_project_home'])->setName('single_project_home');
+                $group->get('/{project_name:[[:alnum:]\-]+}',
+                    ['projectPages', 'single_project_home'])->setName('single_project_home');
             } );
 
             $group->group('/clone_project', function (RouteCollectorProxy $group) {

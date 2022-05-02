@@ -36,213 +36,17 @@
             <div class="tab-content flow-clone-project-tabs" id="nav-tabContent">
 
                 <div class="tab-pane fade show active" id="nav-clone-from-project" role="tabpanel" aria-labelledby="flow-clone-from-project">
-                    <div class="row">
-                        <div class="mt-2 col-12 col-md-6 col-xxl-3">
-                            <label for="flow-select-project">
-                                Choose a project
-                            </label>
-                            <select id="flow-select-project"
-                                    class="w-100"
-                                    tabindex="-1"
-                                    aria-hidden="true"
-                            >
-                            </select>
-                        </div>
-
-                        <div class="mt-4 col-12 col-md-6 col-xxl-auto">
-
-                            <form
-                                method="post"
-                                action=`{{-  url_for('clone_project_from_local',{guid: '::guid::'}) -}}`
-                                id="flow-form-clone-from-project"
-                                class="invisible"
-                            >
-                                {{ form_token(  csrf_token_set_to_root ) }}
-                                <fieldset>
-                                    <span id="flow-selected_project-name"></span>
-                                    <code id="flow-selected_project-guid"></code>
-                                    <button class="btn btn-outline-secondary btn-sm clipy-btn flow-import-project-button"
-                                            type="button"
-                                            data-clipboard-target="#flow-selected_project-guid"
-                                            data-popover_on_success="Copied!"
-                                            data-popover_on_fail="Use Control-C"
-                                    >
-                                        Copy GUID string
-                                    </button>
-                                </fieldset>
-
-                                <fieldset>
-                                    <label for="flow_project_title">
-                                        Project Title
-                                    </label>
-                                    <input type="text" id="flow_project_title" name="flow_project_title"
-                                           class="form-control"
-                                           placeholder="Title"
-                                           required
-                                           maxlength="{{ constant('app\\models\\base\\FlowBase::MAX_SIZE_TITLE') }}"
-                                           value=""
-                                    >
-                                    <button
-                                            class="btn btn-primary flow-import-project-button mt-2"
-                                            type="submit"
-                                    >
-                                        Clone
-                                    </button>
-                                </fieldset>
-                            </form>
-
-                        </div>
-                    </div>
+                  {%include('project/partials/clone/clone-from-project.twig')%}
 
                 </div><!-- /.tab-pane -->
 
                 <div class="tab-pane fade" id="nav-clone-from-git" role="tabpanel" aria-labelledby="flow-clone-from-git">
 
-                    Git!
+                    {%include('project/partials/clone/clone-from-git.twig')%}
                 </div><!-- /.tab-pane -->
 
                 <div class="tab-pane fade" id="nav-clone-from-file" role="tabpanel" aria-labelledby="flow-clone-from-file">
-
-                    <div class="card flow-clone-from-file-form">
-
-                        <div class="card-header p-3 ">
-                            Upload a zipped or tarred file here. The top folder needs to be in the archive
-                        </div>
-
-
-                        {% set clone_from_file_url = url_for('create_from_upload_ajax',{
-                            user_name: user.flow_user_name
-                        } )
-                        %}
-
-
-                        <div class="card-body ">
-                            <form action="{{ clone_from_file_url }}" class="dropzone w-100"
-                                  style="min-height: 20em" id="flow-clone-from-file-form"
-                            >
-                                <div class="row">
-                                    <div class="col-9 col-md-6 col-xxl-3">
-                                        <label for="file_upload_project_title">
-                                            New Project Title
-                                        </label>
-                                        <input type="text"  name="flow_project_title" id="file_upload_project_title"
-                                               class="form-control"
-                                               placeholder="Title"
-                                               required
-                                               maxlength="{{ constant('app\\models\\base\\FlowBase::MAX_SIZE_TITLE') }}"
-                                               value=""
-                                        >
-
-                                    </div>
-
-                                    <div class="col-3 col-md-2 col-xxl-1">
-                                        <button
-                                                class="btn btn-primary flow-clone-from-file-action mt-4"
-                                                type="button" style=" display: inline-block"
-                                        >
-                                            Create
-                                        </button>
-
-                                    </div>
-
-                                    {{ form_token( clone_from_file_url)  }}
-
-                                    <!--  fallback form -->
-                                    <div class="fallback"> <!-- This div will be removed if the fallback is not necessary -->
-                                        <input type="file" name="archive_file" />
-                                    </div>
-
-                                </div> <!-- row -->
-                            </form>
-                        </div> <!-- card-body -->
-                    </div> <!-- card -->
-
-                    <script>
-                        jQuery(function($){
-
-                            function create_dropzone_for_form() {
-                                let myDropzone = new Dropzone(`form#flow-clone-from-file-form`, {
-                                    url: "{{ clone_from_file_url }}",
-                                    paramName: "archive_file", // The name that will be used to transfer the file
-                                    maxFilesize: 50 ,// MB
-                                    autoProcessQueue: false,
-                                    init: function () {
-
-                                        var myDropzone = this;
-
-                                        $(`button.flow-clone-from-file-action`).on('click',function(e) {
-                                            e.preventDefault();
-                                            let name = $(`input#file_upload_project_title`).val();
-                                            if (name) {
-                                                myDropzone.processQueue();
-                                            } else {
-                                                my_swal.fire(
-                                                    'Please enter name',
-                                                    '',
-                                                    'warning'
-                                                )
-                                            }
-
-
-                                        });
-
-                                        this.on('sending', function(file, xhr, formData) {
-                                            // Append all form inputs to the formData Dropzone will POST
-                                            var data = $('#flow-clone-from-file-form').serializeArray();
-                                            $.each(data, function(key, el) {
-                                                formData.append(el.name, el.value);
-                                            });
-                                        });
-                                    }
-
-                                });
-
-                                myDropzone.on("error", function (file, response) {
-                                    let message;
-                                    if ($.type(response) === "string") {
-                                        message = response;
-                                    } else {
-                                        message = response.message
-                                    }
-
-                                    my_swal.fire(
-                                        'Oh No!',
-                                        'Project could not be created<br>\n ' + message,
-                                        'error'
-                                    ).then(() => {
-                                        window.location.reload();
-                                    });
-
-                                });
-
-                                myDropzone.on("success",
-                                    /**
-                                     *
-                                     * @param file
-                                     * @param {FlowCopyProjectActionResponse} response
-                                     */
-                                    function (file, response) {
-                                        my_swal.fire(
-                                            'Project Created',
-                                            response.message +
-                                            '<br>\n ' + response.project.flow_project_guid,
-                                            'success'
-                                        ).then(() => {
-                                            window.location.href = '/' + response.project.admin_user.flow_user_name +'/'
-                                                + response.project.flow_project_title;
-                                        });
-                                    }
-                                );
-
-
-                            }
-
-                            create_dropzone_for_form();
-
-
-
-                        });
-                    </script>
+                    {%include('project/partials/clone/clone-from-file.twig')%}
                 </div><!-- /.tab-pane (upload) -->
 
 
@@ -317,3 +121,5 @@
     });
 
 </script>
+
+

@@ -1,0 +1,193 @@
+<div class="card " id="flow-clone-from-git-form">
+
+    <div class="card-header p-3 ">
+        Copy a repository in using a public url or a git setting
+    </div>
+
+
+    {% set clone_from_git_url = url_for('clone_project_from_git',{
+        user_name: user.flow_user_name
+    } )
+    %}
+
+
+    <div class="card-body ">
+
+        <form action="{{ clone_from_git_url }}" id="flow-clone-from-git-form" method="post" >
+            <div class="row">
+                <div class="col-12 col-md-6 offset-md-3 offset-xxl-4 col-xxl-4 text-center">
+                    <label for="clone_git_project_title">
+                        New Project Title
+                    </label>
+                    <input type="text"  name="flow_project_title" id="clone_git_project_title"
+                           class="form-control"
+                           placeholder="Title"
+                           required
+                           maxlength="{{ constant('app\\models\\base\\FlowBase::MAX_SIZE_TITLE') }}"
+                           value=""
+                    >
+
+                </div>
+
+
+
+            </div> <!-- row -->
+
+            <div class="row mt-3">
+
+                <div class="col-12 col-md-6 col-xxl-6">
+
+                    <div class="form-check " style="margin-bottom: 2em">
+                        <input class="form-check-input" type="radio" name="git_choice" id="git_choice_url"  value="url" checked>
+                        <label class="form-check-label" for="git_choice_url">
+                            Public Url
+                        </label>
+                    </div>
+
+                    <div class="card flow-clone-choice-section">
+                        <div class="card-title">
+                            <h4>
+                                Using public repository
+                            </h4>
+                        </div>
+                        <div class="card-header">
+                            <label for="public_repo_url">
+                                Public Repo Url
+                            </label>
+                        </div>
+
+                        <div class="card-body">
+
+
+                            <input type="url"
+                                   name="public_repo_url"
+                                   id="public_repo_url"
+                                   class="form-control"
+                                   placeholder="Public Url"
+                                   value=""
+                            >
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="col-12 col-md-6 col-xxl-6">
+                    <div class="form-check" style="margin-bottom: 2em">
+                        <input class="form-check-input" type="radio" name="git_choice" id="get_choice_setting"  value="setting">
+                        <label class="form-check-label" for="get_choice_setting">
+                            Use Setting
+                        </label>
+                    </div>
+
+                    <input type="hidden" name="setting_guid">
+
+                    <div class="flow-git-clone-here flow-clone-choice-section opacity-25 pe-none" ></div>
+                </div>
+
+            </div> <!-- row -->
+
+            <div class="row">
+                <div class="col-12 text-center">
+                    <button
+                        class="btn btn-primary flow-clone-from-git-action mt-4"
+                        type="button" style=" display: inline-block"
+                    >
+                        Create
+                    </button>
+
+                </div>
+            </div>
+        </form>
+    </div> <!-- card-body -->
+</div> <!-- card -->
+
+
+<script>
+jQuery(function($) {
+    let selected_clone_tag_guid = null;
+    let choice = 'url';
+
+    {
+        let parent = $(`div#flow-clone-from-git-form`);
+        let git_tags = will_echo_tag_array({{ git_tags|to_json_string }});
+
+
+        let clone_setting_place = parent.find(`.flow-git-clone-here`);
+        let git_import_tag_setting = null;
+
+        let setting_guid_input = $(`input[name="setting_guid"]`);
+
+        let import_setting_params = {
+            tag_list: git_tags,
+            standard_name: "{{ constant('app\\models\\standard\\IFlowTagStandardAttribute::STD_ATTR_NAME_GIT') }}",
+            setting_name: null,
+            tag_setting: git_import_tag_setting,
+            setting_label: "Using a key",
+            setting_description: "Use a setting to clone",
+            on_change_callback: function (ret) {
+                console.log('on change git clone', ret);
+
+                if (ret.chosen_tag) {
+                    selected_clone_tag_guid = ret.chosen_tag.flow_tag_guid;
+
+                } else {
+                    selected_clone_tag_guid = null;
+                }
+
+                setting_guid_input.val(selected_clone_tag_guid);
+
+            },
+            on_cancel_callback: function (ret) {
+                console.log('on cancel import', ret);
+                selected_clone_tag_guid = null;
+                setting_guid_input.val(selected_clone_tag_guid);
+            }
+        };
+
+        let import_jquery = make_flow_standard_selection_control(import_setting_params);
+        clone_setting_place.append(import_jquery);
+    }
+
+    $(`input[name=git_choice]`).on('click',function(){
+        let that = $(this);
+        choice = that.val();
+        $(`.flow-clone-choice-section`).toggleClass('opacity-25 pe-none');
+    });
+
+    $(`button.flow-clone-from-git-action`).on('click',function() {
+        let data = $(`form#flow-clone-from-git-form`).serializeObject();
+
+        do_flow_ajax_action({{clone_from_git_url}},data,
+
+            /** @param {FlowCopyProjectActionResponse} response */
+            function(response) {
+                my_swal.fire(
+                    'Project Created',
+                    response.message +
+                    '<br>\n ' + response.project.flow_project_guid,
+                    'success'
+                ).then(() => {
+                    window.location.href = '/' + response.project.admin_user.flow_user_name +'/'
+                        + response.project.flow_project_title;
+                });
+            }
+            ,
+            function(response) {
+                my_swal.fire(
+                    'Oh No!',
+                    'Project could not be cloned<br>\n ' + response.message ,
+                    'error'
+                ).then(() => {
+                    window.location.reload();
+                });
+            } ,
+            "Cloned Project",
+            "Issue with cloning"
+        );
+    });
+
+});
+</script>
+
+{{ include('tag/partials/tag-js-support.twig') }}

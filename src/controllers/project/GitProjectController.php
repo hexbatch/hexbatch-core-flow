@@ -5,13 +5,15 @@ use app\helpers\AjaxCallData;
 use app\helpers\UserHelper;
 use app\hexlet\GoodZipArchive;
 use app\hexlet\JsonHelper;
-use app\hexlet\WillFunctions;
 use app\models\project\exceptions\NothingToPullException;
 use app\models\project\FlowGitFile;
 use app\models\project\FlowProject;
 use app\models\project\FlowProjectUser;
 use app\models\project\IFlowProject;
+use app\models\project\setting_models\FlowProjectGitSettings;
 use app\models\standard\IFlowTagStandardAttribute;
+use app\models\tag\FlowTagSearch;
+use app\models\tag\FlowTagSearchParams;
 use Exception;
 use InvalidArgumentException;
 use LogicException;
@@ -19,7 +21,6 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Exception\HttpInternalServerErrorException;
 use Slim\Exception\HttpNotFoundException;
-use Slim\Exception\HttpNotImplementedException;
 use Slim\Psr7\Stream;
 
 
@@ -195,20 +196,7 @@ class GitProjectController extends BaseProjectController {
     }
 
 
-    /**
-     * makes new project and then redirects to new project page
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param string $project_name
-     * @return ResponseInterface
-     * @throws HttpNotImplementedException
-     * 
-     */
-    public function clone_project_from_git(ServerRequestInterface $request, ResponseInterface $response, string $project_name) :ResponseInterface {
-        WillFunctions::will_do_nothing($response,$project_name);
-        //todo implement project from git
-        throw new HttpNotImplementedException($request,"clone_project_from_git not implemented yet");
-    }
+
 
     /**
      * @param ServerRequestInterface $request
@@ -441,6 +429,114 @@ class GitProjectController extends BaseProjectController {
     }
 
 
+    /**
+     * makes new project and then redirects to new project page
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     *
+     */
+    public function clone_project_from_git(ServerRequestInterface $request, ResponseInterface $response) :ResponseInterface {
+
+        $project = null;
+        try {
+            $option = new AjaxCallData([
+                AjaxCallData::OPTION_VALIDATE_TOKEN
+            ]);
+
+            $option->note = 'create_from_upload';
+
+            $call = $this->get_project_helper()->validate_ajax_call($option, $request, 'yes');
+
+            if (!property_exists($call->args,'git_choice') || empty($call->args->git_choice)) {
+                throw new InvalidArgumentException("[clone_project_from_git] Need git_choice set");
+            }
+
+            switch ($call->args->git_choice) {
+                case 'setting': {
+                    $setting_tag_guid = $call->args->setting_guid??null;
+                    if (!$setting_tag_guid) {throw new InvalidArgumentException(
+                        "[clone_project_from_git] need setting_guid for this option");}
+
+                    $tag_params = new FlowTagSearchParams();
+                    $tag_params->tag_guids[] = $setting_tag_guid;
+                    $setting_tag_array  = FlowTagSearch::get_tags($tag_params);
+                    if (empty($setting_tag_array)) {
+                        throw new InvalidArgumentException("[clone_project_from_git] could not find tag by tag_guid ". $setting_tag_guid);
+                    }
+
+                    $setting_tag = $setting_tag_array[0];
+
+                    $setting_project = $this->get_project_helper()->get_project_with_permissions(
+                        $request,$setting_tag->flow_project_admin_user_guid,$setting_tag->flow_project_guid,
+                        FlowProjectUser::PERMISSION_COLUMN_READ);
+                    if (!$setting_project) {
+                        throw new InvalidArgumentException(
+                            "[clone_project_from_git] You do not have permission to read the project from the tag");
+                    }
+
+                    //make sure setting tag has the proper data
+                    $setting_standard_value = $setting_tag->hasStandardAttribute(IFlowTagStandardAttribute::STD_ATTR_NAME_GIT);
+                    if (!$setting_standard_value) {
+                        throw new LogicException(
+                            "[clone_project_from_git] Could not find git standard attribute for tag ".
+                            $setting_tag->flow_tag_guid);
+                    }
+                    $setting = new FlowProjectGitSettings($setting_standard_value);
+                    break;
+                }
+
+                case 'url': {
+                    $url = $call->args->public_repo_url??null;
+                    if (!$url) {throw new InvalidArgumentException("[clone_project_from_git] need url for this option");}
+                    $setting = new FlowProjectGitSettings(["url"=>$url]);
+                    break;
+                }
+
+                default: {
+                    throw new InvalidArgumentException(
+                        '[clone_project_from_git] git_choice must be setting|url was'.$call->args->git_choice );
+                }
+            }
+
+
+
+
+            //do copy now
+            $project = FlowProject::create_project_from_upload(null,$call->args->flow_project_title,$setting);
+            $success_message = sprintf("Cloned from %s  to %s ",  $setting->getGitUrl(), $project->get_project_title());
+
+
+            $data = [
+                'success'=>true,
+                'message'=>$success_message,
+                'project'=>$project,
+                'token'=> $call->new_token
+            ];
+            $payload = JsonHelper::toString($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(201);
+
+        }
+        catch (Exception $e) {
+            $this->logger->error("Could not clone project: ".$e->getMessage(),['exception'=>$e]);
+            $data = [
+                'success'=>false,
+                'message'=>$e->getMessage(),
+                'project'=>$project,
+                'token'=> $call->new_token?? null
+            ];
+            $payload = JsonHelper::toString($data);
+
+            $response->getBody()->write($payload);
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(500);
+        }
+    }
 
     /**
      * @param ServerRequestInterface $request
@@ -475,7 +571,7 @@ class GitProjectController extends BaseProjectController {
 
             //do copy now
             $project = FlowProject::create_project_from_upload(
-                                    $temp_file_name_with_extension,$call->args->flow_project_title);
+                                    $temp_file_name_with_extension,$call->args->flow_project_title,null);
             $success_message = "Copied upload from file $client_file_name to "  . $project->get_project_title();
 
 

@@ -141,6 +141,8 @@ SimpleLightbox at https://simplelightbox.com/ for showing original image when cl
 
 Chroma JS at https://gka.github.io/chroma.js/  to convert from named colors to hex
 
+jQuery Serialize Object https://github.com/macek/jquery-serialize-object for converting form data reliably to a js object
+
 ### installation uses npm
  Run `npm i` to install js dependencies that are not saved in the repo
  
