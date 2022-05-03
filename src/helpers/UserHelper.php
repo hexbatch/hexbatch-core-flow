@@ -5,6 +5,7 @@ namespace app\helpers;
 use app\models\project\FlowProject;
 use app\models\project\FlowProjectSearch;
 use app\models\project\FlowProjectSearchParams;
+use app\models\project\IFlowProject;
 use app\models\standard\IFlowTagStandardAttribute;
 use app\models\user\FlowUser;
 use DI\DependencyException;
@@ -28,10 +29,10 @@ class UserHelper extends BaseHelper {
 
     /**
      * @param string|null $user_guid
-     * @return FlowProject|null
+     * @return IFlowProject|null
      * @throws Exception
      */
-   public function get_user_home_project(?string $user_guid = null) : ?FlowProject {
+   public function get_user_home_project(?string $user_guid = null) : ?IFlowProject {
 
         if (!$user_guid) {
             $user_guid = $this->user->flow_user_guid;
@@ -41,7 +42,7 @@ class UserHelper extends BaseHelper {
 
        try {
             $params = new FlowProjectSearchParams();
-            $params->setFlowProjectType(FlowProject::FLOW_PROJECT_TYPE_USER_HOME);
+            $params->setFlowProjectType(IFlowProject::FLOW_PROJECT_TYPE_USER_HOME);
             $params->setOwnerUserNameOrGuidOrId($user_guid);
             $res = FlowProjectSearch::find_projects($params);
 
@@ -51,11 +52,10 @@ class UserHelper extends BaseHelper {
             else {
                 $target_user = FlowUser::find_one($user_guid);
                 $user_home_project = new FlowProject();
-                $user_home_project->flow_project_title = static::USER_HOME_TITLE;
-                $user_home_project->is_public = false;
-                $user_home_project->parent_flow_project_id = null;
-                $user_home_project->flow_project_type = FlowProject::FLOW_PROJECT_TYPE_USER_HOME;
-                $user_home_project->admin_flow_user_id = $target_user->flow_user_id;
+                $user_home_project->set_project_title(static::USER_HOME_TITLE);
+                $user_home_project->set_public(false);
+                $user_home_project->set_project_type(IFlowProject::FLOW_PROJECT_TYPE_USER_HOME);
+                $user_home_project->set_admin_user_id($target_user->flow_user_id);
                 $user_home_project->save();
             }
 

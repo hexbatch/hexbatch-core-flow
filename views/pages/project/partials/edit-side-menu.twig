@@ -1,40 +1,27 @@
 <div class="container p-0 m-1 mb-2 mb-lg-0">
 
     <div class="card" style="width: fit-content">
-        <ul class="list-group flex-lg-column flex-row  ">
+        <ul class="list-group flex-lg-column  list-group-horizontal flex-wrap flex-md-nowrap  ">
 
             {% if project.get_current_user_permissions().can_edit %}
             <li class="list-group-item">
                 <a class="btn btn-outline-primary border border-light"
                    href="{{ url_for('edit_project',{
                        user_name: project.get_admin_user().flow_user_name ,
-                       project_name: project.flow_project_title
+                       project_name: project.get_project_title()
                    } )
                    }}">
-                    Edit Description
+                    Edit Project
                 </a>
             </li>
             {% endif %}
 
-
-            {% if project.get_current_user_permissions().can_admin %}
-            <li class="list-group-item">
-                <a class="btn btn-outline-primary border border-light"
-                   href="{{ url_for('project_permissions',{
-                       user_name: project.get_admin_user().flow_user_name ,
-                       project_name: project.flow_project_title
-                   } )
-                   }}">
-                    Permissions
-                </a>
-            </li>
-            {% endif %}
 
             <li class="list-group-item">
                 <a class="btn btn-outline-primary border border-light"
                    href="{{ url_for('project_tags',{
                        user_name: project.get_admin_user().flow_user_name ,
-                       project_name: project.flow_project_title
+                       project_name: project.get_project_title()
                    } )
                    }}">
                     Tags
@@ -45,7 +32,7 @@
                 <a class="btn btn-outline-primary border border-light"
                    href="{{ url_for('list_entries',{
                        user_name: project.get_admin_user().flow_user_name ,
-                       project_name: project.flow_project_title
+                       project_name: project.get_project_title()
                    } )
                    }}">
                     Entries
@@ -58,7 +45,7 @@
                     <a class="btn btn-outline-primary border border-light"
                        href="{{ url_for('project_resources',{
                            user_name: project.get_admin_user().flow_user_name ,
-                           project_name: project.flow_project_title
+                           project_name: project.get_project_title()
                        } )
                        }}">
                         Resources
@@ -71,7 +58,7 @@
                     <a class="btn btn-outline-primary border border-light"
                        href="{{ url_for('project_history',{
                            user_name: project.get_admin_user().flow_user_name ,
-                           project_name: project.flow_project_title
+                           project_name: project.get_project_title()
                        } )
                        }}">
                         History
@@ -79,32 +66,6 @@
                 </li>
             {% endif %}
 
-
-            {% if project.get_current_user_permissions().can_edit %}
-                <li class="list-group-item">
-                    <a class="btn btn-outline-primary border border-light"
-                       href="{{ url_for('project_export',{
-                           user_name: project.get_admin_user().flow_user_name ,
-                           project_name: project.flow_project_title
-                       } )
-                       }}">
-                        Export
-                    </a>
-                </li>
-            {% endif %}
-
-            {% if project.get_current_user_permissions().can_admin %}
-                <li class="list-group-item">
-                    <a class="btn btn-outline-primary border border-light"
-                       href="{{ url_for('project_import',{
-                           user_name: project.get_admin_user().flow_user_name ,
-                           project_name: project.flow_project_title
-                       } )
-                       }}">
-                        Import
-                    </a>
-                </li>
-            {% endif %}
         </ul>
     </div>
 </div>

@@ -1,6 +1,6 @@
 <script>
     jQuery(function($){ //should execute immediately after load happens if late loading
-        let max_length_for_chapter = {{ project.max_read_me }};
+        let max_length_for_chapter = {{ constant('app\\models\\project\\IFlowProject::MAX_SIZE_READ_ME_IN_CHARACTERS') }};
         let textarea_jq = $('textarea#{{ textarea_id }}');
         let textarea = textarea_jq[0];
         let hidden_input = $('input#{{ hidden_id }}');

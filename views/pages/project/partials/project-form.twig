@@ -7,7 +7,7 @@
                                 {%- elseif project_form_action == 'update_project' -%}
                                       {{- url_for(project_form_action,{
                                                                         user_name: project.get_admin_user().flow_user_name ,
-                                                                        project_name: project.flow_project_title
+                                                                        project_name: project.get_project_title()
                                                                     } )
                                       -}}
                                 {%- else -%}
@@ -18,15 +18,15 @@
                 >
                     {{ form_token(  url_for(project_form_action,{
                         user_name: project.get_admin_user().flow_user_name ,
-                        project_name: project.flow_project_title
+                        project_name: project.get_project_title()
                     } )) }}
 
-                    <input type="hidden" name="flow_project_git_hash" value="{{ project.getFlowProjectFiles().get_head_commit_hash() }}">
+                    <input type="hidden" name="flow_project_git_hash" value="{{ project.get_head_commit_hash() }}">
 
                     <div class="col-12">
-                        {% if project.flow_project_guid %}
+                        {% if project.get_project_guid() %}
                             <div class="float-end d-inline-block ps-1 pe-1">
-                                <code id="editing-flow-project-guid">{{ project.flow_project_guid }}</code>
+                                <code id="editing-flow-project-guid">{{ project.get_project_guid() }}</code>
                                 <!-- Trigger -->
                                 <button class="btn clipy-btn"
                                         type="button"
@@ -43,7 +43,8 @@
                         </label>
                         <input type="text" id="flow_project_title" name="flow_project_title"
                                class="form-control" placeholder="Title" required autofocus
-                               maxlength="{{ project.max_title }}" value="{{ project.flow_project_title }}"
+                               maxlength="{{ constant('app\\models\\base\\FlowBase::MAX_SIZE_TITLE') }}"
+                               value="{{ project.get_project_title() }}"
                         >
                     </div>
 
@@ -51,8 +52,9 @@
                         <label for="flow_project_blurb">Blurb</label>
                         <textarea type="text" id="flow_project_blurb" name="flow_project_blurb"
                                   class="form-control" placeholder="Blurb" required autofocus
-                                  rows="3" maxlength="{{ project.max_blurb }}"
-                        >{{ project.flow_project_blurb }}</textarea>
+                                  rows="3"
+                                  maxlength="{{ constant('app\\models\\base\\FlowBase::MAX_SIZE_BLURB') }}"
+                        >{{ project.get_project_blurb() }}</textarea>
                     </div>
 
 
@@ -73,7 +75,7 @@
                                    name="is_public"
                                    value="1"
                                    type="checkbox" id="flexSwitchCheckDefault"
-                                    {{ project.is_public ? 'checked' : '' }}
+                                    {{ project.is_public() ? 'checked' : '' }}
                             >
                             <label class="form-check-label" for="flexSwitchCheckDefault">
                                 Project is public

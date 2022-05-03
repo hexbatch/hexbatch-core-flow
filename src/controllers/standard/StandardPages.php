@@ -4,10 +4,8 @@ namespace app\controllers\standard;
 use app\controllers\base\BasePages;
 use app\helpers\AjaxCallData;
 use app\helpers\TagHelper;
-use app\helpers\Utilities;
 use app\hexlet\JsonHelper;
 use app\models\standard\FlowTagStandardAttribute;
-use app\models\tag\FlowTagAttribute;
 use Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -38,7 +36,7 @@ class StandardPages extends BasePages
             $db = $this->get_connection();
 
             try {
-                $db->beginTransaction();
+                if(!$db->inTransaction()){$db->beginTransaction();}
                 $deleted_attributes = [];
                 foreach ($tag->attributes as $existing_attribute) {
                     if (isset($valid_update[$existing_attribute->getTagAttributeName()])) {
@@ -46,14 +44,15 @@ class StandardPages extends BasePages
                     }
                 }
                 $tag->save(false,true);
-                $db->commit();
+                if ($db->inTransaction()) {$db->commit();}
             } catch (Exception $e) {
-                $db->rollBack();
+                if ($db->inTransaction()) {$db->rollBack();}
                 throw $e;
             }
 
 
             $new_tag = $tag->clone_refresh();
+            $call->project->save();
             $data = [
                 'success'=>true,'message'=>'ok','tag'=>$new_tag,'action'=> 'delete_tag_standard',
                 'standard_name'=>$standard_name,
@@ -115,6 +114,7 @@ class StandardPages extends BasePages
 
             $tag->save(true,true);
             $new_tag = $tag->clone_refresh();
+            $call->project->save();
             $data = ['success'=>true,'message'=>'ok','tag'=>$new_tag,'action'=> 'update_tag_standard',
                             'standard_name'=>$standard_name,'standard_data'=>$valid_update,'token'=> $call->new_token];
 

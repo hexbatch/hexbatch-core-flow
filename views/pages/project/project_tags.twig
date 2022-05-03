@@ -5,7 +5,7 @@
         {{ include('project/partials/edit-side-menu.twig') }}
     </div><!-- /.col -->
 
-    <div class="col ">
+    <div class="col col-lg-9">
         {% if project.get_current_user_permissions().can_admin %}
             {{ include('project/partials/edit-tags.twig') }}
         {% else %}

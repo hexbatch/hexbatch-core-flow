@@ -1,8 +1,9 @@
 /**
  *
  * @param {FlowTag} tag
+ * @param {?FlowStandardCallback} [on_start]
  */
-function view_standard_css(tag) {
+function view_standard_css(tag,on_start) {
     if (!tag.standard_attributes.hasOwnProperty('css')) { return jQuery('<span>No CSS Found</span>');}
 
     /**
@@ -95,6 +96,18 @@ function view_standard_css(tag) {
         no_thang.removeClass('d-none');
     }
 
+    card.on('click',function() {
+        if (on_start) {
+            on_start(
+                {
+                    tag: tag,
+                    action: 'start_edit',
+                    standard_name: 'css',
+                    standard_data: css
+                }
+            );
+        }
+    });
 
 
     return card;

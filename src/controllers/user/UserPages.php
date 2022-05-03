@@ -6,7 +6,6 @@ use app\helpers\ProjectHelper;
 use app\helpers\UserHelper;
 use app\hexlet\JsonHelper;
 use app\models\base\FlowBase;
-use app\models\standard\IFlowTagStandardAttribute;
 use app\models\user\FlowUser;
 use Delight\Auth\AuthError;
 use Delight\Auth\EmailNotVerifiedException;

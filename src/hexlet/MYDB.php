@@ -867,7 +867,7 @@ class MYDB
         }
 
         $res = mysqli_query($mysqli, $query);
-        if ($res != true) {
+        if (!$res) {
             throw new SQLException(sprintf("Could not run execute:<br> %s<br>    sql:<br>%s<br>", mysqli_error($mysqli), $query));
         }
         return $res;
@@ -896,7 +896,7 @@ class MYDB
             return false;
         }
         $oldNumber = $number;
-        $number = preg_replace('/[^0-9-]/', '', $number);
+        $number = preg_replace('/[^\d-]/', '', $number);
         if ($oldNumber != $number) {
             return false;
         }

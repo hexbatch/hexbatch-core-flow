@@ -10,7 +10,7 @@ use app\models\entry\archive\FlowEntryArchive;
 use app\models\entry\archive\IFlowEntryArchive;
 use app\models\entry\public_json\FlowEntryJsonBase;
 use app\models\entry\public_json\IFlowEntryJson;
-use app\models\project\FlowProject;
+use app\models\project\IFlowProject;
 use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
@@ -25,6 +25,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     public function get_max_title_length() : int { return static::LENGTH_ENTRY_TITLE;}
     public function get_max_blurb_length() : int { return static::LENGTH_ENTRY_BLURB;}
 
+    public function get_entry() : IFlowEntry {return $this;}
 
     protected ?int $flow_entry_id;
     protected ?int $flow_entry_parent_id;
@@ -37,7 +38,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     protected ?string $flow_project_guid;
     protected ?string $flow_entry_parent_guid;
 
-    protected FlowProject $project;
+    protected IFlowProject $project;
 
 
     /**
@@ -54,10 +55,10 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
 
     /**
      * @param array|object|IFlowEntry|IFlowEntryArchive|null $object
-     * @param FlowProject|null $project
+     * @param IFlowProject|null $project
      * @throws Exception
      */
-    public function __construct($object,?FlowProject $project){
+    public function __construct($object,?IFlowProject $project){
 
         $this->project = $project;
         $this->flow_entry_id = null;
@@ -79,7 +80,8 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
             return;
         }
 
-        if ($object instanceof IFlowEntry || $object instanceof IFlowEntryArchive) {
+        if ( $object instanceof IFlowEntryArchive || $object instanceof IFlowEntryReadBasicProperties) {
+
             $this->flow_entry_guid = $object->get_guid();
             $this->flow_entry_parent_guid = $object->get_parent_guid();
             $this->flow_project_guid = $object->get_project_guid();
@@ -87,8 +89,6 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
             $this->entry_updated_at_ts = $object->get_updated_at_ts();
             $this->flow_entry_title = $object->get_title();
             $this->flow_entry_blurb = $object->get_blurb();
-
-
 
         } else {
 
@@ -102,7 +102,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
             }
 
             if (is_object($object) && property_exists($object,'flow_entry_parent') && !empty($object->flow_entry_parent)) {
-                $parent_to_copy = $object->flow_tag_parent;
+                $parent_to_copy = $object->flow_entry_parent;
             } elseif (is_array($object) && array_key_exists('flow_entry_parent',$object) && !empty($object['flow_entry_parent'])) {
                 $parent_to_copy  = $object['flow_entry_parent'];
             } else {
@@ -143,12 +143,12 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
             $db = static::get_connection();
 
 
-            if(  !$this->get_project()->id) {
+            if(  !$this->get_project()->get_id()) {
                 throw new InvalidArgumentException("When saving an entry for the first time, need its project id set");
             }
 
-            $this->set_project_id($this->get_project()->id);
-            $this->set_project_guid($this->get_project()->flow_project_guid);
+            $this->set_project_id($this->get_project()->get_id());
+            $this->set_project_guid($this->get_project()->get_project_guid());
 
             if (!$this->get_parent_id() && $this->get_parent_guid()) {
                 $this->flow_entry_parent_id = $db->cell(
@@ -160,7 +160,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
 
 
             $save_info = [
-                'flow_project_id' => $this->get_project()->id,
+                'flow_project_id' => $this->get_project()->get_id(),
                 'flow_entry_parent_id' => $this->get_parent_id(),
                 'flow_entry_title' => $this->get_title(),
                 'flow_entry_blurb' => $this->get_blurb(),
@@ -169,7 +169,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
             ];
 
             try {
-                if ($b_do_transaction) {
+                if ($b_do_transaction && !$db->inTransaction()) {
                     $db->beginTransaction();
                 }
                 if ($this->get_guid() && $this->get_id()) {
@@ -185,14 +185,14 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                     VALUES (?,?,?,UNHEX(?),?,?,?,?)
                     ON DUPLICATE KEY UPDATE flow_project_id =           VALUES(flow_project_id),
                                             flow_entry_parent_id =      VALUES(flow_entry_parent_id),
-                                            flow_entry_guid =           VALUES(flow_entry_guid) ,      
+                                                  
                                             flow_entry_title =          VALUES(flow_entry_title) ,      
                                             flow_entry_blurb =          VALUES(flow_entry_blurb) ,      
                                             flow_entry_body_bb_code =   VALUES(flow_entry_body_bb_code) ,      
                                             flow_entry_body_text =   VALUES(flow_entry_body_text)       
                 ";
                     $insert_params = [
-                        $this->get_project()->id,
+                        $this->get_project()->get_id(),
                         $this->get_parent_id(),
                         $this->get_created_at_ts(),
                         $this->get_guid(),
@@ -202,7 +202,26 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                         $this->get_text()
                     ];
                     $db->safeQuery($insert_sql, $insert_params, PDO::FETCH_BOTH, true);
-                    $this->set_id($db->lastInsertId());
+                    $maybe_new_id = (int)$db->lastInsertId();
+                    if ($maybe_new_id && ($maybe_new_id !== $this->get_id())) {
+                        $this->set_id($maybe_new_id);
+                    } else {
+                        if (!$this->get_id()) {
+                            //find id via guid
+                            $find_id_sql = "SELECT e.id as entry_id FROM flow_entries e WHERE flow_entry_guid = UNHEX(?)";
+                            $id_info = $db->safeQuery($find_id_sql,[$this->get_guid()],PDO::FETCH_OBJ);
+                            if (empty($id_info)) {
+                                throw new RuntimeException("Could not get entry id from guid of " . $this->get_guid());
+                            }
+                            $new_id = (int)$id_info[0]->entry_id??null;
+                            if (empty($new_id)) {
+                                throw new RuntimeException("Could not get entry id (b) from guid of " . $this->get_guid());
+                            }
+                            $this->set_id($new_id);
+
+                        }
+                    }
+
                 } else {
                     $db->insert('flow_entries', $save_info);
                     $this->set_id($db->lastInsertId());
@@ -217,7 +236,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                     $this->get_id());
 
                 if (empty($update_info)) {
-                    throw new RuntimeException("Could not get entry refresh data using id of " . $this->get_id);
+                    throw new RuntimeException("Could not get entry refresh data using id of " . $this->get_id());
                 }
 
                 $this->set_guid($update_info['flow_entry_guid']);
@@ -255,11 +274,11 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
 
 
     /**
-     * @param FlowProject $project
+     * @param IFlowProject $project
      * @return IFlowEntry
      * @throws Exception
      */
-    public function fetch_this(FlowProject $project) : IFlowEntry {
+    public function fetch_this(IFlowProject $project) : IFlowEntry {
         if (empty($this->get_id()) && empty($this->get_guid())) {
             $me = static::create_entry($project,$this); //new to db
             return $me;
@@ -284,12 +303,12 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
 
 
     /**
-     * @param FlowProject $project
-     * @param FlowProject|null $new_project
+     * @param IFlowProject $project
+     * @param IFlowProject|null $new_project
      * @return IFlowEntry
      * @throws Exception
      */
-    public function clone_with_missing_data(FlowProject $project,?FlowProject $new_project = null) : IFlowEntry
+    public function clone_with_missing_data(IFlowProject $project,?IFlowProject $new_project = null) : IFlowEntry
     {
         $me = $this->fetch_this($project);
         if (empty($me->get_id()) && empty($me->get_guid())) {
@@ -313,8 +332,8 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
 
         if ($new_project) {
             $me->project = $new_project;
-            $me->set_project_guid($new_project->flow_project_guid);
-            $me->set_project_id($new_project->id) ;
+            $me->set_project_guid($new_project->get_project_guid());
+            $me->set_project_id($new_project->get_id()) ;
             $me->set_id(null);
             $me->set_guid(null);
         }
@@ -363,7 +382,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
 
     public function get_project_guid(): ?string {return $this->flow_project_guid;}
     public function get_project_id(): ?int {return $this->flow_project_id;}
-    public function get_project() : FlowProject {return $this->project;}
+    public function get_project() : IFlowProject {return $this->project;}
 
 
 
@@ -459,20 +478,20 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
      * Loads entries from the entry folder (does not use db)
      * if no guids listed, then will return an array of all
      * else will only return the guids asked for, if some or all missing will only return the found, if any
-     * @param FlowProject $project
+     * @param IFlowProject $project
      * @param string[] $only_these_guids
      * @return IFlowEntry[]
      * @throws
      */
-    public static function load(FlowProject $project,array $only_these_guids = []) : array {
+    public static function load(IFlowProject $project,array $only_these_guids = []) : array {
+
         $archive_list = [];
-        $guid_list = $only_these_guids;
-        if (empty($guid_list)) {
-            $guid_list = FlowEntryArchive::discover_all_archived_entries($project);
-        }
-        foreach ($guid_list as $guid) {
-            $node = FlowEntry::create_entry($project,null);
-            $node->set_guid($guid);
+
+        $found_from_folders = FlowEntryYaml::get_yaml_data_from_directory($project);
+
+
+        foreach ($found_from_folders as $found) {
+            $node = FlowEntry::create_entry($project,$found);
             $archive_list[] = FlowEntryArchive::create_archive($node);
         }
         $mutex = new FlockMutex(fopen(__FILE__, "r"));

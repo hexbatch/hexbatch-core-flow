@@ -5,9 +5,9 @@ namespace app\models\entry;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\entry\public_json\FlowEntryJson;
-use app\models\project\FlowProject;
 use app\models\project\FlowProjectSearch;
 use app\models\project\FlowProjectSearchParams;
+use app\models\project\IFlowProject;
 use Exception;
 use LogicException;
 use PDO;
@@ -154,7 +154,7 @@ class FlowEntrySearch extends FlowBase {
 
 
        /**
-        * @var array<string,FlowProject|null> $projects
+        * @var array<string,IFlowProject|null> $projects
         */
        $projects = [];
 
@@ -187,10 +187,10 @@ class FlowEntrySearch extends FlowBase {
                $params->addProjectTitleGuidOrId($project_guids);
                $projects_found = FlowProjectSearch::find_projects($params);
                foreach ($projects_found as $found_project) {
-                   if (!array_key_exists($found_project->flow_project_guid, $projects)) {
+                   if (!array_key_exists($found_project->get_project_guid(), $projects)) {
                        throw new LogicException("Could not find the project after a select");
                    }
-                   $projects[$found_project->flow_project_guid] = $found_project;
+                   $projects[$found_project->get_project_guid()] = $found_project;
                }
            }
 

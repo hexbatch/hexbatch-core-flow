@@ -376,6 +376,20 @@
  */
 
 
+/**
+ *
+ * @typedef {FlowBasicResponse} FlowGitActionResponse
+ * @property {string[]} git_output
+ */
+
+
+/**
+ *
+ * @typedef {FlowBasicResponse} FlowCopyProjectActionResponse
+ * @property {FlowProject} project
+ */
+
+
 
 
 

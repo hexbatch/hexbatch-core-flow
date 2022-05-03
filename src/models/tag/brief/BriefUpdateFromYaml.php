@@ -8,7 +8,7 @@ use app\models\base\FlowBase;
 use app\models\base\SearchParamBase;
 use app\models\multi\GeneralSearch;
 use app\models\multi\GeneralSearchParams;
-use app\models\project\FlowProject;
+use app\models\project\IFlowProject;
 use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
 use app\models\tag\FlowTagAttribute;
@@ -18,17 +18,17 @@ use RuntimeException;
 class BriefUpdateFromYaml extends FlowBase {
 
     public BriefDiffFromYaml $yaml_diff;
-    public FlowProject $project;
+    public IFlowProject $project;
 
     /**
      * Reverse of Brief,
      *      Those marked as added are to be deleted
      *      Those marked as removed will be created
      *      Those marked as modified will be saved
-     * @param FlowProject $project
+     * @param IFlowProject $project
      * @throws Exception
      */
-    public function __construct( FlowProject $project){
+    public function __construct( IFlowProject $project){
         $this->project = $project;
         $this->yaml_diff = new BriefDiffFromYaml($this->project,null,true);
 

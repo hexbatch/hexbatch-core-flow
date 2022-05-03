@@ -264,7 +264,7 @@ class EntryPages extends EntryBase
             }
             $call = $this->validate_call($options,$request,null,$user_name,$project_name);
             $entry_to_insert =  FlowEntry::create_entry($call->project,$call->args);
-            $entry_to_insert->save_entry(true,false);
+            $entry_to_insert->save_entry(true);
             $_SESSION[static::REM_NEW_ENTRY_WITH_ERROR_SESSION_KEY] = null;
 
             if ($call->is_ajax_call) {
@@ -290,7 +290,7 @@ class EntryPages extends EntryBase
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
                 $url = $routeParser->urlFor('show_entry',[
                     "user_name" => $call->project->get_admin_user()->flow_user_name,
-                    "project_name" => $call->project->flow_project_title,
+                    "project_name" => $call->project->get_project_title(),
                     "entry_name" => $entry_to_insert->get_title()
                 ]);
                 $response = $response->withStatus(302);
@@ -316,7 +316,7 @@ class EntryPages extends EntryBase
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
                 $url = $routeParser->urlFor('create_entry',[
                     "user_name" => $call->project->get_admin_user()->flow_user_name,
-                    "project_name" => $call->project->flow_project_title
+                    "project_name" => $call->project->get_project_title()
                 ]);
                 $response = $response->withStatus(302);
                 return $response->withHeader('Location', $url);
@@ -356,7 +356,7 @@ class EntryPages extends EntryBase
             }
 
             $entry_to_save = $entry_to_update->clone_with_missing_data($call->project);
-            $entry_to_save->save(true,false);
+            $entry_to_save->save(true);
             $_SESSION[static::REM_EDIT_ENTRY_WITH_ERROR_SESSION_KEY] = null;
 
             if ($call->is_ajax_call) {
@@ -376,13 +376,13 @@ class EntryPages extends EntryBase
             } else {
                 UserPages::add_flash_message(
                     'success',
-                    "Updated Entry  " . $entry_to_update->flow_project_title
+                    "Updated Entry  " . $entry_to_update->get_project_title()
                 );
 
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
                 $url = $routeParser->urlFor('show_entry',[
                     "user_name" => $call->project->get_admin_user()->flow_user_name,
-                    "project_name" => $call->project->flow_project_title,
+                    "project_name" => $call->project->get_project_title(),
                     "entry_name" => $entry_name
                 ]);
                 $response = $response->withStatus(302);
@@ -408,7 +408,7 @@ class EntryPages extends EntryBase
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
                 $url = $routeParser->urlFor('edit_entry',[
                     "user_name" => $call->project->get_admin_user()->flow_user_name,
-                    "project_name" => $call->project->flow_project_title,
+                    "project_name" => $call->project->get_project_title(),
                     "entry_name" => $entry_name
                 ]);
                 $response = $response->withStatus(302);
@@ -465,13 +465,13 @@ class EntryPages extends EntryBase
             } else {
                 UserPages::add_flash_message(
                     'success',
-                    "Deleted Entry  " . $entry_to_delete->flow_project_title
+                    "Deleted Entry  " . $entry_to_delete->get_project_title()
                 );
 
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
                 $url = $routeParser->urlFor('show_entry',[
                     "user_name" => $call->project->get_admin_user()->flow_user_name,
-                    "project_name" => $call->project->flow_project_title
+                    "project_name" => $call->project->get_project_title()
                 ]);
                 $response = $response->withStatus(302);
                 return $response->withHeader('Location', $url);

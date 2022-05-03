@@ -64,9 +64,9 @@ ee9620b8189e9efc59c665afab141a0a9f245c4d tag	refs/tags/v1.4
  */
 
 use app\hexlet\JsonHelper;
+use app\models\project\exceptions\FlowProjectGitException;
 use app\models\user\FlowUser;
 use Exception;
-use RuntimeException;
 
 class FlowGitHistory {
 
@@ -246,19 +246,30 @@ class FlowGitHistory {
     /**
      * @param string $directory
      * @param string $command
-     * @param bool $b_include_git_word, default true
+     * @param bool $b_include_git_word , default true
      * @param string|null $pre_command
+     * @param bool $b_cd_into_dir
      * @return string
      */
-    public static function do_git_command(string $directory, string $command,bool $b_include_git_word = true, ?string $pre_command = null) : string {
+    public static function do_git_command(string $directory, string $command,
+                                          bool $b_include_git_word = true,
+                                          ?string $pre_command = null,
+                                          bool $b_cd_into_dir = true
+    ) : string {
         if (empty($pre_command)) {$pre_command = '';}
         $git_word = '';
         if ($b_include_git_word) {
             $git_word = 'git';
         }
-        exec("$pre_command cd $directory && $git_word $command 2>&1",$output,$result_code);
+        $cd_command = '';
+        if ($b_cd_into_dir) {
+            $cd_command = "cd $directory &&";
+        }
+        $command = "$pre_command $cd_command $git_word $command 2>&1";
+        exec($command,$output,$result_code);
         if ($result_code) {
-            throw new RuntimeException("Git returned code of $result_code : " . implode("\n",$output));
+            throw new FlowProjectGitException("Command '$command'returned code of $result_code : " .
+                implode("\n",$output));
         }
         return  implode("\n",$output);
     }

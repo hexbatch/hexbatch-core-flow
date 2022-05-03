@@ -2,7 +2,7 @@
     <a
             href="{{ url_for('show_entry',{
                 user_name: project.get_admin_user().flow_user_name ,
-                project_name: project.flow_project_title,
+                project_name: project.get_project_title(),
                 entry_name: entry.get_guid()
             } )
             }}"

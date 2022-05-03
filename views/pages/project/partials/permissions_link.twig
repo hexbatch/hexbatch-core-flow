@@ -1,0 +1,27 @@
+{% if project.get_current_user_permissions().can_admin %}
+<div class="card p-1 mt-1 col-9 mb-1 ms-1" >
+    <h5 class="card-title">
+        Permissions
+    </h5>
+
+    <div class="card-body">
+
+        <div class="card-text ">
+            <div class="" aria-current="page">
+                <a href="{{ url_for('project_permissions',{
+                                user_name: project.get_admin_user().flow_user_name ,
+                                project_name: project.get_project_title()
+                            } )
+                        }}"
+                   class="btn btn-outline-info py-0"
+                >
+                    Go To Permissions
+                </a>
+            </div>
+
+
+        </div> <!-- /.card-text -->
+    </div>  <!-- /.card-body -->
+</div> <!-- /.card -->
+
+{% endif %} {# end can_admin #}

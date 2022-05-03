@@ -2,12 +2,12 @@
 
     let project_base_url = "{{-  url_for('single_project_home',{
         user_name: project.get_admin_user().flow_user_name ,
-        project_name: project.flow_project_title
+        project_name: project.get_project_title()
     } ) -}}";
 
     let get_tags_ajax_url = "{{-  url_for('get_tags_ajax',{
         user_name: project.get_admin_user().flow_user_name ,
-        project_name: project.flow_project_title
+        project_name: project.get_project_title()
     }) -}}";
 
 </script>

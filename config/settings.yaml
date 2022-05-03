@@ -22,5 +22,5 @@ git:
     - bitbucket.org
     - gitlab.com
 program:
-    version: 0.5.1
+    version: 0.5.2
     timezone: 'America/Chicago'

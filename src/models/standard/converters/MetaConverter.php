@@ -5,7 +5,6 @@ namespace app\models\standard\converters;
 use app\helpers\ProjectHelper;
 use app\helpers\Utilities;
 use app\hexlet\JsonHelper;
-use app\models\project\FlowProjectFiles;
 use app\models\standard\IFlowTagStandardAttribute;
 use Carbon\Carbon;
 use Exception;
@@ -43,8 +42,9 @@ class MetaConverter extends BaseConverter {
                 if (empty($raws)) {return null;}
                 $reversed_raws =array_reverse($raws);
                 $target = $reversed_raws[0];
-                $files = new FlowProjectFiles($target->getProjectGuid(),$target->getOwnerUserGuid());
-                $outbound =  ProjectHelper::get_project_helper()->stub_from_file_paths($files,$target->getTextVal());
+                $outbound =  ProjectHelper::get_project_helper()->
+                                stub_from_file_paths_calculated($target->getOwnerUserGuid(),$target->getProjectGuid(),
+                                                                $target->getTextVal());
                 if ($outbound) {
                     $outbound = strip_tags(JsonHelper::to_utf8($outbound));
                 }
@@ -89,9 +89,10 @@ class MetaConverter extends BaseConverter {
         }
 
         if (property_exists($original,$image_url_property_name)) {
-            $files = new FlowProjectFiles($a->getProjectGuid(),$a->getOwnerUserGuid());
-            $original->$image_url_property_name =
-                ProjectHelper::get_project_helper()->stub_to_file_paths($files,$original->$image_url_property_name);
+
+            $original->$image_url_property_name =  ProjectHelper::get_project_helper()->
+            stub_to_file_paths_calculated($a->getOwnerUserGuid(),$a->getProjectGuid(),
+                $original->$image_url_property_name);
         }
 
 

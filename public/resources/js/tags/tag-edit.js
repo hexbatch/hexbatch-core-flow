@@ -141,7 +141,7 @@ function flow_tag_show_editor(tag,
                         toggle_action_spinner(me, 'normal');
                         my_swal.fire(
                             'Oh No!',
-                            'The tag could not be deleted \n<br> ' + ret.message,
+                            'The tag could not change its parent \n<br> ' + ret.message,
                             'error'
                         )
                     })
@@ -225,7 +225,7 @@ function flow_tag_show_editor(tag,
                 editing_div.find('.flow-edit-tag-attribute-content').removeClass('show active');
                 editing_div.find('.flow-edit-tag-applied-content').addClass('show active');
             } else if (that.hasClass('flow-edit-tag-standard-tab')) {
-                triggers.applied.show();
+                triggers.standards.show();
                 editing_div.find('.flow-edit-tag-standard-content').addClass('show active');
                 editing_div.find('.flow-edit-tag-attribute-content').removeClass('show active');
                 editing_div.find('.flow-edit-tag-applied-content').removeClass('show active');
@@ -292,17 +292,22 @@ function flow_tag_show_editor(tag,
         for(let standard_name in FLOW_VIEWABLE_STANDARDS) {
             if (tag.standard_attributes.hasOwnProperty(standard_name)) {
                 let node = jQuery(`<div class="tag-standard-view m-2 ms-4"></div>`);
-                flow_standards_generate_view(standard_name,tag,node);
+                flow_standards_generate_view(standard_name,tag,node,
+
+                    /**
+                     * @param {FlowStandardResponse} edit_params
+                     */
+                    function(edit_params) {
+                        do_edit_standard(edit_params.tag.flow_tag_guid,edit_params.standard_name);
+                    }
+                );
                 home.append(node);
             }
         }
 
     }
 
-    function edit_standard() {
-        let that = $(this);
-        let tag_guid = that.data('tag_guid');
-        let standard_name = that.data('standard_name');
+    function do_edit_standard(tag_guid,standard_name) {
         flow_standards_generate_edit_form(standard_name,tag_guid,null,
             function(ret) {
                 tag = ret.tag;
@@ -318,6 +323,13 @@ function flow_tag_show_editor(tag,
                 )
             }
         );
+    }
+
+    function edit_standard() {
+        let that = $(this);
+        let tag_guid = that.data('tag_guid');
+        let standard_name = that.data('standard_name');
+        do_edit_standard(tag_guid,standard_name);
     }
 
     function delete_standard() {

@@ -252,9 +252,9 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     }
 
     /**
-     * @return string|null
+     * @return int|null
      */
-    public function getTagAttributeLong(): ?string
+    public function getTagAttributeLong(): ?int
     {
         return $this->tag_attribute_long;
     }

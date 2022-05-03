@@ -2,7 +2,8 @@
 
 namespace app\models\entry;
 
-use app\models\project\FlowProject;
+use app\models\project\exceptions\NothingToPushException;
+use app\models\project\IFlowProject;
 use Exception;
 
 
@@ -11,12 +12,12 @@ final class FlowEntry extends FlowEntryMembers  {
 
 
     /**
-     * @param FlowProject $project
+     * @param IFlowProject $project
      * @param object|array|IFlowEntry
      * @return IFlowEntry
      * @throws
      */
-    public static function create_entry(FlowProject $project, $object): IFlowEntry
+    public static function create_entry(IFlowProject $project, $object): IFlowEntry
     {
         return new FlowEntry($object,$project);
     }
@@ -25,22 +26,32 @@ final class FlowEntry extends FlowEntryMembers  {
     {
         $db = null;
         try {
-            $old_id = $this->get_id();
+            $old_guid = $this->get_guid();
             $db = FlowEntry::get_connection();
-            if ($b_do_transaction) {
+            if ($b_do_transaction && !$db->inTransaction()) {
                 $db->beginTransaction();
             }
             parent::save_entry(false, $b_save_children);
             $this->on_after_save_entry();
-            if ($b_do_transaction) {
-                $db->commit();
-            }
+
             $title = $this->get_title();
             $action = "Updated";
-            if (empty($old_id)) {
+            if (empty($old_guid)) {
                 $action = "Created";
             }
-            $this->get_project()->commit_changes("$action Entry $title");
+            if ($b_do_transaction && $db->inTransaction()) {
+                try {
+                    $this->get_project()->commit_changes("$action Entry $title");
+                } catch (NothingToPushException $no_push) {
+                    //ignore if no file changes
+                }
+
+            }
+
+            if ($b_do_transaction && $db->inTransaction()) {
+                $db->commit();
+            }
+
         } catch (Exception $e) {
             if ($b_do_transaction && $db) {
                 if ($db->inTransaction()) {
@@ -48,7 +59,7 @@ final class FlowEntry extends FlowEntryMembers  {
                 }
             }
             if ($this->get_project()) {
-                $this->get_project()->reset_local_files();
+                $this->get_project()->reset_project_repo_files();
             }
             throw $e;
         }

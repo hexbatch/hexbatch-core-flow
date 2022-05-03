@@ -3,10 +3,10 @@
 namespace app\models\entry;
 
 use app\models\entry\public_json\IFlowEntryJson;
-use app\models\project\FlowProject;
+use app\models\project\IFlowProject;
 use Exception;
 
-Interface IFlowEntry {
+Interface IFlowEntry extends IFlowEntryReadBasicProperties {
 
     const LENGTH_ENTRY_TITLE = 40;
     const LENGTH_ENTRY_BLURB = 120;
@@ -15,28 +15,14 @@ Interface IFlowEntry {
     public function get_max_title_length() : int;
     public function get_max_blurb_length() : int;
 
-    public function get_parent_guid() : ?string;
-    public function get_parent_id() : ?int;
     public function get_parent() : ?IFlowEntry;
-
-    public function get_created_at_ts() : ?int;
-    public function get_updated_at_ts() : ?int;
-
-    public function get_id() : ?int;
-    public function get_guid() : ?string;
-    public function get_title() : ?string;
-    public function get_blurb() : ?string;
-
+    public function get_project() : IFlowProject;
+    public function get_entry() : IFlowEntry;
 
     public function get_bb_code() : ?string;
     public function get_html() : ?string;
 
     public function get_text() : ?string;
-
-
-    public function get_project_guid() : ?string;
-    public function get_project_id() : ?int;
-    public function get_project() : FlowProject;
 
     /**
      * @return string[]
@@ -98,19 +84,19 @@ Interface IFlowEntry {
 
 
     /**
-     * @param FlowProject $project
-     * @param FlowProject|null $new_project
+     * @param IFlowProject $project
+     * @param IFlowProject|null $new_project
      * @return IFlowEntry
      * @throws Exception
      */
-    public function clone_with_missing_data(FlowProject $project,?FlowProject $new_project = null) : IFlowEntry;
+    public function clone_with_missing_data(IFlowProject $project,?IFlowProject $new_project = null) : IFlowEntry;
 
     /**
-     * @param FlowProject $project
+     * @param IFlowProject $project
      * @return IFlowEntry
      * @throws Exception
      */
-    public function fetch_this(FlowProject $project) : IFlowEntry ;
+    public function fetch_this(IFlowProject $project) : IFlowEntry ;
 
 
     /**
@@ -146,12 +132,12 @@ Interface IFlowEntry {
     public function on_after_delete_entry() :void ;
 
     /**
-     * @param FlowProject $project
+     * @param IFlowProject $project
      * @param object|array|IFlowEntry
      * @return IFlowEntry
      * @throws
      */
-    public static function create_entry(FlowProject $project,$object) : IFlowEntry ;
+    public static function create_entry(IFlowProject $project,$object) : IFlowEntry ;
 
 
 
@@ -161,8 +147,9 @@ Interface IFlowEntry {
      */
     public function to_public_json() : IFlowEntryJson ;
 
-    public function get_entry_folder() : ?string;
-
+    public function get_entry_folder(?string $new_folder_name = null) : ?string;
+    public function deduce_existing_entry_folder() : ?string;
+    public function get_calculated_entry_folder() : ?string; //returns what the folder should be
 
 
     /**
@@ -182,11 +169,12 @@ Interface IFlowEntry {
      * Loads entries from the entry folder (does not use db)
      * if no guids listed, then will return an array of all
      * else will only return the guids asked for, if some or all missing will only return the found, if any
-     * @param FlowProject $project
+     * @param IFlowProject $project
      * @param string[] $only_these_guids
      * @return IFlowEntry[]
      * @throws
      */
-    public static function load(FlowProject $project,array $only_these_guids = []) : array;
+    public static function load(IFlowProject $project,array $only_these_guids = []) : array;
+
 
 }

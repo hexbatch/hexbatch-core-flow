@@ -124,5 +124,63 @@ jQuery(function ($){
     });
 
 
+
+
+    function git_action(url,success_title,fail_title,on_success) {
+        let data = {};
+        do_flow_ajax_action(url,data,
+
+            /**
+             * @param {FlowGitActionResponse} ret
+             */
+            function(ret) {
+
+                let out = ret.git_output.join("\n <br>");
+                do_toast({
+                    title:success_title,
+                    content: out,
+                    delay:5000,
+                    type:'success'
+                });
+                if (on_success) {on_success();}
+            },
+
+            /**
+             * @param {FlowGitActionResponse} ret
+             */
+            function(ret) {
+                let out = ret.message;
+                if (ret.hasOwnProperty('git_output')) {
+                    out += "\n<br>" + ret.git_output.join("\n <br>");
+                }
+                my_swal.fire(
+                    fail_title,
+                    ret.message +  out,
+                    'error'
+                )
+            },
+            null,
+            null
+        );
+    }
+
+    body.on('click', 'button.flow-git-push-now', function () {
+        let button = $(this);
+        let url = button.data('url');
+        git_action(url,'Pushed!','Cannot Push');
+    });
+
+    body.on('click', 'button.flow-git-pull-now', function () {
+        let button = $(this);
+        let url = button.data('url');
+        git_action(url,'Pulled!','Cannot Pull',function() {
+            setTimeout(function() {
+                window.location.reload();
+            },100);
+
+        });
+    });
+
+
 });
 

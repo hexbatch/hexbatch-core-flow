@@ -6,7 +6,10 @@ BEGIN
     DECLARE msg VARCHAR(255);
 
     -- trigger for triggers_20210708205754_flow_entries
-    SET NEW.flow_entry_guid = UUID_TO_BIN(UUID(),1); -- swap out the quicker time parts for faster indexing with the 1
+    if (NEW.flow_entry_guid IS NULL) THEN
+        SET NEW.flow_entry_guid = UUID_TO_BIN(UUID(),1); -- swap out the quicker time parts for faster indexing with the 1
+    END IF;
+
     SET NEW.created_at_ts = UNIX_TIMESTAMP(NOW());
 
     -- don't allow new parent to be something that points to this (no recursive ancestor chains)

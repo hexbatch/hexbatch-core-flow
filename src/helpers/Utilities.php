@@ -33,7 +33,7 @@ class Utilities extends BaseHelper {
         $version_string = strval($version_string);
         $dashes_and_underscores_to_points = str_replace('-','.',$version_string);
         $dashes_and_underscores_to_points = str_replace('_','.',$dashes_and_underscores_to_points);
-        $only_numbers_and_points = preg_replace('/[^0-9.]+/', '', $dashes_and_underscores_to_points);
+        $only_numbers_and_points = preg_replace('/[^\d.]+/', '', $dashes_and_underscores_to_points);
         if (($pos = strpos($only_numbers_and_points, '.')) !== false) {
             $no_extra_points = substr($only_numbers_and_points, 0, $pos+1).str_replace('.', '', substr($only_numbers_and_points, $pos+1));
         } else {
@@ -80,7 +80,7 @@ class Utilities extends BaseHelper {
         return JsonHelper::fromString($json,true,false);
     }
 
-    public  function deep_copy($what) {
+    public static function deep_copy($what) {
         if (!(is_array($what) || is_object($what))) { return $what; } //will copy if primitive
         $json = JsonHelper::toString($what);
         $b_to_array = false;

@@ -115,7 +115,7 @@ class EntryBase extends BasePages
         if ($search) {
             $ret->search_used = $search;
             if ($options->has_option(FlowEntryCallData::OPTION_LIMIT_SEARCH_TO_PROJECT)) {
-                $ret->search_used->owning_project_guid = $project->flow_project_guid;
+                $ret->search_used->owning_project_guid = $project->get_project_guid();
             }
         } else if (property_exists($ret->args,'search')) {
             $ret->search_used = new FlowEntrySearchParams($ret->args->search);
@@ -127,7 +127,7 @@ class EntryBase extends BasePages
                 $ret->search_used->entry_titles[] = $entry_name;
             }
 
-            $ret->search_used->owning_project_guid = $project->flow_project_guid;
+            $ret->search_used->owning_project_guid = $project->get_project_guid();
         }
 
         if ($ret->search_used) {

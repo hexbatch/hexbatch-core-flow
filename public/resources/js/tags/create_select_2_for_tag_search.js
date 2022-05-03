@@ -23,21 +23,18 @@ function create_select_2_for_tag_search(bare_select_control,b_multi,
         if (tag.flow_tag_guid) {
 
             let tag_style_object = get_tag_style(tag);
-            let tag_style_array = [];
-            for(let rule_name in tag_style_object) {
-                tag_style_array.push(`${rule_name}: ${tag_style_object[rule_name]}`)
-            }
             let tag_classes = get_tag_classes(tag).join(' ');
 
             let display = `<span `+
-                `style="${tag_style_array.join(';')}" `+
                 `class="flow-tag-display ${extra_class} ${tag_classes}" `+
                 `data-guid="${tag.flow_tag_guid}"`+
                 `>`+
                 `${tag.flow_tag_name}`+
                 `</span>`;
 
-            return jQuery(display);
+            let tode = jQuery(display);
+            tode.css(tag_style_object);
+            return tode;
         } else {
             let display = `<span `+
                 `class="flow-tag-display ${extra_class}" `+

@@ -5,7 +5,9 @@ declare(strict_types=1);
 use app\controllers\entry\EntryPages;
 use app\controllers\home\AdminPages;
 use app\controllers\home\HomePages;
-use app\controllers\project\ProjectPages;
+use app\controllers\project\GitProjectController;
+use app\controllers\project\PageProjectController;
+use app\controllers\project\ResourceProjectController;
 use app\controllers\standard\StandardPages;
 use app\controllers\tag\TagPages;
 use app\controllers\user\UserPages;
@@ -38,7 +40,15 @@ return function (App $app) {
     });
 
     $container->set('projectPages', function() use ($app, $container) {
-        return new ProjectPages($container->get('auth'),$container->get(LoggerInterface::class),$container);
+        return new PageProjectController($container->get('auth'),$container->get(LoggerInterface::class),$container);
+    });
+
+    $container->set('projectResources', function() use ($app, $container) {
+        return new ResourceProjectController($container->get('auth'),$container->get(LoggerInterface::class),$container);
+    });
+
+    $container->set('projectGit', function() use ($app, $container) {
+        return new GitProjectController($container->get('auth'),$container->get(LoggerInterface::class),$container);
     });
 
     $container->set('tagPages', function() use ($app, $container) {

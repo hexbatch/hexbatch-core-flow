@@ -2,18 +2,19 @@
 
 namespace app\models\entry\archive;
 
-use app\hexlet\JsonHelper;
+use app\helpers\Utilities;
 use app\hexlet\WillFunctions;
 use app\models\base\SearchParamBase;
 use app\models\entry\FlowEntry;
 use app\models\entry\FlowEntrySearch;
 use app\models\entry\FlowEntrySearchParams;
-use app\models\entry\FlowEntrySummary;
+use app\models\entry\FlowEntryYaml;
 use app\models\entry\IFlowEntry;
 use app\models\multi\GeneralSearch;
 use app\models\multi\GeneralSearchParams;
-use app\models\project\FlowProject;
+use app\models\project\IFlowProject;
 use Exception;
+use LogicException;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -29,55 +30,16 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
         return new FlowEntryArchive($entry);
     }
 
-    /**
-     * reads a yaml file at the project root that is a list of all the stored entrees with the guid and title
-     * verifies that the folders exist, and return the guid strings
-     * @param FlowProject $project
-     * @return string[]
-     * @throws
-     */
-    public static function discover_all_archived_entries(FlowProject $project) :array {
-        $b_already_created = false;
-        $project_directory = $project->getFlowProjectFiles()->get_project_directory($b_already_created);
-        $yaml_path = $project_directory. DIRECTORY_SEPARATOR . self::ALL_FILES_YAML_NAME;
-        $data_array = Yaml::parseFile($yaml_path);
-        $ret = [];
-        $blank = FlowEntry::create_entry($project,null);
-        foreach ($data_array as $data) {
-            try {
-                $node = new FlowEntrySummary($data);
-            } catch (Exception $whooo) {
-                FlowEntryArchive::get_logger()->warning("Could not calculate archive entry for record",['exception'=>$whooo]);
-                continue;
-            }
-
-            if ($node->guid) {
-                $blank->set_guid($node->guid);
-                $entry_folder_path = $blank->get_entry_folder();
-                if (is_readable($entry_folder_path)) {
-                    $ret[] = $node->guid;
-                } else {
-                    FlowEntryArchive::get_logger()->warning("[discover_all_archived_entries] Could not read the entry folder $entry_folder_path");
-                }
-            }
-        }
-        return $ret;
-
-    }
 
     /**
-     * @param FlowProject $project
+     * @param IFlowProject $project
      * @throws
      */
-    public static function record_all_stored_entries(FlowProject $project) : void {
+    public static function record_all_stored_entries(IFlowProject $project) : void {
 
-        $stuff = FlowEntrySummary::get_entry_summaries_for_project($project);
-        $pigs_in_space = JsonHelper::toString($stuff);
-        $stuff_serialized = JsonHelper::fromString($pigs_in_space);
-
-        $stuff_yaml = Yaml::dump($stuff_serialized);
-        $b_already_created = false;
-        $project_directory = $project->getFlowProjectFiles()->get_project_directory($b_already_created);
+        $stuff = FlowEntryYaml::get_yaml_data_from_database($project);
+        $stuff_yaml = Yaml::dump(Utilities::deep_copy($stuff));
+        $project_directory = $project->get_project_directory();
         $yaml_path = $project_directory. DIRECTORY_SEPARATOR . self::ALL_FILES_YAML_NAME;
         $b_ok = file_put_contents($yaml_path,$stuff_yaml);
         if ($b_ok === false) {throw new RuntimeException("Could not write to $yaml_path");}
@@ -117,13 +79,13 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
     }
 
     /**
-     * @param FlowProject $project
+     * @param IFlowProject $project
      * @throws Exception
      */
-    public static function update_all_entries_from_project_directory(FlowProject $project) {
+    public static function update_all_entries_from_project_directory(IFlowProject $project) {
         $entries_in_files_flat_array = FlowEntry::load($project); //sorted by parent, with parent first
         $search = new FlowEntrySearchParams();
-        $search->owning_project_guid = $project->flow_project_guid;
+        $search->owning_project_guid = $project->get_project_guid();
         $search->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
         $entries_in_db_flat_array = FlowEntrySearch::search($search);
 
@@ -161,13 +123,27 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
         }
 
         foreach ($entries_in_files_flat_array as $in_file_entry) {
-            $entries_in_files[$in_file_entry->get_guid()] = $in_file_entry;
+            if ($in_file_entry instanceof IFlowEntryArchive) {
+                $entries_in_files[$in_file_entry->get_entry()->get_guid()] = $in_file_entry;
+            } else if ($in_file_entry instanceof IFlowEntry) {
+                $entries_in_files[$in_file_entry->get_guid()] = $in_file_entry;
+            } else {
+                throw new LogicException("[update_all_entries_from_project_directory] Unknown interface ");
+            }
+
         }
 
 
         foreach ($entries_in_files as $guid => $entry) {
 
-            $archive = FlowEntryArchive::create_archive($entry);
+            if ($entry instanceof IFlowEntryArchive) {
+                $archive = FlowEntryArchive::create_archive($entry->get_entry());
+            } else if ($entry instanceof IFlowEntry) {
+                $archive = FlowEntryArchive::create_archive($entry);
+            } else {
+                throw new LogicException("[update_all_entries_from_project_directory B] Unknown interface ");
+            }
+
             $archive_map[$guid] = $archive;
             $guids = $archive->get_needed_guids_for_empty_ids();
             foreach ($guids as $guid) {
@@ -198,7 +174,14 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
             }
             //add all entry guids in the files in case children or members need them
             foreach ($entries_in_files as $guid => $entry) {
-                $guid_map_to_ids[$guid] = $entry->get_id();
+                if ($entry instanceof IFlowEntryArchive) {
+                    $guid_map_to_ids[$guid] = $entry->get_entry()->get_id();
+                } else if ($entry instanceof IFlowEntry) {
+                    $guid_map_to_ids[$guid] = $entry->get_id();
+                } else {
+                    throw new LogicException("[update_all_entries_from_project_directory D] Unknown interface ");
+                }
+
             }
 
 
@@ -206,7 +189,13 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
                 $archive = $archive_map[$guid];
                 $archive->fill_ids_from_guids($guid_map_to_ids);
                 if (count($archive->get_needed_guids_for_empty_ids())) {
-                    $title = $entry->get_title();
+                    if ($entry instanceof IFlowEntryArchive) {
+                        $title = $entry->get_entry()->get_title();
+                    } else if ($entry instanceof IFlowEntry) {
+                        $title = $entry->get_title();
+                    } else {
+                        throw new LogicException("[update_all_entries_from_project_directory C] Unknown interface ");
+                    }
                     throw new RuntimeException(
                         "[update_all_entries_from_project_directory] Missing some filled guids for $title");
 
@@ -216,7 +205,15 @@ final class FlowEntryArchive extends FlowEntryArchiveMembers {
 
 
             foreach ($entries_in_files_flat_array as  $entry) {
-                $entry->save_entry(false,false);
+
+                if ($entry instanceof IFlowEntryArchive) {
+                    $entry->get_entry()->save_entry();
+                } else if ($entry instanceof IFlowEntry) {
+                    $entry->save_entry();
+                } else {
+                    throw new LogicException("[update_all_entries_from_project_directory C] Unknown interface ");
+                }
+
             }
 
             //delete last to minimize dependencies being mixed up

@@ -1,0 +1,24 @@
+{% if project.get_current_user_permissions().can_admin %}
+<div class="card p-1 mt-1 col-9 mb-1 ms-1 w-100" >
+    <h5 class="card-title ps-1">
+        Patch
+    </h5>
+
+    <div class="card-body p-1">
+
+        <div class="card-text text-center">
+
+            <button
+               class="btn btn-outline-info py-0 flow-show-upload-patch-dialog"
+            >
+                Load Patch
+            </button>
+
+
+
+        </div> <!-- /.card-text -->
+    </div>  <!-- /.card-body -->
+</div> <!-- /.card -->
+    {{ include('project/partials/import/patch_upload_form.twig')}}
+
+{% endif %} {# end can_admin #}

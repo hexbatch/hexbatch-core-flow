@@ -1,5 +1,5 @@
 {% if applied.tagged_flow_project_guid %}
-    {% if project.flow_project_guid == applied.tagged_flow_project_guid %}
+    {% if project.get_project_guid() == applied.tagged_flow_project_guid %}
         <i class="bi bi-box flow-tag-applied-of-this " ></i>
         {{ applied.tagged_title }}
     {% else %}

@@ -1,8 +1,8 @@
 /**
- *
  * @param {FlowTag} tag
+ * @param {?FlowStandardCallback} [on_start]
  */
-function view_standard_meta(tag) {
+function view_standard_meta(tag,on_start) {
     if (!tag.standard_attributes.hasOwnProperty('meta')) { return jQuery('<span>No Meta Found</span>');}
 
     /**
@@ -79,6 +79,19 @@ function view_standard_meta(tag) {
             da_time_node.find('.meta_date_time').text(date.toLocaleString());
         }
     }
+
+    card.on('click',function() {
+        if (on_start) {
+            on_start(
+                {
+                    tag: tag,
+                    action: 'start_edit',
+                    standard_name: 'meta',
+                    standard_data: meta
+                }
+            );
+        }
+    });
 
     return card;
 
