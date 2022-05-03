@@ -1,10 +1,10 @@
 
-<ul class="list-group list-group-flush flow-tags-list" data-project_guid="{{ project.flow_project_guid }}">
+<ul class="list-group list-group-flush flow-tags-list" data-project_guid="{{ project.get_project_guid() }}">
     {% for tag in project.get_all_owned_tags_in_project(true) %}
     <li class="list-group-item">
         <div class="row">
             <div class="col-12 col-xl-6 flow-tag-show-edit-on-click" data-tag_guid="{{ tag.flow_tag_guid }}">
-                <span class="flow-tag-list-name flow-tag-display  flow-tag-{{ project.flow_project_guid }}"
+                <span class="flow-tag-list-name flow-tag-display  flow-tag-{{ project.get_project_guid() }}"
                       data-tag_guid="{{ tag.flow_tag_guid }}"
                       style="display: none"
                 >

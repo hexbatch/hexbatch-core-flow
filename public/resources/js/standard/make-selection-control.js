@@ -109,6 +109,7 @@ function make_flow_standard_selection_control(setup) {
         if (chosen_standard) {
             let here = view_div.find('.flow-selected-standard-view-here');
             flow_standards_generate_view(standard_name,tag_setting,here);
+            here.css(tag_setting.css);
         }
 
 
@@ -122,6 +123,7 @@ function make_flow_standard_selection_control(setup) {
         if (selectable_standards.length > 0) {
             qj_body.on("click", `div#${view_div_id}`, display_selection_dialog);
         }
+
 
         return view_div;
     }

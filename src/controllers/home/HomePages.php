@@ -2,7 +2,7 @@
 namespace app\controllers\home;
 
 use app\controllers\base\BasePages;
-use app\controllers\project\ProjectPages;
+use app\controllers\project\PageProjectController;
 use app\controllers\user\UserPages;
 use app\hexlet\JsonHelper;
 use app\models\entry\FlowEntrySearch;
@@ -78,7 +78,7 @@ class HomePages extends BasePages
 
                     $route_to_go_to = $routeParser->urlFor('show_entry',[
                         "user_name" => $entry_project->get_admin_user()->flow_user_guid,
-                        "project_name" => $entry_project->flow_project_guid,
+                        "project_name" => $entry_project->get_project_guid(),
                         "entry_name" => $entry->get_guid()
                     ]);
 
@@ -102,10 +102,10 @@ class HomePages extends BasePages
                     $user_class = $project->get_admin_user();
                     $user_name = '';
                     if ($user_class) { $user_name = $user_class->flow_user_guid; }
-                    $project_name = $project->flow_project_guid;
+                    $project_name = $project->get_project_guid();
 
                     /**
-                     * @var ProjectPages $project_pages
+                     * @var PageProjectController $project_pages
                      */
                     $project_pages = $this->container->get('projectPages');
                     return $project_pages->single_project_home($request,$response,$user_name,$project_name);

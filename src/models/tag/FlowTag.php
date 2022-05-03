@@ -3,13 +3,15 @@
 namespace app\models\tag;
 
 
+use app\helpers\Utilities;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
-use app\models\project\FlowProject;
+use app\models\project\IFlowProject;
 use app\models\standard\FlowTagStandardAttribute;
 use app\models\standard\IFlowTagStandardAttribute;
 use app\models\tag\brief\BriefFlowTag;
+use Error;
 use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
@@ -26,7 +28,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
     public ?int $flow_tag_id;
     public ?int $flow_project_id;
 
-    public ?FlowProject $flow_project;
+    public ?IFlowProject $flow_project;
 
     public ?int $parent_tag_id;
     public ?int $tag_created_at_ts;
@@ -236,8 +238,42 @@ class FlowTag extends FlowBase implements JsonSerializable {
         foreach ($object as $key => $val) {
             if ($key === 'attributes') {continue;}
             if ($key === 'applied') {continue;}
+            if ($key === 'standard_attributes') {
+                if (!is_array($val)) {
+                    if (! $val instanceof IFlowTagStandardAttribute) {
+                        if (is_object($val)) {
+                            foreach ($val as $standard_name => $standard_value) {
+                                $args_for_standard = [
+                                  'standard_name' =>   $standard_name,
+                                  'standard_value' =>   $standard_value
+                                ];
+                                $param_node = new FlowTagStandardAttribute( Utilities::convert_to_object($args_for_standard));
+                                $this->standard_attributes[] = $param_node;
+                            }
+                        } else {
+                            if (!empty($val)) {
+                                throw new InvalidArgumentException(
+                                    "[FlowTag Constructor] standard_attributes is not array, object or empty: "
+                                    . print_r($val, true)
+                                );
+                            }
+                        }
+
+                    } else {
+                        $this->standard_attributes[] = $val;
+                    }
+                } else {
+                    $this->standard_attributes = $val;
+                }
+            }
             else if (property_exists($this,$key)) {
-                $this->$key = $val;
+                try {
+                    $this->$key = $val;
+                } catch (Error $help) {
+                    static::get_logger()->info("key $key",['message'=>$help->getMessage(),'value'=>$val]);
+                    throw $help;
+                }
+
             }
         }
 
@@ -473,12 +509,13 @@ class FlowTag extends FlowBase implements JsonSerializable {
     /**
      * @param string|null $attribute_name
      * @param FlowTagAttribute|null $attribute
+     * @param bool $b_do_transaction
      * @return $this|FlowTag
      * @throws Exception
      */
-    public  function save_tag_return_clones(?string $attribute_name, FlowTagAttribute &$attribute = null): FlowTag
+    public  function save_tag_return_clones(?string $attribute_name, FlowTagAttribute &$attribute = null,bool $b_do_transaction=false): FlowTag
     {
-        $this->save(true,true);
+        $this->save($b_do_transaction,true);
         $altered_tag = $this->clone_refresh();
 
         if ($attribute_name) {
@@ -556,7 +593,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
             ];
 
 
-            if ($b_do_transaction) {$db->beginTransaction();}
+            if ($b_do_transaction && !$db->inTransaction()) {$db->beginTransaction();}
             if ($this->flow_tag_guid && $this->flow_tag_id) {
 
                 $db->update('flow_tags',$save_info,[
@@ -653,7 +690,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
                 }
             }
             $this->update_standard_attibutes();
-            if ($b_do_transaction) {$db->commit(); }
+            if ($b_do_transaction && $db->inTransaction()) {$db->commit(); }
 
 
         } catch (Exception $e) {

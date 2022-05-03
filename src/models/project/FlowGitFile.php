@@ -4,6 +4,7 @@ namespace app\models\project;
 
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\IFlowEntryArchive;
+use app\models\entry\FlowEntryYaml;
 use Exception;
 
 class FlowGitFile {
@@ -56,8 +57,8 @@ class FlowGitFile {
     }
 
     protected function is_valid_resource_file() : bool{
-        if (strpos($this->file,FlowProjectFiles::REPO_FILES_DIRECTORY.DIRECTORY_SEPARATOR) !== false) {return true;}
-        if (strpos($this->file,FlowProjectFiles::REPO_RESOURCES_DIRECTORY.DIRECTORY_SEPARATOR) !== false) {return true;}
+        if (strpos($this->file,IFlowProject::REPO_FILES_DIRECTORY.DIRECTORY_SEPARATOR) !== false) {return true;}
+        if (strpos($this->file,IFlowProject::REPO_RESOURCES_DIRECTORY.DIRECTORY_SEPARATOR) !== false) {return true;}
         return false;
     }
 
@@ -77,6 +78,7 @@ class FlowGitFile {
         if (strpos($this->file,IFlowEntryArchive::BLURB_FILE_NAME) !== false) {return 'Entry Blurb';}
         if (strpos($this->file,IFlowEntryArchive::BB_CODE_FILE_NAME) !== false) {return 'Entry BB Code';}
         if (strpos($this->file,IFlowEntryArchive::BASE_YAML_FILE_NAME) !== false) {return 'Entry Yaml';}
+        if (strpos($this->file,FlowEntryYaml::FILENAME_TO_MARK_INVALID) !== false) {return 'Marked Ignored';}
         return "Other Entry File";
     }
 

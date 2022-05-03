@@ -5,13 +5,13 @@ namespace app\models\tag\brief;
 
 
 use app\models\base\FlowBase;
-use app\models\project\FlowProject;
+use app\models\project\IFlowProject;
 use Exception;
 
 class BriefCheckValidYaml extends FlowBase {
 
     public BriefDiffFromYaml $yaml_diff;
-    public FlowProject $project;
+    public IFlowProject $project;
     protected int $n_is_valid = 0;
     public array $issues = [];
     public function is_valid():bool { return (bool)$this->n_is_valid; }
@@ -21,10 +21,10 @@ class BriefCheckValidYaml extends FlowBase {
      *      Those marked as added are to be deleted
      *      Those marked as removed will be created
      *      Those marked as modified will be saved
-     * @param FlowProject $project
+     * @param IFlowProject $project
      * @throws Exception
      */
-    public function __construct( FlowProject $project){
+    public function __construct( IFlowProject $project){
         $this->n_is_valid = 1;
         $this->project = $project;
         $this->yaml_diff = new BriefDiffFromYaml($this->project,null,true);

@@ -8,11 +8,11 @@
         <li class="breadcrumb-item">
             <a href="{{ url_for('single_project_home',{
                 user_name: project.get_admin_user().flow_user_name ,
-                project_name: project.flow_project_title
+                project_name: project.get_project_title()
             } )
             }}">
                 <span class="flow-project-title">
-                    {{ project.flow_project_title }}
+                    {{ project.get_project_title() }}
                 </span>
             </a>
         </li>

@@ -1,17 +1,17 @@
 {{ form_token(  url_for('edit_permissions_ajax',{
     user_name: project.get_admin_user().flow_user_name ,
-    project_name: project.flow_project_title
+    project_name: project.get_project_title()
 } )) }}
 
 <script>
     let flow_project_edit_permission_ajax_url = "{{-  url_for('edit_permissions_ajax',{
                                                             user_name: project.get_admin_user().flow_user_name ,
-                                                            project_name: project.flow_project_title
+                                                            project_name: project.get_project_title()
                                                         }) -}}";
 
     let flow_project_user_search_url = "{{-  url_for('find_users_by_project') -}}";
 
-    let flow_project_guid = "{{- project.flow_project_guid -}}"
+    let flow_project_guid = "{{- project.get_project_guid() -}}"
 </script>
 
 
@@ -21,7 +21,7 @@
             <div class="card" >
 
                 <div class="card-header">
-                    Permissions For {{ project.flow_project_title }}
+                    Permissions For {{ project.get_project_title() }}
                 </div>
 
                 <div class="card-body">
@@ -137,7 +137,7 @@
                         <input class="form-check-input" type="checkbox"
                                id="flow-set-public"
                                value="1"
-                               id="flexSwitchCheckDefault" {{ project.is_public ? 'checked' : '' }}
+                               id="flexSwitchCheckDefault" {{ project.is_public() ? 'checked' : '' }}
                         >
                         <label class="form-check-label" for="flexSwitchCheckDefault">
                             Project is public
@@ -145,7 +145,7 @@
                     </div>
 
 
-                    <div class="flow-reader-area {{ project.is_public ? 'flow-disabled' : ''}}" >
+                    <div class="flow-reader-area {{ project.is_public() ? 'flow-disabled' : ''}}" >
                         <dl class="row">
                             <dt class="col-6 col-xxl-3">
                                 Readers

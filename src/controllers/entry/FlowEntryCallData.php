@@ -4,7 +4,7 @@ namespace app\controllers\entry;
 
 use app\models\entry\FlowEntrySearchParams;
 use app\models\entry\IFlowEntry;
-use app\models\project\FlowProject;
+use app\models\project\IFlowProject;
 use InvalidArgumentException;
 use stdClass;
 
@@ -13,7 +13,7 @@ class FlowEntryCallData {
     public ?string $note = null;
 
     public ?stdClass $args = null;
-    public ?FlowProject $project;
+    public ?IFlowProject $project;
 
     /**
      * @var IFlowEntry[] $entry_array
@@ -61,7 +61,7 @@ class FlowEntryCallData {
 
 
 
-    function __construct(array $options = [], ?stdClass $args = null ,?FlowProject $project = null ,?array $new_token = null ){
+    function __construct(array $options = [], ?stdClass $args = null ,?IFlowProject $project = null ,?array $new_token = null ){
         $this->args = $args;
         $this->project = $project;
         $this->new_token = $new_token;

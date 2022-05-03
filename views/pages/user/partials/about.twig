@@ -9,11 +9,11 @@
 
             <div class="card-body">
                 <h5 class="card-title">
-                    {{ project.flow_project_blurb }}
+                    {{ project.get_project_blurb() }}
                 </h5>
 
                 <div class="flow-project-readme-display">
-                    {{ project.flow_project_readme_html| raw }}
+                    {{ project.get_html()| raw }}
                 </div>
 
 

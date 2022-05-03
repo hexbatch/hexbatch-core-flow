@@ -6,7 +6,7 @@ use app\models\base\SearchParamBase;
 use app\models\multi\GeneralSearch;
 use app\models\multi\GeneralSearchParams;
 use app\models\multi\GeneralSearchResult;
-use app\models\project\FlowProject;
+use app\models\project\IFlowProject;
 use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
 use app\models\tag\FlowTagAttribute;
@@ -16,7 +16,7 @@ use Symfony\Component\Yaml\Yaml;
 
 class BriefDiffFromYaml {
 
-    public FlowProject $project;
+    public IFlowProject $project;
 
     /**
      * @var BriefFlowTag[] $changed_tags
@@ -216,9 +216,6 @@ class BriefDiffFromYaml {
             $tag = $this->brief_tag_map[$app->flow_tag_guid];
             $tag_name_to_use = $tag->new_name ?? $tag->flow_tag_name;
             $tagged_guid = $app->get_tagged_guid();
-            if (!array_key_exists($tagged_guid,$target_map)) {
-                throw new LogicException("[get_changed_applied_summary_line:removed] target guid $tagged_guid is not in map ");
-            }
             $target_name = $target_map[$tagged_guid]->title;
             $target_type = $target_map[$tagged_guid]->type;
             $changes[] = "Removed applied $tag_name_to_use from $target_type $target_name";
@@ -233,12 +230,12 @@ class BriefDiffFromYaml {
 
 
     /**
-     * @param FlowProject $project
+     * @param IFlowProject $project
      * @param string|null $yaml_file
      * @param bool $b_changed_is_set_from_file
      * @throws Exception
      */
-    public function __construct(FlowProject $project,?string $yaml_file=null,bool $b_changed_is_set_from_file = false){
+    public function __construct(IFlowProject $project,?string $yaml_file=null,bool $b_changed_is_set_from_file = false){
         $this->project = $project;
         $this->changed_tags = [];
         $this->added_tags = [];
@@ -306,6 +303,7 @@ class BriefDiffFromYaml {
         foreach ($saved as $btag) {
 
             $btag_object = new BriefFlowTag($btag);
+            $btag_object->flow_project_guid = $project->get_project_guid();
             $b_tag_map[$btag_object->flow_tag_guid] = $btag_object;
             $this->brief_tag_map[$btag_object->flow_tag_guid] = $btag_object;
             $this->from_yaml_as_brief_tag_map[$btag_object->flow_tag_guid] = $btag_object;
@@ -373,7 +371,7 @@ class BriefDiffFromYaml {
                     $attribute->getPointsToFlowProjectGuid() !== $battribute->points_to_flow_project_guid ||
                     $attribute->getPointsToFlowTagGuid() !== $battribute->points_to_flow_tag_guid ||
                     $attribute->getTagAttributeText() !== $battribute->tag_attribute_text ||
-                    $attribute->getTagAttributeLong() !== $battribute->tag_attribute_long ||
+                    intval($attribute->getTagAttributeLong()) !== intval($battribute->tag_attribute_long) ||
                     $attribute->getTagAttributeName() !== $battribute->tag_attribute_name
                 ) {
                     if ($b_changed_is_set_from_file) {

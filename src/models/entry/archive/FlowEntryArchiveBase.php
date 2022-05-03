@@ -6,11 +6,9 @@ namespace app\models\entry\archive;
 use app\hexlet\RecursiveClasses;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
+use app\models\entry\FlowEntryYaml;
 use app\models\entry\IFlowEntry;
-use Carbon\Carbon;
 use JsonSerializable;
-use RuntimeException;
-use Symfony\Component\Yaml\Yaml;
 
 abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable, IFlowEntryArchive {
     
@@ -100,8 +98,8 @@ abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable
     {
         if (empty($this->entry->get_project_id()) && $this->entry->get_project_guid()) {
             $this->entry->set_project_id( $guid_map_to_ids[$this->entry->get_project_guid()] ?? null);}
-        if (empty($this->flow_entry_parent_id) && $this->entry->get_project_guid()) {
-            $this->entry->set_parent_id($guid_map_to_ids[$this->entry->get_project_guid()] ?? null);}
+        if (empty($this->flow_entry_parent_id) && $this->entry->get_parent_guid()) {
+            $this->entry->set_parent_id($guid_map_to_ids[$this->entry->get_parent_guid()] ?? null);}
     }
 
 
@@ -110,10 +108,15 @@ abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable
      * @throws
      */
     public function delete_archive() : void {
-        $path = $this->get_entry()->get_entry_folder();
+        $path = $this->get_entry()->get_calculated_entry_folder();
         if (!is_readable($path)) {
-            static::get_logger()->warning("Could not delete entry base folder of $path because it does not exist");
-            return;
+            static::get_logger()->warning("Could not find calculated entry base folder of $path ");
+            $path = $this->get_entry()->deduce_existing_entry_folder();
+            if (!is_readable($path)) {
+                static::get_logger()->warning("Could not find entry base folder of $path ");
+                return;
+            }
+
         }
         RecursiveClasses::rrmdir($path);
     }
@@ -122,24 +125,7 @@ abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable
      * Writes the entry, and its children , to the archive
      */
     public function write_archive() : void {
-        //create folder if not existing
-        $path = $this->get_entry()->get_entry_folder();
-        if (!is_readable($path)) {
-            $b_ok = mkdir($path,0777,false);
-            if (!$b_ok) {
-                throw new RuntimeException("Could not create entry base folder of  $path");
-            }
-        }
-
-
-        $stuff = $this->to_array();
-        $stuff['entry_name'] = $this->get_entry()->get_title();
-        $stuff['human_date_time'] = Carbon::now()->toIso8601String();
-        $stuff_yaml = Yaml::dump($stuff);
-
-        $yaml_path = $path. DIRECTORY_SEPARATOR . static::BASE_YAML_FILE_NAME;
-        $b_ok = file_put_contents($yaml_path,$stuff_yaml);
-        if ($b_ok === false) {throw new RuntimeException("Could not write to $yaml_path");}
+        FlowEntryYaml::write_yaml_entry($this->get_entry());
     }
 
 
@@ -147,41 +133,13 @@ abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable
      * sets any data found in archive into this, over-writing data in entry object
      */
     public function read_archive() : void  {
-        $path = $this->get_entry()->get_entry_folder();
-        $yaml_path = $path. DIRECTORY_SEPARATOR . static::BASE_YAML_FILE_NAME;
-        if (!is_readable($yaml_path)) {
-            throw new RuntimeException("Could not read $yaml_path");
-        }
 
-        $saved = Yaml::parseFile($yaml_path);
-        foreach ($saved as $key => $value) {
-
-            switch ($key) {
-                case 'flow_entry_guid': {
-                    $this->get_entry()->set_guid($value);
-                    break;
-                }
-                case 'flow_entry_parent_guid': {
-                    $this->get_entry()->set_parent_guid($value);
-                    break;
-                }
-                case 'flow_project_guid': {
-                    $this->get_entry()->set_project_id($value);
-                    break;
-                }
-                case 'entry_created_at_ts': {
-                    $this->get_entry()->set_created_at_ts($value);
-                    break;
-                }
-                case 'entry_updated_at_ts': {
-                    $this->get_entry()->set_updated_at_ts($value);
-                    break;
-                }
-                default: {
-                    throw new RuntimeException("read_archive: Did not recognize the key of $key");
-                }
-            }
-        }
+        $yaml_entry = FlowEntryYaml::read_yaml_entry($this->get_entry());
+        $this->get_entry()->set_guid($yaml_entry->get_guid());
+        $this->get_entry()->set_parent_guid($yaml_entry->get_parent_guid());
+        $this->get_entry()->set_project_guid($yaml_entry->get_project_guid());
+        $this->get_entry()->set_created_at_ts($yaml_entry->get_created_at_ts());
+        $this->get_entry()->set_updated_at_ts($yaml_entry->get_updated_at_ts());
     }
 
 

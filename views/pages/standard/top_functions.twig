@@ -41,14 +41,14 @@
      * @param { FlowTag|string }tag_guid_or_object
      * @param {object} standards_object
      * @param {?jQuery} parent
-     * @param {?FlowStandardCallback} success_callback
+     * @param {?FlowStandardCallback} success_or_start_callback
      * @param {?FlowStandardCallback} fail_callback
 
      *
      *
      */
     function flow_generate_standard_gui(standard_name,tag_guid_or_object,standards_object,
-                                   parent,success_callback,fail_callback) {
+                                   parent,success_or_start_callback,fail_callback) {
 
 
         function executeFunctionByName(functionName, context /*, args */) {
@@ -87,13 +87,13 @@
             }
 
             let dat_ok_callback = function(data) {
-                if (!success_callback) {
+                if (!success_or_start_callback) {
                     dat_ok_callback = function(what) {
-                        console.debug('success',what);
+                        console.debug('success or edit',what);
                     }
                 }
                 if (modal) { modal.close()}
-                if (success_callback) success_callback(data);
+                if (success_or_start_callback) success_or_start_callback(data);
             }
 
             let thing = executeFunctionByName(standards_object[standard_name],window,tag_to_use,dat_ok_callback,data_no_no_callback);
@@ -142,12 +142,13 @@
     /**
      * @param {string} standard_name
      * @param { FlowTag|string }tag_guid_or_object
+     * @param {?FlowStandardCallback} [on_start]
      * @param {?jQuery} parent
      *
      *
      */
-    function flow_standards_generate_view(standard_name,tag_guid_or_object,parent) {
-        return flow_generate_standard_gui(standard_name,tag_guid_or_object,FLOW_VIEWABLE_STANDARDS,parent,null,null);
+    function flow_standards_generate_view(standard_name,tag_guid_or_object,parent,on_start) {
+        return flow_generate_standard_gui(standard_name,tag_guid_or_object,FLOW_VIEWABLE_STANDARDS,parent,on_start,null);
 
     }
 

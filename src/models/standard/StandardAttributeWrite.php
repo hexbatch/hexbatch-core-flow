@@ -219,14 +219,17 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
         foreach ($raw_by_attribute_names_by_tag_guid as $tag_guid => &$raw_ancestor_list_by_attribute_names) {
             $tag_parent_guid = $tag_guid_map_to_parent_tag_guid[$tag_guid];
             while($tag_parent_guid) {
-                $their_attributes = $raw_by_attribute_names_by_tag_guid[$tag_parent_guid];
-                foreach ($their_attributes as $their_attribute_name => $their_raw_array) {
-                    if (!isset($raw_ancestor_list_by_attribute_names[$their_attribute_name])) {
-                        $raw_ancestor_list_by_attribute_names[$their_attribute_name] = $their_raw_array;
+                if (isset($raw_by_attribute_names_by_tag_guid[$tag_parent_guid])) {
+                    $their_attributes = $raw_by_attribute_names_by_tag_guid[$tag_parent_guid];
+                    foreach ($their_attributes as $their_attribute_name => $their_raw_array) {
+                        if (!isset($raw_ancestor_list_by_attribute_names[$their_attribute_name])) {
+                            $raw_ancestor_list_by_attribute_names[$their_attribute_name] = $their_raw_array;
+                        }
                     }
                 }
 
-                $tag_parent_guid = $tag_guid_map_to_parent_tag_guid[$tag_parent_guid];
+                $tag_parent_guid = $tag_guid_map_to_parent_tag_guid[$tag_parent_guid] ?? null;
+
             }
         }
         unset($raw_ancestor_list_by_attribute_names);
@@ -255,7 +258,31 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
             }
         }
         static::trim_tags($tags_ids_with_no_standards); //remove standards that might have been erased with no attributes behind
+
+
+        //finally, if a tag has no attributes, copy over its parent's standard attributes,
+        // because the loop above only lets a tag inherit its parent's standards if the tag has one attribute
+        foreach ($flow_tags as $tag_maybe_with_no_attributes) {
+            if (count($tag_maybe_with_no_attributes->attributes)) { continue;}
+            if (!$tag_maybe_with_no_attributes->parent_tag_id) { continue;}
+            static::copy_parent_standards_to_child($tag_maybe_with_no_attributes);
+        }
         return $ret;
+
+    }
+
+    protected static function copy_parent_standards_to_child(FlowTag $flowTag) : int  {
+        if (!$flowTag->parent_tag_id) { return 0;}
+        $sql = "INSERT INTO flow_standard_attributes (flow_tag_id,standard_name, standard_json)
+                SELECT 
+                    ? as flow_tag_id, standard_name, standard_json
+                    FROM flow_standard_attributes parent 
+                    WHERE parent.flow_tag_id = ?
+                ON DUPLICATE KEY UPDATE 
+                   standard_json = VALUES(standard_json) ";
+        $db = static::get_connection();
+        $args = [$flowTag->flow_tag_id, $flowTag->parent_tag_id];
+        return $db->safeQuery($sql,$args,PDO::FETCH_BOTH,true);
 
     }
 

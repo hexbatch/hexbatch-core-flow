@@ -1,8 +1,9 @@
 /**
  *
  * @param {FlowTag} tag
+ * @param {?FlowStandardCallback} [on_start]
  */
-function view_standard_git(tag) {
+function view_standard_git(tag,on_start) {
     if (!tag.standard_attributes.hasOwnProperty('git')) { return jQuery('<span>No Git Found</span>');}
 
     /**
@@ -66,6 +67,18 @@ function view_standard_git(tag) {
         git_notes.html(git.git_notes);
     }
 
+    card.on('click',function() {
+        if (on_start) {
+            on_start(
+                {
+                    tag: tag,
+                    action: 'start_edit',
+                    standard_name: 'git',
+                    standard_data: git
+                }
+            );
+        }
+    });
 
 
     return card;

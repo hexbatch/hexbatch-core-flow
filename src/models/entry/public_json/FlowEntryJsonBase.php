@@ -2,9 +2,11 @@
 
 namespace app\models\entry\public_json;
 
+use app\models\entry\archive\IFlowEntryArchive;
 use app\models\entry\IFlowEntry;
 use BlueM\Tree;
 use JsonSerializable;
+use LogicException;
 
 class FlowEntryJsonBase implements IFlowEntryJson,JsonSerializable {
 
@@ -39,20 +41,50 @@ class FlowEntryJsonBase implements IFlowEntryJson,JsonSerializable {
     /**
      * sort parents before children
      * if there are entries with a parent set, but not in the array, then those are put at the end
-     * @param IFlowEntry[] $entry_array_to_sort
+     * @param IFlowEntry[]|IFlowEntryArchive[] $entry_array_to_sort
      * @return IFlowEntry[]
      */
     public static function sort_array_by_parent(array $entry_array_to_sort): array
     {
         $data = [];
         $data[] = ['id' => 0, 'parent' => -1, 'title' => 'dummy_root','tag'=>null];
+
+        /**
+         * @var array<string,int> $hash_fake_ids
+         */
+        $hash_fake_ids = [];
+        $count_id = 10;
+        foreach ($entry_array_to_sort as $thing) {
+            $hash_fake_ids[$thing->get_entry()->get_guid()] = $count_id++;
+        }
+
         foreach ($entry_array_to_sort as $entry) {
-            $data[] = [
-                'id' => $entry->get_id(),
-                'parent' => $entry->get_parent_id()??0,
-                'title' => $entry->get_title(),
-                'entry'=>$entry
-            ];
+            if ($entry instanceof IFlowEntryArchive) {
+
+                if(!$entry->get_entry()->get_parent_guid()) { $parent_id = 0;}
+                elseif (isset($hash_fake_ids[$entry->get_entry()->get_parent_guid()])) {
+                    $parent_id = $hash_fake_ids[$entry->get_entry()->get_parent_guid()];
+                }
+                else {$parent_id = 0;  }
+
+                $data[] = [
+                    'id' => $hash_fake_ids[$entry->get_entry()->get_guid()],
+                    'parent' => $parent_id ,
+                    'title' => $entry->get_entry()->get_title(),
+                    'entry'=>$entry
+                ];
+
+            } else if ($entry instanceof IFlowEntry) {
+                $data[] = [
+                    'id' => $entry->get_id(),
+                    'parent' => $entry->get_parent_id()??0,
+                    'title' => $entry->get_title(),
+                    'entry'=>$entry
+                ];
+            } else {
+                throw new LogicException("[FlowEntryJsonBase::sort_array_by_parent] Unknown interface ");
+            }
+
         }
         $tree = new Tree(
             $data,

@@ -101,6 +101,7 @@ https://github.com/php-lock/lock for making sure only one thing at a time can do
 
 https://carbon.nesbot.com for date/time strings
 
+
 ## Javascript Libraries Used
 
 bootstrap https://getbootstrap.com/docs/4.1/getting-started/introduction/
@@ -139,6 +140,8 @@ Tempus Dominus at https://getdatepicker.com/ for chosing date time
 SimpleLightbox at https://simplelightbox.com/ for showing original image when clicking on thumbnail
 
 Chroma JS at https://gka.github.io/chroma.js/  to convert from named colors to hex
+
+jQuery Serialize Object https://github.com/macek/jquery-serialize-object for converting form data reliably to a js object
 
 ### installation uses npm
  Run `npm i` to install js dependencies that are not saved in the repo

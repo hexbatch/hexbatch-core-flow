@@ -1,17 +1,79 @@
+
+
 <div class="container p-0 m-1 mb-3">
 
     <div class="card" style="">
 
         <h5 class="card-title">
-            Import and Export For {{ project.flow_project_title }}
+            Import and Export For {{ project.get_project_title() }}
         </h5>
 
         <div class="card-body flow-import-export-settings" >
             <div class="row">
-                <div class="col-6">
+
+                <div class="col-4 md-col-3">
+                    {% if project.get_current_user_permissions().can_edit %}
+                        <div class="d-inline-block">
+                            <button type="button"
+                                    class="btn btn-outline-primary py-0 flow-git-pull-now"
+                                    data-url="{{ url_for('pull_project_ajax',{
+                                        user_name: project.get_admin_user().flow_user_name ,
+                                        project_name: project.get_project_title()
+                                    } )
+                                    }}"
+                            >
+                                Pull Now
+                            </button>
+                        </div>
+                    {% endif %} {# end can-edit #}
+                </div> <!--.col  -->
+
+                <div class="col-4 md-col-3">
+                    {% if project.get_current_user_permissions().can_read %}
+                        <div class="" aria-current="page">
+                            <a href="{{ url_for('download_project_export',{
+                                user_name: project.get_admin_user().flow_user_name ,
+                                project_name: project.get_project_title()
+                            } )
+                            }}"
+                               class="btn btn-outline-info py-0"
+                            >
+                                Download as Zip
+                            </a>
+                        </div>
+                    {% endif %} {# end can-read #}
+                </div> <!-- .col -->
+
+
+
+                <div class="col-4 md-col-3">
+                    {% if project.get_current_user_permissions().can_edit %}
+                        <div class="d-inline-block">
+                            <button type="button"
+                                    class="btn btn-outline-primary py-0 flow-git-push-now"
+                                    data-url="{{ url_for('push_project_ajax',{
+                                        user_name: project.get_admin_user().flow_user_name ,
+                                        project_name: project.get_project_title()
+                                    } )
+                                    }}"
+                            >
+                                Push Now
+                            </button>
+                        </div>
+                    {% endif %} {# end can-edit #}
+                </div> <!--.col  -->
+
+            </div> <!-- .row -->
+        </div> <!-- .card-body -->
+
+
+
+        <div class="card-body flow-import-export-settings" >
+            <div class="row">
+                <div class="col-12 col-md-6">
                     <div class="flow-git-import-here"></div>
                 </div>
-                <div class="col-6">
+                <div class="col-12 col-md-6 mt-2 mt-md-0">
                     <div class="flow-git-export-here"></div>
                 </div>
             </div>

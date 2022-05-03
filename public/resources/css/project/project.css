@@ -39,8 +39,9 @@ div#flow-history-area .flow-grid-striped.row:nth-of-type(even) {
 }
 
 div#flow-history-area ul.flow-history-file-list li span.flow-commit-body {
-    white-space: pre;
+    white-space: pre-wrap;
     display: block;
+    word-break: break-word;
 }
 
 .row.flow-project-list-item {
@@ -48,6 +49,20 @@ div#flow-history-area ul.flow-history-file-list li span.flow-commit-body {
 }
 .row.flow-project-list-item:nth-child(2n) {
     background: #eeefff;
+}
+
+div.flow-import-export-settings .list-group-item.git-repo {
+    color: revert;
+    background-color: revert;
+}
+
+div.flow-import-export-settings .list-group-item.da-notes {
+    color: revert;
+    background-color: revert;
+}
+
+.flow-clone-project-tabs .dropzone .dz-preview .dz-details .dz-filename {
+    margin-top: 2em;
 }
 
 

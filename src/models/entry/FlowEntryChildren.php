@@ -5,7 +5,7 @@ namespace app\models\entry;
 
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\IFlowEntryArchive;
-use app\models\project\FlowProject;
+use app\models\project\IFlowProject;
 use Exception;
 
 /**
@@ -24,10 +24,10 @@ abstract class FlowEntryChildren extends FlowEntryFiles  {
 
     /**
      * @param array|object|FlowEntryBase|IFlowEntryArchive|null $object
-     * @param FlowProject|null $project
+     * @param IFlowProject|null $project
      * @throws Exception
      */
-    public function __construct($object,?FlowProject $project){
+    public function __construct($object,?IFlowProject $project){
         parent::__construct($object,$project);
 
         $this->child_entries = [];
@@ -76,7 +76,7 @@ abstract class FlowEntryChildren extends FlowEntryFiles  {
     public function get_children_guids(): array {
 
         $ret = [];
-        array_walk($this->child_guids,
+        array_walk($this->child_entries,
 
             function(IFlowEntry $x)  use(&$ret)
             {
@@ -91,7 +91,7 @@ abstract class FlowEntryChildren extends FlowEntryFiles  {
      */
     public function get_children_ids() : array {
         $ret = [];
-        array_walk($this->child_guids,
+        array_walk($this->child_entries,
 
             function(IFlowEntry $x)  use(&$ret)
             {
@@ -126,7 +126,7 @@ abstract class FlowEntryChildren extends FlowEntryFiles  {
         try {
            if ($b_save_children) {
                $db = static::get_connection();
-               if ($b_do_transaction) {$db->beginTransaction(); }
+               if ($b_do_transaction && !$db->inTransaction()) {$db->beginTransaction(); }
                foreach ($this->child_entries as $child_guid => $child) {
                    WillFunctions::will_do_nothing($child_guid);
                    $child->save_entry();
