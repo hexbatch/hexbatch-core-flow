@@ -4,34 +4,22 @@ Sets up the organization and work flow for the core hexbatch library. Can be use
 The main use of this web app is to organize ideas, its useful for planning complex specifications
 
 ## Releases
-| Date              | Version | Name                     |
-|-------------------|---------|--------------------------|
-| October 26, 2021  | 0.4.0   | Tags Oh My!              |
-| September 2, 2021 | 0.3.0   | Import Export            |
-| August 9, 2021    | 0.2.0   | Projects and Users Exist |
-| July 4, 2021      | 0.1.0   | First Commit             |
+| Date              | Version | Name                                  |
+|-------------------|---------|---------------------------------------|
+| May 3, 2022       | 0.5.2   | Git Revamp                            |
+| April 20, 2022    | 0.5.1   | Git Bit!                              |
+| April 13, 2022    | 0.5.0.1 | Standard views and Edits              |
+| March 30, 2022    | 0.5.0   | Standard Attributes are in the house! |
+| March 26, 2022    | 0.4.4   | Working with tag attributes           |
+| March 22, 2022    | 0.4.3   | Back into the workflow                |
+| March 15, 2022    | 0.4.2   | Searching Things                      |
+| October 31, 2021  | 0.4.1   | Entries First                         |
+| October 26, 2021  | 0.4.0   | Tags Oh My!                           |
+| September 2, 2021 | 0.3.0   | Import Export                         |
+| August 9, 2021    | 0.2.0   | Projects and Users Exist              |
+| July 4, 2021      | 0.1.0   | First Commit                          |
 
-
-### Tags Oh My!  ~ Released October 26, 2021
-
-Each project can create and manage a list of tags
-
-A tag has a name , a possible parent tag to inherit from, and a guid (and some other things like timestamps)
-
-Each tag can have 0 or more attributes. An attribute can have a name, an integer value and a text value. 
-An attribute can also link to any one user or entry or project. 
-A tag will inherit all the attributes of its ancestors, with the ability to overwrite exiting tags for itself and its own descendants.
-Some attributes are used to style the tag name or things the tag points too, or when a tag is applied to something.
-These are called standard attributes. standard attributes of color, background-color are currently used to change the tag name
-
-Projects, Users and Entries can be assigned tags. This is called applying tags.
-Tags are assigned by any project but if a project is visible the tag names and properties are too
-
-### Import Export ~ Released September 2,2021
-
-Save projects to an internal repository, see the commits on a web page, auto push to remote repo for each save
-
-Can import a new branch , or commit of the same repo (as long as derived from current branch )
+### See [Version History Page](versions.md)
 
 
 ## Installation
@@ -173,7 +161,9 @@ The important things to add to the docker-compose.yml file for xdebug to work is
 
 ## All html markup is done by twig templates the views folder
 
-### twig helpers
+Below is a list of additional items that can be used in the twig markup 
+
+### twig helpers from library
 
     url_for() - returns the URL for a given route. e.g.: /hello/world
     full_url_for() - returns the URL for a given route. e.g.: http://www.example.com/hello/world
@@ -182,16 +172,36 @@ The important things to add to the docker-compose.yml file for xdebug to work is
     get_uri() - returns the UriInterface object from the incoming ServerRequestInterface object
     base_path() - returns the base path.
 
-### custom twig helpers
+
+### Functions 
 
     form_token() - creates a safety token for ajax
     dump_session() - shows the current session contents (for debugging)
     uuid() - generates a new v4 uuid
+    standard_keys() - returns an array of standard attribute keys for the given type
+
+### Filters
+    
+    to_json_string  - A better and safer way of encoding json
+
+#### Variables
+    
+    root_url - Full url to the top of the project
+    csrf_token_set_to_root  - Used to create ajax CSRF protection
+    program_version  -  current version
+    supported_git_hosts - lists git sites can use ssh with inside project
+            
+    standard_viewable_scripts - lists standards that have javascript view support
+    standard_editable_scripts - lists standards that have javascript edit support
+    standard_viewable_frames - lists standards that have twig (html) view support
+    standard_editable_frames - lists standards that have twig (html) edit support
 
 # Notes
 
 ## GIT
-in the php , the git repo is not on the computer , but on a mapped folder from docker,
+
+In the php , the git repo is not on the computer , but on a mapped folder from docker,
+
 when needing to do more git commands, either Run `sudo docker exec -it hexbatch_dev_php-fpm_1 bash` 
     and go up to the /var/www/flow_projects folder and then find the correct project repo there (they are listed by guid not name)
 
