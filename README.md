@@ -59,18 +59,24 @@ as a second command to build the autoload class map so the classes in the src fo
 ### Using PHP Libraries 
 
 https://github.com/slimphp/Slim For the overall framework
+
 see https://discourse.slimframework.com
+
 see https://www.slimframework.com/docs/v4
+
     using https://php-di.org/doc/frameworks/slim.html for container injection
+
     using https://github.com/slimphp/Slim-Psr7 for the PSR-7 implementation 
+
     using https://github.com/slimphp/Twig-View for twig views
 
 https://github.com/lulco/phoenix for migrations
-    https://symfony.com/doc/current/components/yaml.html for better config files
+    
+https://symfony.com/doc/current/components/yaml.html for better config files
 
 https://github.com/delight-im/PHP-Auth for user verification and authentication 
 
-Twig 3.3 see https://twig.symfony.com/doc/3.x/
+https://twig.symfony.com/doc/3.x/ Twig 3.3  
 
 
 https://github.com/paragonie/easydb for easier db use
@@ -137,7 +143,29 @@ jQuery Serialize Object https://github.com/macek/jquery-serialize-object for con
 
 ### installation uses npm
  Run `npm i` to install js dependencies that are not saved in the repo
+
+ I use a docker image from https://hub.docker.com/r/andrewmackrodt/nodejs 
  
+ after first time run each latest, its as fast as local
+    
+ #### start interactive mode
+ 
+    sudo docker run --rm -it andrewmackrodt/nodejs
+
+#### print version
+    
+    sudo docker run --rm andrewmackrodt/nodejs --version
+
+#### run npm install in the current directory
+
+    sudo docker run --rm -it \
+    -e PUID=$(id -u) \
+    -e PGID=$(id -g) \
+    -v $PWD:/app \
+    -w /app \
+    andrewmackrodt/nodejs npm install`
+ 
+any nmp commands instead of install can be used instead (ls to list, outdated to show what can be updated, update ,etc)
 
 ## Environmental Notes
 
