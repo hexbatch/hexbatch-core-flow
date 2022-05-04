@@ -5,6 +5,8 @@ namespace app\models\entry\public_json;
 use app\models\entry\archive\IFlowEntryArchive;
 use app\models\entry\IFlowEntry;
 use BlueM\Tree;
+
+use JetBrains\PhpStorm\ArrayShape;
 use JsonSerializable;
 use LogicException;
 
@@ -20,6 +22,10 @@ class FlowEntryJsonBase implements IFlowEntryJson,JsonSerializable {
         return $this->entry;
     }
 
+    #[ArrayShape(["flow_entry_guid" => "null|string", "flow_entry_parent_guid" => "null|string",
+                    "flow_project_guid" => "null|string", "entry_created_at_ts" => "int|null",
+                    "entry_updated_at_ts" => "int|null", "flow_entry_title" => "null|string",
+                    "flow_entry_blurb" => "null|string", "flow_entry_body_bb_code" => "null|string"])]
     public function to_array() : array {
         return [
             "flow_entry_guid" => $this->entry->get_guid(),
@@ -33,6 +39,7 @@ class FlowEntryJsonBase implements IFlowEntryJson,JsonSerializable {
         ];
     }
 
+    #[ArrayShape(["flow_entry_guid" => "\null|string", "flow_entry_parent_guid" => "\null|string", "flow_project_guid" => "\null|string", "entry_created_at_ts" => "\int|null", "entry_updated_at_ts" => "\int|null", "flow_entry_title" => "\null|string", "flow_entry_blurb" => "\null|string", "flow_entry_body_bb_code" => "\null|string"])]
     public function jsonSerialize() : array
     {
         return $this->to_array();

@@ -57,9 +57,9 @@ class MYDB
 
 
     /**
-     * @var object|mysqli the mysqli object, the database connection
+     * @var null|mysqli the mysqli object, the database connection
      */
-    public  $mysqli = null;
+    public ?mysqli $mysqli = null;
 
     /**
      * @var bool $destroyMe is a flag which tells the destructor if this connection needs to be taken down
@@ -67,9 +67,9 @@ class MYDB
     private bool $destroyMe = false;
 
     /**
-     * @var object|mysqli_result is used in the static connection helper methods
+     * @var mysqli_result|null is used in the static connection helper methods
      */
-    protected $result = null;
+    protected null|mysqli_result $result = null;
 
     //  $transactionCount is  in $mysqli;
     //for storing and reusing prepared statements as requested, they are put into
@@ -84,6 +84,11 @@ class MYDB
      * @var int $AnExistCount is a remembering of how many open connections there are when the object is created
      */
     private int $AnExistCount = -1010;
+
+
+    protected array $statement_cache = [];
+    
+    protected int $transactionCount = 0;
 
     /**
      *  Tests if a value is part of an enum set of the column
@@ -103,13 +108,13 @@ class MYDB
     /**
      * Gets the hash of cached statements
      * @see MYDB::execSQL()
-     * @return array <p>
+     * @return array
      *    key value pair of "name to remember prepared statement": mysqli_stmt
-     * </p>
+     *
      */
     public function getCachedStatements(): array
     {
-        return $this->mysqli->statementCache;
+        return $this->statement_cache;
     }
 
     /**
@@ -137,7 +142,8 @@ class MYDB
      */
     public function __construct(?object $mysqli, array $db_setup = null, bool $bIgnoreAardvark = false)
     {
-
+        $this->transactionCount = 0;
+        $this->statement_cache = [];
         if (is_null($mysqli)) {
 
             $this->destroyMe = true;
@@ -173,26 +179,24 @@ class MYDB
             $this->destroyMe = false;
             $this->mysqli = $mysqli;
         }
-        if (!isset($this->mysqli->statementCache)) {
-            $this->mysqli->statementCache = array();
-        }
 
-        if (!isset($this->mysqli->transactionCount)) {
-            $this->mysqli->transactionCount = 0;
+
+        if (!isset($this->transactionCount)) {
+            $this->transactionCount = 0;
         }
 
 
     }
 
     /**
-     *  Destructor, notice that it will not close out the mysqli if this object is being used as a smart pointer
+     *  notice that it will not close out the mysqli if this object is being used as a smart pointer
      */
     public function __destruct()
     {
         if ($this->destroyMe) {
             //close out the cached statements
 
-            foreach ($this->mysqli->statementCache as $s) {
+            foreach ($this->statement_cache as $s) {
                 /** @var $s mysqli_stmt */
                 $s->close();
                 unset($s);
@@ -208,7 +212,7 @@ class MYDB
      * Gets the underlying mysqli object
      * @return mysqli|null
      */
-    public function getDBHandle()
+    public function getDBHandle() : ?mysqli
     {
         return $this->mysqli;
     }
@@ -220,14 +224,14 @@ class MYDB
      * Can be called multiple times, but the @see MYDB::commit() must be called same amount of times before the data is commited
      * @return void
      */
-    public function beginTransaction()
+    public function beginTransaction(): void
     {
 
 
-        $this->mysqli->transactionCount++;
+        $this->transactionCount++;
 
-        //jad( "doing begin ".$this->mysqli->transactionCount);
-        if ($this->mysqli->transactionCount > 1) {
+        //jad( "doing begin ".$this->transactionCount);
+        if ($this->transactionCount > 1) {
             return;
         }
         $this->mysqli->autocommit(FALSE);
@@ -240,15 +244,15 @@ class MYDB
      * @throws SQLException if beginTransaction was not called ahead of time
      * @return void
      */
-    public function commit()
+    public function commit(): void
     {
 
-        $this->mysqli->transactionCount--;
-        //jad( "doing commit ".$this->mysqli->transactionCount);
-        if ($this->mysqli->transactionCount < 0) {
-            throw new SQLException('Commit in mydb is misaligned', $this->mysqli->transactionCount);
+        $this->transactionCount--;
+        //jad( "doing commit ".$this->transactionCount);
+        if ($this->transactionCount < 0) {
+            throw new SQLException('Commit in mydb is misaligned', $this->transactionCount);
         }
-        if ($this->mysqli->transactionCount > 0) {
+        if ($this->transactionCount > 0) {
             return;
         }
         $this->mysqli->commit();
@@ -261,12 +265,12 @@ class MYDB
      * Rolls back a transaction, will set the transaction count, relied on by @see MYDB::commit() to 0
      * @return void
      */
-    public function rollback()
+    public function rollback(): void
     {
         //jad( "doing rollback");
         $this->mysqli->rollback();
         $this->mysqli->autocommit(TRUE);
-        $this->mysqli->transactionCount = 0;
+        $this->transactionCount = 0;
     }
 
     /**
@@ -278,7 +282,7 @@ class MYDB
      * Can be used with @see MYDB::fetch()
      * and @see MYDB::fetchThrowIfNull()
      */
-    public function execute($sql)
+    public function execute($sql): ?mysqli_result
     {
         $this->result = self::staticExecute($sql, $this->mysqli);
         return $this->result;
@@ -328,7 +332,7 @@ class MYDB
      * Can only be used after @return int|string
      *@see MYDB::execute()
      */
-    public function getRowCount()
+    public function getRowCount(): int|string
     {
         return mysqli_num_rows($this->result);
     }
@@ -342,7 +346,7 @@ class MYDB
      * @return bool|mysqli_stmt
      * @throws SQLException  if there is any sql error
      */
-    public function prepare($sql)
+    public function prepare($sql): bool|mysqli_stmt
     {
         $st = mysqli_prepare($this->mysqli, $sql);
         if (!$st) {
@@ -374,7 +378,7 @@ class MYDB
     /**
      * Multipurpose statement to write prepared statements to the database
      *
-     * @param $sql string|object <p>
+     * @param $sql object|string <p>
      *   if string, then the sql statement must have at least one ? in it. if a statement does not need a ?
      *   then add a "AND ?" to the where, for example, and then place a variable with 1 in the params
      *
@@ -473,7 +477,7 @@ class MYDB
      *
      * </p>
      */
-    public function execSQL($sql, ?array $params=null, int $close=MYDB::RESULT_SET, string $lookupKey = null)
+    public function execSQL(object|string $sql, ?array $params=null, int $close=MYDB::RESULT_SET, string $lookupKey = null): mixed
     {
 
 
@@ -488,14 +492,14 @@ class MYDB
             $bStatementClose = false;
         } elseif ($lookupKey) {
             //check to make sure it has @sey@
-	        if (strpos($lookupKey,'@sey@') === false) {
+	        if (!str_contains($lookupKey, '@sey@')) {
 	        	throw new SQLException("Lookup key does not have @sey@ in it somewhere");
 	        }
 
         	//see if we previously put a statement in this key
 
-            if (isset($this->mysqli->statementCache[$lookupKey])) {
-                $previousStatement = $this->mysqli->statementCache[$lookupKey];
+            if (isset($this->statementCache[$lookupKey])) {
+                $previousStatement = $this->statementCache[$lookupKey];
                 $sql = $previousStatement;
                 $bIsStatement = true;
                 $bStatementClose = false;
@@ -515,7 +519,7 @@ class MYDB
 
         //if lookup key, then put this statement in the key
         if ($lookupKey) {
-            $this->mysqli->statementCache[$lookupKey] = $stmt;
+            $this->statement_cache[$lookupKey] = $stmt;
             $bStatementClose = false;
         }
 
@@ -616,7 +620,7 @@ class MYDB
      * @return integer the number of rows updated, will be 0 or 1
      * @throws SQLException when the underlying table or field does not exist
      */
-    public function update(string $table, $id, array $fields, string $pk_name = 'id')
+    public function update(string $table, mixed $id, array $fields, string $pk_name = 'id'): int
     {
 
 
@@ -661,7 +665,7 @@ class MYDB
      *    if the fields are
      * @throws SQLException
      */
-    public function insert(string $table, array $fields)
+    public function insert(string $table, array $fields): int|array
     {
         if ( empty($fields)) { throw new SQLException("Insert Function in database class needs fields to be a populated array");}
 
@@ -717,10 +721,10 @@ class MYDB
      *  optional values:
      *    character_set: if not supplied the character set will be utf8
      * </p>
-     * @return object mysqli
+     * @return mysqli
      * @throws SQLException if connection fails
      */
-    protected static function getMySqliDatabase(array $configs): object
+    protected static function getMySqliDatabase(array $configs): mysqli
     {
 
         $MySQLUsername = $configs['username'];
@@ -753,12 +757,12 @@ class MYDB
     /**
      * Helper function to throw errors with messages from the mysqli object
      *
-     * @param object|mysqli $mysqli  cannot be null
+     * @param mysqli $mysqli  cannot be null
      * @param $sql string additional information, usually here the sql string that caused the issue
      *
      * @throws SQLException every time
      */
-    public static function throwSQLError($mysqli, string $sql)
+    public static function throwSQLError(mysqli $mysqli, string $sql)
     {
         $help = sprintf("SQL Error\n %s\nSQL is:\n %s", mysqli_error($mysqli), $sql);
         throw new SQLException($help);
@@ -768,12 +772,12 @@ class MYDB
      * helper method to throw errors with messages from the mysqli object, has html line breaks
      *
      * @param $msg1 string additional information, usually here the sql string that caused the issue
-     * @param object|mysqli $mysqli  object cannot be null
+     * @param mysqli $mysqli  object cannot be null
      * @param string|null default null information to put on next line
      *
      * @throws SQLException every time
      */
-    public static function throwSQLErrorWithHtml(string $msg1, $mysqli, $msg2 = null)
+    public static function throwSQLErrorWithHtml(string $msg1, mysqli $mysqli, $msg2 = null)
     {
         if ($msg2) {
             throw new SQLException(sprintf("%s:<br> %s<br>    error:<br>%s<br>", $msg1, $msg2, mysqli_error($mysqli)));
@@ -788,12 +792,12 @@ class MYDB
      * Helper function to throw errors with messages from the mysqli_stmt object , has html line breaks
      *
      * @param string $msg1  additional information, usually here the sql string that caused the issue
-     * @param object|mysqli_stmt $stmt  mysqli_stmt
+     * @param mysqli_stmt $stmt  mysqli_stmt
      * @param string|null $msg2 additional information on the next line (optional)
      *
      * @throws SQLException every time
      */
-    public static function throwSQLStatement(string $msg1, $stmt, string $msg2 = null)
+    public static function throwSQLStatement(string $msg1, mysqli_stmt $stmt, string $msg2 = null)
     {
         if ($msg2) {
             throw new SQLException(sprintf("error:<br>\n%s<br>\n%s<br>\n%s<br>", $msg1,  mysqli_stmt_error($stmt),$msg2));
@@ -807,12 +811,12 @@ class MYDB
      * helper function to execute a mysqli_stmt
      * @link http://php.net/manual/en/mysqli-stmt.execute.php
      *
-     * @param ?object|mysqli_stmt $state statement object
+     * @param null|mysqli_stmt $state statement object
      *
      * @return void
      * @throws SQLException if something goes wrong
      */
-    public static function executeStatement($state)
+    public static function executeStatement(?mysqli_stmt $state) : void
     {
         if ( empty($state)) {
             throw new SQLException("statement was null or empty");
@@ -829,7 +833,7 @@ class MYDB
      * @param $mysqli
      * @throws SQLException
      */
-    public static function printDatabaseLanguageVariables($mysqli)
+    public static function printDatabaseLanguageVariables($mysqli): void
     {
         $sql = "show variables like 'character_set%'";
 
@@ -880,7 +884,7 @@ class MYDB
      * @param mixed $var
      * @return bool
      */
-    public static function is_whole_number($var): bool
+    public static function is_whole_number(mixed $var): bool
     {
         return (is_numeric($var) && (intval($var) == floatval($var)));
     }
@@ -890,7 +894,7 @@ class MYDB
      * @param mixed $number
      * @return bool true if only a whole number, false if anything else
      */
-    public static function isNumberClean($number): bool
+    public static function isNumberClean(mixed $number): bool
     {
         if (!self::is_whole_number($number)) {
             return false;
@@ -910,7 +914,7 @@ class MYDB
      * @return string value of the input
      * @throws SQLDataException if not a whole integer only
      */
-    public static function cleanNumber($number): string
+    public static function cleanNumber(mixed $number): string
     {
 
         $what = self::isNumberClean($number);
@@ -929,7 +933,7 @@ class MYDB
      * @param mixed $s
      * @return null|string
      */
-    public static function stringOrNull($s): ?string
+    public static function stringOrNull(mixed $s): ?string
     {
         $s = trim((string)$s);
         if (empty($s)) {
@@ -955,11 +959,6 @@ class MYDB
     {
         if (empty($s)) {
             $s = '';
-        }
-        /** @noinspection PhpDeprecationInspection */
-        if (get_magic_quotes_gpc())//magic quotes on
-        {
-            $s = stripslashes($s);
         }
 
         if ($b_strip_tags) {
@@ -1066,7 +1065,8 @@ class MYDB
 	 *
 	 * @throws SQLException
 	 */
-	public function execute_nested_sql_files(string $folder_path) {
+	public function execute_nested_sql_files(string $folder_path): void
+    {
 
 		try {
 			$this->beginTransaction();

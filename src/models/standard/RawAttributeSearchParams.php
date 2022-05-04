@@ -70,7 +70,7 @@ class RawAttributeSearchParams  extends SearchParamBase {
     /**
      * @param mixed $tag_guid_thing
      */
-    public function addTagGuid($tag_guid_thing): void
+    public function addTagGuid(mixed $tag_guid_thing): void
     {
         if (JsonHelper::isJson($tag_guid_thing)) {
             $try_me = JsonHelper::fromString($tag_guid_thing);
@@ -92,7 +92,7 @@ class RawAttributeSearchParams  extends SearchParamBase {
     /**
      * @param mixed $name_thing
      */
-    public function addAttributeName($name_thing): void
+    public function addAttributeName(mixed $name_thing): void
     {
         if (JsonHelper::isJson($name_thing)) {
             $try_me = JsonHelper::fromString($name_thing);

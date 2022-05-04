@@ -64,13 +64,13 @@ class BriefDiffFromYaml {
     /**
      * @var array<string,BriefFlowTag> $brief_tag_map
      */
-    public $brief_tag_map = [];
+    public array $brief_tag_map = [];
 
 
     /**
      * @var array<string,BriefFlowTag> $brief_tag_map
      */
-    public $from_yaml_as_brief_tag_map = [];
+    public array $from_yaml_as_brief_tag_map = [];
 
     protected bool $b_yaml_file_exists = false;
 

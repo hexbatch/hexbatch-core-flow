@@ -51,7 +51,7 @@ class FlowProjectSearchParams extends SearchParamBase {
     /**
      * @param mixed $project_title_guid_or_id
      */
-    public function addProjectTitleGuidOrId( $project_title_guid_or_id): void
+    public function addProjectTitleGuidOrId(mixed $project_title_guid_or_id): void
     {
         if (JsonHelper::isJson($project_title_guid_or_id)) {
             $try_me = JsonHelper::fromString($project_title_guid_or_id);
@@ -78,9 +78,9 @@ class FlowProjectSearchParams extends SearchParamBase {
     }
 
     /**
-     * @param string|int|null $owner_user_name_or_guid_or_id
+     * @param int|string|null $owner_user_name_or_guid_or_id
      */
-    public function setOwnerUserNameOrGuidOrId($owner_user_name_or_guid_or_id): void
+    public function setOwnerUserNameOrGuidOrId(int|string|null $owner_user_name_or_guid_or_id): void
     {
         if (empty($owner_user_name_or_guid_or_id)) {
             $this->owner_user_name_or_guid_or_id = null;
@@ -99,7 +99,7 @@ class FlowProjectSearchParams extends SearchParamBase {
     /**
      * @return false|string|null
      */
-    public function getFlowProjectType()
+    public function getFlowProjectType(): false|string|null
     {
         return $this->flow_project_type;
     }
@@ -107,7 +107,7 @@ class FlowProjectSearchParams extends SearchParamBase {
     /**
      * @param false|string|null $flow_project_type
      */
-    public function setFlowProjectType($flow_project_type): void
+    public function setFlowProjectType(false|string|null $flow_project_type): void
     {
         $this->flow_project_type = $flow_project_type;
     }

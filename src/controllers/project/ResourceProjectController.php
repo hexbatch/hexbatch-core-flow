@@ -145,7 +145,7 @@ class ResourceProjectController extends BaseProjectController {
             $file_url_parts = array_reverse(explode('/',$file_url));
             $backwards_parts = [];
             foreach ($file_url_parts as $part) {
-                if (strpos($part,":") !== false) {break;}
+                if (str_contains($part, ":")) {break;}
                 $backwards_parts[] =$part;
                 if ($part === 'resources') {break;}
             }

@@ -9,9 +9,12 @@ use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\tag\FlowTag;
 use InvalidArgumentException;
+
+use JetBrains\PhpStorm\ArrayShape;
 use JsonSerializable;
 use LogicException;
 use RuntimeException;
+use stdClass;
 
 
 class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlowTagStandardAttribute {
@@ -19,9 +22,9 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
 
     protected ?string $standard_name;
     /**
-     * @var mixed|null
+     * @var stdClass|array|string|null $standard_value
      */
-    protected  $standard_value;
+    protected stdClass|array|string|null $standard_value;
 
     protected ?int $standard_updated_ts;
     protected ?string $project_guid;
@@ -122,6 +125,9 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
         return JsonHelper::fromString(JsonHelper::toString($this->standard_value));
     }
 
+    #[ArrayShape(['standard_name' => "null|string", 'standard_value' => "mixed|null|object",
+        'standard_updated_ts' => "int|null", 'tag_guid' => "null|string", 'standard_guid' => "null|string",
+        'project_guid' => "null|string", 'owner_user_guid' => "null|string"])]
     public function jsonSerialize(): array
     {
 
@@ -173,7 +179,7 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
      * @param string|string[] $project_guid
      * @return array<string,IFlowTagStandardAttribute[]>  mapped to project guid
      */
-    public  static function read_standard_attributes_of_projects( $project_guid) : array {
+    public  static function read_standard_attributes_of_projects(array|string $project_guid) : array {
         $params = new StandardAttributeSearchParams();
 
         $params->addOwningProject($project_guid);

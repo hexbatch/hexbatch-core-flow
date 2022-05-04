@@ -50,7 +50,7 @@ class BaseConnection {
         $this->user = $this->container->get('user');
     }
 
-   public function get_current_user() : FlowUser{
+   public function get_current_user() : ?FlowUser{
         return $this->user;
    }
 

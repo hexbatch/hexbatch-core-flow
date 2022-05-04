@@ -4,6 +4,7 @@ namespace app\hexlet;
 
 use Exception;
 use Highlight\Highlighter;
+use JetBrains\PhpStorm\NoReturn;
 use PHPHtmlParser\Dom;
 use app\hexlet\hexlet_exceptions\JsonHelperException;
 use ForceUTF8\Encoding;
@@ -31,14 +32,16 @@ class JsonHelper {
 
 
     public static bool $b_output_headers = true;
+
     /**
      * Helper function to output json format and exit
      * @param array $phpArray
      * @param int $http_code the code to return in the output as well as to die with
-     * @throws JsonHelperException if cannot parse array to json
+     * @return never
      * @noinspection PhpUnused
+     *
      */
-    public static function sendJSONAndDie(array $phpArray=[], int $http_code=200) {
+    #[NoReturn] public static function endJSONAndDie(array $phpArray=[], int $http_code=200) :never {
         if ( ! headers_sent() ) {
             http_response_code($http_code);
             header('Content-Type: application/json');
@@ -50,13 +53,15 @@ class JsonHelper {
 
     /**
      * sends $phpArray as json out with a json header and the $http_code as the server code
-     * @param mixed $message the info to send, if not array will be cast as string and put into a message field
+     * @param mixed|array $message the info to send, if not array will be cast as string and put into a message field
      * @param int $http_code
      * @param bool $b_valid
      * @param int|null $status_code - - if null then is same status as http code
-     * @return void , script will exit here
+     * @return never , script will exit here
      */
-    public static function printStatusJSONAndDie($message=[], int $http_code=200, bool $b_valid = true, int $status_code = null) {
+    #[NoReturn]
+    public static function printStatusJSONAndDie(mixed $message=[], int $http_code=200, bool $b_valid = true,
+                                                             int   $status_code = null) :never{
 
         if (is_null($status_code)) {
             $status_code = $http_code;
@@ -94,7 +99,7 @@ class JsonHelper {
      *
      * @noinspection PhpUnused
      */
-    public static function printErrorJSONAndDie($message, int $http_code=500, int $status_in_json=null) {
+    public static function printErrorJSONAndDie(mixed $message, int $http_code=500, int $status_in_json=null) : never  {
 
         self::printStatusJSONAndDie($message,$http_code, false,$status_in_json);
     }
@@ -103,7 +108,7 @@ class JsonHelper {
      * @param mixed $string
      * @return bool
      */
-    public static function isJson($string): bool
+    public static function isJson(mixed $string): bool
     {
         if (!is_string($string)) {return false;}
         json_decode($string);
@@ -118,7 +123,7 @@ class JsonHelper {
      * @return string
      * @throws JsonHelperException if json error
      */
-    public static function toString($phpArray, int $options=JSON_UNESCAPED_UNICODE): string
+    public static function toString(mixed $phpArray, int $options=JSON_UNESCAPED_UNICODE): string
     {
         $out = json_encode($phpArray, $options );
         if ($out) {
@@ -143,7 +148,7 @@ class JsonHelper {
      * @return array|mixed|null
      * @throws JsonHelperException if json error
      */
-    public static function fromString($what, bool $b_exception=true, bool $b_association=true) {
+    public static function fromString(mixed $what, bool $b_exception=true, bool $b_association=true): mixed {
         if (is_null($what) ) { return null;}
         if (empty($what) && !is_numeric($what)) {
             if ($b_association) {
@@ -195,12 +200,11 @@ class JsonHelper {
      * @param boolean $b_cast_bools_as_int <p>
      *
      * </p>
-     * @return string
-     * @throws JsonHelperException
+     * @return string|null
      * @since 0.1
      * @version 0.4.0 empty arrays do not cast as null any more
      */
-    public static function toStringAgnostic($what, bool $b_empty_is_null=true, bool $b_cast_bools_as_int = true): ?string
+    public static function toStringAgnostic(mixed $what, bool $b_empty_is_null=true, bool $b_cast_bools_as_int = true): ?string
     {
         if (is_null($what)) {return null;}
         if (is_string($what)) {
@@ -250,15 +254,16 @@ class JsonHelper {
 
     /**
      * Will Convert any scalar to boolean
-     * @param string|integer|float|null|boolean|object|array $var
-     * @param bool $b_null_is_good, default false <p>
-     *   added @version 0.4.0
+     * @param mixed $var
+     * @param bool $b_null_is_good , default false <p>
+     *   added
+     * @version 0.4.0
      *   sometimes a tri-state is needed, if $b_null_is_good is true, then null is not cast to boolean
      * </p>
-     * @return bool
      * @since 0.1.0
+     * @return bool|null
      */
-    public static function var_to_boolean($var, bool $b_null_is_good = false): ?bool
+    public static function var_to_boolean(mixed $var, bool $b_null_is_good = false): ?bool
     {
 
         if ($b_null_is_good) {
@@ -356,7 +361,8 @@ class JsonHelper {
      *@throws JsonHelperException if not a recognized name, if json what is not an array
      * @noinspection PhpUnused
      */
-    public static function dataFromString(?string $data_type, ?string $what) {
+    public static function dataFromString(?string $data_type, ?string $what): mixed
+    {
         if (is_null($what)) {return null;}
         if (is_null($data_type)) {return null;}
 
@@ -436,7 +442,7 @@ class JsonHelper {
      * @throws JsonHelperException if not a recognized $category, and if the data is not following the rules described in the param section
      * @noinspection PhpUnused
      */
-    public static function dataToString(string $data_type, $what): string
+    public static function dataToString(string $data_type, mixed $what): string
     {
         //var_dump($data_type);
         // var_dump($what);
@@ -518,7 +524,7 @@ class JsonHelper {
      * Use this to inspect json returns
      * Debug, prints array information to the screen in an easy to read html table
      * I have been using this for years, and its not mine, forget where I found it
-     * @param $elem, the only thing to use when calling it, the rest of the method params is for the recursion
+     * @param mixed $elem, the only thing to use when calling it, the rest of the method params is for the recursion
      * @param int $max_level
      * @param array $print_nice_stack
      * @return void  it prints to the screen
@@ -527,7 +533,8 @@ class JsonHelper {
      *
      * @noinspection PhpUnused
      */
-    public static function print_nice($elem, int $max_level=15, array $print_nice_stack=array()){
+    public static function print_nice(mixed $elem, int $max_level=15, array $print_nice_stack=array()): void
+    {
         //if (is_object($elem)) {$elem = object_to_array($elem);}
         if(is_array($elem) || is_object($elem)){
             if(in_array($elem,$print_nice_stack,true)){
@@ -586,7 +593,8 @@ class JsonHelper {
      * @throws JsonHelperException
      * @noinspection PhpUnused
      */
-    public static function TO($object){ //Test Object
+    public static function TO($object): void
+    { //Test Object
         try {
             if (!is_object($object)) {
                 throw new JsonHelperException("This is not a Object");
@@ -610,7 +618,8 @@ class JsonHelper {
                 echo "<br />" . $value;
             }
             echo "</pre>";
-        } /** @noinspection PhpRedundantCatchClauseInspection */ catch ( ReflectionException $r) {
+        } /** @noinspection PhpRedundantCatchClauseInspection */
+        catch ( ReflectionException $r) {
             throw new JsonHelperException($r->getMessage(),0,$r);
         }
     }
@@ -644,13 +653,13 @@ class JsonHelper {
 
 
 
-    public static function html_from_bb_code($original) {
+    public static function html_from_bb_code($original) : ?string {
 
        // will_send_to_error_log('original',$original);
         $safe_encoding = self::to_utf8($original);
        // will_send_to_error_log('$safe_encoding',$safe_encoding);
         $trimmed = trim($safe_encoding);
-        if (empty($trimmed)) {return $trimmed;}
+        if (empty($trimmed)) {return '';}
 
         //convert any p , br and non linux line returns to /n
         $lines_standardized = self::tags_to_n($trimmed,false,false);
@@ -920,7 +929,8 @@ class JsonHelper {
      *   the string to be converted, assumes with the unicode replacement that the string is not encoding mangled
      *    so need to make sure that the php and html are talking enough in utf8 ( I did here for when I applied it)
      * <p>
-     * @param mixed $replace_nobreak_space <p>
+     *
+     * @param bool $replace_nobreak_space <p>
      * the default is false, and means no replacement
      *  otherwise the nobreak unicode character will be replaced by the value of this param
      *  This is here because the ckeditor will put this between p tags and so will add spaces that are not intended
@@ -933,7 +943,7 @@ class JsonHelper {
      * @return string
      * @throws JsonHelperException  if one of the operations fail
      */
-    public static function tags_to_n(string $string, $replace_nobreak_space= false, bool $b_remove_existing_newlines = true): string
+    public static function tags_to_n(string $string, bool $replace_nobreak_space= false, bool $b_remove_existing_newlines = true): string
     {
 
         //note: if having trouble with a mangled utf8 string then use

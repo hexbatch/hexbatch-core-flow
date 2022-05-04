@@ -19,6 +19,8 @@ use app\models\tag\brief\BriefUpdateFromYaml;
 use app\models\user\FlowUser;
 use Exception;
 use InvalidArgumentException;
+
+use JetBrains\PhpStorm\ArrayShape;
 use LogicException;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
@@ -94,6 +96,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
      * @return array<string, string>
      * @throws Exception
      */
+    #[ArrayShape(['log' => "string"])]
     public function raw_history(): array
     {
         $this->history();
@@ -181,15 +184,22 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
                     throw new NothingToPushException("No tracked files changed, will not try to push");
                 }
 
+                //setup repo author and email
+                //git config --global user.email "you@example.com"
+                //git config --global user.name "Your Name"
+                $current_user = ProjectHelper::get_project_helper()->get_current_user();
+                if (!$current_user) {throw new RuntimeException("Cannot save, nobody logged in");}
+
+                $author_email_command = sprintf('config  user.email "%s"',$this->get_admin_user()->flow_user_email);
+                $this->do_git_command($author_email_command);
+
+                $author_name_command = sprintf('config  user.name "%s"',$this->get_admin_user()->flow_user_name);
+                $this->do_git_command($author_name_command);
+
+
                 $this->do_git_command("commit  -m '$commit_message'");
-                if (isset($_SESSION[FlowUser::SESSION_USER_KEY])) {
-                    /**
-                     * @var FlowUser $logged_in_user
-                     */
-                    $logged_in_user = $_SESSION[FlowUser::SESSION_USER_KEY];
-                    $user_info = "$logged_in_user->flow_user_guid <$logged_in_user->flow_user_email>";
-                    $this->do_git_command("commit --amend --author='$user_info' --no-edit");
-                }
+                $user_info = "$current_user->flow_user_guid <$current_user->flow_user_email>";
+                $this->do_git_command("commit --amend --author='$user_info' --no-edit");
                 if ($this->getGitExportSettings()->isGitAutomatePush()) {
                     $this->push_repo();
                 }
@@ -210,7 +220,8 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
      * @throws Exception
      * @return false|string  returns false if no changes, else returns the commit message (regardless if committed)
      */
-    protected function save_tag_yaml_and_commit(bool $b_commit = true,bool $b_log_message = false)  {
+    protected function save_tag_yaml_and_commit(bool $b_commit = true,bool $b_log_message = false): false|string
+    {
         $brief_changes = new BriefDiffFromYaml($this); //compare current changes to older saved in yaml
 
         $this->save_tags_to_yaml_in_project_directory();
@@ -238,7 +249,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             }
             try {
                 $this->commit_changes($commit_message,$b_commit,$b_log_message);
-            } catch (NothingToPushException $no_push) {
+            } catch (NothingToPushException ) {
                 //ignore if no file changes
             }
 
@@ -408,9 +419,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             $project->save();
             return $project;
         } catch (Exception $e) {
-            if ($project) {
-                $project->destroy_project();
-            }
+            $project?->destroy_project();
             throw $e;
         }
 
@@ -468,7 +477,8 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
                     $this->reset_project_repo_files($old_head);
                 } catch (Exception $oh_no) {
                     $message = "Failed to reset project to $old_head after error of ". $e->getMessage()
-                        . ' '. $e->getFile() .' '. $e->getLine();
+                        . ' '. $e->getFile() .' '. $e->getLine() . ' because of ' . $oh_no->getMessage()
+                        . ' '. $oh_no->getFile() .' '. $oh_no->getLine();
                     throw new RuntimeException($message);
                 }
             }
@@ -676,7 +686,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
 
             try {
                 $this->commit_changes($commit_message_full);
-            } catch (NothingToPushException $no_push) {
+            } catch (NothingToPushException ) {
                 //ignore if no file changes
             }
 
@@ -695,7 +705,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
     }
 
     /**
-     * @return string
+     * @return string|null
      * @throws Exception
      */
     protected function get_push_head_commit_hash() : ?string {
@@ -733,7 +743,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
     }
 
     /**
-     * @return string
+     * @return string|null
      * @throws Exception
      */
     protected function get_pull_head_commit_hash() : ?string {
@@ -776,21 +786,20 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
         if (!$this->get_project_guid()) {return false;}
         try {
             return $this->do_git_command('status');
-        } catch (Exception $e) {
+        } catch (Exception ) {
             return false ;
         }
     }
 
     /**
-     * @return string
-     * @throws Exception
+     * @return string|null
      */
     public function get_head_commit_hash() : ?string {
         if (!$this->get_project_guid()) {return null;}
         if (!$this->is_repo_created()) {return null;}
         try {
             return $this->do_git_command('rev-parse HEAD');
-        } catch (Exception $e) {
+        } catch (Exception ) {
             return null;
         }
     }
@@ -866,7 +875,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
         try {
             try {
                 $remote_url = $this->do_git_command("config --get remote.$remote_name.url");
-            } catch (Exception $e) {
+            } catch (Exception ) {
                 $remote_url = '';
             }
 
@@ -892,7 +901,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
     }
 
     /**
-     * @return FlowProjectGitSettings|null
+     * @return FlowProjectGitSettings
      * @throws Exception
      */
     protected function getGitExportSettings() : FlowProjectGitSettings {
@@ -907,7 +916,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
     }
 
     /**
-     * @return FlowProjectGitSettings|null
+     * @return FlowProjectGitSettings
      * @throws Exception
      */
     protected function getGitImportSettings() : FlowProjectGitSettings {

@@ -1,5 +1,5 @@
 # exclude everything
-*
+*.log
 
 # exception to the rule
 !.gitignore

@@ -4,10 +4,12 @@ namespace app\models\tag\brief;
 
 
 
-use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\tag\FlowAppliedTag;
+
+use JetBrains\PhpStorm\ArrayShape;
 use JsonSerializable;
+use stdClass;
 
 class BriefFlowAppliedTag implements JsonSerializable {
 
@@ -20,12 +22,9 @@ class BriefFlowAppliedTag implements JsonSerializable {
 
 
     /**
-     * @param FlowAppliedTag|BriefFlowAppliedTag $app
+     * @param BriefFlowAppliedTag|FlowAppliedTag|stdClass $app
      */
-    public function __construct($app){
-        if (is_array($app)) {
-            $app = JsonHelper::fromString(JsonHelper::toString($app),true,false);
-        }
+    public function __construct(BriefFlowAppliedTag|FlowAppliedTag|stdClass $app){
         $this->flow_applied_tag_guid = $app->flow_applied_tag_guid;
         $this->flow_tag_guid = $app->flow_tag_guid;
         $this->tagged_flow_entry_guid = $app->tagged_flow_entry_guid;
@@ -34,10 +33,16 @@ class BriefFlowAppliedTag implements JsonSerializable {
         $this->created_at_ts = $app->created_at_ts;
     }
 
+    #[ArrayShape(["flow_applied_tag_guid" => "\null|string", "flow_tag_guid" => "\null|string",
+        "tagged_flow_entry_guid" => "\null|string", "tagged_flow_user_guid" => "\null|string",
+        "tagged_flow_project_guid" => "\null|string", "created_at_ts" => "\int|null"])]
     public function jsonSerialize(): array {
        return $this->to_array();
     }
 
+    #[ArrayShape(["flow_applied_tag_guid" => "null|string", "flow_tag_guid" => "null|string",
+        "tagged_flow_entry_guid" => "null|string", "tagged_flow_user_guid" => "null|string",
+        "tagged_flow_project_guid" => "null|string", "created_at_ts" => "int|null"])]
     public function to_array() : array {
         return [
             "flow_applied_tag_guid" => $this->flow_applied_tag_guid,

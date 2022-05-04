@@ -21,7 +21,7 @@ class CssConverter extends BaseConverter {
 
     /**
      * @param string $key
-     * @return object
+     * @return string|null
      */
     protected function getFinalOfKey(string $key): ?string
     {
@@ -37,6 +37,7 @@ class CssConverter extends BaseConverter {
                $allowed_public_keys = FlowTagStandardAttribute::getStandardAttributeKeys(static::STANDARD_NAME);
                foreach ($raws as $raw) {
 
+                   if (!$raw->getTextVal()) { continue;}
                    $maybe_css_rules = array_map(function($x) {return trim($x);},explode(';',$raw->getTextVal()));
                    $maybe_css_object = JsonHelper::fromString($raw->getTextVal(),false,false);
                    if (is_object($maybe_css_object)) {

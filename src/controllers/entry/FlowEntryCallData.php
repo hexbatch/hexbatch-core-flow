@@ -50,7 +50,7 @@ class FlowEntryCallData {
         return in_array($what,$this->options);
     }
 
-    public function set_option(string $what)  {
+    public function set_option(string $what): void {
         if ( !in_array($what,static::ALL_OPTIONS)) {
             throw new InvalidArgumentException("[FlowEntryCallData] Option name not recognized while setting $what");
         }

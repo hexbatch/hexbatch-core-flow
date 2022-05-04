@@ -42,7 +42,7 @@ final class FlowEntry extends FlowEntryMembers  {
             if ($b_do_transaction && $db->inTransaction()) {
                 try {
                     $this->get_project()->commit_changes("$action Entry $title");
-                } catch (NothingToPushException $no_push) {
+                } catch (NothingToPushException ) {
                     //ignore if no file changes
                 }
 
@@ -58,9 +58,7 @@ final class FlowEntry extends FlowEntryMembers  {
                     $db->rollBack();
                 }
             }
-            if ($this->get_project()) {
-                $this->get_project()->reset_project_repo_files();
-            }
+            $this->get_project()?->reset_project_repo_files();
             throw $e;
         }
 

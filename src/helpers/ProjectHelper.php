@@ -58,7 +58,7 @@ class ProjectHelper extends BaseHelper {
 
         try {
             $project = $this->find_one($project_name,$user_name_or_guid,$permission,$this->user->flow_user_id);
-        } catch (InvalidArgumentException $not_found) {
+        } catch (InvalidArgumentException ) {
             if ($request) {
                 throw new HttpNotFoundException($request,sprintf("Cannot Find Project %s",$project_name));
             } else {
@@ -225,7 +225,7 @@ class ProjectHelper extends BaseHelper {
             }
             return $new_project;
         } catch (Exception $e ) {
-            if ($new_project) {$new_project->delete_project_directory();}
+            $new_project?->delete_project_directory();
             if ($this->get_connection()->inTransaction()) {
                 $this->get_connection()->rollBack();
             }
@@ -263,7 +263,7 @@ class ProjectHelper extends BaseHelper {
                 7 => 'Failed to write file to disk.',
                 8 => 'A PHP extension stopped the file upload.',
             );
-            throw new RuntimeException($request,"File Error $file_name : ". $phpFileUploadErrors[$uploadedFile->getError()] );
+            throw new RuntimeException("File Error $file_name : ". $phpFileUploadErrors[$uploadedFile->getError()] );
         }
 
         return $uploadedFile;

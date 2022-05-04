@@ -5,6 +5,8 @@ use app\models\base\FlowBase;
 use app\models\project\IFlowProject;
 use Exception;
 use InvalidArgumentException;
+
+use JetBrains\PhpStorm\ArrayShape;
 use JsonSerializable;
 use RuntimeException;
 
@@ -56,10 +58,10 @@ abstract class FlowProjectDataLevel extends FlowBase implements JsonSerializable
 
 
     /**
-     * @param null|array|object $object
+     * @param object|array|null $object
      * @throws Exception
      */
-    public function __construct($object=null){
+    public function __construct(object|array $object=null){
         $this->b_new_project = false;
 
         if (empty($object)) {
@@ -95,6 +97,8 @@ abstract class FlowProjectDataLevel extends FlowBase implements JsonSerializable
     }
 
 
+    #[ArrayShape(['flow_project_title' => "null|string", 'flow_project_guid' => "null|string",
+        'created_at_ts' => "int|null", 'flow_project_blurb' => "null|string"])]
     public function jsonSerialize() : array
     {
         return [
@@ -204,6 +208,11 @@ abstract class FlowProjectDataLevel extends FlowBase implements JsonSerializable
 
     }
 
+    /**
+     * @param bool $b_do_transaction
+     * @return void
+     * @throws Exception
+     */
     public function destroy_project(bool $b_do_transaction = true): void {
         $db = static::get_connection();
         try {
@@ -226,6 +235,7 @@ abstract class FlowProjectDataLevel extends FlowBase implements JsonSerializable
                     $db->rollBack();
                 }
             }
+            throw $e;
         }
     }
 }

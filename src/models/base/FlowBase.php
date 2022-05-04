@@ -20,7 +20,8 @@ class FlowBase  {
      */
     protected static Container $container;
 
-    public static function set_container($c) {
+    public static function set_container($c): void
+    {
         static::$container = $c;
     }
 
@@ -43,7 +44,7 @@ class FlowBase  {
         try {
             return  static::$container->get(LoggerInterface::class);
         } catch (Exception $e) {
-            die( static::class . " Cannot get logger");
+            die( static::class . " Cannot get logger ". $e->getMessage());
         }
     }
 
@@ -71,7 +72,9 @@ class FlowBase  {
     }
 
     protected bool $b_brief_json_flag = false;
-    public function set_brief_json_flag(bool $what) { $this->b_brief_json_flag = $what; }
+    public function set_brief_json_flag(bool $what): void{
+        $this->b_brief_json_flag = $what;
+    }
     public function get_brief_json_flag() : bool { return $this->b_brief_json_flag ; }
 
 
@@ -116,7 +119,7 @@ class FlowBase  {
         WillFunctions::will_do_nothing($matches);
         if ($b_match === false) {
             $error_preg = array_flip(array_filter(get_defined_constants(true)['pcre'], function ($value) {
-                return substr($value, -6) === '_ERROR';
+                return str_ends_with($value, '_ERROR');
             }, ARRAY_FILTER_USE_KEY))[preg_last_error()];
             throw new RuntimeException($error_preg);
         }

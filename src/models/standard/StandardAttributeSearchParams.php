@@ -44,7 +44,7 @@ class StandardAttributeSearchParams  extends RawAttributeSearchParams {
     /**
      * @param mixed $project_guid_or_name
      */
-    public function addOwningProject($project_guid_or_name): void
+    public function addOwningProject(mixed $project_guid_or_name): void
     {
         if (JsonHelper::isJson($project_guid_or_name)) {
             $try_me = JsonHelper::fromString($project_guid_or_name);
@@ -69,7 +69,7 @@ class StandardAttributeSearchParams  extends RawAttributeSearchParams {
     /**
      * @param mixed $user_guid_thing
      */
-    public function setOwningUser($user_guid_thing): void
+    public function setOwningUser(mixed $user_guid_thing): void
     {
         $type = static::find_type_of_arg($user_guid_thing);
         if ($type === static::ARG_IS_HEX ) {

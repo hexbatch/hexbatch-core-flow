@@ -27,6 +27,7 @@ class UserHelper extends BaseHelper {
 
     }
 
+
     /**
      * @param string|null $user_guid
      * @return IFlowProject|null

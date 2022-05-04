@@ -13,6 +13,8 @@ use app\models\project\IFlowProject;
 use Carbon\Carbon;
 use DirectoryIterator;
 use InvalidArgumentException;
+
+use JetBrains\PhpStorm\ArrayShape;
 use JsonSerializable;
 use PDO;
 use RuntimeException;
@@ -348,11 +350,16 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
         return $invalid;
     }
 
+    #[ArrayShape(['entry_name' => "mixed", 'flow_entry_guid' => "mixed", 'flow_entry_parent_guid' => "mixed", 'flow_project_guid' => "mixed", 'entry_created_at_ts' => "mixed", 'entry_updated_at_ts' => "mixed", 'human_date_time' => "\null|string", 'folder_hash' => "\null|string", 'child_entries' => "\app\models\entry\FlowEntryYaml[]|array"])]
     public function jsonSerialize() : array
     {
        return $this->toArray();
     }
 
+    #[ArrayShape(['entry_name' => "mixed", 'flow_entry_guid' => "mixed", 'flow_entry_parent_guid' => "mixed",
+                    'flow_project_guid' => "mixed", 'entry_created_at_ts' => "mixed", 'entry_updated_at_ts' => "mixed",
+                    'human_date_time' => "null|string", 'folder_hash' => "null|string",
+                    'child_entries' => "\app\models\entry\FlowEntryYaml[]|array"])]
     public function toArray() : array  {
         return [
             'entry_name' => $this->entry_name,

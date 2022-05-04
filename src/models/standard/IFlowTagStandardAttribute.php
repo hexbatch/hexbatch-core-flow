@@ -219,7 +219,7 @@ Interface IFlowTagStandardAttribute {
      * @param string|string[] $project_guid
      * @return array<string,IFlowTagStandardAttribute[]>  mapped to project guid
      */
-    public  static function read_standard_attributes_of_projects( $project_guid) : array;
+    public  static function read_standard_attributes_of_projects(array|string $project_guid) : array;
 
     /**
      * @param string $user_name_email_or_guid  (email, username or guid)

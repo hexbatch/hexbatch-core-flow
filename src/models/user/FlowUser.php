@@ -13,6 +13,8 @@ use Delight\Auth\UserAlreadyExistsException;
 use Delight\Auth\UserManager;
 use Exception;
 use InvalidArgumentException;
+
+use JetBrains\PhpStorm\ArrayShape;
 use JsonSerializable;
 use PDO;
 use Delight\Auth\Auth;
@@ -40,7 +42,7 @@ class FlowUser extends FlowBase implements JsonSerializable {
     protected array $permissions = [];
 
     /**
-     * @return array|FlowProjectUser[]
+     * @return FlowProjectUser[]
      */
     public function get_permissions() :array {
         return $this->permissions;
@@ -68,7 +70,7 @@ class FlowUser extends FlowBase implements JsonSerializable {
     }
 
     /**
-     * @return FlowUser
+     * @return FlowUser|null
      */
     public static function get_logged_in_user() : ?FlowUser {
         try {
@@ -183,7 +185,7 @@ class FlowUser extends FlowBase implements JsonSerializable {
                             static::get_logger()->notice("User email changed from $this->old_email to $this->flow_user_email");
                         });
                     }
-                } catch (TooManyRequestsException $too) {
+                } catch (TooManyRequestsException ) {
                     throw new RuntimeException("Cannot save email, too many requests at once");
                 } catch (InvalidEmailException $too) {
                     throw new RuntimeException("Cannot save email, it is invalid ". $too->getMessage());
@@ -504,6 +506,9 @@ class FlowUser extends FlowBase implements JsonSerializable {
     }
 
 
+    #[ArrayShape(["flow_user_guid" => "null|string", "flow_user_created_at_ts" => "int|null",
+        "last_logged_in_page_ts" => "int|null", "flow_user_name" => "null|string", "flow_user_email" => "null|string",
+        "permissions" => "\app\models\project\FlowProjectUser[]"])]
     public function jsonSerialize(): array
     {
         return [

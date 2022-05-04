@@ -2,11 +2,13 @@
 namespace app\hexlet;
 
 class WillFunctions {
-    public static function will_do_nothing(...$what) {
+    public static function will_do_nothing(...$what): void
+    {
 
     }
 
-    public static function will_do_action_later(...$what) {
+    public static function will_do_action_later(...$what): void
+    {
 
     }
 
@@ -16,7 +18,8 @@ class WillFunctions {
      * @param mixed|null $default
      * @return mixed|null
      */
-    public static function value_from_property_names_or_default(object $obj,array $names_to_try,$default=null) {
+    public static function value_from_property_names_or_default(object $obj, array $names_to_try, mixed $default=null): mixed
+    {
         foreach ($names_to_try as $name) {
             if (property_exists($obj,$name)) {
                 return $obj->$name;

@@ -8,7 +8,10 @@ use app\helpers\Utilities;
 use app\hexlet\WillFunctions;
 use app\models\tag\FlowTag;
 use InvalidArgumentException;
+
+use JetBrains\PhpStorm\ArrayShape;
 use JsonSerializable;
+use stdClass;
 
 class BriefFlowTag implements JsonSerializable {
 
@@ -33,9 +36,9 @@ class BriefFlowTag implements JsonSerializable {
 
 
     /**
-     * @param FlowTag|BriefFlowTag $tag
+     * @param FlowTag|BriefFlowTag|stdClass|array $tag
      */
-    public function __construct( $tag){
+    public function __construct(FlowTag|BriefFlowTag|stdClass|array $tag){
 
         if (is_array($tag)) {
             $tag = Utilities::convert_to_object($tag);
@@ -78,11 +81,16 @@ class BriefFlowTag implements JsonSerializable {
         $this->applied = $brief_applied;
     }
 
+    #[ArrayShape(["flow_tag_guid" => "string", "parent_tag_guid" => "\null|string", "flow_project_guid" => "\null|string", "created_at_ts" => "\int|mixed|null", "updated_at_ts" => "\int|mixed|null", "flow_tag_name" => "string", "attributes" => "\app\models\tag\brief\BriefFlowTagAttribute[]|array", "applied" => "\app\models\tag\brief\BriefFlowAppliedTag[]|array"])]
     public function jsonSerialize(): array {
         return $this->to_array();
     }
 
-    public function to_array() : array {
+    #[ArrayShape(["flow_tag_guid" => "string", "parent_tag_guid" => "null|string", "flow_project_guid" => "null|string",
+                     "created_at_ts" => "int|mixed|null", "updated_at_ts" => "int|mixed|null", "flow_tag_name" => "string",
+                      "attributes" => "\app\models\tag\brief\BriefFlowTagAttribute[]|array",
+                       "applied" => "\app\models\tag\brief\BriefFlowAppliedTag[]|array"])]
+   public function to_array() : array {
         return [
             "flow_tag_guid" => $this->flow_tag_guid,
             "parent_tag_guid" => $this->parent_tag_guid,

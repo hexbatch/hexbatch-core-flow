@@ -6,9 +6,9 @@ use app\helpers\Utilities;
 abstract class FlowSimpleModel {
 
     /**
-     * @param array|object|null $object
+     * @param object|array|null $object
      */
-    public function __construct($object=null)
+    public function __construct(object|array $object=null)
     {
 
         if (empty($object)) {
