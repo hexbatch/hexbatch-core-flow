@@ -149,14 +149,18 @@ jQuery Serialize Object https://github.com/macek/jquery-serialize-object for con
  after first time run each latest, its as fast as local
     
  #### start interactive mode
- 
-    sudo docker run --rm -it andrewmackrodt/nodejs
+(start a nodejs shell, can do javascript in it)
+
+    sudo docker run --rm -it andrewmackrodt/nodejs 
+    
 
 #### print version
-    
+(prints the version of the docker image)    
+
     sudo docker run --rm andrewmackrodt/nodejs --version
 
 #### run npm install in the current directory
+(use this to manage the js libraries)
 
     sudo docker run --rm -it \
     -e PUID=$(id -u) \

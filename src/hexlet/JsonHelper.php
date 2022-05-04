@@ -661,6 +661,10 @@ class JsonHelper {
         $trimmed = trim($safe_encoding);
         if (empty($trimmed)) {return '';}
 
+        $trimmed = str_replace('<?php','≺?php',$trimmed);//php
+        $trimmed = str_replace('<?=','≺?=',$trimmed);//php
+        $trimmed = str_replace('<=','≺?',$trimmed);//php
+
         //convert any p , br and non linux line returns to /n
         $lines_standardized = self::tags_to_n($trimmed,false,false);
 
@@ -677,6 +681,7 @@ class JsonHelper {
 
         $body = str_replace('] ',']&nbsp',$body);//unicode space
         $body = str_replace('] ',']&nbsp;',$body);//regular space
+        $body = str_replace('<','≺',$body);//php
 
 
 
@@ -798,7 +803,17 @@ class JsonHelper {
 
 
         $parser->parse($body);
+        $whats_this = $parser->getRoot();
         $post =  $parser->getAsHtml();
+
+        //todo add new tag bbcode to front end and here [tag guid as attribute]
+        //will be this html tag class with the guid attribute (or guid data attribute), so can be rendered at html and stuff
+
+
+        //todo the root, and the tag bb code to make rows for each thing with its parent in new table
+
+
+
         //will_send_to_error_log('after parse ',$post);
 
         //add in image dimensions, if they exist

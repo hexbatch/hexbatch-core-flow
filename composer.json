@@ -50,6 +50,9 @@
         "patches": {
             "paquettg/php-html-parser": {
                 "Fix deprecation notices for offsetGet() return type": "vendor-patches/paquettg/php-html-parser/3.1.1/fix_offsetget_deprecation.patch"
+            },
+            "jbbcode/jbbcode" : {
+                    "Expose tree root" : "vendor-patches/jbbcode/jbbcode/expose-tree-root.patch"
             }
         },
         "composer-exit-on-patch-failure": true,

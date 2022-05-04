@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "04229fa27f75a629e2d27337c6c7f9d1",
+    "content-hash": "61ddfa2d290adfe5acb045e653c5d69a",
     "packages": [
         {
             "name": "bluem/tree",
