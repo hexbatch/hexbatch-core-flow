@@ -3,6 +3,7 @@
 ## Releases
 | Date              | Version | Name                                  |
 |-------------------|---------|---------------------------------------|
+| May 4, 2022       | 0.5.3   | Upgrade to php 8.1.5                  |
 | May 3, 2022       | 0.5.2   | Git Revamp                            |
 | April 20, 2022    | 0.5.1   | Git Bit!                              |
 | April 13, 2022    | 0.5.0.1 | Standard views and Edits              |
@@ -15,6 +16,9 @@
 | September 2, 2021 | 0.3.0   | Import Export                         |
 | August 9, 2021    | 0.2.0   | Projects and Users Exist              |
 | July 4, 2021      | 0.1.0   | First Commit                          |
+
+### May 4, 2022       | 0.5.3   | Upgrade to php 8.1.5
+From 7.4 not much changed in functionality
 
 ### May 3, 2022       | 0.5.2   | Git Revamp
 Makes code work well for copying and updating from different sources, and the git support code is much improved

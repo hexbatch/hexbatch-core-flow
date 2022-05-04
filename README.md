@@ -6,6 +6,7 @@ The main use of this web app is to organize ideas, its useful for planning compl
 ## Releases
 | Date              | Version | Name                                  |
 |-------------------|---------|---------------------------------------|
+| May 4, 2022       | 0.5.3   | Upgrade to php 8.1.5                  |
 | May 3, 2022       | 0.5.2   | Git Revamp                            |
 | April 20, 2022    | 0.5.1   | Git Bit!                              |
 | April 13, 2022    | 0.5.0.1 | Standard views and Edits              |
