@@ -63,7 +63,9 @@ ee9620b8189e9efc59c665afab141a0a9f245c4d tag	refs/tags/v1.4
 
  */
 
+
 use app\hexlet\JsonHelper;
+use app\hexlet\WillFunctions;
 use app\models\project\exceptions\FlowProjectGitException;
 use app\models\user\FlowUser;
 use Exception;
@@ -148,13 +150,13 @@ class FlowGitHistory {
         $refs_themselves = explode(',',$this->refs);
         foreach ($refs_themselves as $a_ref) {
             $a_ref = trim($a_ref);
-            if (strpos($a_ref,'tag') !== false) {
+            if (str_contains($a_ref, 'tag')) {
                 $tag_parts = explode(' ',$a_ref);
                 array_shift($tag_parts);
                 $tag = trim(join('',$tag_parts));
                 $this->tags[] = $tag;
             } else {
-                if (strpos($a_ref,'HEAD ->') !== false) {
+                if (str_contains($a_ref, 'HEAD ->')) {
                     $this->is_head = true;
                 }
 
@@ -166,6 +168,17 @@ class FlowGitHistory {
         }
 
         $this->body = str_replace("|","\n",$this->body);
+
+        //many used in blades but phpstorm too dumb to know that so mark them here as used
+        WillFunctions::will_do_nothing(
+            $this->project_guid,
+            $this->abbreviated_commit,
+            $this->abbreviated_tree,
+            $this->abbreviated_parent,
+            $this->author_email,
+            $this->commit_ts,
+            $this->get_author()
+        );
 
     }
 

@@ -12,8 +12,7 @@ class GitConverter extends BaseConverter  {
 
     /**
      * @param string $key
-     * @return object
-     * @throws Exception
+     * @return string|null
      */
     protected function getFinalOfKey(string $key): ?string
     {

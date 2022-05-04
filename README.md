@@ -52,7 +52,8 @@ Composer is installed in the docker container of php-fpm
 
 Run `sudo docker exec -it hexbatch_dev_php-fpm_1 bash` and then inside do composer command `composer install`
 
-If this is the first time running the project on this computer, also run `composer dump-autoload` as a second command to build the autoload class map so the classes in the src folder will load
+If this is the first time running the project on this computer, also run `composer dump-autoload` 
+as a second command to build the autoload class map so the classes in the src folder will load
 
 ### Using PHP Libraries 
 
@@ -88,6 +89,8 @@ https://github.com/BlueM/Tree for those hard to reach sorting issues
 https://github.com/php-lock/lock for making sure only one thing at a time can do critical file changes
 
 https://carbon.nesbot.com for date/time strings
+
+https://github.com/cweagans/composer-patches to patch otherwise broken php-html-parser in 1.8.5 without fuss
 
 
 ## Javascript Libraries Used
@@ -188,7 +191,9 @@ Below is a list of additional items that can be used in the twig markup
     
     root_url - Full url to the top of the project
     csrf_token_set_to_root  - Used to create ajax CSRF protection
-    program_version  -  current version
+    program_version  -  current version number
+    program_version_link - current version link for more info about this
+    program_version_description - current version name
     supported_git_hosts - lists git sites can use ssh with inside project
             
     standard_viewable_scripts - lists standards that have javascript view support

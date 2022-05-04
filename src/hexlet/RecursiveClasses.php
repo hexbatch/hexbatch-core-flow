@@ -5,6 +5,7 @@ namespace app\hexlet;
 
 use Exception;
 use InvalidArgumentException;
+
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClassConstant;
@@ -84,7 +85,8 @@ class RecursiveClasses {
 	/**
 	 * @throws Exception
 	 */
-	private  function auto_load() {
+	private  function auto_load(): void
+    {
 
 		$dir = $this->directory;
 
@@ -155,6 +157,7 @@ class RecursiveClasses {
 	 * @return array  [class=>'',namespace=>'']
 	 * @throws Exception if class cannot be found
 	 */
+	#[ArrayShape(['class' => "mixed|string", 'namespace' => "string"])]
 	private  function get_class_name_from_file(string $file): array
     {
 		$fp = fopen($file, 'r');
@@ -169,7 +172,7 @@ class RecursiveClasses {
 			$buffer .= fread($fp, 512);
 			$tokens = @token_get_all($buffer);
 
-			if (strpos($buffer, '{') === false) continue;
+			if (!str_contains($buffer, '{')) continue;
 
 			for (;$i<count($tokens);$i++) {
 				if ($tokens[$i][0] === T_NAMESPACE) {
@@ -203,12 +206,13 @@ class RecursiveClasses {
 	 *
 	 * @return mixed|null
 	 */
-	public static function constant_value(object $object, string $constant_name) {
+	public static function constant_value(object $object, string $constant_name): mixed
+    {
 		$class_name = get_class($object); // fully-qualified class name
 		try {
 			$constant_reflex = new ReflectionClassConstant($class_name, $constant_name);
 			$constant_value = $constant_reflex->getValue();
-		} /** @noinspection PhpRedundantCatchClauseInspection */ catch ( ReflectionException $e) {
+		} /** @noinspection PhpRedundantCatchClauseInspection */ catch ( ReflectionException ) {
 			$constant_value = null;
 		}
 		return $constant_value;
@@ -218,7 +222,8 @@ class RecursiveClasses {
      * @param string $dir
      * @author https://www.php.net/manual/en/function.rmdir.php#98622
      */
-    public static function rrmdir(string $dir) {
+    public static function rrmdir(string $dir): void
+    {
         if (is_dir($dir)) {
             $objects = scandir($dir);
             foreach ($objects as $object) {

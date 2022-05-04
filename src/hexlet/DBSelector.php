@@ -30,11 +30,11 @@ class DBSelector {
      *   @see MYDB::getMySqliDatabase() for details of keys in the array used in the code
      * @uses DBSelector::$db_names
      *
-     * @return object|MYDB
+     * @return MYDB
      * @throws SQLException
      *
      */
-    public static function getConnection(string $what = 'flow') {
+    public static function getConnection(string $what = 'flow') : MYDB {
         if (isset(self::$cache[$what])) {
             $mysqli =  self::$cache[$what]->getDBHandle();
             return new MYDB($mysqli); //smart pointer, db will only go out of scope when the static class def does

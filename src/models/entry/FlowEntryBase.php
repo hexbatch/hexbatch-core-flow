@@ -13,11 +13,14 @@ use app\models\entry\public_json\IFlowEntryJson;
 use app\models\project\IFlowProject;
 use Exception;
 use InvalidArgumentException;
+
+use JetBrains\PhpStorm\ArrayShape;
 use JsonSerializable;
 use LogicException;
 use malkusch\lock\mutex\FlockMutex;
 use PDO;
 use RuntimeException;
+use stdClass;
 
 
 abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowEntry {
@@ -52,13 +55,11 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     protected array $flow_entry_ancestor_guids = [];
 
 
-
     /**
-     * @param array|object|IFlowEntry|IFlowEntryArchive|null $object
+     * @param IFlowEntryArchive|stdClass|array|IFlowEntry|null $object
      * @param IFlowProject|null $project
-     * @throws Exception
      */
-    public function __construct($object,?IFlowProject $project){
+    public function __construct(IFlowEntryArchive|stdClass|array|IFlowEntry|null $object, ?IFlowProject $project){
 
         $this->project = $project;
         $this->flow_entry_id = null;
@@ -450,6 +451,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
         return new FlowEntryJsonBase($this);
     }
 
+    #[ArrayShape(["flow_entry_guid" => "\null|string", "flow_entry_parent_guid" => "\null|string", "flow_project_guid" => "\null|string", "entry_created_at_ts" => "\int|null", "entry_updated_at_ts" => "\int|null", "flow_entry_title" => "\null|string", "flow_entry_blurb" => "\null|string", "flow_entry_body_bb_code" => "\null|string"])]
     public function jsonSerialize() : array {
         return $this->to_public_json()->to_array();
     }

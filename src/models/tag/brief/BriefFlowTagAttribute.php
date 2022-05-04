@@ -102,7 +102,7 @@ class BriefFlowTagAttribute  implements JsonSerializable {
     /**
      * @return int|mixed|null
      */
-    public function getAttributeCreatedAtTs()
+    public function getAttributeCreatedAtTs(): mixed
     {
         return $this->attribute_created_at_ts;
     }
@@ -118,9 +118,9 @@ class BriefFlowTagAttribute  implements JsonSerializable {
 
 
     /**
-     * @param FlowTagAttribute|BriefFlowTagAttribute|stdClass  $att
+     * @param FlowTagAttribute|BriefFlowTagAttribute|array|stdClass  $att
      */
-    public function __construct($att){
+    public function __construct(FlowTagAttribute|BriefFlowTagAttribute|array|stdClass $att){
         if (is_array($att)) {
             $att = JsonHelper::fromString(JsonHelper::toString($att),true,false);
         }

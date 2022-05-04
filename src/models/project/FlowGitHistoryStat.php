@@ -43,14 +43,14 @@ class FlowGitHistoryStat {
         $ret = [];
         foreach ($raw_log_parts as $raw_thing) {
             $raw_array = explode("\n",$raw_thing);
-            if (strpos($raw_array[0],'commit') !== false) {
+            if (str_contains($raw_array[0], 'commit')) {
                 $raw_array[0] = str_replace('commit ','',$raw_array[0]);
             }
             $node = new FlowGitHistoryStat();
             $node->commit = trim($raw_array[0]);
             $raw_array_reversed = array_reverse($raw_array);
             for($i=1; $i < count($raw_array_reversed); $i++) {
-                if (strpos($raw_array_reversed[$i],' | ') === false) {break;}
+                if (!str_contains($raw_array_reversed[$i], ' | ')) {break;}
                 $file_parts =  preg_split('/\s+/',$raw_array_reversed[$i]);
                 if (empty($file_parts[0])) {$file_path =$file_parts[1]; }
                 else { $node->files[] = $file_path =$file_parts[0];}

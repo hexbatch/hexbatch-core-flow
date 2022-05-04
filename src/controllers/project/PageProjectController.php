@@ -391,6 +391,7 @@ class PageProjectController extends BaseProjectController
                 throw $e;
             }
         } catch (Exception $e) {
+            $this->get_logger()->error("cannot update project: ".$e->getMessage(),['exception'=>$e]);
             try {
                 UserPages::add_flash_message('warning', "Cannot update project " . $e->getMessage());
                 $_SESSION[static::REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY] = $project;

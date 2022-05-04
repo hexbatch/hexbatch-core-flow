@@ -96,7 +96,7 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
             if ($fileinfo->isDir() && !$fileinfo->isDot()) {
                 $maybe_path =   $fileinfo->getPathname();
                 $file_name =   $fileinfo->getFilename();
-                if (strpos($file_name,$this->get_guid()) !== false) {
+                if (str_contains($file_name, $this->get_guid())) {
                     //look inside of it
                     $yaml = FlowEntryYaml::maybe_read_yaml_in_folder($maybe_path,$this->get_project());
                     if ($yaml) {return $maybe_path;}

@@ -18,11 +18,11 @@
         "ext-zip": "*",
         "ext-fileinfo": "*",
         "slim/slim": "4.*",
-        "slim/psr7": "^1.4",
+        "slim/psr7": "1.*",
         "php-di/slim-bridge": "^3.1",
         "delight-im/auth": "^8.3",
-        "lulco/phoenix": "^1.8",
-        "symfony/yaml": "^5.3",
+        "lulco/phoenix": "^2.1",
+        "symfony/yaml": "6.*",
         "slim/twig-view": "^3.0",
         "neitanod/forceutf8": "^2.0",
         "paragonie/easydb": "^2",
@@ -31,12 +31,28 @@
         "paquettg/php-html-parser": "^3.1",
         "ramsey/uuid": "^4.1",
         "paragonie/anti-csrf": "^2.3",
-        "scrivo/highlight.php": "v9.18.1.7",
+        "scrivo/highlight.php": "^9.18",
         "bluem/tree": "^3.1",
         "malkusch/lock": "^2.2",
-        "nesbot/carbon": "^2.54"
+        "nesbot/carbon": "^2.54",
+        "cweagans/composer-patches": "^1.7"
     },
     "autoload": {
         "psr-4": {"app\\": "src/"}
+    },
+    "config": {
+        "allow-plugins": {
+            "cweagans/composer-patches": true
+        },
+        "preferred-install": "source"
+    },
+    "extra": {
+        "patches": {
+            "paquettg/php-html-parser": {
+                "Fix deprecation notices for offsetGet() return type": "vendor-patches/paquettg/php-html-parser/3.1.1/fix_offsetget_deprecation.patch"
+            }
+        },
+        "composer-exit-on-patch-failure": true,
+        "enable-patching": true
     }
 }

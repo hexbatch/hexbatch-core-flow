@@ -48,9 +48,9 @@ abstract class BaseConverter implements IAttributeConverter {
     }
 
     /**
-        Default version just gets the last child of the key or null
+     * Default version just gets the last child of the key or null
      * @param string $key
-     * @return object
+     * @return string|null
      */
     protected  function getFinalOfKey(string $key) : ?string  {
         $raws = $this->getRawOfKey($key);

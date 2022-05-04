@@ -1,0 +1,12 @@
+diff --git a/src/PHPHtmlParser/Dom/Node/Collection.php b/src/PHPHtmlParser/Dom/Node/Collection.php
+index ff44725..6125b19 100644
+--- a/src/PHPHtmlParser/Dom/Node/Collection.php
++++ b/src/PHPHtmlParser/Dom/Node/Collection.php
+@@ -130,6 +130,7 @@ class Collection implements IteratorAggregate, ArrayAccess, Countable
+      *
+      * @return mixed
+      */
++	#[\ReturnTypeWillChange]
+     public function offsetGet($offset)
+     {
+         return $this->collection[$offset] ?? null;

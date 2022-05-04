@@ -14,6 +14,7 @@ use DirectoryIterator;
 use Exception;
 use PDO;
 use Psr\Http\Message\ServerRequestInterface;
+use doesnot\Exist\at\all;
 
 class AdminHelper extends BaseHelper {
 
@@ -102,18 +103,7 @@ class AdminHelper extends BaseHelper {
      */
     public  function admin_test(ServerRequestInterface $request) : array  {
 
-        $tests = ['a','b'];
-        foreach ($tests as $test) {
-            print_r($test,true);
-        }
-        $path = "/var/www/current";
-        $dir = new DirectoryIterator($path);
-        $ret = [];
-        foreach ($dir as $fileinfo) {
-            if ($fileinfo->isDir() && !$fileinfo->isDot()) {
-                $ret[] =  $fileinfo->getFilename();
-            }
-        }
+        $ret = [static::get_current_user()];
         return $ret;
     }
 

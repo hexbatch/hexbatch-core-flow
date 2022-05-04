@@ -57,8 +57,8 @@ class FlowGitFile {
     }
 
     protected function is_valid_resource_file() : bool{
-        if (strpos($this->file,IFlowProject::REPO_FILES_DIRECTORY.DIRECTORY_SEPARATOR) !== false) {return true;}
-        if (strpos($this->file,IFlowProject::REPO_RESOURCES_DIRECTORY.DIRECTORY_SEPARATOR) !== false) {return true;}
+        if (str_contains($this->file, IFlowProject::REPO_FILES_DIRECTORY . DIRECTORY_SEPARATOR)) {return true;}
+        if (str_contains($this->file, IFlowProject::REPO_RESOURCES_DIRECTORY . DIRECTORY_SEPARATOR)) {return true;}
         return false;
     }
 
@@ -74,11 +74,11 @@ class FlowGitFile {
         return $this->file;
     }
     protected function get_entry_file_name() : ?string  {
-        if (strpos($this->file,IFlowEntryArchive::TITLE_FILE_NAME) !== false) {return 'Entry Name';}
-        if (strpos($this->file,IFlowEntryArchive::BLURB_FILE_NAME) !== false) {return 'Entry Blurb';}
-        if (strpos($this->file,IFlowEntryArchive::BB_CODE_FILE_NAME) !== false) {return 'Entry BB Code';}
-        if (strpos($this->file,IFlowEntryArchive::BASE_YAML_FILE_NAME) !== false) {return 'Entry Yaml';}
-        if (strpos($this->file,FlowEntryYaml::FILENAME_TO_MARK_INVALID) !== false) {return 'Marked Ignored';}
+        if (str_contains($this->file, IFlowEntryArchive::TITLE_FILE_NAME)) {return 'Entry Name';}
+        if (str_contains($this->file, IFlowEntryArchive::BLURB_FILE_NAME)) {return 'Entry Blurb';}
+        if (str_contains($this->file, IFlowEntryArchive::BB_CODE_FILE_NAME)) {return 'Entry BB Code';}
+        if (str_contains($this->file, IFlowEntryArchive::BASE_YAML_FILE_NAME)) {return 'Entry Yaml';}
+        if (str_contains($this->file, FlowEntryYaml::FILENAME_TO_MARK_INVALID)) {return 'Marked Ignored';}
         return "Other Entry File";
     }
 
@@ -95,8 +95,8 @@ class FlowGitFile {
         $raw_array_reversed = array_reverse($raw_array);
         $output_as_array_reversed = [];
         foreach ($raw_array_reversed as $thing) {
-            if (strpos($thing,"\ No newline at end of file") !== false) {continue;}
-            if (strpos($thing,"+++ b/$this->file") !== false) {break;}
+            if (str_contains($thing, "\ No newline at end of file")) {continue;}
+            if (str_contains($thing, "+++ b/$this->file")) {break;}
             $output_as_array_reversed[] = $thing;
         }
 

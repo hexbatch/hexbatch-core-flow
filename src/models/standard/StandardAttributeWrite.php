@@ -8,6 +8,8 @@ use app\models\base\FlowBase;
 use app\models\standard\converters\BaseConverter;
 use app\models\tag\FlowTag;
 use InvalidArgumentException;
+
+use JetBrains\PhpStorm\ArrayShape;
 use JsonSerializable;
 use LogicException;
 use PDO;
@@ -40,6 +42,8 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
 
     }
 
+    #[ArrayShape(['standard_name' => "string", 'standard_value' => "object", 'tag_guid' => "string", 'tag_id' => "int",
+                'attribute_array' => "\app\models\standard\RawAttributeData[]|array"])]
     public function jsonSerialize() : array
     {
         return [

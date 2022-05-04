@@ -13,7 +13,7 @@ class MYDB_Value {
     /**
      * @var mixed $value
      */
-    public $value = null;
+    public mixed $value = null;
 
     /**
      * @var string|null $flag

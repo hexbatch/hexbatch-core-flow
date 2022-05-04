@@ -26,7 +26,7 @@ class Utilities extends BaseHelper {
      * @example converts something like '0.1.2' to 0.12
      * @param string|null $version_string
      *
-     * @return float
+     * @return float|null
      */
     function convert_version_to_float(?string $version_string) : ?float {
         if (empty($version_string)) {return null;}
@@ -48,8 +48,26 @@ class Utilities extends BaseHelper {
         return $program->version ?? null;
     }
 
+    /**
+     * @since 0.5.3
+     * @return string|null
+     */
+    function get_version_description() : ?string {
+        $program = $this->get_settings()->program ?? (object)[];
+        return $program->version_description_short ?? null;
+    }
+
+    /**
+     * @since 0.5.3
+     * @return string|null
+     */
+    function get_version_link() : ?string {
+        $program = $this->get_settings()->program ?? (object)[];
+        return $program->version_link ?? null;
+    }
 
 
+    /** @noinspection PhpUnused */
     public static function get_version_float() : float {
         $me = static::get_utilities();
         $string_version = $me->get_version_string();

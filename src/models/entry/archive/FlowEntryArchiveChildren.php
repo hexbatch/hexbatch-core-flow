@@ -4,12 +4,14 @@ namespace app\models\entry\archive;
 
 
 use app\models\entry\FlowEntry;
+use JetBrains\PhpStorm\ArrayShape;
 
 
 abstract class FlowEntryArchiveChildren extends FlowEntryArchiveFiles {
 
 
 
+    #[ArrayShape(["flow_entry_guid" => "\null|string", "flow_entry_parent_guid" => "\null|string", "flow_project_guid" => "\null|string", "entry_created_at_ts" => "\int|null", "entry_updated_at_ts" => "\int|null", 'child_entries' => "array"])]
     public function to_array() : array {
 
         $array = parent::to_array();

@@ -57,12 +57,14 @@ class SearchParamBase {
     }
     public function getPageSize() :int  {return $this->page_size;}
 
-    public function setPage(int $what) {
+    public function setPage(int $what): void
+    {
         $this->page = intval($what);
         if ($this->page < 1) {$this->page = 1;}
     }
 
-    public function setPageSize(int $what) {
+    public function setPageSize(int $what): void
+    {
         $this->page_size = intval($what);
         if ($this->page_size < 1) { $this->page_size = 1;}
         if ($this->page_size === SearchParamBase::UNLIMITED_RESULTS_PER_PAGE) {

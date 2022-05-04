@@ -5,6 +5,8 @@ use app\models\project\FlowProjectUser;
 use app\models\user\FlowUser;
 use Exception;
 use InvalidArgumentException;
+use JetBrains\PhpStorm\ArrayShape;
+
 
 abstract class FlowProjectUserLevelLevel extends FlowProjectDataLevel {
 
@@ -34,6 +36,7 @@ abstract class FlowProjectUserLevelLevel extends FlowProjectDataLevel {
      * @return array
      * @throws Exception
      */
+    #[ArrayShape(['flow_project_title' => "\null|string", 'flow_project_guid' => "\null|string", 'created_at_ts' => "\int|null", 'flow_project_blurb' => "\null|string", 'admin_user' => "\app\models\user\FlowUser|null"])]
     public function jsonSerialize() : array
     {
         $ret = parent::jsonSerialize();
@@ -55,7 +58,7 @@ abstract class FlowProjectUserLevelLevel extends FlowProjectDataLevel {
     }
 
     /**
-     * @return string
+     * @return string|null
      * @throws Exception
      */
     public function get_owner_user_guid() : ?string {
