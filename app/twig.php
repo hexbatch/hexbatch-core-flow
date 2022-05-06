@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use app\handlers\TwigProjectSetter;
 use app\helpers\ProjectHelper;
 use app\helpers\StandardHelper;
 use app\helpers\Utilities;
@@ -10,7 +11,6 @@ use app\hexlet\JsonHelper;
 use app\models\standard\FlowTagStandardAttribute;
 use Ramsey\Uuid\Uuid;
 use Slim\App;
-use Slim\Views\Twig;
 use Slim\Views\TwigMiddleware;
 use Twig\Extension\AbstractExtension;
 use Twig\Extension\DebugExtension;
@@ -63,7 +63,7 @@ class Hexlet_Twig_Extension extends AbstractExtension implements GlobalsInterfac
             'standard_viewable_scripts' => $viewable_standard_scripts,
             'standard_editable_scripts' => $editable_standard_scripts,
             'standard_viewable_frames' => $viewable_standard_frames,
-            'standard_editable_frames' => $editable_standard_frames,
+            'standard_editable_frames' => $editable_standard_frames
         ];
     }
 
@@ -113,6 +113,14 @@ class Hexlet_Twig_Extension extends AbstractExtension implements GlobalsInterfac
             ['is_safe' => ['html']]
         );
 
+        $print_nice = new TwigFunction(
+            'print_nice',
+            function(mixed $what) {
+                return Utilities::print_nice($what);
+            },
+            ['is_safe' => ['html']]
+        );
+
 
         $standard_keys = new TwigFunction(
             'standard_keys',
@@ -122,7 +130,7 @@ class Hexlet_Twig_Extension extends AbstractExtension implements GlobalsInterfac
             []
         );
 
-        return [$csrf,$session_dump,$generate_uuid,$standard_keys];
+        return [$csrf,$session_dump,$generate_uuid,$standard_keys,$print_nice];
     }
 
 }
@@ -142,7 +150,7 @@ return function (App $app) {
             HEXLET_TWIG_TEMPLATE_PATH);
 
         $settings_as_array = JsonHelper::fromString(JsonHelper::toString($settings),true,true);
-        $twig =  new Twig($loader, $settings_as_array);
+        $twig =  new TwigProjectSetter($loader, $settings_as_array);
         $twig->addExtension(new Hexlet_Twig_Extension());
 
         $twig->addExtension(new DebugExtension());

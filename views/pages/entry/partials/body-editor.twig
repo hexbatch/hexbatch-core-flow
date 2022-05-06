@@ -1,5 +1,55 @@
 <script>
     jQuery(function($){ //should execute immediately after load happens if late loading
+
+        let flow_tag_bb_struct = {
+
+            tags: {
+                "span": {
+                    "data-tag_guid": null
+                }
+            },
+            isSelfClosing: true,
+            isInline: true,
+            isHtmlInline: undefined,
+            allowedChildren: false,
+            allowsEmpty: true,
+            excludeClosing: true,
+            skipLastLineBreak: true,
+            strictMatch: false,
+
+            breakBefore: false,
+            breakStart: false,
+            breakEnd: false,
+            breakAfter: false,
+
+            format: function(element, content) {
+                let el_dom_tag = $(element);
+                if(!el_dom_tag.data('tag_guid'))
+                    return content;
+
+                return `[flow_tag tag=${el_dom_tag.data('tag_guid')}]`;
+            },
+            html: function(token, attrs, content) {
+                if(  attrs.hasOwnProperty('tag') ) {
+                    if (attrs.tag) {
+                        content = `<span class="flow-bb-tag flow-tag-display flow-tag-${attrs.tag}" data-tag_guid="${attrs.tag}"></span>`;
+                        setTimeout(function() {
+                            update_tags_in_display(false);
+                        },100)
+
+                    }
+                }
+
+
+                return content;
+            },
+
+            quoteType: sceditor.BBCodeParser.QuoteType.auto
+        }
+
+        sceditor.formats.bbcode.set('flow_tag',flow_tag_bb_struct);
+
+
         let max_length_for_chapter = {{ constant('app\\models\\project\\IFlowProject::MAX_SIZE_READ_ME_IN_CHARACTERS') }};
         let textarea_jq = $('textarea#{{ textarea_id }}');
         let textarea = textarea_jq[0];
@@ -16,6 +66,9 @@
 
         });
         let da_editor = textarea._sceditor;
+
+
+
         da_editor.bind('valuechange  keyup blur paste pasteraw',function(/* e */) {
             let words = da_editor.val();
 

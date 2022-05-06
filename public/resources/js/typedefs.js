@@ -48,6 +48,7 @@
  * @typedef {Object} FlowToken
  * @property {string} _CSRF_INDEX
  * @property {string} _CSRF_TOKEN
+ * @property {string} flow_project_git_hash
  */
 
 /**
@@ -387,6 +388,32 @@
  *
  * @typedef {FlowBasicResponse} FlowCopyProjectActionResponse
  * @property {FlowProject} project
+ */
+
+
+
+/**
+ *
+ * @typedef {Object} FlowEntry
+ * @property {number} [id]
+ * @property {string} [text]
+ * @property {string} flow_entry_guid
+ * @property {?string} flow_entry_parent_guid
+ * @property {string} flow_project_guid
+ * @property {number} entry_created_at_ts
+ * @property {number} entry_updated_at_ts
+ * @property {string} flow_entry_title
+ * @property {string} flow_entry_blurb
+ * @property {string} flow_entry_body_bb_code
+
+ */
+
+/**
+ *
+ * @typedef {FlowBasicResponse} FlowEntryLifetimeResponse
+ * @property {FlowProject} project
+ * @property {FlowEntry} entry
+ * @property {string} entry_url
  */
 
 

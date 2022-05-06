@@ -82,6 +82,10 @@
     {{ form_token(  csrf_token_set_to_root ) }}
 </div>
 
+<input type="hidden" id="flow_project_git_hash" value="{{ flow_project_git_hash }}">
+
+
+
 <script>
     let general_search_url = "{{-  url_for('general_search') -}}";
 </script>

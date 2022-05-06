@@ -3,6 +3,7 @@
  * @param {?FlowStandardCallback} [on_start]
  */
 function view_standard_meta(tag,on_start) {
+
     if (!tag.standard_attributes.hasOwnProperty('meta')) { return jQuery('<span>No Meta Found</span>');}
 
     /**
@@ -33,6 +34,12 @@ function view_standard_meta(tag,on_start) {
         meta_link.attr('href',meta.meta_picture_url);
 
         meta_link.simpleLightbox({nav:false,captions:false,loop:false});
+    }
+
+    if (meta.meta_author ) {
+        let author_node = card.find('.meta-author');
+        author_node.removeClass('d-none');
+        author_node.find('.meta_author').html(meta.meta_author);
     }
 
     if (meta.meta_first_name || meta.meta_last_name || meta.meta_website) {

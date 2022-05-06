@@ -215,6 +215,7 @@ Below is a list of additional items that can be used in the twig markup
     dump_session() - shows the current session contents (for debugging)
     uuid() - generates a new v4 uuid
     standard_keys() - returns an array of standard attribute keys for the given type
+    print_nice()   - prints out to a colored html table, like a dump, but only shows public or json supplied properties of objects
 
 ### Filters
     

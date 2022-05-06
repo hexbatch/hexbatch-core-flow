@@ -369,10 +369,7 @@ class PageProjectController extends BaseProjectController
                 }
             }
 
-            $old_git_hash = $args['flow_project_git_hash'];
-            if ($project->get_head_commit_hash() !== $old_git_hash) {
-                throw new InvalidArgumentException("Git hash is too old, project was saved since this page loaded");
-            }
+
 
             $project->save();
             $_SESSION[static::REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY] = null;
@@ -669,10 +666,10 @@ class PageProjectController extends BaseProjectController
     {
 
         $ret_tag = $ret_attribute = $setting_tag = $setting_standard_value = $standard_attribute_name=  null;
-
+        $call = null;
         try {
             $option = new AjaxCallData([
-                AjaxCallData::OPTION_IS_AJAX,
+                AjaxCallData::OPTION_ENFORCE_AJAX,
                 AjaxCallData::OPTION_MAKE_NEW_TOKEN,
                 AjaxCallData::OPTION_VALIDATE_TOKEN
             ]);
@@ -752,7 +749,7 @@ class PageProjectController extends BaseProjectController
                 'setting_name'=>$setting_name,
                 'standard_name'=>$standard_attribute_name,
                 'standard_value'=>$setting_standard_value,
-                'token'=> $call->new_token
+                'token'=> $call->get_token_with_project_hash($call->project)
             ];
             $payload = JsonHelper::toString($data);
 
@@ -772,7 +769,7 @@ class PageProjectController extends BaseProjectController
                 'setting_name'=>$setting_name,
                 'standard_name'=>$standard_attribute_name,
                 'standard_value'=>$setting_standard_value,
-                'token'=> $call->new_token?? null
+                'token'=> $call->get_token_with_project_hash($call->project)
             ];
             $payload = JsonHelper::toString($data);
 

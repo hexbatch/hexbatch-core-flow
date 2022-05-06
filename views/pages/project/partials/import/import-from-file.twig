@@ -14,7 +14,7 @@
                         project_name: project.get_project_title()
                     } )) }}
 
-                    <input type="hidden" name="flow_project_git_hash" value="{{ project.get_head_commit_hash() }}">
+                    <input type="hidden" id="flow_project_git_hash" value="{{ flow_project_git_hash }}">
 
                     <div class="col-12">
                         <label for="repo_or_patch_file">

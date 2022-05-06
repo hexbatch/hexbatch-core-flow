@@ -42,7 +42,10 @@ class TagPages extends BasePages
                               string $user_name, string $project_name,string $tag_name) :ResponseInterface
     {
         try {
-            $option = new AjaxCallData([AjaxCallData::OPTION_GET_APPLIED, AjaxCallData::OPTION_ALLOW_EMPTY_BODY]);
+            $option = new AjaxCallData([
+                AjaxCallData::OPTION_ALLOW_NO_PROJECT_HASH,
+                AjaxCallData::OPTION_GET_APPLIED, AjaxCallData::OPTION_ALLOW_EMPTY_BODY]);
+
             $option->note = 'show_tag';
 
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
@@ -198,7 +201,7 @@ class TagPages extends BasePages
                               string $user_name, string $project_name) :ResponseInterface {
         
         try {
-            $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
+            $option = new AjaxCallData([AjaxCallData::OPTION_ENFORCE_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'create_tag';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name);
 
@@ -225,7 +228,11 @@ class TagPages extends BasePages
                 $saved_tag = $tag->clone_refresh();
 
                 $call->project->do_tag_save_and_commit();
-                $data = ['success'=>true,'message'=>'ok','tag'=>$saved_tag,'token'=> $call->new_token];
+                $data = [
+                    'success'=>true,'message'=>'ok',
+                    'tag'=>$saved_tag,
+                    'token'=> $call->get_token_with_project_hash($call?->project)
+                ];
                 $payload = JsonHelper::toString($data);
 
                 $response->getBody()->write($payload);
@@ -242,7 +249,8 @@ class TagPages extends BasePages
 
         } catch (Exception $e) {
             $this->logger->error("Could not create_tag: ".$e->getMessage(),['exception'=>$e]);
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,
+                'token'=> $call?->get_token_with_project_hash($call?->project)];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -269,7 +277,7 @@ class TagPages extends BasePages
     {
         
         try {
-            $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX,AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
+            $option = new AjaxCallData([AjaxCallData::OPTION_ENFORCE_AJAX,AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'edit_tag';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
 
@@ -304,7 +312,11 @@ class TagPages extends BasePages
 
                 $call->project->do_tag_save_and_commit();
 
-                $data = ['success'=>true,'message'=>'ok','tag'=>$saved_tag,'attribute'=>null,'token'=> $call->new_token];
+                $data = [
+                    'success'=>true,'message'=>'ok',
+                    'tag'=>$saved_tag,'attribute'=>null,
+                    'token'=> $call->get_token_with_project_hash($call?->project)
+                ];
                 $payload = JsonHelper::toString($data);
 
                 $response->getBody()->write($payload);
@@ -322,7 +334,8 @@ class TagPages extends BasePages
 
         } catch (Exception $e) {
             $this->logger->error("Could not edit_tag: ".$e->getMessage(),['exception'=>$e]);
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,
+                'token'=> $call?->get_token_with_project_hash($call?->project)];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -349,7 +362,7 @@ class TagPages extends BasePages
     {
         
         try {
-            $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX,AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
+            $option = new AjaxCallData([AjaxCallData::OPTION_ENFORCE_AJAX,AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'delete_tag';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
 
@@ -359,7 +372,12 @@ class TagPages extends BasePages
                 $db->beginTransaction();
                 $call->tag->delete_tag();
                 $call->project->do_tag_save_and_commit();
-                $data = ['success'=>true,'message'=>'ok','tag'=>$call->tag,'attribute'=>null,'token'=> $call->new_token];
+                $data = [
+                    'success'=>true,
+                    'message'=>'ok',
+                    'tag'=>$call->tag,'attribute'=>null,
+                    'token'=> $call->get_token_with_project_hash($call?->project)
+                ];
                 $payload = JsonHelper::toString($data);
 
                 $response->getBody()->write($payload);
@@ -376,7 +394,8 @@ class TagPages extends BasePages
 
         } catch (Exception $e) {
             $this->logger->error("Could not delete_tag: ".$e->getMessage(),['exception'=>$e]);
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,
+                'token'=> $call?->get_token_with_project_hash($call?->project)];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -406,7 +425,7 @@ class TagPages extends BasePages
     {
         
         try {
-            $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
+            $option = new AjaxCallData([AjaxCallData::OPTION_ENFORCE_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'create_attribute';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
 
@@ -438,7 +457,11 @@ class TagPages extends BasePages
                 }
 
                 $call->project->do_tag_save_and_commit();
-                $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$new_attribute,'token'=> $call->new_token];
+                $data = [
+                    'success'=>true,'message'=>'ok','tag'=>$altered_tag,
+                    'attribute'=>$new_attribute,
+                    'token'=> $call->get_token_with_project_hash($call?->project)
+                ];
                 $payload = JsonHelper::toString($data);
 
                 $response->getBody()->write($payload);
@@ -456,7 +479,8 @@ class TagPages extends BasePages
 
         } catch (Exception $e) {
             $this->logger->error("Could not create_attribute: ".$e->getMessage(),['exception'=>$e]);
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,
+                'token'=> $call?->get_token_with_project_hash($call?->project)];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -484,7 +508,7 @@ class TagPages extends BasePages
     {
         
         try {
-            $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
+            $option = new AjaxCallData([AjaxCallData::OPTION_ENFORCE_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'edit_attribute';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name,$attribute_name);
 
@@ -513,7 +537,11 @@ class TagPages extends BasePages
 
                 $call->project->do_tag_save_and_commit();
 
-                $data = ['success'=>true,'message'=>'ok attribute','tag'=>$altered_tag,'attribute'=>$new_attribute,'token'=> $call->new_token];
+                $data = [
+                    'success'=>true,'message'=>'ok attribute',
+                    'tag'=>$altered_tag,'attribute'=>$new_attribute,
+                    'token'=> $call->get_token_with_project_hash($call?->project)
+                ];
 
 
                 $payload = JsonHelper::toString($data);
@@ -533,7 +561,8 @@ class TagPages extends BasePages
 
         } catch (Exception $e) {
             $this->logger->error("Could not edit_attribute: ".$e->getMessage(),['exception'=>$e]);
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,
+                'token'=> $call?->get_token_with_project_hash($call?->project)];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -561,7 +590,7 @@ class TagPages extends BasePages
     {
         
         try {
-            $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
+            $option = new AjaxCallData([AjaxCallData::OPTION_ENFORCE_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'delete_attribute';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name,$attribute_name);
             $db = $this->get_connection();
@@ -591,7 +620,11 @@ class TagPages extends BasePages
 
                 $call->project->do_tag_save_and_commit();
 
-                $data = ['success'=>true,'message'=>'ok','tag'=>$altered_tag,'attribute'=>$call->attribute,'token'=> $call->new_token];
+                $data = [
+                    'success'=>true,'message'=>'ok',
+                    'tag'=>$altered_tag,'attribute'=>$call->attribute,
+                    'token'=> $call->get_token_with_project_hash($call?->project)
+                ];
                 $payload = JsonHelper::toString($data);
 
                 $response->getBody()->write($payload);
@@ -609,7 +642,8 @@ class TagPages extends BasePages
 
         } catch (Exception $e) {
             $this->logger->error("Could not delete_attribute: ".$e->getMessage(),['exception'=>$e]);
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,
+                'token'=> $call?->get_token_with_project_hash($call?->project)];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -634,7 +668,7 @@ class TagPages extends BasePages
                                 string $user_name, string $project_name,string $tag_name) :ResponseInterface
     {
         try {
-            $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
+            $option = new AjaxCallData([AjaxCallData::OPTION_ENFORCE_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'create_applied';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
 
@@ -662,7 +696,7 @@ class TagPages extends BasePages
                 $call->project->do_tag_save_and_commit();
                 $data = [
                     'success'=>true,'message'=>'ok','tag'=>$tag,'attribute'=>null,'applied'=>$applied_to_return,
-                    'token'=> $call->new_token
+                    'token'=> $call->get_token_with_project_hash($call?->project)
                 ];
                 $payload = JsonHelper::toString($data);
 
@@ -681,7 +715,8 @@ class TagPages extends BasePages
 
         } catch (Exception $e) {
             $this->logger->error("Could not create_applied: ".$e->getMessage(),['exception'=>$e]);
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,
+                'token'=> $call?->get_token_with_project_hash($call?->project)];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -707,7 +742,7 @@ class TagPages extends BasePages
                                     string $user_name, string $project_name,string $tag_name) :ResponseInterface
     {
         try {
-            $option = new AjaxCallData([AjaxCallData::OPTION_IS_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
+            $option = new AjaxCallData([AjaxCallData::OPTION_ENFORCE_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'delete_applied';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_name);
 
@@ -734,7 +769,7 @@ class TagPages extends BasePages
 
                 $data = [
                     'success'=>true,'message'=>'ok','tag'=>$tag,'attribute'=>null,'applied'=>$call->applied,
-                    'token'=> $call->new_token
+                    'token'=> $call->get_token_with_project_hash($call?->project)
                 ];
                 $payload = JsonHelper::toString($data);
 
@@ -753,7 +788,8 @@ class TagPages extends BasePages
 
         } catch (Exception $e) {
             $this->logger->error("Could not delete_applied: ".$e->getMessage(),['exception'=>$e]);
-            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,'token'=> $call->new_token?? null];
+            $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,
+                        'token'=> $call?->get_token_with_project_hash($call?->project)];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);

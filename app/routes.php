@@ -210,6 +210,7 @@ return function (App $app) {
 
                 $group->group('/tag', function (RouteCollectorProxy $group) use($container){
 
+                    /** @uses \app\controllers\tag\TagPages::show_tag() */
                     $group->get('/{tag_name:[[:alnum:]\-]+}/show', ['tagPages', 'show_tag'])->setName('show_tag');
 
                     //tags in project , no matter how they are used or attached to
@@ -248,15 +249,29 @@ return function (App $app) {
 
                 $group->group('/entry', function (RouteCollectorProxy $group) use($container) {
 
+                        /** @uses \app\controllers\entry\EntryPages::list_entries()  */
                         $group->get('/list[/page/{page:[1-9]+[0-9]*}]', ['entryPages', 'list_entries'])->setName('list_entries');
+
+                        /** @uses \app\controllers\entry\EntryPages::show_entry()*/
                         $group->get('/show/{entry_name:[[:alnum:]\-]+}', ['entryPages', 'show_entry'])->setName('show_entry');
 
                         $group->group('', function (RouteCollectorProxy $group) {
+                            /** @uses \app\controllers\entry\EntryPages::new_entry() */
                             $group->get('/new', ['entryPages', 'new_entry'])->setName('new_entry');
+
+                            /** @uses \app\controllers\entry\EntryPages::edit_entry() */
                             $group->get('/edit/{entry_name:[[:alnum:]\-]+}', ['entryPages', 'edit_entry'])->setName('edit_entry');
-                            $group->post('/create', ['entryPages', 'create_entry'])->setName('create_entry');
-                            $group->post('/update/{entry_name:[[:alnum:]\-]+}', ['entryPages', 'update_entry'])->setName('update_entry');
-                            $group->post('/delete/{entry_name:[[:alnum:]\-]+}', ['entryPages', 'delete_entry'])->setName('delete_entry');
+
+                            /** @uses \app\controllers\entry\EntryLifeTime::create_entry()  */
+                            $group->post('/create', ['entryLifeTime', 'create_entry'])->setName('create_entry');
+
+                            /** @uses \app\controllers\entry\EntryLifeTime::update_entry()  */
+                            $group->post('/update/{entry_name:[[:alnum:]\-]+}',
+                                ['entryLifeTime', 'update_entry'])->setName('update_entry');
+
+                            /** @uses \app\controllers\entry\EntryLifeTime::delete_entry()  */
+                            $group->post('/delete/{entry_name:[[:alnum:]\-]+}',
+                                ['entryLifeTime', 'delete_entry'])->setName('delete_entry');
                         })->add('checkLoggedInMiddleware');
                 } );
 

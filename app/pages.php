@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use app\controllers\entry\EntryLifeTime;
 use app\controllers\entry\EntryPages;
 use app\controllers\home\AdminPages;
 use app\controllers\home\HomePages;
@@ -12,6 +13,7 @@ use app\controllers\standard\StandardPages;
 use app\controllers\tag\TagPages;
 use app\controllers\user\UserPages;
 use app\helpers\AdminHelper;
+use app\helpers\EntryHelper;
 use app\helpers\ProjectHelper;
 use app\helpers\StandardHelper;
 use app\helpers\TagHelper;
@@ -61,6 +63,14 @@ return function (App $app) {
 
     $container->set('entryPages', function() use ($app, $container) {
         return new EntryPages($container->get('auth'),$container->get(LoggerInterface::class),$container);
+    });
+
+    $container->set('entryLifeTime', function() use ($app, $container) {
+        return new EntryLifeTime($container->get('auth'),$container->get(LoggerInterface::class),$container);
+    });
+
+    $container->set('entryHelper', function() use ($app, $container) {
+        return new EntryHelper($container->get('auth'),$container->get(LoggerInterface::class),$container);
     });
 
     $container->set('projectHelper', function() use ($app, $container) {

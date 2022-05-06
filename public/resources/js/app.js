@@ -48,9 +48,12 @@ function update_root_flow_ajax_token(tok) {
     let da_div = $("div#flow-ajax-token");
     let token_csrf_index_input = da_div.find('input[name="_CSRF_INDEX"]');
     let token_csrf_token_input = da_div.find('input[name="_CSRF_TOKEN"]');
+    let flow_project_git_hash_input = $('input#flow_project_git_hash');
 
     token_csrf_index_input.val(tok._CSRF_INDEX);
     token_csrf_token_input.val(tok._CSRF_TOKEN);
+    flow_project_git_hash_input.val(tok.flow_project_git_hash)
+
 }
 
 /**
@@ -63,6 +66,9 @@ function set_object_with_flow_ajax_token_data(obj) {
     let token_csrf_token_input = da_div.find('input[name="_CSRF_TOKEN"]');
     obj._CSRF_INDEX = token_csrf_index_input.val();
     obj._CSRF_TOKEN = token_csrf_token_input.val();
+
+    let flow_project_git_hash_input = $('input#flow_project_git_hash');
+    obj.flow_project_git_hash = flow_project_git_hash_input.val();
 }
 
 /**
@@ -221,12 +227,16 @@ function do_flow_ajax_action(url,out_data,
 
 }
 
+
+
 /**
  * {Swal}
  */
 let my_swal = null;
 
-jQuery(function() {
+const FLOW_AJAX_RESPONSE_FLAG = 'flow_ajax_response_flag';
+
+jQuery(function($) {
    // noinspection JSUnresolvedVariable
     my_swal = SweetAlert;
 
@@ -259,5 +269,35 @@ jQuery(function() {
              popover.dispose();
         },2000);
         e.clearSelection();
+    });
+
+    $(`body`).on('submit',`form.flow-ajax-post`,function (e){
+        e.preventDefault();
+        let da_form = $(this);
+        let url = da_form.attr('action');
+        let data = da_form.serializeObject();
+
+        do_flow_ajax_action(url,data,
+            function(ret) {
+                da_form.trigger("flow-ajax-post-success",[ret]);
+                if (ret.hasOwnProperty(FLOW_AJAX_RESPONSE_FLAG) && ret[FLOW_AJAX_RESPONSE_FLAG]) {return;}
+                my_swal.fire(
+                    ret.message,
+                    '',
+                    'success'
+                );
+            },
+            function(ret) {
+                da_form.trigger("flow-ajax-post-fail",[ret]);
+                if (ret.hasOwnProperty(FLOW_AJAX_RESPONSE_FLAG) && ret[FLOW_AJAX_RESPONSE_FLAG]) {return;}
+                my_swal.fire(
+                    ret.message,
+                    '',
+                    'error'
+                );
+            },
+            "Success",
+            "Failed"
+            );
     });
 });

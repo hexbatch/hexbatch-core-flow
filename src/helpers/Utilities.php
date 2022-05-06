@@ -105,4 +105,11 @@ class Utilities extends BaseHelper {
         if (is_array($what)) { $b_to_array = true;}
         return JsonHelper::fromString($json,true,$b_to_array);
     }
+
+    public static function print_nice($what) {
+        if (is_object($what)) {
+            return JsonHelper::print_nice(static::convert_to_object($what));
+        }
+        return JsonHelper::print_nice($what);
+    }
 }

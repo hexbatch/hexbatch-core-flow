@@ -520,6 +520,12 @@ class JsonHelper {
         }
     }
 
+    public static function print_nice(mixed $what) :string {
+        ob_start();
+        static::print_nice_internal($what);
+        return ob_get_clean();
+    }
+
     /**
      * Use this to inspect json returns
      * Debug, prints array information to the screen in an easy to read html table
@@ -533,7 +539,7 @@ class JsonHelper {
      *
      * @noinspection PhpUnused
      */
-    public static function print_nice(mixed $elem, int $max_level=15, array $print_nice_stack=array()): void
+    public static function print_nice_internal(mixed $elem, int $max_level=15, array $print_nice_stack=array()): void
     {
         //if (is_object($elem)) {$elem = object_to_array($elem);}
         if(is_array($elem) || is_object($elem)){
@@ -565,7 +571,7 @@ class JsonHelper {
                 /** @noinspection HtmlDeprecatedAttribute */
                 echo '<tr><td valign="top" style="width:40px;background-color:' . $rgb . ';">';
                 echo '<strong style="color:black">'.$k."</strong></td><td style='background-color:white;color:black'>";
-                self::print_nice($v,$max_level,$print_nice_stack);
+                self::print_nice_internal($v,$max_level,$print_nice_stack);
                 echo "</td></tr>";
             }
             echo "</table><br><br>";
