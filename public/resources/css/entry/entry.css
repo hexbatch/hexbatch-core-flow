@@ -1,0 +1,7 @@
+.flow-tags-for-bb textarea.select2-search__field {
+    line-height: 18px;
+}
+
+.select2-selection.form-control {
+    padding: 0;
+}

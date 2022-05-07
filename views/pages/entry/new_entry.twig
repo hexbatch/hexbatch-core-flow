@@ -64,13 +64,10 @@
 </div> <!-- .container -->
 
 
-{% include 'entry/partials/body-editor.twig' with{
-    'textarea_id': 'flow_entry_body_bb_code_area',
-    'hidden_id': 'flow_entry_body_bb_code'
-} %}
 
 <script>
     jQuery(function ($){
+        create_living_bb_editor('flow_entry_body_bb_code_area','flow_entry_body_bb_code')
         let da_form = $(`#flow-entry-creator`)
         da_form.on('flow-ajax-post-success',
 

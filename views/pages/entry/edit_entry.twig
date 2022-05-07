@@ -57,6 +57,21 @@
                                class="form-control" placeholder="Title" required autofocus
                                maxlength="{{ entry.max_title_length }}" value="{{ entry.title }}"
                         >
+                        <label class="input-group-text flow-tags-for-bb">
+                            <span class="me-2">
+                                Tag
+                            </span>
+                            <select id="flow-tags-for-bb-list"
+                                    title="Parents"
+                                    class="form-control">
+
+                            </select>
+                            <span class="float-end">
+                                <button type="button" class="btn btn-sm btn-success ms-1" id="flow-new-tag-into-bb-action">
+                                    <i class="bi bi-bookmark-star"></i>
+                                </button>
+                            </span>
+                        </label>
                     </div>
 
                     <div class="col-12 col-xxl-6">
@@ -89,13 +104,10 @@
 </div> <!-- .container -->
 
 
-{% include 'entry/partials/body-editor.twig' with{
-    'textarea_id': 'flow_entry_body_bb_code_area',
-    'hidden_id': 'flow_entry_body_bb_code'
-} %}
 
 <script>
     jQuery(function ($){
+        create_living_bb_editor('flow_entry_body_bb_code_area','flow_entry_body_bb_code')
         let da_form = $(`#flow-entry-updator`)
         da_form.on('flow-ajax-post-success',
 
@@ -126,6 +138,8 @@
                 data[FLOW_AJAX_RESPONSE_FLAG] = true;
             }
         );
+
+
     });
 </script>
 
