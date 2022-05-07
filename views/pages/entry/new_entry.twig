@@ -1,6 +1,6 @@
 {{ include('entry/partials/entry-breadcrumbs.twig') }}
 
-{% set create_entry_url =  url_for('create_entry',
+{% set create_entry_url =  url_for('create_entry_ajax',
         {
             user_name: project.get_admin_user().flow_user_name ,
             project_name: project.get_project_title()
@@ -9,14 +9,14 @@
 
 <script src="{{ root_url }}/public/resources/js/entry/edit-entry.js"></script>
 
-<div class="container container-xxl">
+<div class="container container-sm container-md container-lg container-xl container-xxl">
     <div class="card col-12">
         <form method="post" action="{{create_entry_url}}" class="flow-ajax-post" id="flow-entry-creator">
             <input type="hidden" id="flow_project_git_hash" value="{{ flow_project_git_hash }}">
             <div class="card-header">
                 <h4>
                     New Entry
-                    <button type="submit" class="btn btn-lg btn-primary float-end " >
+                    <button type="submit" class="btn btn-lg btn-primary float-end pb-0 pt-0" >
                         <i class="far fa-save pe-1"></i>
                         Save
                     </button>

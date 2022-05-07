@@ -29,6 +29,22 @@ class AdminPages extends BasePages
             ->withHeader('Content-Type', 'application/json');
     }
 
+
+    /**
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     * @throws
+     */
+    public function files( ServerRequestInterface $request,ResponseInterface $response) :ResponseInterface {
+
+        ob_start();
+        AdminHelper::getInstance()->run_file_manager($request);
+        $output = ob_get_contents();
+        $response->getBody()->write($output);
+        ob_end_clean();
+        return $response;
+    }
+
     /**
      * @param ResponseInterface $response
      * @return ResponseInterface

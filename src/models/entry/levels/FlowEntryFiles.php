@@ -1,6 +1,6 @@
 <?php
 
-namespace app\models\entry;
+namespace app\models\entry\levels;
 
 
 use app\helpers\ProjectHelper;
@@ -8,11 +8,14 @@ use app\helpers\Utilities;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\IFlowEntryArchive;
+use app\models\entry\FlowEntryYaml;
+use app\models\entry\IFlowEntry;
 use app\models\project\IFlowProject;
 use DirectoryIterator;
 use Exception;
 use InvalidArgumentException;
 use RuntimeException;
+
 
 /**
  * All the public resources and files an entry uses is in the project resources folder

@@ -4,10 +4,53 @@
     <div class="card col-12 col-lg-9">
 
         <div class="card-title">
-            <h4 class="pt-1">
-                {{ entry.get_title() }}
-            </h4>
-        </div>
+            <div class="row pt-1">
+                <div class="col-7 col-sm-9 ">
+                    {{ entry.get_title() }}
+                </div> <!-- col -->
+
+                <div class="col-2 col-sm-1 ">
+                    {% if project.get_current_user_permissions().can_write %}
+
+                        <button class="btn btn-primary   flow-action flow-entry-edit-action"
+                                data-guid="{{ entry.get_guid() }}"
+                                data-title="{{ entry.get_title() }}"
+                                data-url="{{ url_for('edit_entry',{
+                                    user_name: entry.get_project().get_admin_user().flow_user_name ,
+                                    project_name: entry.get_project().get_project_title(),
+                                    entry_name: entry.get_guid()
+                                } )
+                                }}"
+                        >
+                            <i class="bi bi-pencil  "></i>
+                        </button>
+                    {% endif %}
+                </div> <!-- col -->
+
+                <div class="col-1 ">
+                </div>
+
+                <div class="col-2 col-sm-1 ">
+                    {% if project.get_current_user_permissions().can_write %}
+                        <button class="btn btn-danger  flow-action flow-entry-delete-action "
+                                data-guid="{{ entry.get_guid() }}"
+                                data-title="{{ entry.get_title() }}"
+                                data-url="{{ url_for('delete_entry_ajax',{
+                                    user_name: entry.get_project().get_admin_user().flow_user_name ,
+                                    project_name: entry.get_project().get_project_title(),
+                                    entry_name: entry.get_guid()
+                                } )
+                                }}"
+                        >
+                            <i class="bi bi-trash  "></i>
+                            <i class="fas fa-spinner fa-pulse flow-spinner"  style="display: none"></i>
+                        </button>
+                    {% endif %}
+                </div> <!-- col -->
+
+            </div> <!-- row -->
+
+        </div> <!-- card-title -->
 
         <div class="card-header">
             {{ entry.get_blurb() }}
@@ -18,3 +61,5 @@
         </div><!-- /.card-body -->
     </div><!-- /.card.col -->
 </div> <!-- /.row  -->
+
+<script src="{{ root_url }}/public/resources/js/entry/edit-entry.js"></script>

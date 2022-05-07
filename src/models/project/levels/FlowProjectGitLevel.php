@@ -637,12 +637,12 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
 
 
 
-    public function save(bool $b_do_transaction = true): void
+    public function save(bool $b_do_transaction = true,bool $b_commit_project = true): void
     {
         $db = static::get_connection();
         try {
             if ($b_do_transaction && !$db->inTransaction()) { $db->beginTransaction();}
-            parent::save(false);
+            parent::save(false,$b_commit_project);
 
 
 
@@ -685,7 +685,10 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
             }
 
             try {
-                $this->commit_changes($commit_message_full);
+                if ($b_commit_project) {
+                    $this->commit_changes($commit_message_full);
+                }
+
             } catch (NothingToPushException ) {
                 //ignore if no file changes
             }

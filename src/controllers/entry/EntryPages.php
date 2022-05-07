@@ -292,7 +292,7 @@ class EntryPages extends EntryBase
             }
 
             return $this->view->render($response, 'main.twig', [
-                'page_template_path' => 'project/edit_entry.twig',
+                'page_template_path' => 'entry/edit_entry.twig',
                 'page_title' => "Edit Entry ". $form_in_progress->get_title(),
                 'page_description' => "New Entry Form ". $form_in_progress->get_title(),
                 'project' => $call->project,

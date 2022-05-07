@@ -10,6 +10,7 @@ enum EntryRoutes: string
 {
     case SHOW = 'show_entry';
     case UPDATE = 'update_entry';
+    case LIST = 'list_entries';
 
     public static function get_entry_url(
         self $route_name,ServerRequestInterface $request,?AjaxCallData $call,?IFlowEntry $over_entry = null ) : ?string
@@ -22,15 +23,19 @@ enum EntryRoutes: string
 
 
         return match ($route_name) {
-            EntryRoutes::SHOW => $routeParser->urlFor('show_entry', [
+            self::SHOW => $routeParser->urlFor('show_entry', [
                 'user_name' => $call->project->get_admin_user()->flow_user_name,
                 'project_name' => $call->project->get_project_title(),
                 'entry_name' => $entry_to_use->get_guid()
             ]),
-            EntryRoutes::UPDATE => $routeParser->urlFor('update_entry', [
+            self::UPDATE => $routeParser->urlFor('update_entry', [
                 'user_name' => $call->project->get_admin_user()->flow_user_name,
                 'project_name' => $call->project->get_project_title(),
                 'entry_name' => $entry_to_use->get_guid()
+            ]),
+            self::LIST => $routeParser->urlFor('list_entries', [
+                'user_name' => $call->project->get_admin_user()->flow_user_name,
+                'project_name' => $call->project->get_project_title()
             ])
         };
 

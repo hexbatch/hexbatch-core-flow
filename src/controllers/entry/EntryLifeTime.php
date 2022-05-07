@@ -5,6 +5,7 @@ use app\helpers\AjaxCallData;
 use app\hexlet\JsonHelper;
 use app\models\entry\FlowEntry;
 use app\models\project\FlowProjectUser;
+use Error;
 use Exception;
 use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
@@ -41,12 +42,21 @@ class EntryLifeTime extends EntryBase {
                 project_name: $project_name
             );
 
+            $db = static::get_connection();
+            try {
+                if ( !$db->inTransaction()) {$db->beginTransaction();}
+                $entry_to_insert =  FlowEntry::create_entry($call->project,$call->args);
+                $entry_to_insert->save_entry();
+                $_SESSION[EntryPages::REM_NEW_ENTRY_WITH_ERROR_SESSION_KEY] = null;
 
-            $entry_to_insert =  FlowEntry::create_entry($call->project,$call->args);
-            $entry_to_insert->save_entry(true);
-            $_SESSION[EntryPages::REM_NEW_ENTRY_WITH_ERROR_SESSION_KEY] = null;
-
-            $call->entry = $entry_to_insert->clone_with_missing_data($call->project);
+                $call->entry = $entry_to_insert->clone_with_missing_data($call->project);
+                $call->project->save(false,false);
+                $call->project->commit_changes("Created Entry ". $call->entry->get_title());
+                if ($db->inTransaction()) {$db->commit();}
+            } catch (Exception| Error $drat) {
+                if ($db->inTransaction()) {$db->rollBack();}
+                throw $drat;
+            }
 
 
             $data = [
@@ -120,11 +130,28 @@ class EntryLifeTime extends EntryBase {
                 throw new InvalidArgumentException("[update_entry] Could not find entry $entry_name for project $project_name");
             }
 
-            $entry_to_save = $entry_to_update->clone_with_missing_data($call->project);
-            $entry_to_save->save(true);
-            $_SESSION[EntryPages::REM_EDIT_ENTRY_WITH_ERROR_SESSION_KEY] = null;
 
-            $returned_entry = $entry_to_save->clone_with_missing_data($call->project);
+            $db = static::get_connection();
+            try {
+                if ( !$db->inTransaction()) {$db->beginTransaction();}
+
+
+                $entry_to_update->set_title($call->args->flow_entry_title);
+                $entry_to_update->set_blurb($call->args->flow_entry_blurb);
+                $entry_to_update->set_body_bb_code($call->args->flow_entry_body_bb_code);
+                $entry_to_update->save();
+                $_SESSION[EntryPages::REM_EDIT_ENTRY_WITH_ERROR_SESSION_KEY] = null;
+
+                $returned_entry = $entry_to_update->clone_with_missing_data($call->project);
+                $call->project->save(false,false);
+                $call->project->commit_changes("Updated Entry ". $call->entry->get_title());
+
+                if ($db->inTransaction()) {$db->commit();}
+            } catch (Exception| Error $drat) {
+                if ($db->inTransaction()) {$db->rollBack();}
+                throw $drat;
+            }
+
 
 
             $data = [
@@ -132,6 +159,7 @@ class EntryLifeTime extends EntryBase {
                 'message'=>'Updated Entry',
                 'entry'=>$returned_entry,
                 'entry_url' =>EntryRoutes::get_entry_url(EntryRoutes::SHOW,$request,$call),
+                'list_url' =>EntryRoutes::get_entry_url(EntryRoutes::LIST,$request,$call),
                 'project' => $call?->project,
                 'token'=> $call->get_token_with_project_hash($call?->project)
 
@@ -148,7 +176,8 @@ class EntryLifeTime extends EntryBase {
             $this->logger->error("Could not update entry",['exception'=>$e]);
             $data = ['success'=>false,'message'=>$e->getMessage(),
                     'entry'=>$call?->entry,
-                    'entry_url'=>null,
+                    'entry_url' =>EntryRoutes::get_entry_url(EntryRoutes::SHOW,$request,$call),
+                    'list_url' =>EntryRoutes::get_entry_url(EntryRoutes::LIST,$request,$call),
                     'project' => $call?->project,
                     'token'=> $call?->get_token_with_project_hash($call?->project) ];
             $payload = JsonHelper::toString($data);
@@ -198,12 +227,27 @@ class EntryLifeTime extends EntryBase {
                 throw new InvalidArgumentException("[delete_entry] Could not find entry $entry_name for project $project_name");
             }
 
-            $call->entry->delete_entry();
+            $db = static::get_connection();
+            try {
+                if ( !$db->inTransaction()) {$db->beginTransaction();}
+
+                $call->entry->delete_entry();
+                $call->project->save(false,false);
+                $call->project->commit_changes("Deleted Entry ". $call->entry->get_title());
+
+                if ($db->inTransaction()) {$db->commit();}
+            } catch (Exception| Error $drat) {
+                if ($db->inTransaction()) {$db->rollBack();}
+                throw $drat;
+            }
+
 
             $data = [
                 'success'=>true,
                 'message'=>'ok',
                 'entry'=>$call->entry,
+                'entry_url' =>null,
+                'list_url' =>EntryRoutes::get_entry_url(EntryRoutes::LIST,$request,$call),
                 'token'=> $call->get_token_with_project_hash($call?->entry->get_project())
             ];
             $payload = JsonHelper::toString($data);
@@ -218,7 +262,8 @@ class EntryLifeTime extends EntryBase {
             $data = [
                 'success'=>false,
                 'message'=>$e->getMessage(),
-                'entry'=>null,
+                'entry_url' =>null,
+                'list_url' =>EntryRoutes::get_entry_url(EntryRoutes::LIST,$request,$call),
                 'token'=> $call->get_token_with_project_hash(null)
             ];
             $payload = JsonHelper::toString($data);

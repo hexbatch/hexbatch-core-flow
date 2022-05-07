@@ -1,10 +1,11 @@
 <?php
 
-namespace app\models\entry;
+namespace app\models\entry\levels;
 
 
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\IFlowEntryArchive;
+use app\models\entry\IFlowEntry;
 use app\models\project\IFlowProject;
 use Exception;
 

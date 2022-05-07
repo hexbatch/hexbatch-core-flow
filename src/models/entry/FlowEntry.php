@@ -2,6 +2,7 @@
 
 namespace app\models\entry;
 
+use app\models\entry\levels\FlowEntryMembers;
 use app\models\project\exceptions\NothingToPushException;
 use app\models\project\IFlowProject;
 use Exception;

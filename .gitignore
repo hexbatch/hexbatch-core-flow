@@ -1,6 +1,7 @@
 .idea/
 
 /vendor/
+/vendor-tools/
 /local-only
 
 /node_modules/

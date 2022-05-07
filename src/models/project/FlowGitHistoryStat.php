@@ -36,7 +36,7 @@ class FlowGitHistoryStat {
      * @throws Exception
      */
     public static function get_stats(string $project_path) :array {
-        $changed_files_command = '--no-pager log --stat -n30000 --no-color ';
+        $changed_files_command = '--no-pager log --stat=10000 -n30000 --no-color ';
         $raw_log = FlowGitHistory::do_git_command($project_path,$changed_files_command);
         $raw_log_parts = explode(")\n\ncommit",$raw_log);
 

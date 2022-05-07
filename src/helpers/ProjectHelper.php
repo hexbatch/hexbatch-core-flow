@@ -478,5 +478,17 @@ class ProjectHelper extends BaseHelper {
         return $ret;
     }
 
+    /**
+     * @return string
+     * @throws Exception
+     */
+    public function get_projects_base_directory() : string {
+        $check =  $this->get_settings()->project->parent_directory;
+        if (!is_readable($check)) {
+            throw new RuntimeException("The directory of $check is not readable");
+        }
+        return $check;
+    }
+
 
 }

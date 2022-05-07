@@ -18,6 +18,9 @@ return function (App $app) {
         $group->get('/db/redo_triggers', ['adminPages', 'redo_triggers'])->setName('redo_triggers');
         $group->get('/phpinfo', ['adminPages', 'php_info'])->setName('phpinfo');
 
+        /** @uses \app\controllers\home\AdminPages::files() */
+        $group->get('/files', ['adminPages', 'files'])->setName('files');
+
         /** @uses \app\controllers\home\AdminPages::test() */
         $group->get('/test', ['adminPages', 'test'])->setName('admin_test');
     })->add('checkAdminMiddleware')->add($container->get('twigMiddleware'))->add('pingUserMiddleware');
@@ -260,18 +263,20 @@ return function (App $app) {
                             $group->get('/new', ['entryPages', 'new_entry'])->setName('new_entry');
 
                             /** @uses \app\controllers\entry\EntryPages::edit_entry() */
-                            $group->get('/edit/{entry_name:[[:alnum:]\-]+}', ['entryPages', 'edit_entry'])->setName('edit_entry');
+                            $group->get('/edit/{entry_name:[[:alnum:]\-]+}',
+                                ['entryPages', 'edit_entry'])->setName('edit_entry');
 
                             /** @uses \app\controllers\entry\EntryLifeTime::create_entry()  */
-                            $group->post('/create', ['entryLifeTime', 'create_entry'])->setName('create_entry');
+                            $group->post('/create',
+                                ['entryLifeTime', 'create_entry'])->setName('create_entry_ajax');
 
                             /** @uses \app\controllers\entry\EntryLifeTime::update_entry()  */
                             $group->post('/update/{entry_name:[[:alnum:]\-]+}',
-                                ['entryLifeTime', 'update_entry'])->setName('update_entry');
+                                ['entryLifeTime', 'update_entry'])->setName('update_entry_ajax');
 
                             /** @uses \app\controllers\entry\EntryLifeTime::delete_entry()  */
                             $group->post('/delete/{entry_name:[[:alnum:]\-]+}',
-                                ['entryLifeTime', 'delete_entry'])->setName('delete_entry');
+                                ['entryLifeTime', 'delete_entry'])->setName('delete_entry_ajax');
                         })->add('checkLoggedInMiddleware');
                 } );
 

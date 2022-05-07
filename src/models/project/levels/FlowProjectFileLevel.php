@@ -4,6 +4,7 @@ namespace app\models\project\levels;
 use app\helpers\ProjectHelper;
 use app\hexlet\JsonHelper;
 use app\hexlet\RecursiveClasses;
+use app\hexlet\WillFunctions;
 use app\models\entry\FlowEntryYaml;
 use app\models\project\IFlowProject;
 use Carbon\Carbon;
@@ -178,12 +179,13 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
         return $this->get_project_directory() . DIRECTORY_SEPARATOR . 'flow_project_readme_bb_code.bbcode';
     }
 
-    public function save(bool $b_do_transaction = true): void
+    public function save(bool $b_do_transaction = true,bool $b_commit_project = true): void
     {
+        WillFunctions::will_do_nothing($b_commit_project);
         $db = static::get_connection();
         try {
             if ($b_do_transaction && !$db->inTransaction()) { $db->beginTransaction();}
-            parent::save(false);
+            parent::save(false,$b_commit_project);
 
 
             $read_me_path_bb = $this->get_bb_code_path();
@@ -378,11 +380,7 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
      * @throws Exception
      */
     protected function get_projects_base_directory() : string {
-        $check =  static::$container->get('settings')->project->parent_directory;
-        if (!is_readable($check)) {
-            throw new RuntimeException("The directory of $check is not readable");
-        }
-        return $check;
+        return ProjectHelper::get_project_helper()->get_projects_base_directory();
     }
 
     /**

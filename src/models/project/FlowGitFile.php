@@ -19,6 +19,8 @@ class FlowGitFile {
      */
     public ?string $file;
 
+    public bool $b_file_deleted;
+
     /**
      * @var string $file
      */
@@ -31,6 +33,9 @@ class FlowGitFile {
         $this->commit = $commit;
         $this->file = $file;
         $this->short_name = $this->get_short_name();
+        $this->b_file_deleted = false;
+        $full_path = $this->project_path . DIRECTORY_SEPARATOR . $this->file;
+        if (!is_readable($full_path)) {$this->b_file_deleted = true;}
     }
 
     protected function get_short_name() : string {
@@ -39,6 +44,7 @@ class FlowGitFile {
             case 'flow_project_blurb': { $this->is_public = true ; return 'Project Blurb'; }
             case 'flow_project_title': { $this->is_public = true ; return 'Project Title'; }
             case 'tags.yaml': { $this->is_public = true ; return 'Tags'; }
+            case 'entry-summary.yaml': { $this->is_public = true ; return 'Entry Summary'; }
             default: {
 
                 if ($this->is_valid_resource_file()) {

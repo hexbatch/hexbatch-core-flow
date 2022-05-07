@@ -414,6 +414,7 @@
  * @property {FlowProject} project
  * @property {FlowEntry} entry
  * @property {string} entry_url
+ * @property {string} list_url
  */
 
 

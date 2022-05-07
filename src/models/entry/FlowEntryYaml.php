@@ -344,7 +344,11 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
         }
 
         foreach ($invalid as $invalid_folder) {
-            file_put_contents($invalid_folder.DIRECTORY_SEPARATOR.static::FILENAME_TO_MARK_INVALID,Carbon::now()->toIso8601String());
+            $invalid_file_path = $invalid_folder.DIRECTORY_SEPARATOR.static::FILENAME_TO_MARK_INVALID;
+            if (!is_readable($invalid_file_path)) {
+                file_put_contents($invalid_file_path,Carbon::now()->toIso8601String());
+            }
+
         }
 
         return $invalid;
