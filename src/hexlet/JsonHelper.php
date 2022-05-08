@@ -4,6 +4,7 @@ namespace app\hexlet;
 
 use Exception;
 use Highlight\Highlighter;
+use JBBCode\validators\FnValidator;
 use JetBrains\PhpStorm\NoReturn;
 use PHPHtmlParser\Dom;
 use app\hexlet\hexlet_exceptions\JsonHelperException;
@@ -658,14 +659,21 @@ class JsonHelper {
     }
 
 
+    public static function get_parsed_bb_code($original) : ?Parser {
 
-    public static function html_from_bb_code($original) : ?string {
 
-       // will_send_to_error_log('original',$original);
+
+        // will_send_to_error_log('original',$original);
         $safe_encoding = self::to_utf8($original);
-       // will_send_to_error_log('$safe_encoding',$safe_encoding);
+        // will_send_to_error_log('$safe_encoding',$safe_encoding);
         $trimmed = trim($safe_encoding);
-        if (empty($trimmed)) {return '';}
+        if (empty($trimmed)) {return null;}
+
+        //replace flow_tag with closing
+        $trimmed = preg_replace(
+            '/(?P<da_tag>\[flow_tag\s+tag=(?P<guid>[\da-fA-F]+)\s*])/',
+            '$1[/flow_tag]',
+            $trimmed);
 
         $trimmed = str_replace('<?php','≺?php',$trimmed);//php
         $trimmed = str_replace('<?=','≺?=',$trimmed);//php
@@ -674,7 +682,7 @@ class JsonHelper {
         //convert any p , br and non linux line returns to /n
         $lines_standardized = self::tags_to_n($trimmed,false,false);
 
-      //  will_send_to_error_log('$lines_standardized',$lines_standardized);
+        //  will_send_to_error_log('$lines_standardized',$lines_standardized);
 
 
 
@@ -803,20 +811,31 @@ class JsonHelper {
             /** @lang text */ '<img src="{param}" alt="bb image">'
         ));
 
-
-
-
+        $builder = new CodeDefinitionBuilder(
+            'flow_tag',
+            '<span class="flow-bb-tag flow-tag-display flow-tag-{tag} d-none" data-tag_guid="{tag}"></span>'
+        );
+        $builder->setUseOption(true)->setOptionValidator(new FnValidator(
+            function($input) {
+                return WillFunctions::is_valid_guid_format($input);
+            }),'tag')->setParseContent(false);
+        //flow_tag
+        $parser->addCodeDefinition( $builder->build());
 
 
         $parser->parse($body);
-        $whats_this = $parser->getRoot();
+        return $parser;
+    }
+
+    public static function html_from_bb_code($original) : ?string {
+
+
+        $parser = static::get_parsed_bb_code($original);
+
+
         $post =  $parser->getAsHtml();
 
-        //todo add new tag bbcode to front end and here [tag guid as attribute]
-        //will be this html tag class with the guid attribute (or guid data attribute), so can be rendered at html and stuff
-
-
-        //todo the root, and the tag bb code to make rows for each thing with its parent in new table
+        //todo convert tag bb to invisible span of guid
 
 
 

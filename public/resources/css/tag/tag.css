@@ -87,3 +87,7 @@ span.flow-tag-display.flow-tag-no-borders-padding {
     box-shadow: none;
     border-radius: 0;
 }
+
+.flow-tag-no-pointer-events {
+    pointer-events: none !important;
+}

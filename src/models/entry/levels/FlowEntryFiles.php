@@ -8,6 +8,7 @@ use app\helpers\Utilities;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\IFlowEntryArchive;
+use app\models\entry\entry_node\EntryNode;
 use app\models\entry\FlowEntryYaml;
 use app\models\entry\IFlowEntry;
 use app\models\project\IFlowProject;
@@ -327,6 +328,9 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
                 'id' => $this->get_id()
             ]
         );
+
+        $parser = JsonHelper::get_parsed_bb_code($this->get_bb_code());
+        EntryNode::parse_root($parser->getRoot(),null);
 
     }
 

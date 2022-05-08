@@ -99,7 +99,6 @@ jQuery(function($) {
                 content: 'No tag selected',delay:10000,type:'warning'});
             return;
         }
-        //todo selected seems to have issues with tag of no css in the select2 edit box, and add css to iframe!
         let bb_tag = `[flow_tag tag=${insert_this_tag.flow_tag_guid}]`
         da_bb_code_editor.insert(
             bb_tag, null,
@@ -144,7 +143,7 @@ function create_living_bb_editor(textarea_id,hidden_id) {
         html: function(token, attrs, content) {
             if(  attrs.hasOwnProperty('tag') ) {
                 if (attrs.tag) {
-                    content = `<span class="flow-bb-tag flow-tag-display flow-tag-${attrs.tag}" data-tag_guid="${attrs.tag}"></span>`;
+                    content = `<span class="flow-bb-tag flow-tag-display flow-tag-no-pointer-events flow-tag-${attrs.tag}" data-tag_guid="${attrs.tag}"></span>`;
                     setTimeout(function() {
                         update_tags_in_display(false);
                     },100)
@@ -179,6 +178,18 @@ function create_living_bb_editor(textarea_id,hidden_id) {
     });
     da_bb_code_editor = textarea._sceditor;
 
+    //insert styles
+    let editor_body_node = da_bb_code_editor.getBody();
+    let da_body = $(editor_body_node);
+    let da_head = da_body.siblings('head');
+    da_head.append(`<link rel="preload"
+          href="https://fonts.googleapis.com/css?family=Roboto|Open+Sans|Space+Mono|Lato|Montserrat|Oswald|Raleway|Merriweather|Inconsolata|Allura|Sigmar+One|Gloria+Hallelujah|Montez|Lobster|Josefin+Sans|Shadows+Into+Light|Pacifico|Amatic+SC:700|Orbitron:400,900|Rokkitt|Righteous|Dancing+Script:700|Bangers|Chewy|Sigmar+One|Architects+Daughter|Abril+Fatface|Covered+By+Your+Grace|Kaushan+Script|Gloria+Hallelujah|Satisfy|Lobster+Two:700|Comfortaa:700|Cinzel|Courgette"
+          as="style"
+          onload="this.onload=null;this.rel='stylesheet'">`);
+
+    da_head.append(`<link rel="stylesheet" href="${TAG_STYLE_LINK}" />`);
+    da_head.append(`<link rel="stylesheet" href="${BOOTSTRAP_ICONS_STYLE_LINK}" />`);
+    console.log('dis is what I found',da_head);
 
 
     da_bb_code_editor.bind('valuechange  keyup blur paste pasteraw',function(/* e */) {

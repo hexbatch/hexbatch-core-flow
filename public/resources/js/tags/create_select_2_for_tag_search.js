@@ -33,7 +33,10 @@ function create_select_2_for_tag_search(bare_select_control,b_multi,
                 `</span>`;
 
             let tode = jQuery(display);
-            tode.css(tag_style_object);
+            if(!_.isEmpty(tag_style_object)) {
+                tode.css(tag_style_object);
+            }
+
             return tode;
         } else {
             let display = `<span `+
