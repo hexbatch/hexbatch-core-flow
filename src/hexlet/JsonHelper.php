@@ -2,6 +2,7 @@
 
 namespace app\hexlet;
 
+use app\models\entry\entry_node\IFlowEntryNode;
 use Exception;
 use Highlight\Highlighter;
 use JBBCode\validators\FnValidator;
@@ -670,9 +671,10 @@ class JsonHelper {
         if (empty($trimmed)) {return null;}
 
         //replace flow_tag with closing
+        $flow_tag_name = IFlowEntryNode::FLOW_TAG_BB_CODE_NAME;
         $trimmed = preg_replace(
-            '/(?P<da_tag>\[flow_tag\s+tag=(?P<guid>[\da-fA-F]+)\s*])/',
-            '$1[/flow_tag]',
+            "/(?P<da_tag>\[$flow_tag_name\s+tag=(?P<guid>[\da-fA-F]+)\s*])/",
+            "$1[/$flow_tag_name]",
             $trimmed);
 
         $trimmed = str_replace('<?php','≺?php',$trimmed);//php
@@ -812,7 +814,7 @@ class JsonHelper {
         ));
 
         $builder = new CodeDefinitionBuilder(
-            'flow_tag',
+            $flow_tag_name,
             '<span class="flow-bb-tag flow-tag-display flow-tag-{tag} d-none" data-tag_guid="{tag}"></span>'
         );
         $builder->setUseOption(true)->setOptionValidator(new FnValidator(

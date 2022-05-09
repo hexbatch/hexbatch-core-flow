@@ -29,7 +29,7 @@ abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable
 
     public function get_entry() : IFlowEntry { return $this->entry;}
 
-    #[ArrayShape(["flow_entry_guid" => "\null|string", "flow_entry_parent_guid" => "\null|string", "flow_project_guid" => "\null|string", "entry_created_at_ts" => "\int|null", "entry_updated_at_ts" => "\int|null"])]
+    #[ArrayShape(["flow_entry_guid" => "null|string", "flow_entry_parent_guid" => "null|string", "flow_project_guid" => "null|string", "entry_created_at_ts" => "\int|null", "entry_updated_at_ts" => "\int|null"])]
     public function jsonSerialize(): array {
         return $this->to_array();
     }

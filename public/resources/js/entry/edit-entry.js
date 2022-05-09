@@ -99,7 +99,7 @@ jQuery(function($) {
                 content: 'No tag selected',delay:10000,type:'warning'});
             return;
         }
-        let bb_tag = `[flow_tag tag=${insert_this_tag.flow_tag_guid}]`
+        let bb_tag = `[${FLOW_TAG_BB_CODE} tag=${insert_this_tag.flow_tag_guid}]`
         da_bb_code_editor.insert(
             bb_tag, null,
             true, // filter
@@ -138,7 +138,7 @@ function create_living_bb_editor(textarea_id,hidden_id) {
             if(!el_dom_tag.data('tag_guid'))
                 return content;
 
-            return `[flow_tag tag=${el_dom_tag.data('tag_guid')}]`;
+            return `[${FLOW_TAG_BB_CODE} tag=${el_dom_tag.data('tag_guid')}]`;
         },
         html: function(token, attrs, content) {
             if(  attrs.hasOwnProperty('tag') ) {
@@ -158,7 +158,7 @@ function create_living_bb_editor(textarea_id,hidden_id) {
         quoteType: sceditor.BBCodeParser.QuoteType.auto
     }
 
-    sceditor.formats.bbcode.set('flow_tag',flow_tag_bb_struct);
+    sceditor.formats.bbcode.set(`${FLOW_TAG_BB_CODE}`,flow_tag_bb_struct);
 
 
 

@@ -15,26 +15,28 @@ class GeneralSearch extends FlowBase {
     const TYPE_USER = 'user';
     const TYPE_PROJECT = 'project';
     const TYPE_ENTRY = 'entry';
+    const TYPE_ENTRY_NODE = 'entry_node';
     const TYPE_TAG = 'tag';
 
     const ALL_TYPES_KEYWORD = 'all';
     const ALL_TYPES_BUT_TAGS_KEYWORD = 'not-tags';
 
-    const ALL_TYPES_BUT_TAGS = [
+    const ALL_SEARCH_TYPES_BUT_TAGS = [
         GeneralSearch::TYPE_PROJECT,
         GeneralSearch::TYPE_ENTRY,
         GeneralSearch::TYPE_USER
     ];
 
-    const ALL_TYPES = [
+    const ALL_SEARCH_TYPES = [
         GeneralSearch::TYPE_PROJECT,
         GeneralSearch::TYPE_ENTRY,
         GeneralSearch::TYPE_USER,
         GeneralSearch::TYPE_TAG
     ];
 
-    public static function is_valid_type($what_type) : bool {
-        return in_array($what_type,static::ALL_TYPES);
+
+    public static function is_valid_search_type($what_type) : bool {
+        return in_array($what_type,static::ALL_SEARCH_TYPES);
     }
 
     /**
@@ -113,7 +115,7 @@ class GeneralSearch extends FlowBase {
         if (count($search->types)) {
             $in_question_array=[];
             foreach ($search->types as $a_type) {
-                if ( GeneralSearch::is_valid_type($a_type) ) {
+                if ( GeneralSearch::is_valid_search_type($a_type) ) {
                     $args[] = $a_type;
                     $in_question_array[] = "?";
                 }

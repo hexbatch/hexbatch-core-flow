@@ -354,7 +354,7 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
         return $invalid;
     }
 
-    #[ArrayShape(['entry_name' => "mixed", 'flow_entry_guid' => "mixed", 'flow_entry_parent_guid' => "mixed", 'flow_project_guid' => "mixed", 'entry_created_at_ts' => "mixed", 'entry_updated_at_ts' => "mixed", 'human_date_time' => "\null|string", 'folder_hash' => "\null|string", 'child_entries' => "\app\models\entry\FlowEntryYaml[]|array"])]
+    #[ArrayShape(['entry_name' => "mixed", 'flow_entry_guid' => "mixed", 'flow_entry_parent_guid' => "mixed", 'flow_project_guid' => "mixed", 'entry_created_at_ts' => "mixed", 'entry_updated_at_ts' => "mixed", 'human_date_time' => "null|string", 'folder_hash' => "null|string", 'child_entries' => "\app\models\entry\FlowEntryYaml[]|array"])]
     public function jsonSerialize() : array
     {
        return $this->toArray();

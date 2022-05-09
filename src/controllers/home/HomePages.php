@@ -192,11 +192,11 @@ class HomePages extends BasePages
             {
                 if ($root['types'] === GeneralSearch::ALL_TYPES_KEYWORD )
                 {
-                    $search->types = GeneralSearch::ALL_TYPES;
+                    $search->types = GeneralSearch::ALL_SEARCH_TYPES;
                 }
                 elseif ($root['types'] === GeneralSearch::ALL_TYPES_BUT_TAGS_KEYWORD)
                 {
-                    $search->types = GeneralSearch::ALL_TYPES_BUT_TAGS;
+                    $search->types = GeneralSearch::ALL_SEARCH_TYPES_BUT_TAGS;
                 }
                 else
                 {

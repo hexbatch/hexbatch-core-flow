@@ -36,7 +36,7 @@ abstract class FlowProjectUserLevelLevel extends FlowProjectDataLevel {
      * @return array
      * @throws Exception
      */
-    #[ArrayShape(['flow_project_title' => "\null|string", 'flow_project_guid' => "\null|string", 'created_at_ts' => "\int|null", 'flow_project_blurb' => "\null|string", 'admin_user' => "\app\models\user\FlowUser|null"])]
+    #[ArrayShape(['flow_project_title' => "null|string", 'flow_project_guid' => "null|string", 'created_at_ts' => "\int|null", 'flow_project_blurb' => "null|string", 'admin_user' => "\app\models\user\FlowUser|null"])]
     public function jsonSerialize() : array
     {
         $ret = parent::jsonSerialize();

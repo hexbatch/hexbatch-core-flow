@@ -699,7 +699,7 @@ class FlowTag extends FlowBase implements JsonSerializable {
                     $db->rollBack();
                 }
             }
-            static::get_logger()->alert("Tag model cannot save ",['exception'=>$e]);
+            static::get_logger()->alert("Tag model cannot save ",['exception'=>$e->getMessage()]);
             throw $e;
         }
     }
