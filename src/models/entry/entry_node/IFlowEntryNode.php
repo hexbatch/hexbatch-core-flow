@@ -38,4 +38,6 @@ interface IFlowEntryNode {
     public function save(bool $b_do_transaction = false, bool $b_save_children = false) :void;
     public function get_as_bb_code() :string ;
 
+    public function add_child(IFlowEntryNode $node): void;
+
 }

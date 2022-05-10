@@ -78,6 +78,17 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
     public function get_applied_flow_tag_guid() : ?string {return $this->flow_applied_tag_guid ;}
     public function get_applied() : ?FlowAppliedTag {return $this->flow_applied_tag ;}
 
+    public function add_child(IFlowEntryNode $node): void {
+
+        preg_match('/\[flow_tag\s+tag=(?P<guid>[\da-fA-F]+)\s*]/',
+            $node->get_node_text()??'', $output_array);
+        if ($output_array['guid']??null) {
+            $tag_guid = $output_array['guid'];
+            $this->set_tag_guid($tag_guid);
+        }
+        $this->children_nodes[] = $node;
+    }
+
     public function __construct($object=null){
         $this->pass_through_value = 0;
         $this->entry_node_id = null;
@@ -104,12 +115,20 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
 
         if (empty($object)) {return null;}
         if (!is_object($object)) {
+            $rem_parent = null;
+            if (is_array($object) && array_key_exists('parent',$object) && $object['parent'] instanceof IFlowEntryNode) {
+                $rem_parent = $object['parent'];
+                unset($object['parent']);
+            }
             $object = Utilities::convert_to_object($object);
+            if ($rem_parent) {
+                $object->parent = $rem_parent;
+            }
         }
 
         foreach ($object as $key => $val) {
             if ($key === 'entry_node_attributes') {
-               if (!is_object($object)) {
+               if (!is_object($val)) {
                    $this->entry_node_attributes = Utilities::convert_to_object($val);
                 } else {
                    $this->entry_node_attributes = $val;
@@ -119,7 +138,9 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
                 if ($val instanceof IFlowEntryNode) {
                     $this->parent = $val;
                 } else {
-                    $this->parent= new FlowEntryNode($val);
+                    if (!empty($val)) {
+                        $this->parent= new FlowEntryNode($val);
+                    }
                 }
             }
             elseif ($key === 'applied_tag') {
@@ -206,7 +227,28 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
     public static function parse_root(DocumentElement $root): array
     {
         $temp_counter = 0;
-        return static::parse_root_inner($root,null,$temp_counter);
+        $found_nodes =  static::parse_root_inner($root,null,$temp_counter);
+
+        //do the tree
+        $data = [];
+        $data[] = ['id' => 0, 'parent' => -1, 'title' => 'dummy_root','entry_node'=>null];
+        foreach ($found_nodes as $whrat) {
+            $data[] = ['id' => $whrat->pass_through_value, 'parent' => $whrat->parent?->pass_through_value??0,
+                'title' => $whrat->entry_node_words,'entry_node'=>$whrat];
+        }
+
+        $tree = new Tree(
+            $data,
+            ['rootId' => -1]
+        );
+
+        $sorted_nodes =  $tree->getNodes();
+        $ret = [];
+        foreach ($sorted_nodes as $node) {
+            $what =  $node->entry_node??null;
+            if ($what) {$ret[] = $what;}
+        }
+        return $ret;
     }
 
     /**
@@ -221,88 +263,59 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
          * @var IFlowEntryNode $ret
          */
         $ret = [];
-        try {
 
-            $temp_counter++;
-            switch (get_class($node)) {
+        $temp_counter++;
+        switch (get_class($node)) {
 
-                case "JBBCode\DocumentElement":
-                case "JBBCode\ElementNode":
-                {
-                    $entry_node =
-                        new FlowEntryNode([
-                            'bb_tag_name' => $node->getTagName(),
-                            'parent' => $parent,
-                            'entry_node_attributes'=>$node->getAttribute() ?? []
-                        ]);
-                    $entry_node->pass_through_value = $temp_counter++;
-                    if ($node->getTagName() !== 'flow_tag') {
-                        $ret[] = $entry_node;
-                    }
-
-                    $children_returns = [];
-                    foreach ($node->getChildren() as $child) {
-                        $children_returns[] = static::parse_root_inner($child, $entry_node,$temp_counter);
-                    }
-                    foreach ($children_returns as $chit) {
-                        if (is_array($chit)) {
-                            $ret = array_merge($ret, $chit);
-                        } else {
-                            if ($node->getTagName() !== 'flow_tag') {
-                                $ret[] = $chit;
-                            }
-
-                        }
-                    }
-
-
-                    break;
-                }
-                case "JBBCode\TextNode":
-                {
-                    $entry_node = new FlowEntryNode( [
-                            'text',
-                            'entry_node_words'=> $node->getAsText(),
-                            'parent' => $parent,
+            case "JBBCode\DocumentElement":
+            case "JBBCode\ElementNode":
+            {
+                $entry_node =
+                    new FlowEntryNode([
+                        'bb_tag_name' => $node->getTagName(),
+                        'parent' => $parent,
+                        'entry_node_attributes'=>$node->getAttribute() ?? []
                     ]);
-                    $entry_node->pass_through_value = $temp_counter++;
+                $entry_node->pass_through_value = $temp_counter++;
+                $parent?->add_child($entry_node);
+                $ret[] = $entry_node;
 
-                    preg_match('/\[flow_tag\s+tag=(?P<guid>[\da-fA-F]+)\s*]/',
-                        $node->getAsText()??'', $output_array);
-                    if ($output_array['guid']??null) {
-                        $tag_guid = $output_array['guid'];
-                        $parent->set_tag_guid($tag_guid);
-                        return []; //do not add to nodes in this special case
+                $children_returns = [];
+                foreach ($node->getChildren() as $child) {
+                    $children_returns[] = static::parse_root_inner($child, $entry_node,$temp_counter);
+                }
+                foreach ($children_returns as $chit) {
+                    if (is_array($chit)) {
+                        $ret = array_merge($ret, $chit);
+                    } else {
+                        if ($node->getTagName() !== 'flow_tag') {
+                            $ret[] = $chit;
+                        }
+
                     }
-                    $ret[] = $entry_node;
-                    break;
                 }
-                default:
-                {
-                    throw new LogicException("[parse_root_inner] Unexpected class " . get_class($node));
-                }
-            }
-        } finally {
-            //do the tree
-            $data = [];
-            $data[] = ['id' => 0, 'parent' => -1, 'title' => 'dummy_root','entry_node'=>null];
-            foreach ($ret as $whrat) {
-                $data[] = ['id' => $whrat->pass_through_value, 'parent' => $whrat->parent?->pass_through_value??0,
-                    'title' => $whrat->entry_node_words,'entry_node'=>$whrat];
-            }
 
-            $tree = new Tree(
-                $data,
-                ['rootId' => -1]
-            );
 
-            $sorted_nodes =  $tree->getNodes();
-            $new_ret = [];
-            foreach ($sorted_nodes as $node) {
-                $what =  $node->entry_node??null;
-                if ($what) {$new_ret[] = $what;}
+                break;
             }
-            $ret = $new_ret;
+            case "JBBCode\TextNode":
+            {
+                $entry_node = new FlowEntryNode( [
+                    'bb_tag_name' => 'text',
+                    'entry_node_words'=> $node->getAsText(),
+                    'parent' => $parent
+                ]);
+                $entry_node->pass_through_value = $temp_counter++;
+                $parent?->add_child($entry_node);
+
+
+                $ret[] = $entry_node;
+                break;
+            }
+            default:
+            {
+                throw new LogicException("[parse_root_inner] Unexpected class " . get_class($node));
+            }
         }
         return $ret;
     }
@@ -337,7 +350,7 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
 
             $entry_node_attributes_as_json = JsonHelper::toString($this->entry_node_attributes);
             $save_info = [
-                'flow_entry_parent_id' => $this->flow_entry_parent_id,
+                'flow_entry_node_parent_id' => $this->parent_id,
                 'bb_tag_name' => $this->bb_tag_name,
                 'entry_node_words' => $this->entry_node_words,
                 'entry_node_attributes' => $entry_node_attributes_as_json,
@@ -353,10 +366,10 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
             elseif ($this->entry_node_guid) {
                 $insert_sql = "
                     INSERT INTO flow_entry_nodes
-                        (flow_entry_id,flow_entry_parent_id, bb_tag_name, entry_node_words, entry_node_guid, entry_node_attributes)  
+                        (flow_entry_id,flow_entry_node_parent_id, bb_tag_name, entry_node_words, entry_node_guid, entry_node_attributes)  
                     VALUES (?,?,?,?,UNHEX(?),?)
                     ON DUPLICATE KEY UPDATE flow_entry_id =   VALUES(flow_entry_id),
-                                            flow_entry_parent_id =     VALUES(flow_entry_parent_id),
+                                            flow_entry_node_parent_id =     VALUES(flow_entry_node_parent_id),
                                             bb_tag_name =     VALUES(bb_tag_name)   ,    
                                             entry_node_words =     VALUES(entry_node_words)   ,    
                                             entry_node_attributes =     VALUES(entry_node_attributes)     

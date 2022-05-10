@@ -39,7 +39,7 @@ class AddFlowEntryNodes extends AbstractMigration
             CREATE TABLE flow_entry_nodes (
                 `id` INT NOT NULL AUTO_INCREMENT ,
                 `flow_entry_id` INT NULL DEFAULT NULL ,
-                `flow_entry_parent_id` INT NULL DEFAULT NULL ,
+                `flow_entry_node_parent_id` INT NULL DEFAULT NULL ,
                 `entry_node_created_at` DATETIME NOT NULL DEFAULT current_timestamp,
                 `entry_node_updated_at` TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
                  entry_node_guid BINARY(16) DEFAULT NULL ,
@@ -48,13 +48,13 @@ class AddFlowEntryNodes extends AbstractMigration
                 `entry_node_attributes` JSON NULL DEFAULT NULL,
                 PRIMARY KEY (`id`),
                 KEY idx_flow_entry_id (flow_entry_id),
-                KEY idx_flow_entry_parent_id (flow_entry_parent_id),
+                KEY idx_flow_entry_parent_id (flow_entry_node_parent_id),
                 UNIQUE KEY udx_entry_node_guid (entry_node_guid),
                 constraint fk_flow_entry_nodes_has_entry_id
                     foreign key (flow_entry_id) references flow_entries (id)
                         on update cascade on delete cascade,
                 constraint fk_flow_entry_nodes_has_parent_id
-                    foreign key (flow_entry_parent_id) references flow_entry_nodes (id)
+                    foreign key (flow_entry_node_parent_id) references flow_entry_nodes (id)
                         on update cascade on delete cascade        
            ) ENGINE = InnoDB COMMENT = 'Holds parsed bb code to allow tag manipulation and consistency ';
 

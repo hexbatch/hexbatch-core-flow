@@ -2,7 +2,9 @@
 
 namespace app\models\base;
 
+use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
+use InvalidArgumentException;
 
 class SearchParamBase {
 
@@ -77,6 +79,34 @@ class SearchParamBase {
         $this->page = 1;
         $this->page_size = static::DEFAULT_PAGE_SIZE;
     }
+
+
+    /**
+     * @param mixed $guid_thing
+     * @return string[]
+     */
+    public static function validate_cast_guid_array(mixed $guid_thing): array
+    {
+        $ret = [];
+        if (empty($guid_thing)) {return $ret;}
+        if (JsonHelper::isJson($guid_thing)) {
+            $try_me = JsonHelper::fromString($guid_thing);
+            if (is_array($try_me)) { $ret = array_unique(array_merge($ret,static::validate_cast_guid_array($try_me))) ; }
+        } elseif (is_array($guid_thing) && count($guid_thing)) {
+            foreach ($guid_thing as $one_thing) {
+                $ret = array_unique(array_merge($ret,static::validate_cast_guid_array($one_thing)));
+            }
+        } else {
+            $type = static::find_type_of_arg($guid_thing);
+            if ($type === static::ARG_IS_HEX ) {
+                $ret[] = $guid_thing;
+            } else {
+                throw new InvalidArgumentException("Must be guid: ". $type);
+            }
+        }
+        return $ret;
+    }
+
 
 
 }
