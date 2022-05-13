@@ -2,6 +2,7 @@
 
 namespace app\helpers;
 
+use app\hexlet\hexlet_exceptions\JsonHelperException;
 use app\hexlet\JsonHelper;
 use Carbon\Carbon;
 use DI\DependencyException;
@@ -86,24 +87,29 @@ class Utilities extends BaseHelper {
         return $now->toIso8601String();
     }
 
-    public static function convert_to_object($what) : ?object {
+    public static function convert_to_object($what) : null|array|object {
         if (is_null($what)) { return null;}
         if (is_array($what) || is_object($what)) {
             $json = JsonHelper::toString($what);
         } elseif (JsonHelper::isJson($what)) {
             $json = $what;
         } else {
-            throw new InvalidArgumentException("This cannot be converted to an object: ".print_r($what,true));
+            throw new InvalidArgumentException(
+                "[convert_to_object] This cannot be converted to an object: ".print_r($what,true));
         }
-        return JsonHelper::fromString($json,true,false);
+        $converted =  JsonHelper::fromString($json,true,false);
+        if (! (is_object($converted) || is_array($converted) || is_null($converted))) {
+            throw new JsonHelperException("[convert_to_object] not an array, object or null ! ". $json);
+        }
+        return $converted;
     }
 
-    public static function deep_copy($what) {
+    public static function deep_copy($what,$b_to_array = false) {
         if (!(is_array($what) || is_object($what))) { return $what; } //will copy if primitive
         $json = JsonHelper::toString($what);
-        $b_to_array = false;
-        if (is_array($what)) { $b_to_array = true;}
-        return JsonHelper::fromString($json,true,$b_to_array);
+        $to_array_flag = false;
+        if (is_array($what) || $b_to_array) { $to_array_flag = true;}
+        return JsonHelper::fromString($json,true,$to_array_flag);
     }
 
     public static function print_nice($what): string

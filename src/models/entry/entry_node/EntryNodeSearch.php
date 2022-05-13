@@ -2,25 +2,36 @@
 
 namespace app\models\entry\entry_node;
 
-use app\models\base\FlowBase;
-use BlueM\Tree;
+use app\models\entry\IFlowEntry;
+use Exception;
 use InvalidArgumentException;
-use ParagonIE\EasyDB\Exception\QueryError;
 use PDO;
-use TypeError;
 
 
-class EntryNodeSearch extends FlowBase {
+class EntryNodeSearch extends EntryNodeContainer {
 
     /**
      * @param EntryNodeSearchParams $params
-     * @return IFlowEntryNode[]
+     * @return EntryNodeSearch
+     * @throws Exception
      */
-    public static function search(EntryNodeSearchParams $params) : array {
+    public function search(EntryNodeSearchParams $params) : EntryNodeSearch {
 
+        if($params->is_empty()) {throw new InvalidArgumentException("search for nodes: params is empty");}
         $args = [];
         $where_and = [];
-        //todo fixup and implement node search
+        $used_inner_joins = [];
+        $inner_joins = [];
+        /*
+         *
+
+         */
+        $inner_joins['applied'] = "INNER JOIN flow_applied_tags driver_applied on ".
+                                        "driver_applied.tagged_flow_entry_node_id = driver_node.id";
+
+        $inner_joins['tag'] = "INNER JOIN flow_tags driver_tag  on driver_tag.id = driver_applied.flow_tag_id";
+
+        $inner_joins['parent'] = "INNER JOIN flow_tags driver_parent_tag  on driver_tag.flow_entry_node_parent_id = driver_parent_tag.id";
 
         if (count($params->getTagGuids())) {
             $in_question_array = [];
@@ -31,6 +42,7 @@ class EntryNodeSearch extends FlowBase {
             if (count($in_question_array)) {
                 $comma_delimited_unhex_question = implode(",",$in_question_array);
                 $where_and[] = "driver_tag.flow_tag_guid in ($comma_delimited_unhex_question)";
+                $used_inner_joins['tag'] = $inner_joins['tag'];
             }
         }
 
@@ -42,7 +54,8 @@ class EntryNodeSearch extends FlowBase {
             }
             if (count($in_question_array)) {
                 $comma_delimited_unhex_question = implode(",",$in_question_array);
-                $where_and[] = "driver_tag.flow_tag_guid in ($comma_delimited_unhex_question)";
+                $where_and[] = "driver_applied.flow_applied_tag_guid in ($comma_delimited_unhex_question)";
+                $used_inner_joins['applied'] = $inner_joins['applied'];
             }
         }
 
@@ -54,7 +67,7 @@ class EntryNodeSearch extends FlowBase {
             }
             if (count($in_question_array)) {
                 $comma_delimited_unhex_question = implode(",",$in_question_array);
-                $where_and[] = "driver_tag.flow_tag_guid in ($comma_delimited_unhex_question)";
+                $where_and[] = "driver_entry.flow_entry_guid in ($comma_delimited_unhex_question)";
             }
         }
 
@@ -66,16 +79,31 @@ class EntryNodeSearch extends FlowBase {
             }
             if (count($in_question_array)) {
                 $comma_delimited_unhex_question = implode(",",$in_question_array);
-                $where_and[] = "driver_tag.flow_tag_guid in ($comma_delimited_unhex_question)";
+                $where_and[] = "driver_node.entry_node_guid in ($comma_delimited_unhex_question)";
             }
         }
 
-        if (empty($where_and)) {return [];}
+        if ($params->getParentGuid()) {
+            $used_inner_joins['parent'] = $inner_joins['parent'];
+            $where_and[] = "driver_parent_tag.entry_node_guid = ?";
+            $args[] = $params->getParentGuid();
+        }
+
+        if (!is_null($params->getIsTopNode())) {
+            if ($params->getIsTopNode()) {
+                $where_and[] = "driver_node.flow_entry_node_parent_id IS NULL";
+            } else {
+                $where_and[] = "driver_node.flow_entry_node_parent_id IS NOT NULL";
+            }
+
+        }
+
+        if (empty($where_and)) {return $this;}
         
 
 
         $where_stuff = implode(' AND ',$where_and);
-
+        $inner_joins_combined = implode("\n",$used_inner_joins);
 
         $page_size = $params->getPageSize();
         $start_place = ($params->getPage() - 1) * $page_size;
@@ -84,87 +112,62 @@ class EntryNodeSearch extends FlowBase {
         $db = static::get_connection();
 
 
-        /*
-          entry_node_id 
-        flow_entry_id 
-        entry_node_created_at_ts 
-        entry_node_updated_at_ts 
-        entry_node_guid 
-        bb_tag_name 
-        entry_node_words 
-        flow_entry_guid 
-        parent_entry_node_guid 
-        parent_id 
-        parent 
-        entry_node_attributes = (object)[];
-        children_nodes = [];
+        $sql = "SELECT
 
-        flow_applied_tag_guid 
-        flow_applied_tag_id 
-        flow_applied_tag 
-
-        flow_tag 
-        flow_tag_id 
-        flow_tag_guid 
-
-         */
-
-        $sql = "SELECT 
+                    node.id                                     as node_id,
+                    HEX(node.entry_node_guid)                   as node_guid,
                     
-                    t.id                                    as tag_id,
-                    HEX(t.flow_tag_guid)                    as tag_guid,
-                    attribute.id                            as attribute_id,
-                    HEX(attribute.flow_tag_attribute_guid)  as attribute_guid,
-                    attribute.tag_attribute_name            as attribute_name,
-                    attribute.tag_attribute_long            as long_val,
-                    attribute.tag_attribute_text            as text_val    ,
-                    
-                    t.parent_tag_id                         as parent_tag_id ,
-                    HEX(parent_t.flow_tag_guid)             as parent_tag_guid,
-                    HEX(project.flow_project_guid)          as project_guid,
-                    HEX(u.flow_user_guid)                   as owner_user_guid
-       
-                FROM flow_tags t
+                    UNIX_TIMESTAMP(node.entry_node_created_at)  as node_created_at_ts,
+                    UNIX_TIMESTAMP(node.entry_node_updated_at)  as node_updated_at_ts,
+                    node.bb_tag_name                            as bb_tag_name,
+                    node.entry_node_words                       as node_words,
+                    HEX(entry.flow_entry_guid)                  as flow_entry_guid,
+                    node.flow_entry_id                          as flow_entry_id,
+                    HEX(parent.entry_node_guid)                 as parent_guid,
+                    node.flow_entry_node_parent_id              as parent_id,
+                    node.entry_node_attributes                  as node_attributes,
+                    HEX(applied.flow_applied_tag_guid)          as flow_applied_tag_guid,
+                    applied.id                                  as flow_applied_tag_id,
+                    HEX(tag.flow_tag_guid)                      as flow_tag_guid,
+                    tag.id                                      as flow_tag_id
+                
+                
+                FROM flow_entry_nodes node
                 INNER JOIN  (
-                    
-                    
+                
+                
                     WITH RECURSIVE cte AS (
                         (
-                            SELECT 0 as depth, driver_tag.id as flow_tag_id , driver_tag.parent_tag_id, cast(null as SIGNED ) as child_tag_id
-                            FROM flow_tags driver_tag
-                            INNER JOIN flow_projects driver_project ON driver_project.id = driver_tag.flow_project_id
-                           
-                            WHERE 1 
-                                AND $where_stuff  
-                                LIMIT $start_place , $page_size
+                            SELECT driver_node.id as entry_node_id,
+                                   driver_node.flow_entry_node_parent_id,
+                                   0 as da_count
+                            FROM flow_entry_nodes driver_node
+                            INNER JOIN flow_entries driver_entry ON driver_entry.id = driver_node.flow_entry_id
+                            $inner_joins_combined
+                            where  1 
+                                    AND $where_stuff  
+                                    LIMIT $start_place , $page_size
                         )
-                        UNION
-                        DISTINCT
-                        (
-                            SELECT  1, parent_tag.id as flow_tag_id, parent_tag.parent_tag_id, c.flow_tag_id as child_tag_id
-                            FROM cte c
-                            INNER JOIN flow_tags parent_tag ON parent_tag.id = c.parent_tag_id
-                        )
-                        UNION
-                        DISTINCT
-                        (
-                            SELECT 2 , child_tag.id as flow_tag_id,  c.flow_tag_id as parent_tag_id, null as child_tag_id
-                            FROM cte c
-                                     INNER JOIN flow_tags child_tag ON child_tag.parent_tag_id = c.flow_tag_id
-                        )
+                        UNION ALL
+                        SELECT child.id, child.flow_entry_node_parent_id, op.da_count + 1
+                        FROM flow_entry_nodes child
+                                 INNER JOIN cte op ON op.entry_node_id = child.flow_entry_node_parent_id
+                        
                     )
-                    SELECT group_concat(depth) as depth ,cte.flow_tag_id, cte.parent_tag_id, group_concat(cte.child_tag_id) as children_list
+                    SELECT group_concat(da_count) as depth ,cte.entry_node_id, cte.flow_entry_node_parent_id
                     FROM cte
-                    GROUP BY cte.flow_tag_id, cte.parent_tag_id
-                    
-                    
-                )  as driver ON driver.flow_tag_id = t.id  
-                LEFT JOIN flow_tags parent_t ON parent_t.id = t.parent_tag_id
-                LEFT JOIN flow_tag_attributes attribute on attribute.flow_tag_id = t.id
-                INNER JOIN flow_projects project on t.flow_project_id = project.id
-                INNER JOIN flow_users u on project.admin_flow_user_id = u.id
-                WHERE 1 
-                ORDER BY tag_id,attribute_id DESC ;
+                    GROUP BY cte.entry_node_id, cte.flow_entry_node_parent_id
+                
+                
+                )  as driver ON driver.entry_node_id = node.id
+                INNER JOIN flow_entries entry ON entry.id = node.flow_entry_id
+                LEFT JOIN flow_entry_nodes parent ON parent.id = node.flow_entry_node_parent_id
+                LEFT JOIN flow_applied_tags applied on applied.tagged_flow_entry_node_id = node.id
+                LEFT JOIN flow_tags tag  on tag.id = applied.flow_tag_id
+                WHERE 1
+                ORDER BY node.id ASC ;
+
+
                 ";
 
 
@@ -172,121 +175,32 @@ class EntryNodeSearch extends FlowBase {
 
             $res = $db->safeQuery($sql, $args, PDO::FETCH_OBJ);
 
+            $this->flat_contents = [];
+
+            /**
+             * @var array<string,IFlowEntry> $nodes
+             */
             $nodes = [];
+
             foreach ($res as $row) {
                 $node = new FlowEntryNode($row);
-                if (is_null($node->getAttributeGuid())) { continue;}
-                $nodes[] = $node;
-            }
-            if (empty($nodes)) {return [];}
-
-            $ret = static::sort_raw_array_by_parent_tag($nodes);
-
-            /**
-             * @var array<string,RawAttributeData[]> $map_raw_by_tag_guid
-             */
-            $map_raw_by_tag_guid = [];
-            foreach ($ret as $mapper) {
-                if (!isset($map_raw_by_tag_guid[$mapper->getTagGuid()])) {
-                    $map_raw_by_tag_guid[$mapper->getTagGuid()] = [];
-                }
-                $map_raw_by_tag_guid[$mapper->getTagGuid()][] = $mapper;
+                $this->flat_contents[] = $node;
+                $nodes[$node->get_node_guid()] = $node;
             }
 
-            /**
-             * @var array<string,string> $map_tag_parent_guid_by_tag_guid
-             */
-            $map_tag_parent_guid_by_tag_guid = [];
-            foreach ($ret as $mapper) {
-                $map_tag_parent_guid_by_tag_guid[$mapper->getTagGuid()] = $mapper->getParentTagGuid();
+            foreach ($this->flat_contents as $node) {
+                $node->set_parent($nodes[$node->get_parent_guid()]??null);
             }
 
-            //sort by parent tags (parent first)
-            // for each raw, loop by parent tag backwards until find its attribute name, then enter that as the parent attribute
+            $this->flat_contents = $this->sort_nodes_by_parent_id();
 
-            for($i = count($ret) - 1; $i >= 0 ; $i--) {
-                $raw = $ret[$i];
-                //loop by parent going down
-                $parent_tag_guid = $raw->getParentTagGuid();
-                while($parent_tag_guid) {
-                    if (isset($map_raw_by_tag_guid[$parent_tag_guid])) {
-                        $parent_of_mine_attributes = $map_raw_by_tag_guid[$parent_tag_guid];
-                        foreach ($parent_of_mine_attributes as $maybe_parent_attribute) {
-                            if ($maybe_parent_attribute->getAttributeName() === $raw->getAttributeName()) {
-                                $raw->setParentAttributeGuid($maybe_parent_attribute->getAttributeGuid());
-                                $raw->setParentAttributeID($maybe_parent_attribute->getAttributeID());
-                                break 2;
-                            }
-                        }
-                    }
-                    $parent_tag_guid = $map_tag_parent_guid_by_tag_guid[$parent_tag_guid] ?? null;
-
-                }
-
-            }
-        } catch ( InvalidArgumentException|QueryError|TypeError $e) {
-            static::get_logger()->alert("RawAttributeSearch cannot get data ",['exception'=>$e]);
+            return $this;
+        } catch (Exception $e) {
+            static::get_logger()->error("EntryNodeSearch::search issue ". $e->getMessage());
             throw $e;
         }
 
+    }//end search
 
-        return $ret;
-    }
 
-    /**
-     * sort parents before children
-     * if there are tags with a parent set, but not in the array, then those are put at the end
-     * @param RawAttributeData[] $raw_array_to_sort
-     * @return RawAttributeData[]
-     */
-    protected static function sort_raw_array_by_parent_tag(array $raw_array_to_sort) : array {
-
-        $all_tag_ids = [];
-        foreach ($raw_array_to_sort as $raw_parent) {
-            if (!in_array($raw_parent->getTagID(),$all_tag_ids)) {
-                $all_tag_ids[] =  $raw_parent->getTagID();
-            }
-        }
-
-        $data = [];
-        $data[] = ['id' => 0, 'parent' => -1, 'title' => 'dummy_root','raw'=>null];
-        $map = [];
-        foreach ($raw_array_to_sort as $raw) {
-            $map[$raw->getTagGuid()][] = $raw;
-            if (count($map[$raw->getTagGuid()]) > 1) { continue;}
-
-            $found_parent_id = 0;
-            if ($raw->getParentTagID()) {
-                if (in_array($raw->getParentTagID(),$all_tag_ids)) {
-                    $found_parent_id = $raw->getParentTagID();
-                }
-            }
-
-            $data[] = [
-                'id' => $raw->getTagID(),
-                'parent' => $found_parent_id,
-                'title' => $raw->getTagGuid(),
-                'raw'=>$raw];
-        }
-        $tree = new Tree(
-            $data,
-            ['rootId' => -1]
-        );
-
-        $sorted_nodes =  $tree->getNodes();
-        $ret = [];
-        foreach ($sorted_nodes as $node) {
-            /**
-             * @var RawAttributeData $what
-             */
-            $what =  $node->raw??null;
-            if (!$what) {continue;}
-
-            foreach ($map[$what->getTagGuid()] as $add_raw) {
-                $ret[] = $add_raw;
-            }
-
-        }
-        return $ret;
-    }
 }

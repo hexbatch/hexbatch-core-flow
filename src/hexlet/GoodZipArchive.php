@@ -20,7 +20,7 @@ class GoodZipArchive extends ZipArchive
             if (empty($top_folder_name)) {
                 $top_folder_name = basename($input_folder);
             }
-            $res = $this->open($output_zip_file, ZipArchive::CREATE);
+            $res = $this->open($output_zip_file, ZipArchive::OVERWRITE);
             if($res === true) 	{ $this->addDir($input_folder, $top_folder_name); $this->close(); }
             else  				{ throw new RuntimeException("Cannot create zip archive"); }
         }

@@ -139,7 +139,7 @@ class EntryLifeTime extends EntryBase {
                 $entry_to_update->set_title($call->args->flow_entry_title);
                 $entry_to_update->set_blurb($call->args->flow_entry_blurb);
                 $entry_to_update->set_body_bb_code($call->args->flow_entry_body_bb_code);
-                $entry_to_update->save();
+                $entry_to_update->save_entry();
                 $_SESSION[EntryPages::REM_EDIT_ENTRY_WITH_ERROR_SESSION_KEY] = null;
 
                 $returned_entry = $entry_to_update->clone_with_missing_data($call->project);

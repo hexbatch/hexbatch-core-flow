@@ -3,7 +3,6 @@
 namespace app\models\entry\levels;
 
 
-use app\hexlet\WillFunctions;
 use app\models\entry\archive\IFlowEntryArchive;
 use app\models\entry\IFlowEntry;
 use app\models\project\IFlowProject;
@@ -129,20 +128,5 @@ abstract class FlowEntryMembers extends FlowEntryChildren  {
     public function get_hosts() : array {return $this->host_entries;}
 
 
-    /**
-     * @throws Exception
-     */
-    public function save(bool $b_do_transaction = false, bool $b_save_children = false) :void {
-
-        parent::save_entry($b_do_transaction,$b_save_children);
-
-        try {
-            WillFunctions::will_do_action_later();
-
-        } catch (Exception $e) {
-            static::get_logger()->alert("Entry Member model cannot save ",['exception'=>$e]);
-            throw $e;
-        }
-    }
 
 }

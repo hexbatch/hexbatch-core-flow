@@ -2,15 +2,18 @@
 
 namespace app\models\entry\entry_node;
 
-use app\models\entry\IFlowEntry;
-use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
 
 interface IFlowEntryNodeDocument {
 
     const ENTRY_NODE_FILE_NAME = 'nodes.yaml';
 
-    public function save(bool $b_do_transaction = false);
+    public function save(bool $b_do_transaction = false) : void;
+
+    /**
+     * @return IFlowEntryNode|null
+     */
+    public function get_top_node_of_entry() : ?IFlowEntryNode;
 
 
     public  function get_as_bb_code(

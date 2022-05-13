@@ -22,23 +22,44 @@ class EntryNodeSearchParams extends SearchParamBase {
     /**
      * @var string[] $tag_guids
      */
-    public array $tag_guids = [];
+    protected array $tag_guids = [];
 
     /**
      * @var string[] $node_guids
      */
-    public array $node_guids = [];
+    protected array $node_guids = [];
 
 
     /**
      * @var string[] $entry_guids
      */
-    public array $entry_guids = [];
+    protected array $entry_guids = [];
 
     /**
      * @var string[] $applied_guids
      */
-    public array $applied_guids = [];
+    protected array $applied_guids = [];
+
+
+    protected ?string $parent_guid;
+    protected ?bool $is_top_node;
+
+    /**
+     * @return bool|null
+     */
+    public function getIsTopNode(): ?bool
+    {
+        return $this->is_top_node;
+    }
+
+    /**
+     * @param bool|null $is_top_node
+     */
+    public function setIsTopNode(?bool $is_top_node): void
+    {
+        $this->is_top_node = $is_top_node;
+    }
+
 
     /**
      * @return string[]
@@ -72,15 +93,33 @@ class EntryNodeSearchParams extends SearchParamBase {
         return $this->applied_guids;
     }
 
+    /**
+     * @return string|null
+     */
+    public function getParentGuid(): ?string
+    {
+        return $this->parent_guid;
+    }
+
+    /**
+     * @param string|null $parent_guid
+     */
+    public function setParentGuid(?string $parent_guid): void
+    {
+        $this->parent_guid = $parent_guid;
+    }
+
 
 
 
     function __construct(object|array|null $object=null){
         parent::__construct();
+        $this->parent_guid = null;
         $this->tag_guids = [];
         $this->entry_guids = [];
         $this->applied_guids = [];
         $this->node_guids = [];
+        $this->is_top_node = false;
 
         if (empty($object)) {
             return;
@@ -97,23 +136,35 @@ class EntryNodeSearchParams extends SearchParamBase {
         }
     }
 
+    public function is_empty() : bool {
+        $ret = parent::is_empty();
+        if ($this->is_top_node !== null ) {return false;}
+        return $ret;
+    }
+
     /**
      * @param mixed $guid_thing
      */
     public function addTagGuid(mixed $guid_thing): void
     {
-        $filter = [];
-        if (is_array($guid_thing)) {
-            foreach ($guid_thing as $thang ) {
-                if ($thang instanceof FlowTag) {
-                    $this->tag_guids[] = $thang->flow_tag_guid;
-                } else {
-                    $filter[] = $thang;
+        if ($guid_thing instanceof FlowTag) {
+            $this->tag_guids[] = $guid_thing->flow_tag_guid;
+        } else {
+            $filter = [];
+            if (is_array($guid_thing)) {
+                foreach ($guid_thing as $thang ) {
+                    if ($thang instanceof FlowTag) {
+                        $this->tag_guids[] = $thang->flow_tag_guid;
+                    } else {
+                        $filter[] = $thang;
+                    }
                 }
+            } else {
+                $filter = $guid_thing;
             }
+            $what = static::validate_cast_guid_array($filter);
+            $this->tag_guids = array_unique(array_merge($this->tag_guids,$what));
         }
-        $what = static::validate_cast_guid_array($filter);
-        $this->tag_guids = array_unique(array_merge($this->tag_guids,static::validate_cast_guid_array($what)));
     }
 
     /**
@@ -121,18 +172,25 @@ class EntryNodeSearchParams extends SearchParamBase {
      */
     public function addEntryGuid(mixed $guid_thing): void
     {
-        $filter = [];
-        if (is_array($guid_thing)) {
-            foreach ($guid_thing as $thang ) {
-                if ($thang instanceof IFlowEntry) {
-                    $this->entry_guids[] = $thang->get_guid();
-                } else {
-                    $filter[] = $thang;
+        if ($guid_thing instanceof IFlowEntry) {
+            $this->entry_guids[] = $guid_thing->get_guid();
+        } else {
+            $filter = [];
+            if (is_array($guid_thing)) {
+                foreach ($guid_thing as $thang ) {
+                    if ($thang instanceof IFlowEntry) {
+                        $this->entry_guids[] = $thang->get_guid();
+                    } else {
+                        $filter[] = $thang;
+                    }
                 }
+            } else {
+                $filter = $guid_thing;
             }
+            $what = static::validate_cast_guid_array($filter);
+            $this->entry_guids = array_unique(array_merge($this->entry_guids,$what));
         }
-        $what = static::validate_cast_guid_array($filter);
-        $this->entry_guids = array_unique(array_merge($this->entry_guids,static::validate_cast_guid_array($what)));
+
     }
 
     /**
@@ -140,18 +198,25 @@ class EntryNodeSearchParams extends SearchParamBase {
      */
     public function addNodeGuid(mixed $guid_thing): void
     {
-        $filter = [];
-        if (is_array($guid_thing)) {
-            foreach ($guid_thing as $thang ) {
-                if ($thang instanceof IFlowEntryNode) {
-                    $this->node_guids[] = $thang->get_node_guid();
-                } else {
-                    $filter[] = $thang;
+        if ($guid_thing instanceof IFlowEntryNode) {
+            $this->node_guids[] = $guid_thing->get_node_guid();
+        } else {
+            $filter = [];
+            if (is_array($guid_thing)) {
+                foreach ($guid_thing as $thang ) {
+                    if ($thang instanceof IFlowEntryNode) {
+                        $this->node_guids[] = $thang->get_node_guid();
+                    } else {
+                        $filter[] = $thang;
+                    }
                 }
+            } else {
+                $filter = $guid_thing;
             }
+            $what = static::validate_cast_guid_array($filter);
+            $this->node_guids = array_unique(array_merge($this->node_guids,$what));
         }
-        $what = static::validate_cast_guid_array($filter);
-        $this->node_guids = array_unique(array_merge($this->node_guids,static::validate_cast_guid_array($what)));
+
     }
 
     /**
@@ -159,17 +224,24 @@ class EntryNodeSearchParams extends SearchParamBase {
      */
     public function addAppliedGuid(mixed $guid_thing): void
     {
-        $filter = [];
-        if (is_array($guid_thing)) {
-            foreach ($guid_thing as $thang ) {
-                if ($thang instanceof FlowAppliedTag) {
-                    $this->applied_guids[] = $thang->flow_applied_tag_guid;
-                } else {
-                    $filter[] = $thang;
+        if ($guid_thing instanceof FlowAppliedTag) {
+            $this->applied_guids[] = $guid_thing->flow_applied_tag_guid;
+        } else {
+            $filter = [];
+            if (is_array($guid_thing)) {
+                foreach ($guid_thing as $thang ) {
+                    if ($thang instanceof FlowAppliedTag) {
+                        $this->applied_guids[] = $thang->flow_applied_tag_guid;
+                    } else {
+                        $filter[] = $thang;
+                    }
                 }
+            } else {
+                $filter = $guid_thing;
             }
+            $what = static::validate_cast_guid_array($filter);
+            $this->applied_guids = array_unique(array_merge($this->applied_guids,$what));
         }
-        $what = static::validate_cast_guid_array($filter);
-        $this->applied_guids = array_unique(array_merge($this->applied_guids,static::validate_cast_guid_array($what)));
+
     }
 }
