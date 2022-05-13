@@ -204,7 +204,7 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
 
         if ($this->bb_tag_name=== static::FLOW_TAG_BB_CODE_NAME) {
             $tag_guid = null;
-            foreach ($this->attributes as $attribute) {
+            foreach ($this->node_attributes as $attribute) {
                 if (WillFunctions::is_valid_guid_format($attribute)) { $tag_guid = $attribute; break;}
             }
             if ($tag_guid && $this->parent) {
@@ -241,7 +241,7 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
 
     public function set_parent(?IFlowEntryNode $parent): void {
 
-        if ($this->parent_guid && ($this->parent_guid !== $parent?->get_node_guid())) {
+        if ($this->parent_guid && $parent && ($this->parent_guid !== $parent->get_node_guid())) {
             throw new LogicException("Passed in parent does not have same guid as parent guid already set");
         }
         $this->parent = $parent;
@@ -346,14 +346,20 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
                 }
             }
 
-            if ($this->flow_tag_id) {
+            if ($this->flow_tag_guid) {
+
+                if (!$this->flow_tag_id ) {
+                    $this->flow_tag_id = $db->cell(
+                        "SELECT id  FROM flow_tags WHERE flow_tag_guid = UNHEX(?)",
+                        $this->flow_tag_guid);
+                }
                 //instantiate applied tag object and save it
-                if (!$this->flow_applied_tag) {
+                if (!$this->flow_applied_tag?->flow_tag_id) {
                     $this->flow_applied_tag = new FlowAppliedTag();
                 }
                 $this->flow_applied_tag->flow_tag_id = $this->flow_tag_id;
                 $this->flow_applied_tag->tagged_flow_entry_node_id = $this->node_id;
-                $this->flow_applied_tag->flow_applied_tag_guid = $this->flow_applied_tag_guid;
+                $this->flow_applied_tag->flow_tag_guid = $this->flow_applied_tag_guid;
                 $this->flow_applied_tag->id = $this->flow_applied_tag_id;
                 $this->flow_applied_tag->save();
             }
@@ -390,13 +396,20 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
         if ($this->node_words) {
             return $this->node_words;
         }
-        $str = "[".$this->bb_tag_name;
-        if (!empty($this->node_attributes)) {
-            if (isset($this->node_attributes[$this->bb_tag_name])) {
-                $str .= "=".$this->attribute[$this->tagName];
+        if ($this->bb_tag_name === IFlowEntryNode::DOCUMENT_BB_CODE_NAME ) {
+            $str = '';
+        } else {
+            $str = "[".$this->bb_tag_name;
+        }
+
+        if ($this->bb_tag_name !== IFlowEntryNode::DOCUMENT_BB_CODE_NAME && !empty($this->node_attributes)) {
+            $attributes = $this->node_attributes;
+            if (property_exists($attributes,$this->bb_tag_name)) {
+                $bb_tag_name = $this->bb_tag_name;
+                $str .= "=".$attributes->$bb_tag_name;
             }
 
-            foreach ($this->node_attributes as $key => $value) {
+            foreach ($attributes as $key => $value) {
                 if ($key == $this->bb_tag_name) {
                     continue;
                 } else {
@@ -404,11 +417,17 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
                 }
             }
         }
-        $str .= "]";
+        if ($this->bb_tag_name !== IFlowEntryNode::DOCUMENT_BB_CODE_NAME ) {
+            $str .= "]";
+        }
+
         foreach ($this->children_nodes as $child) {
             $str .= $child->get_as_bb_code();
         }
-        $str .= "[/".$this->bb_tag_name."]";
+        if ($this->bb_tag_name !== IFlowEntryNode::DOCUMENT_BB_CODE_NAME ) {
+            $str .= "[/".$this->bb_tag_name."]";
+        }
+
 
         return $str;
     }

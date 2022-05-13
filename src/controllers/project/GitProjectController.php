@@ -466,8 +466,9 @@ class GitProjectController extends BaseProjectController {
                         "[clone_project_from_git] need setting_guid for this option");}
 
                     $tag_params = new FlowTagSearchParams();
-                    $tag_params->tag_guids[] = $setting_tag_guid;
-                    $setting_tag_array  = FlowTagSearch::get_tags($tag_params);
+                    $tag_params->addGuidsOrNames($setting_tag_guid);
+                    $tag_search = new FlowTagSearch();
+                    $setting_tag_array = $tag_search->get_tags($tag_params)->get_found_tags();
                     if (empty($setting_tag_array)) {
                         throw new InvalidArgumentException("[clone_project_from_git] could not find tag by tag_guid ". $setting_tag_guid);
                     }

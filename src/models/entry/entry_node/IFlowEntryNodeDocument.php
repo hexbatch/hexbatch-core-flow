@@ -2,11 +2,14 @@
 
 namespace app\models\entry\entry_node;
 
+use app\models\entry\IFlowEntry;
 use app\models\tag\FlowTag;
 
 interface IFlowEntryNodeDocument {
 
     const ENTRY_NODE_FILE_NAME = 'nodes.yaml';
+
+    public function get_entry() : IFlowEntry;
 
     public function save(bool $b_do_transaction = false) : void;
 
@@ -24,10 +27,10 @@ interface IFlowEntryNodeDocument {
     ) : array;
 
     /**
-     * @param IFlowEntryNodeDocument $doc
-     * @param FlowTag[] $from
-     * @param FlowTag $here
-     * @return string
+     * @param IFlowEntryNodeDocument|null $target_doc
+     * @param FlowTag[] $from_tags
+     * @param FlowTag|null $target_tag
+     * @return string|null
      */
-    public function insert_at(IFlowEntryNodeDocument $doc,array $from,FlowTag $here) : string;
+    public function insert_at(array $from_tags, ?IFlowEntryNodeDocument $target_doc, ?FlowTag $target_tag) : ?string;
 }

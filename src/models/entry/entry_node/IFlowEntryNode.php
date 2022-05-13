@@ -7,6 +7,7 @@ use app\models\tag\FlowTag;
 
 interface IFlowEntryNode {
     const FLOW_TAG_BB_CODE_NAME = 'flow_tag';
+    const DOCUMENT_BB_CODE_NAME = 'Document';
 
     public function get_node_id() : ?int;
     public function get_node_guid() : ?string;

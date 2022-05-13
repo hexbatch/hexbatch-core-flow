@@ -363,13 +363,13 @@ class FlowTag extends FlowBase implements JsonSerializable {
         }
         $search = new FlowTagSearchParams();
         if ($this->flow_tag_guid) {
-            $search->tag_guids[] = $this->flow_tag_guid;
+            $search->addGuidsOrNames($this->flow_tag_guid);
         } elseif ($this->flow_tag_id) {
             $search->tag_ids[] = $this->flow_tag_id;
         }
         $search->flag_get_applied = $b_get_applied;
-
-        $me_array = FlowTagSearch::get_tags($search);
+        $tag_search = new FlowTagSearch();
+        $me_array = $tag_search->get_tags($search)->get_found_tags();
         if (empty($me_array)) {
             throw new InvalidArgumentException("Tag is not found from guid of $this->flow_tag_guid or id of $this->flow_tag_id");
         }

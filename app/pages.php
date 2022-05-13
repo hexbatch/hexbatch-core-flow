@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use app\controllers\entry\EntryLifeTime;
+use app\controllers\entry\EntryNodes;
 use app\controllers\entry\EntryPages;
 use app\controllers\home\AdminPages;
 use app\controllers\home\HomePages;
@@ -67,6 +68,10 @@ return function (App $app) {
 
     $container->set('entryLifeTime', function() use ($app, $container) {
         return new EntryLifeTime($container->get('auth'),$container->get(LoggerInterface::class),$container);
+    });
+
+    $container->set('entryNodes', function() use ($app, $container) {
+        return new EntryNodes($container->get('auth'),$container->get(LoggerInterface::class),$container);
     });
 
     $container->set('entryHelper', function() use ($app, $container) {

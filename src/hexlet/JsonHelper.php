@@ -831,14 +831,10 @@ class JsonHelper {
 
     public static function html_from_bb_code($original) : ?string {
 
-
         $parser = static::get_parsed_bb_code($original);
-
+        if (empty($parser)) {return  null;}
 
         $post =  $parser->getAsHtml();
-
-        //todo convert tag bb to invisible span of guid
-
 
 
         //will_send_to_error_log('after parse ',$post);

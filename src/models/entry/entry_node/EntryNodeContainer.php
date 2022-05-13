@@ -41,12 +41,26 @@ class EntryNodeContainer extends FlowBase{
      */
     protected function sort_nodes_by_parent_id() : array  {
 
+        $hash = [];
+        //set pass-through
+        foreach ($this->getFlatContents() as $whrat) {
+            $hash[$whrat->get_node_guid()] = $whrat->get_node_id();
+        }
+
+        foreach ($this->getFlatContents() as $spike) {
+            if ($spike->get_parent_guid() && isset($hash[$spike->get_parent_guid()])) {
+                $spike->set_pass_through_value($hash[$spike->get_parent_guid()]);
+            } else {
+                $spike->set_pass_through_value(0);
+            }
+
+        }
 
         //do the tree
         $data = [];
         $data[] = ['id' => 0, 'parent' => -1, 'title' => 'dummy_root','entry_node'=>null];
         foreach ($this->getFlatContents() as $whrat) {
-            $data[] = ['id' => $whrat->get_node_id(), 'parent' => $whrat->get_parent_id()??0,
+            $data[] = ['id' => $whrat->get_node_id(), 'parent' => $whrat->get_pass_through_value()??0,
                 'title' => $whrat->get_node_guid(),'entry_node'=>$whrat];
         }
 

@@ -89,11 +89,11 @@ class TagPages extends BasePages
             $page_size = GeneralSearch::DEFAULT_PAGE_SIZE;
             $args = $request->getQueryParams();
             $search_params = new FlowTagSearchParams();
-            $search_params->owning_project_guid = $project->get_project_guid();
+            $search_params->setOwningProjectGuid($project->get_project_guid());
             if (isset($args['search'])) {
 
                 if (isset($args['search']['tag_guid'])) {
-                    $search_params->tag_guids[] = trim($args['search']['tag_guid']);
+                    $search_params->addGuidsOrNames(trim($args['search']['tag_guid']));
                 }
 
                 if (isset($args['search']['term'])) {
@@ -120,7 +120,7 @@ class TagPages extends BasePages
                 }
 
                 if (isset($args['search']['b_all_tags_in_project']) && $args['search']['b_all_tags_in_project']) {
-                    $search_params->owning_project_guid = $project->get_project_guid();
+                    $search_params->setOwningProjectGuid($project->get_project_guid());
                     $page_size = SearchParamBase::UNLIMITED_RESULTS_PER_PAGE;
                 }
 
@@ -137,7 +137,8 @@ class TagPages extends BasePages
 
             $search_params->setPage($page);
             $search_params->setPageSize($page_size);
-            $matches = FlowTagSearch::get_tags($search_params);
+            $tag_search = new FlowTagSearch();
+            $matches = $tag_search->get_tags($search_params)->get_found_tags();
             $routeParser = RouteContext::fromRequest($request)->getRouteParser();
             foreach ($matches as $mtag) {
                 $mtag->flow_project = $project;

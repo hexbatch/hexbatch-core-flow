@@ -120,9 +120,10 @@ class HomePages extends BasePages
                     return $user_pages->user_page($request,$response,$guid);
                 }
                 case GeneralSearch::TYPE_TAG: {
-                    $tag_search = new FlowTagSearchParams();
-                    $tag_search->tag_guids[] = $guid;
-                    $tag_res = FlowTagSearch::get_tags($tag_search);
+                    $tag_search_params = new FlowTagSearchParams();
+                    $tag_search_params->addGuidsOrNames($guid);
+                    $tag_search = new FlowTagSearch();
+                    $tag_res = $tag_search->get_tags($tag_search_params)->get_found_tags();
                     if (empty($tag_res)) {
                         throw new HttpNotFoundException($request,"Cannot find Tag ". $guid);
                     }

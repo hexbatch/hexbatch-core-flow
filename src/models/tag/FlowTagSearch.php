@@ -17,12 +17,51 @@ use PDO;
 class FlowTagSearch  extends FlowBase{
 
     /**
-     * @return FlowTag[]
-     * @throws
+     * @var FlowTag[] $tags_found
      */
-    public static function get_tags(FlowTagSearchParams $search): array
-    {
+    protected array $tags_found = [];
+    protected ?FlowTagSearchParams $last_search = null;
 
+    /**
+     * @return FlowTag[]
+     */
+    public function get_found_tags() : array { return $this->tags_found;}
+
+    /**
+     * get only the tags that have guid or name asked for
+     * @return FlowTag[]
+     */
+    public function get_direct_match_tags() : array {
+        $ret = [];
+        if (!$this->last_search) {return [];}
+
+        foreach ($this->tags_found as $tag) {
+            if (in_array($tag->flow_tag_guid,$this->last_search->get_guids())) {
+                $ret[] = $tag;
+            }
+            elseif (in_array($tag->flow_tag_name,$this->last_search->get_names())) {
+                $ret[] = $tag;
+            }
+            elseif (in_array($tag->flow_tag_id,$this->last_search->get_ids())) {
+                $ret[] = $tag;
+            }
+
+            elseif ($this->last_search->tag_name_term) {
+                if (false !== stripos($tag->flow_tag_name, $this->last_search->tag_name_term) ) {
+                    $ret[] = $tag;
+                }
+            }
+        }
+        return $ret;
+    }
+    /**
+     * @param FlowTagSearchParams $search
+     * @return FlowTagSearch
+     * @throws Exception
+     */
+    public  function get_tags(FlowTagSearchParams $search): FlowTagSearch
+    {
+        $this->last_search = $search;
         $args = [];
         $where_project = 2;
         $where_name = 4;
@@ -32,9 +71,9 @@ class FlowTagSearch  extends FlowBase{
         $where_not_applied_to = 64;
 
 
-        if ($search->owning_project_guid) {
+        if ($search->getOwningProjectGuid()) {
             $where_project = "driver_project.flow_project_guid = UNHEX(?)";
-            $args[] = $search->owning_project_guid;
+            $args[] = $search->getOwningProjectGuid();
         }
 
         if ($search->tag_name_term) {
@@ -42,9 +81,9 @@ class FlowTagSearch  extends FlowBase{
             $args[] = '%'.$search->tag_name_term.'%';
         }
 
-        if (count($search->tag_guids)) {
+        if (count($search->get_guids())) {
             $in_question_array = [];
-            foreach ($search->tag_guids as $a_guid) {
+            foreach ($search->get_guids() as $a_guid) {
                 if ( ctype_xdigit($a_guid) ) {
                     $args[] = $a_guid;
                     $in_question_array[] = "UNHEX(?)";
@@ -53,6 +92,18 @@ class FlowTagSearch  extends FlowBase{
             if (count($in_question_array)) {
                 $comma_delimited_unhex_question = implode(",",$in_question_array);
                 $where_tag_guid = "driver_tag.flow_tag_guid in ($comma_delimited_unhex_question)";
+            }
+        }
+
+        if (count($search->get_names())) {
+            $in_question_array = [];
+            foreach ($search->get_names() as $a_name) {
+                $args[] = $a_name;
+                $in_question_array[] = "?";
+            }
+            if (count($in_question_array)) {
+                $comma_delimited_unhex_question = implode(",",$in_question_array);
+                $where_tag_guid = "driver_tag.flow_tag_name in ($comma_delimited_unhex_question)";
             }
         }
 
@@ -339,19 +390,20 @@ class FlowTagSearch  extends FlowBase{
             $filtered = [];
             //filter out the ones that  are not top level searches, the rest will be in the parent list
             foreach ($ret as $item) {
-                if ($search->owning_project_guid) {
-                    if ($item->flow_project_guid !== $search->owning_project_guid ) {continue;}
+                if ($search->getOwningProjectGuid()) {
+                    if ($item->flow_project_guid !== $search->getOwningProjectGuid() ) {continue;}
                 }
 
                 if ($search->tag_name_term) {
                     if (false === stripos($item->flow_tag_name, $search->tag_name_term) ) {continue;}
                 }
 
-                if (count($search->tag_guids)) {
+                if (count($search->get_guids())) {
                     $found_guid = false;
-                    for($i = 0; $i < count($search->tag_guids); $i++) {
-                        if ($item->flow_tag_guid === $search->tag_guids[$i]) {$found_guid = true; break;}
+                    foreach ($search->get_guids() as $a_search_guid) {
+                        if ($item->flow_tag_guid === $a_search_guid) {$found_guid = true; break;}
                     }
+
                     if (!$found_guid) {continue;}
                 }
 
@@ -421,7 +473,9 @@ class FlowTagSearch  extends FlowBase{
                 if (!$tag) {continue;} //may not have any standards
                 $tag->setStandardAttributes($standard_attributes) ;
             }
-            return  $filtered;
+            $this->tags_found = $filtered;
+
+            return  $this;
         } catch (Exception $e) {
             static::get_logger()->alert("FlowTag model cannot get_tags ",['exception'=>$e]);
             throw $e;

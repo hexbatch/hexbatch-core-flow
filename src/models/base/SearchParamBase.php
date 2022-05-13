@@ -4,6 +4,7 @@ namespace app\models\base;
 
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
+use app\models\tag\FlowTag;
 use InvalidArgumentException;
 
 class SearchParamBase {
@@ -14,6 +15,7 @@ class SearchParamBase {
     const ARG_IS_INT = 'arg-is-int';
     const ARG_IS_HEX = 'arg-is-hex';
     const ARG_IS_NAME = 'arg-is-string';
+    const ARG_IS_TAG_NAME = 'arg-is-tag-name';
     const ARG_IS_EMAIL = 'arg-is-email';
     const ARG_IS_INVALID = 'arg-is-invalid';
 
@@ -40,6 +42,8 @@ class SearchParamBase {
                     return static::ARG_IS_EMAIL;
                 } else if(FlowBase::check_valid_title($what)){
                     return static::ARG_IS_NAME;
+                } else if(FlowTag::check_valid_name($what)){
+                    return static::ARG_IS_TAG_NAME;
                 } else {
                     return static::ARG_IS_INVALID;
                 }
@@ -83,9 +87,10 @@ class SearchParamBase {
 
     /**
      * @param mixed $guid_thing
+     * @param bool $b_throw_exception
      * @return string[]
      */
-    public static function validate_cast_guid_array(mixed $guid_thing): array
+    public static function validate_cast_guid_array(mixed $guid_thing, bool $b_throw_exception = true): array
     {
         $ret = [];
         if (empty($guid_thing)) {return $ret;}
@@ -101,7 +106,51 @@ class SearchParamBase {
             if ($type === static::ARG_IS_HEX ) {
                 $ret[] = $guid_thing;
             } else {
-                throw new InvalidArgumentException("Must be guid: ". $type);
+                if ($b_throw_exception) {
+                    throw new InvalidArgumentException("Must be guid: ". $type);
+                }
+
+            }
+        }
+        return $ret;
+    }
+
+
+    /**
+     * @param mixed $name_thing
+     * @return string[]
+     */
+    public static function validate_cast_name_array(mixed $name_thing,
+                                                    bool $b_allow_tag_name = false, bool $b_throw_exception = true)
+    : array
+    {
+        $ret = [];
+        if (empty($name_thing)) {return $ret;}
+        if (JsonHelper::isJson($name_thing)) {
+            $try_me = JsonHelper::fromString($name_thing);
+            if (is_array($try_me)) {
+                $ret = array_unique(array_merge($ret,static::validate_cast_name_array($try_me,$b_allow_tag_name))) ;
+            }
+        } elseif (is_array($name_thing) && count($name_thing)) {
+            foreach ($name_thing as $one_thing) {
+                $ret = array_unique(array_merge($ret,static::validate_cast_name_array($one_thing,$b_allow_tag_name)));
+            }
+        } else {
+            $type = static::find_type_of_arg($name_thing);
+            if ($type === static::ARG_IS_HEX ||  $type === static::ARG_IS_EMAIL ||  $type === static::ARG_IS_INT) {
+                return [];
+            }
+            if ($type === static::ARG_IS_NAME  ) {
+                $ret[] = $name_thing;
+            }
+            elseif ($b_allow_tag_name && $type === static::ARG_IS_TAG_NAME) {
+                $ret[] = $name_thing;
+            }
+            else {
+                if ($b_throw_exception) {
+                    throw new InvalidArgumentException("Must be name: ". $type);
+                }
+
             }
         }
         return $ret;

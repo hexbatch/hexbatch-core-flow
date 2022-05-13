@@ -35,6 +35,15 @@ class ProjectHelper extends BaseHelper {
 
     }
 
+    public static function get_entry_helper() : EntryHelper {
+        try {
+            return static::get_container()->get('entryHelper');
+        } catch (DependencyException|NotFoundException $e) {
+            throw new LogicException($e->getMessage());
+        }
+
+    }
+
     public function get_root_url() : string {
 
         if (!array_key_exists('HTTP_HOST',$_SERVER)) {

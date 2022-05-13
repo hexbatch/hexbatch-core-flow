@@ -119,7 +119,7 @@ class EntryNodeSearchParams extends SearchParamBase {
         $this->entry_guids = [];
         $this->applied_guids = [];
         $this->node_guids = [];
-        $this->is_top_node = false;
+        $this->is_top_node = null;
 
         if (empty($object)) {
             return;

@@ -23,6 +23,8 @@ class EntryNodeDocument extends EntryNodeContainer implements  IFlowEntryNodeDoc
 
     protected IFlowEntry $entry;
 
+    public function get_entry() : IFlowEntry {return $this->entry;}
+
     public function __construct(IFlowEntry $entry){
         $this->entry = $entry;
     }
@@ -36,7 +38,6 @@ class EntryNodeDocument extends EntryNodeContainer implements  IFlowEntryNodeDoc
         $older_top_node = $this->get_top_node_of_entry();
         $older_top_node?->delete_node();
         $this->flat_contents = $this->parse_root($this->entry->get_bb_code());
-        //todo check children to see when they get their id and guid set, set too early here?
         foreach ($this->flat_contents as $node) {
             $node->set_entry_id($this->entry->get_id());
             $node->set_entry_guid($this->entry->get_guid());
@@ -254,13 +255,28 @@ class EntryNodeDocument extends EntryNodeContainer implements  IFlowEntryNodeDoc
     }
 
     /**
-     * @param IFlowEntryNodeDocument $doc
-     * @param FlowTag[] $from
-     * @param FlowTag $here
-     * @return string
+     * @param FlowTag[] $from_tags
+     * @param IFlowEntryNodeDocument|null $target_doc
+     * @param FlowTag|null $target_tag
+     * @return string|null
+     * @throws Exception
      */
-    public function insert_at(IFlowEntryNodeDocument $doc,array $from,FlowTag $here) : string {
-        //todo implement the insert_at here
-        return '';
+    public function insert_at(array $from_tags, ?IFlowEntryNodeDocument $target_doc = null, ?FlowTag $target_tag=null )
+    : ?string
+    {
+        if (empty($from_tags)) {return null;}
+        $params = new EntryNodeSearchParams();
+        $params->addTagGuid($from_tags);
+        $params->addEntryGuid($this->get_entry());
+        $search = new EntryNodeSearch();
+        $top_found_nodes =$search->search($params)->getTopContents();
+        $found_bb_code = [];
+        foreach ($top_found_nodes as $found_node) {
+            $found_bb_code[] = $found_node->get_as_bb_code();
+        }
+        if (!$target_doc) {
+            return implode("",$found_bb_code);
+        }
+        return null;
     }
 }

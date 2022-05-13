@@ -65,8 +65,9 @@ abstract class FlowProjectSettingLevel extends FlowProjectTagLevel {
         if (!$setting_tag_guid) { return null;  }
 
         $tag_params = new FlowTagSearchParams();
-        $tag_params->tag_guids[] = $setting_tag_guid;
-        $pointee_tag_array = FlowTagSearch::get_tags($tag_params);
+        $tag_params->addGuidsOrNames($setting_tag_guid);
+        $tag_search = new FlowTagSearch();
+        $pointee_tag_array = $tag_search->get_tags($tag_params)->get_found_tags();
 
         if (empty($pointee_tag_array)) {
             throw new LogicException("[get_setting_tag] pointee for $setting_name holds invalid pointer: $setting_tag_guid");

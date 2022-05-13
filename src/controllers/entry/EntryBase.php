@@ -6,7 +6,7 @@ use app\helpers\EntryHelper;
 
 
 
-class EntryBase extends BasePages
+abstract class EntryBase extends BasePages
 {
 
 

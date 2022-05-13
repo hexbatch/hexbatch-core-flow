@@ -29,7 +29,10 @@ class EntryNodeSearch extends EntryNodeContainer {
         $inner_joins['applied'] = "INNER JOIN flow_applied_tags driver_applied on ".
                                         "driver_applied.tagged_flow_entry_node_id = driver_node.id";
 
-        $inner_joins['tag'] = "INNER JOIN flow_tags driver_tag  on driver_tag.id = driver_applied.flow_tag_id";
+        $inner_joins['tag'] = "
+            INNER JOIN flow_applied_tags driver_applied on driver_applied.tagged_flow_entry_node_id = driver_node.id
+            INNER JOIN flow_tags driver_tag  on driver_tag.id = driver_applied.flow_tag_id
+            ";
 
         $inner_joins['parent'] = "INNER JOIN flow_tags driver_parent_tag  on driver_tag.flow_entry_node_parent_id = driver_parent_tag.id";
 
