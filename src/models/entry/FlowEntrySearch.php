@@ -2,7 +2,6 @@
 
 namespace app\models\entry;
 
-use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\entry\public_json\FlowEntryJson;
 use app\models\project\FlowProjectSearch;
@@ -86,7 +85,6 @@ class FlowEntrySearch extends FlowBase {
            }
        }
 
-       //todo search sql: fill in the values for flow_entry_ancestor_guid_list, see tag union
        $sql = /** @lang MySQL */
            "
             SELECT  
@@ -158,11 +156,6 @@ class FlowEntrySearch extends FlowBase {
         */
        $projects = [];
 
-       /**
-        * @var array<string,IFlowEntry> $all
-        */
-       $all = [];
-
 
        /**
         * @var IFlowEntry $unsorted_ret
@@ -199,23 +192,10 @@ class FlowEntrySearch extends FlowBase {
                $using_project = $projects[$row->flow_project_guid]??null;
                if (!$using_project) {throw new LogicException("could not find the project when creating entries");}
                $node = FlowEntry::create_entry($using_project,$row);
-               $all[$node->get_guid()] = $node;
                if (intval($row->is_primary)) {$unsorted_ret[] = $node;}
            }
 
 
-
-           //build children list
-           foreach ($all as $found_guid => $found_entry) {
-               WillFunctions::will_do_nothing($found_guid);
-               if (!$found_entry->get_parent_guid()) { continue; }
-
-                if (!array_key_exists($found_entry->get_parent_guid(),$all)) {
-                    throw new LogicException("FlowEntrySearch: Could not find parent in all array ");
-                }
-                $parent_entry = $all[$found_entry->get_parent_guid()];
-                $parent_entry->add_child($found_entry);
-           }
 
            $ret = FlowEntryJson::sort_array_by_parent($unsorted_ret);
        } catch (Exception $e) {

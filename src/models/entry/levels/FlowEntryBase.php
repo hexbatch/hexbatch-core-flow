@@ -349,9 +349,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     }
 
     public function delete_entry() : void {
-        if (count($this->get_children()) || count($this->get_children_ids())) {
-            throw new InvalidArgumentException("Cannot delete entry, it has children");
-        }
+
         $db = static::get_connection();
         if ($this->get_id()) {
             $db->delete('flow_entries',['id'=>$this->get_id()]);
@@ -534,7 +532,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     /**
      * called after the save is made
      */
-    public function on_after_save_entry() :void {
+    protected function on_after_save_entry() :void {
         WillFunctions::will_do_nothing("base method");
     }
 
@@ -542,7 +540,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
      * called after the delete is done
      * @throws
      */
-    public function on_after_delete_entry() :void {
+    protected function on_after_delete_entry() :void {
         $mutex = new FlockMutex(fopen(__FILE__, "r"));
         $mutex->synchronized(function ()  {
             $archive = FlowEntryArchive::create_archive($this);

@@ -109,13 +109,6 @@ class AdminHelper extends BaseHelper {
         return $ret;
     }
 
-    /**
-     * @param ServerRequestInterface $request
-     * @throws Exception
-     */
-    public  function run_file_manager(ServerRequestInterface $request) : void  {
-       throw new HttpNotImplementedException($request,"No file manager found");
-    }
 
 
 }

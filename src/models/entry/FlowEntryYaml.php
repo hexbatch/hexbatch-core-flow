@@ -102,20 +102,11 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
             $this->entry_updated_at_ts = $object->get_updated_at_ts() ;
             $this->human_date_time = Carbon::now()->toIso8601String() ;
             $this->dese_child_entries = [] ;
-            foreach ($object->get_children() as $child_entry) {
-                $this->dese_child_entries[] = new static($child_entry);
-            }
             $this->folder_path = $object->deduce_existing_entry_folder();
         } else {
             foreach ($object as $key => $val) {
                 if (property_exists($this,$key)) {
-                    if ($key === 'child_entries') {
-                        foreach ($val as $child_info) {
-                            $this->dese_child_entries[] = new static($child_info,$project);
-                        }
-                    } else {
-                        $this->$key = $val;
-                    }
+                    $this->$key = $val;
                 }
             }
         }

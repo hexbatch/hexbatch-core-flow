@@ -289,7 +289,6 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
                 'entry_node_words' => $this->node_words,
                 'entry_node_attributes' => $entry_node_attributes_as_json,
             ];
-            //todo new child nodes should not have id or guid yet ?
             if ($this->node_guid && $this->node_id) {
 
                 $db->update('flow_entry_nodes',$save_info,[

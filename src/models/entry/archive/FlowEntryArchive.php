@@ -18,7 +18,7 @@ use LogicException;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
-final class FlowEntryArchive extends FlowEntryArchiveMembers {
+final class FlowEntryArchive extends FlowEntryArchiveFiles {
 
     const ALL_FILES_YAML_NAME = 'entry-summary.yaml';
     /**

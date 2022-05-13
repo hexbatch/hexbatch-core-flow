@@ -2,7 +2,6 @@
 
 namespace app\models\entry;
 
-use app\models\project\IFlowProject;
 
 interface IFlowEntryReadBasicProperties {
 

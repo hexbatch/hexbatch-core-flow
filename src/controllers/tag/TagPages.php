@@ -200,7 +200,8 @@ class TagPages extends BasePages
      */
     public function create_tag( ServerRequestInterface $request,ResponseInterface $response,
                               string $user_name, string $project_name) :ResponseInterface {
-        
+
+        $call = null;
         try {
             $option = new AjaxCallData([AjaxCallData::OPTION_ENFORCE_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'create_tag';
@@ -276,7 +277,7 @@ class TagPages extends BasePages
     public function edit_tag( ServerRequestInterface $request,ResponseInterface $response,
                                 string $user_name, string $project_name,string $tag_name) :ResponseInterface
     {
-        
+        $call = null;
         try {
             $option = new AjaxCallData([AjaxCallData::OPTION_ENFORCE_AJAX,AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'edit_tag';
@@ -361,7 +362,7 @@ class TagPages extends BasePages
     public function delete_tag( ServerRequestInterface $request,ResponseInterface $response,
                                       string $user_name, string $project_name,string $tag_name) :ResponseInterface
     {
-        
+        $call = null;
         try {
             $option = new AjaxCallData([AjaxCallData::OPTION_ENFORCE_AJAX,AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'delete_tag';
@@ -424,7 +425,7 @@ class TagPages extends BasePages
     public function create_attribute( ServerRequestInterface $request,ResponseInterface $response,
                               string $user_name, string $project_name,string $tag_name) :ResponseInterface
     {
-        
+        $call = null;
         try {
             $option = new AjaxCallData([AjaxCallData::OPTION_ENFORCE_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'create_attribute';
@@ -507,7 +508,7 @@ class TagPages extends BasePages
     public function edit_attribute( ServerRequestInterface $request,ResponseInterface $response,
                                       string $user_name, string $project_name,string $tag_name,string $attribute_name) :ResponseInterface
     {
-        
+        $call = null;
         try {
             $option = new AjaxCallData([AjaxCallData::OPTION_ENFORCE_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'edit_attribute';
@@ -589,7 +590,7 @@ class TagPages extends BasePages
     public function delete_attribute( ServerRequestInterface $request,ResponseInterface $response,
                                     string $user_name, string $project_name,string $tag_name,string $attribute_name) :ResponseInterface
     {
-        
+        $call = null;
         try {
             $option = new AjaxCallData([AjaxCallData::OPTION_ENFORCE_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'delete_attribute';
@@ -668,6 +669,7 @@ class TagPages extends BasePages
     public function create_applied( ServerRequestInterface $request,ResponseInterface $response,
                                 string $user_name, string $project_name,string $tag_name) :ResponseInterface
     {
+        $call = null;
         try {
             $option = new AjaxCallData([AjaxCallData::OPTION_ENFORCE_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'create_applied';
@@ -742,6 +744,7 @@ class TagPages extends BasePages
     public function delete_applied( ServerRequestInterface $request,ResponseInterface $response,
                                     string $user_name, string $project_name,string $tag_name) :ResponseInterface
     {
+        $call = null;
         try {
             $option = new AjaxCallData([AjaxCallData::OPTION_ENFORCE_AJAX, AjaxCallData::OPTION_MAKE_NEW_TOKEN, AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'delete_applied';

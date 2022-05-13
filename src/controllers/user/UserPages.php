@@ -166,13 +166,13 @@ class UserPages extends BasePages {
                 // valid address
                 try {
                     $this->auth->login($email_or_username, $password, $remember_me);
-                } catch (InvalidEmailException $unknown) {
+                } catch (InvalidEmailException ) {
                     throw new HttpNotFoundException($request,"Email $email_or_username Not Found");
                 }
-                catch (InvalidPasswordException $bad_password) {
+                catch (InvalidPasswordException ) {
                     throw new HttpNotFoundException($request,"Wrong Password");
                 }
-                catch (TooManyRequestsException $too_many) {
+                catch (TooManyRequestsException ) {
                     throw new HttpBadRequestException($request,"You are doing this too many times in a row");
                 }
 
@@ -180,10 +180,10 @@ class UserPages extends BasePages {
                 // invalid address
                 try {
                     $this->auth->loginWithUsername($email_or_username, $password, $remember_me);
-                } catch (UnknownUsernameException $unknown) {
+                } catch (UnknownUsernameException ) {
                     throw new HttpNotFoundException($request,"User $email_or_username Not Found");
                 }
-                catch (TooManyRequestsException $too_many) {
+                catch (TooManyRequestsException ) {
                     throw new HttpBadRequestException($request,"You are doing this too many times in a row");
                 }
 
@@ -201,9 +201,9 @@ class UserPages extends BasePages {
                 throw $e;
             }
 
-        } catch (InvalidPasswordException $e) {
+        } catch (InvalidPasswordException ) {
             $message = ('Wrong password');
-        } catch (EmailNotVerifiedException $e) {
+        } catch (EmailNotVerifiedException ) {
             $message = ('Email not verified');
         }  catch (Exception $e) {
             $this->logger->error('some sort of error in user login',['exception'=>$e]);
@@ -282,13 +282,13 @@ class UserPages extends BasePages {
                 try {
                     $this->auth->confirmEmail($selector, $token);
 
-                } catch (InvalidSelectorTokenPairException $e) {
+                } catch (InvalidSelectorTokenPairException ) {
                     $error_message = ('Invalid token');
-                } catch (TokenExpiredException $e) {
+                } catch (TokenExpiredException ) {
                     $error_message = ('Token expired');
-                } catch (UserAlreadyExistsException $e) {
+                } catch (UserAlreadyExistsException ) {
                     $error_message = ('Email address already exists');
-                } catch (TooManyRequestsException $e) {
+                } catch (TooManyRequestsException ) {
                     $error_message = ('Too many requests');
                 } catch (Exception $e) {
                     $error_message = $e->getMessage();
@@ -310,13 +310,13 @@ class UserPages extends BasePages {
                 $flow_user->flow_user_email = $base_email;
                 $flow_user->save();
             }
-        } catch (InvalidEmailException $e) {
+        } catch (InvalidEmailException ) {
             $message = 'Invalid email address';
-        } catch (InvalidPasswordException $e) {
+        } catch (InvalidPasswordException ) {
             $message = 'Invalid password';
-        } catch (UserAlreadyExistsException $e) {
+        } catch (UserAlreadyExistsException ) {
             $message = 'User already exists';
-        } catch (TooManyRequestsException $e) {
+        } catch (TooManyRequestsException ) {
             $message = 'Too many requests';
         } catch (InvalidArgumentException $e) {
             $message = $e->getMessage();

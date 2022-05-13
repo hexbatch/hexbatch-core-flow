@@ -6,6 +6,7 @@ namespace app\hexlet;
 use Exception;
 use InvalidArgumentException;
 
+use JetBrains\PhpStorm\ArrayShape;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClassConstant;

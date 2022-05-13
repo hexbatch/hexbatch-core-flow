@@ -118,6 +118,8 @@ class SearchParamBase {
 
     /**
      * @param mixed $name_thing
+     * @param bool $b_allow_tag_name
+     * @param bool $b_throw_exception
      * @return string[]
      */
     public static function validate_cast_name_array(mixed $name_thing,
