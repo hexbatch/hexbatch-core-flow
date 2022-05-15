@@ -76,8 +76,7 @@ https://symfony.com/doc/current/components/yaml.html for better config files
 
 https://github.com/delight-im/PHP-Auth for user verification and authentication 
 
-https://twig.symfony.com/doc/3.x/ Twig 3.3  
-
+https://twig.symfony.com/doc/3.x/ Twig
 
 https://github.com/paragonie/easydb for easier db use
 

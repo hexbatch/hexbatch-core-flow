@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "61ddfa2d290adfe5acb045e653c5d69a",
+    "content-hash": "e5f2dae9b4e1f5d07c39115bed614b97",
     "packages": [
         {
             "name": "bluem/tree",
@@ -1022,40 +1022,44 @@
         },
         {
             "name": "monolog/monolog",
-            "version": "2.5.0",
+            "version": "3.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Seldaek/monolog.git",
-                "reference": "4192345e260f1d51b365536199744b987e160edc"
+                "reference": "60ad5183b5e5d6c9d4047e9f3072d36071dcc161"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/4192345e260f1d51b365536199744b987e160edc",
-                "reference": "4192345e260f1d51b365536199744b987e160edc",
+                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/60ad5183b5e5d6c9d4047e9f3072d36071dcc161",
+                "reference": "60ad5183b5e5d6c9d4047e9f3072d36071dcc161",
                 "shasum": ""
             },
             "require": {
-                "php": ">=7.2",
-                "psr/log": "^1.0.1 || ^2.0 || ^3.0"
+                "php": ">=8.1",
+                "psr/log": "^2.0 || ^3.0"
             },
             "provide": {
-                "psr/log-implementation": "1.0.0 || 2.0.0 || 3.0.0"
+                "psr/log-implementation": "3.0.0"
             },
             "require-dev": {
-                "aws/aws-sdk-php": "^2.4.9 || ^3.0",
+                "aws/aws-sdk-php": "^3.0",
                 "doctrine/couchdb": "~1.0@dev",
-                "elasticsearch/elasticsearch": "^7",
+                "elasticsearch/elasticsearch": "^7 || ^8",
+                "ext-json": "*",
                 "graylog2/gelf-php": "^1.4.2",
+                "guzzlehttp/guzzle": "^7.4",
+                "guzzlehttp/psr7": "^2.2",
                 "mongodb/mongodb": "^1.8",
                 "php-amqplib/php-amqplib": "~2.4 || ^3",
                 "php-console/php-console": "^3.1.3",
-                "phpspec/prophecy": "^1.6.1",
-                "phpstan/phpstan": "^0.12.91",
-                "phpunit/phpunit": "^8.5",
+                "phpstan/phpstan": "^1.4",
+                "phpstan/phpstan-deprecation-rules": "^1.0",
+                "phpstan/phpstan-strict-rules": "^1.1",
+                "phpunit/phpunit": "^9.5.16",
                 "predis/predis": "^1.1",
-                "rollbar/rollbar": "^1.3 || ^2 || ^3",
-                "ruflin/elastica": ">=0.90@dev",
-                "swiftmailer/swiftmailer": "^5.3|^6.0"
+                "ruflin/elastica": "^7",
+                "symfony/mailer": "^5.4 || ^6",
+                "symfony/mime": "^5.4 || ^6"
             },
             "suggest": {
                 "aws/aws-sdk-php": "Allow sending log messages to AWS services like DynamoDB",
@@ -1077,7 +1081,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "2.x-dev"
+                    "dev-main": "3.x-dev"
                 }
             },
             "autoload": {
@@ -1105,7 +1109,7 @@
             ],
             "support": {
                 "issues": "https://github.com/Seldaek/monolog/issues",
-                "source": "https://github.com/Seldaek/monolog/tree/2.5.0"
+                "source": "https://github.com/Seldaek/monolog/tree/3.0.0"
             },
             "funding": [
                 {
@@ -1117,7 +1121,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-04-08T15:43:54+00:00"
+            "time": "2022-05-10T10:39:55+00:00"
         },
         {
             "name": "myclabs/php-enum",
@@ -1653,28 +1657,28 @@
         },
         {
             "name": "paragonie/easydb",
-            "version": "v2.11.0",
+            "version": "v3.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/paragonie/easydb.git",
-                "reference": "38cfac4bbd96960628ca3237ed98f3f344ffdd7b"
+                "reference": "331eb2ec69cf735597a7b59e61eb9c31688b716f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/paragonie/easydb/zipball/38cfac4bbd96960628ca3237ed98f3f344ffdd7b",
-                "reference": "38cfac4bbd96960628ca3237ed98f3f344ffdd7b",
+                "url": "https://api.github.com/repos/paragonie/easydb/zipball/331eb2ec69cf735597a7b59e61eb9c31688b716f",
+                "reference": "331eb2ec69cf735597a7b59e61eb9c31688b716f",
                 "shasum": ""
             },
             "require": {
                 "ext-pdo": "*",
-                "paragonie/corner": "^1|^2",
-                "php": "^7|^8"
+                "paragonie/corner": "^2",
+                "php": "^8"
             },
             "require-dev": {
-                "phpunit/phpunit": "^6|^7",
+                "phpunit/phpunit": "^9",
                 "psalm/plugin-phpunit": "<1",
                 "squizlabs/php_codesniffer": "^3",
-                "vimeo/psalm": "^3"
+                "vimeo/psalm": "^4"
             },
             "type": "library",
             "autoload": {
@@ -1688,8 +1692,8 @@
             ],
             "authors": [
                 {
-                    "name": "Scott Arciszewski",
-                    "email": "scott@paragonie.com",
+                    "name": "Paragon Initiative Enterprises",
+                    "email": "security@paragonie.com",
                     "homepage": "https://paragonie.com",
                     "role": "Developer"
                 },
@@ -1716,7 +1720,7 @@
                 "issues": "https://github.com/paragonie/easydb/issues",
                 "source": "https://github.com/paragonie/easydb"
             },
-            "time": "2020-01-20T01:06:56+00:00"
+            "time": "2022-05-11T18:30:41+00:00"
         },
         {
             "name": "php-di/invoker",
@@ -4112,16 +4116,16 @@
         },
         {
             "name": "twig/twig",
-            "version": "v3.3.10",
+            "version": "v3.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/twigphp/Twig.git",
-                "reference": "8442df056c51b706793adf80a9fd363406dd3674"
+                "reference": "ed19f4bf9d19c4ef920b5d8243910bd32e85b9ba"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/twigphp/Twig/zipball/8442df056c51b706793adf80a9fd363406dd3674",
-                "reference": "8442df056c51b706793adf80a9fd363406dd3674",
+                "url": "https://api.github.com/repos/twigphp/Twig/zipball/ed19f4bf9d19c4ef920b5d8243910bd32e85b9ba",
+                "reference": "ed19f4bf9d19c4ef920b5d8243910bd32e85b9ba",
                 "shasum": ""
             },
             "require": {
@@ -4136,7 +4140,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "3.3-dev"
+                    "dev-master": "3.4-dev"
                 }
             },
             "autoload": {
@@ -4172,7 +4176,7 @@
             ],
             "support": {
                 "issues": "https://github.com/twigphp/Twig/issues",
-                "source": "https://github.com/twigphp/Twig/tree/v3.3.10"
+                "source": "https://github.com/twigphp/Twig/tree/v3.4.0"
             },
             "funding": [
                 {
@@ -4184,7 +4188,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-04-06T06:47:41+00:00"
+            "time": "2022-05-15T06:25:28+00:00"
         }
     ],
     "packages-dev": [],
