@@ -22,7 +22,7 @@ git:
     - bitbucket.org
     - gitlab.com
 program:
-    version: 0.6.0-alpha
+    version: 0.6.0
     version_link: https://github.com/hexbatch/hexbatch-core-flow/pull/5
     version_description_short: Entries Upgraded
     timezone: 'America/Chicago'
