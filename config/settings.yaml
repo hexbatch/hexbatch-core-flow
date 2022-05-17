@@ -23,6 +23,6 @@ git:
     - gitlab.com
 program:
     version: 0.6.1-alpha
-    version_link: https://github.com/hexbatch/hexbatch-core-flow/pull/5
+    version_link: "https://github.com/hexbatch/hexbatch-core-flow/pull/6"
     version_description_short: "No More Attribute Pointers"
     timezone: 'America/Chicago'
