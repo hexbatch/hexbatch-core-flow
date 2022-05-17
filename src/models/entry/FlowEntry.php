@@ -2,12 +2,13 @@
 
 namespace app\models\entry;
 
+use app\models\entry\levels\FlowEntryFiles;
 use app\models\project\exceptions\NothingToPushException;
 use app\models\project\IFlowProject;
 use Exception;
 
 
-final class FlowEntry extends FlowEntryMembers  {
+final class FlowEntry extends FlowEntryFiles  {
 
 
 
@@ -67,7 +68,7 @@ final class FlowEntry extends FlowEntryMembers  {
     /**
      * called after the save is made
      */
-    public function on_after_save_entry() :void {
+    protected function on_after_save_entry() :void {
         parent::on_after_save_entry();
         $this->store(); //write it to archive
     }

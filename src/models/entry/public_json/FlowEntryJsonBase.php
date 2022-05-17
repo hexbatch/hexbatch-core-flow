@@ -37,9 +37,11 @@ class FlowEntryJsonBase implements IFlowEntryJson,JsonSerializable {
             "flow_entry_blurb" => $this->entry->get_blurb(),
             "flow_entry_body_bb_code" => $this->entry->get_bb_code(),
         ];
+
+
     }
 
-    #[ArrayShape(["flow_entry_guid" => "\null|string", "flow_entry_parent_guid" => "\null|string", "flow_project_guid" => "\null|string", "entry_created_at_ts" => "\int|null", "entry_updated_at_ts" => "\int|null", "flow_entry_title" => "\null|string", "flow_entry_blurb" => "\null|string", "flow_entry_body_bb_code" => "\null|string"])]
+    #[ArrayShape(["flow_entry_guid" => "null|string", "flow_entry_parent_guid" => "null|string", "flow_project_guid" => "null|string", "entry_created_at_ts" => "\int|null", "entry_updated_at_ts" => "\int|null", "flow_entry_title" => "null|string", "flow_entry_blurb" => "null|string", "flow_entry_body_bb_code" => "null|string"])]
     public function jsonSerialize() : array
     {
         return $this->to_array();

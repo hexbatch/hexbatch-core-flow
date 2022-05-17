@@ -1,6 +1,7 @@
 <?php
 namespace app\models\project\levels;
 
+use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\project\IFlowProject;
 use Exception;
@@ -113,10 +114,12 @@ abstract class FlowProjectDataLevel extends FlowBase implements JsonSerializable
 
     /**
      * @param bool $b_do_transaction default true
-     * @throws Exception
+     * @param bool $b_commit_project
      * @return void
+     * @throws Exception
      */
-    public function save(bool $b_do_transaction = true) : void {
+    public function save(bool $b_do_transaction = true,bool $b_commit_project = true) : void {
+        WillFunctions::will_do_nothing($b_commit_project);
         $db = null;
         try {
             if (empty($this->flow_project_title)) {

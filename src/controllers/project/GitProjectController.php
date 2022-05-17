@@ -40,7 +40,8 @@ class GitProjectController extends BaseProjectController {
                                     string $user_name, string $project_name) :ResponseInterface {
 
         try {
-            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name, FlowProjectUser::PERMISSION_COLUMN_WRITE);
+            $project = $this->get_project_helper()->get_project_with_permissions($request,$user_name, $project_name,
+                FlowProjectUser::PERMISSION_COLUMN_WRITE);
 
             if (!$project) {
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");
@@ -211,9 +212,10 @@ class GitProjectController extends BaseProjectController {
 
 
         $git_out = [];
+        $call = null;
         try {
             $option = new AjaxCallData([
-                AjaxCallData::OPTION_IS_AJAX,
+                AjaxCallData::OPTION_ENFORCE_AJAX,
                 AjaxCallData::OPTION_MAKE_NEW_TOKEN,
                 AjaxCallData::OPTION_VALIDATE_TOKEN
             ]);
@@ -235,7 +237,7 @@ class GitProjectController extends BaseProjectController {
                 'success'=>true,
                 'message'=>'ok',
                 'git_output'=>$git_out,
-                'token'=> $call->new_token
+                'token'=> $call->get_token_with_project_hash($call->project)
             ];
             $payload = JsonHelper::toString($data);
 
@@ -250,7 +252,7 @@ class GitProjectController extends BaseProjectController {
                 'success'=>false,
                 'message'=>$e->getMessage(),
                 'git_output'=>$git_out,
-                'token'=> $call->new_token?? null
+                'token'=> $call?->get_token_with_project_hash($call?->project)
             ];
             $payload = JsonHelper::toString($data);
 
@@ -276,9 +278,10 @@ class GitProjectController extends BaseProjectController {
 
 
         $git_out = [];
+        $call = null;
         try {
             $option = new AjaxCallData([
-                AjaxCallData::OPTION_IS_AJAX,
+                AjaxCallData::OPTION_ENFORCE_AJAX,
                 AjaxCallData::OPTION_MAKE_NEW_TOKEN,
                 AjaxCallData::OPTION_VALIDATE_TOKEN
             ]);
@@ -300,7 +303,7 @@ class GitProjectController extends BaseProjectController {
                 'success'=>true,
                 'message'=>'ok',
                 'git_output'=>$git_out,
-                'token'=> $call->new_token
+                'token'=> $call->get_token_with_project_hash($call->project)
             ];
             $payload = JsonHelper::toString($data);
 
@@ -315,7 +318,7 @@ class GitProjectController extends BaseProjectController {
                 'success'=>false,
                 'message'=>$no_pull->getMessage(),
                 'git_output'=>$git_out,
-                'token'=> $call->new_token?? null
+                'token'=> $call?->get_token_with_project_hash($call?->project)
             ];
             $payload = JsonHelper::toString($data);
 
@@ -330,7 +333,7 @@ class GitProjectController extends BaseProjectController {
                 'success'=>false,
                 'message'=>$e->getMessage(),
                 'git_output'=>$git_out,
-                'token'=> $call->new_token?? null
+                'token'=> $call?->get_token_with_project_hash($call?->project)
             ];
             $payload = JsonHelper::toString($data);
 
@@ -356,6 +359,7 @@ class GitProjectController extends BaseProjectController {
 
         $temp_file_name_with_extension = null;
         $patch_status = [];
+        $call = null;
         try {
             $option = new AjaxCallData([
                 AjaxCallData::OPTION_VALIDATE_TOKEN
@@ -384,7 +388,7 @@ class GitProjectController extends BaseProjectController {
                 'success'=>true,
                 'message'=>$success_message,
                 'git_output'=>$patch_status,
-                'token'=> $call->new_token
+                'token'=> $call->get_token_with_project_hash($call->project)
             ];
             $payload = JsonHelper::toString($data);
 
@@ -399,7 +403,7 @@ class GitProjectController extends BaseProjectController {
                 'success'=>false,
                 'message'=>$no_pull->getMessage(),
                 'git_output'=>$patch_status,
-                'token'=> $call->new_token?? null
+                'token'=> $call?->get_token_with_project_hash($call?->project)
             ];
             $payload = JsonHelper::toString($data);
 
@@ -414,7 +418,7 @@ class GitProjectController extends BaseProjectController {
                 'success'=>false,
                 'message'=>$e->getMessage(),
                 'git_output'=>$patch_status,
-                'token'=> $call->new_token?? null
+                'token'=> $call?->get_token_with_project_hash($call?->project)
             ];
             $payload = JsonHelper::toString($data);
 
@@ -439,9 +443,10 @@ class GitProjectController extends BaseProjectController {
     public function clone_project_from_git(ServerRequestInterface $request, ResponseInterface $response) :ResponseInterface {
 
         $project = null;
+        $call = null;
         try {
             $option = new AjaxCallData([
-                AjaxCallData::OPTION_IS_AJAX,
+                AjaxCallData::OPTION_ENFORCE_AJAX,
                 AjaxCallData::OPTION_MAKE_NEW_TOKEN,
                 AjaxCallData::OPTION_VALIDATE_TOKEN
             ]);
@@ -461,8 +466,9 @@ class GitProjectController extends BaseProjectController {
                         "[clone_project_from_git] need setting_guid for this option");}
 
                     $tag_params = new FlowTagSearchParams();
-                    $tag_params->tag_guids[] = $setting_tag_guid;
-                    $setting_tag_array  = FlowTagSearch::get_tags($tag_params);
+                    $tag_params->addGuidsOrNames($setting_tag_guid);
+                    $tag_search = new FlowTagSearch();
+                    $setting_tag_array = $tag_search->get_tags($tag_params)->get_found_tags();
                     if (empty($setting_tag_array)) {
                         throw new InvalidArgumentException("[clone_project_from_git] could not find tag by tag_guid ". $setting_tag_guid);
                     }
@@ -513,7 +519,7 @@ class GitProjectController extends BaseProjectController {
                 'success'=>true,
                 'message'=>$success_message,
                 'project'=>$project,
-                'token'=> $call->new_token
+                'token'=> $call->get_token_with_project_hash($call->project)
             ];
             $payload = JsonHelper::toString($data);
 
@@ -529,7 +535,7 @@ class GitProjectController extends BaseProjectController {
                 'success'=>false,
                 'message'=>$e->getMessage(),
                 'project'=>$project,
-                'token'=> $call->new_token?? null
+                'token'=> $call?->get_token_with_project_hash($call?->project)
             ];
             $payload = JsonHelper::toString($data);
 
@@ -551,6 +557,7 @@ class GitProjectController extends BaseProjectController {
 
         $temp_file_name_with_extension = null;
         $project = null;
+        $call = null;
         try {
             $option = new AjaxCallData([
                 AjaxCallData::OPTION_VALIDATE_TOKEN
@@ -581,7 +588,7 @@ class GitProjectController extends BaseProjectController {
                 'success'=>true,
                 'message'=>$success_message,
                 'project'=>$project,
-                'token'=> $call->new_token
+                'token'=> $call->get_token_with_project_hash($call->project)
             ];
             $payload = JsonHelper::toString($data);
 
@@ -597,7 +604,7 @@ class GitProjectController extends BaseProjectController {
                 'success'=>false,
                 'message'=>$e->getMessage(),
                 'project'=>$project,
-                'token'=> $call->new_token?? null
+                'token'=> $call?->get_token_with_project_hash($call?->project)
             ];
             $payload = JsonHelper::toString($data);
 

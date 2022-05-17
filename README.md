@@ -6,6 +6,8 @@ The main use of this web app is to organize ideas, its useful for planning compl
 ## Releases
 | Date              | Version | Name                                  |
 |-------------------|---------|---------------------------------------|
+| May 17, 2022      | 0.6.0   | Entries Upgraded                      |
+| May 4, 2022       | 0.5.3   | Upgrade to php 8.1.5                  |
 | May 3, 2022       | 0.5.2   | Git Revamp                            |
 | April 20, 2022    | 0.5.1   | Git Bit!                              |
 | April 13, 2022    | 0.5.0.1 | Standard views and Edits              |
@@ -58,19 +60,24 @@ as a second command to build the autoload class map so the classes in the src fo
 ### Using PHP Libraries 
 
 https://github.com/slimphp/Slim For the overall framework
+
 see https://discourse.slimframework.com
+
 see https://www.slimframework.com/docs/v4
+
     using https://php-di.org/doc/frameworks/slim.html for container injection
+
     using https://github.com/slimphp/Slim-Psr7 for the PSR-7 implementation 
+
     using https://github.com/slimphp/Twig-View for twig views
 
 https://github.com/lulco/phoenix for migrations
-    https://symfony.com/doc/current/components/yaml.html for better config files
+    
+https://symfony.com/doc/current/components/yaml.html for better config files
 
 https://github.com/delight-im/PHP-Auth for user verification and authentication 
 
-Twig 3.3 see https://twig.symfony.com/doc/3.x/
-
+https://twig.symfony.com/doc/3.x/ Twig
 
 https://github.com/paragonie/easydb for easier db use
 
@@ -136,7 +143,33 @@ jQuery Serialize Object https://github.com/macek/jquery-serialize-object for con
 
 ### installation uses npm
  Run `npm i` to install js dependencies that are not saved in the repo
+
+ I use a docker image from https://hub.docker.com/r/andrewmackrodt/nodejs 
  
+ after first time run each latest, its as fast as local
+    
+ #### start interactive mode
+(start a nodejs shell, can do javascript in it)
+
+    sudo docker run --rm -it andrewmackrodt/nodejs 
+    
+
+#### print version
+(prints the version of the docker image)    
+
+    sudo docker run --rm andrewmackrodt/nodejs --version
+
+#### run npm install in the current directory
+(use this to manage the js libraries)
+
+    sudo docker run --rm -it \
+    -e PUID=$(id -u) \
+    -e PGID=$(id -g) \
+    -v $PWD:/app \
+    -w /app \
+    andrewmackrodt/nodejs npm install`
+ 
+any nmp commands instead of install can be used instead (ls to list, outdated to show what can be updated, update ,etc)
 
 ## Environmental Notes
 
@@ -182,6 +215,7 @@ Below is a list of additional items that can be used in the twig markup
     dump_session() - shows the current session contents (for debugging)
     uuid() - generates a new v4 uuid
     standard_keys() - returns an array of standard attribute keys for the given type
+    print_nice()   - prints out to a colored html table, like a dump, but only shows public or json supplied properties of objects
 
 ### Filters
     

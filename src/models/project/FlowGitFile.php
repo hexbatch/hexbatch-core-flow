@@ -4,6 +4,7 @@ namespace app\models\project;
 
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\IFlowEntryArchive;
+use app\models\entry\entry_node\IFlowEntryNodeDocument;
 use app\models\entry\FlowEntryYaml;
 use Exception;
 
@@ -19,6 +20,8 @@ class FlowGitFile {
      */
     public ?string $file;
 
+    public bool $b_file_deleted;
+
     /**
      * @var string $file
      */
@@ -31,6 +34,9 @@ class FlowGitFile {
         $this->commit = $commit;
         $this->file = $file;
         $this->short_name = $this->get_short_name();
+        $this->b_file_deleted = false;
+        $full_path = $this->project_path . DIRECTORY_SEPARATOR . $this->file;
+        if (!is_readable($full_path)) {$this->b_file_deleted = true;}
     }
 
     protected function get_short_name() : string {
@@ -39,6 +45,7 @@ class FlowGitFile {
             case 'flow_project_blurb': { $this->is_public = true ; return 'Project Blurb'; }
             case 'flow_project_title': { $this->is_public = true ; return 'Project Title'; }
             case 'tags.yaml': { $this->is_public = true ; return 'Tags'; }
+            case 'entry-summary.yaml': { $this->is_public = true ; return 'Entry Summary'; }
             default: {
 
                 if ($this->is_valid_resource_file()) {
@@ -79,6 +86,7 @@ class FlowGitFile {
         if (str_contains($this->file, IFlowEntryArchive::BB_CODE_FILE_NAME)) {return 'Entry BB Code';}
         if (str_contains($this->file, IFlowEntryArchive::BASE_YAML_FILE_NAME)) {return 'Entry Yaml';}
         if (str_contains($this->file, FlowEntryYaml::FILENAME_TO_MARK_INVALID)) {return 'Marked Ignored';}
+        if (str_contains($this->file, IFlowEntryNodeDocument::ENTRY_NODE_FILE_NAME)) {return 'Node Yaml';}
         return "Other Entry File";
     }
 

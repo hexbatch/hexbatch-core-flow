@@ -1,0 +1,22 @@
+{%if (node_navigation)%}
+    <div class="container p-0 m-1">
+        <div class="card flow-node-navigation">
+            <div class="card-body bg-dark text-white">
+                {{node_navigation | raw }}
+                <button class="btn btn-outline-secondary text-white flow-action-show-tags float-end">
+                    Tags
+                </button>
+            </div>
+
+        </div>
+    </div> <!-- ./container -->
+    <script>
+        jQuery(function($) {
+            $(`button.flow-action-show-tags`).on('click', function () {
+                $(`div.flow-node-navigation`).find(`.flow-tag-display`).toggleClass('d-none');
+                update_tags_in_display(false);
+            });
+
+        });
+    </script>
+{%endif%}

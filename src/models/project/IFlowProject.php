@@ -66,7 +66,7 @@ interface IFlowProject {
     public function set_admin_user_id(?int $user_id) : void ;
 
 
-    public function save(bool $b_do_transaction = true) : void;
+    public function save(bool $b_do_transaction = true,bool $b_commit_project = true ) : void;
     public function destroy_project(bool $b_do_transaction = true): void;
 
     public function get_current_user_permissions(): ?FlowProjectUser;

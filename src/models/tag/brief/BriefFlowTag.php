@@ -81,7 +81,7 @@ class BriefFlowTag implements JsonSerializable {
         $this->applied = $brief_applied;
     }
 
-    #[ArrayShape(["flow_tag_guid" => "string", "parent_tag_guid" => "\null|string", "flow_project_guid" => "\null|string", "created_at_ts" => "\int|mixed|null", "updated_at_ts" => "\int|mixed|null", "flow_tag_name" => "string", "attributes" => "\app\models\tag\brief\BriefFlowTagAttribute[]|array", "applied" => "\app\models\tag\brief\BriefFlowAppliedTag[]|array"])]
+    #[ArrayShape(["flow_tag_guid" => "string", "parent_tag_guid" => "null|string", "flow_project_guid" => "null|string", "created_at_ts" => "\int|mixed|null", "updated_at_ts" => "\int|mixed|null", "flow_tag_name" => "string", "attributes" => "\app\models\tag\brief\BriefFlowTagAttribute[]|array", "applied" => "\app\models\tag\brief\BriefFlowAppliedTag[]|array"])]
     public function jsonSerialize(): array {
         return $this->to_array();
     }

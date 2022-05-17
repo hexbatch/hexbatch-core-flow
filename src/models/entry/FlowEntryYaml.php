@@ -102,20 +102,11 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
             $this->entry_updated_at_ts = $object->get_updated_at_ts() ;
             $this->human_date_time = Carbon::now()->toIso8601String() ;
             $this->dese_child_entries = [] ;
-            foreach ($object->get_children() as $child_entry) {
-                $this->dese_child_entries[] = new static($child_entry);
-            }
             $this->folder_path = $object->deduce_existing_entry_folder();
         } else {
             foreach ($object as $key => $val) {
                 if (property_exists($this,$key)) {
-                    if ($key === 'child_entries') {
-                        foreach ($val as $child_info) {
-                            $this->dese_child_entries[] = new static($child_info,$project);
-                        }
-                    } else {
-                        $this->$key = $val;
-                    }
+                    $this->$key = $val;
                 }
             }
         }
@@ -344,13 +335,17 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
         }
 
         foreach ($invalid as $invalid_folder) {
-            file_put_contents($invalid_folder.DIRECTORY_SEPARATOR.static::FILENAME_TO_MARK_INVALID,Carbon::now()->toIso8601String());
+            $invalid_file_path = $invalid_folder.DIRECTORY_SEPARATOR.static::FILENAME_TO_MARK_INVALID;
+            if (!is_readable($invalid_file_path)) {
+                file_put_contents($invalid_file_path,Carbon::now()->toIso8601String());
+            }
+
         }
 
         return $invalid;
     }
 
-    #[ArrayShape(['entry_name' => "mixed", 'flow_entry_guid' => "mixed", 'flow_entry_parent_guid' => "mixed", 'flow_project_guid' => "mixed", 'entry_created_at_ts' => "mixed", 'entry_updated_at_ts' => "mixed", 'human_date_time' => "\null|string", 'folder_hash' => "\null|string", 'child_entries' => "\app\models\entry\FlowEntryYaml[]|array"])]
+    #[ArrayShape(['entry_name' => "mixed", 'flow_entry_guid' => "mixed", 'flow_entry_parent_guid' => "mixed", 'flow_project_guid' => "mixed", 'entry_created_at_ts' => "mixed", 'entry_updated_at_ts' => "mixed", 'human_date_time' => "null|string", 'folder_hash' => "null|string", 'child_entries' => "\app\models\entry\FlowEntryYaml[]|array"])]
     public function jsonSerialize() : array
     {
        return $this->toArray();

@@ -11,14 +11,13 @@ use RuntimeException;
 /** @noinspection PhpUnused */
 class AddFlowGroupAttributes extends AbstractMigration
 {
-    //202203128077010_add_flow_standard_attributes.php
-    //triggers_202203128077010_flow_standard_attributes
-    const NAME_PART = '202203128077010';
+    //20220312807701_add_flow_standard_attributes.php
+    //triggers_20220312807701_flow_standard_attributes
+    const NAME_PART = '20220312807701';
     const TRIGGER_DIR = HEXLET_BASE_PATH . '/database/hexlet_migrations/triggers/triggers_' . self::NAME_PART . '_flow_standard_attributes';
 
     protected function up(): void
     {
-
         $mydb = DBSelector::getConnection();
 
         if (!is_dir(static::TRIGGER_DIR)) {
@@ -39,14 +38,14 @@ class AddFlowGroupAttributes extends AbstractMigration
                 `standard_json` JSON NULL DEFAULT NULL,
                 PRIMARY KEY (`id`),
                 KEY idx_tag_id (flow_tag_id),
-                UNIQUE KEY udx_tag_attribute (flow_tag_id,standard_name)
+                UNIQUE KEY udx_tag_attribute (flow_tag_id,standard_name),
+                constraint fk_flow_standard_attributes_has_tag_id
+                    foreign key (flow_tag_id) references flow_tags (id)
+                        on update cascade on delete cascade
            ) ENGINE = InnoDB COMMENT = 'Keeps a record of standard attributes as they stack up in a tag ';
 
        ");
 
-        $this->execute("ALTER TABLE flow_standard_attributes
-            ADD CONSTRAINT `fk_flow_standard_attributes_has_tag_id` 
-            FOREIGN KEY (`flow_tag_id`) REFERENCES `flow_tags`(`id`) ON DELETE CASCADE ON UPDATE CASCADE ;");
 
         //NOW UPDATE THE TRIGGERS !
         $files = MYDB::recursive_search_sql_files(static::TRIGGER_DIR);

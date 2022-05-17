@@ -81,7 +81,8 @@ class SQLHelper {
         $search_params = new FlowTagSearchParams();
         $search_params->setPage(1);
         $search_params->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
-        $all_tags = FlowTagSearch::get_tags($search_params);
+        $tag_search = new FlowTagSearch();
+        $all_tags = $tag_search->get_tags($search_params)->get_found_tags();
         $writers = FlowTagStandardAttribute::write_standard_attributes($all_tags);
         return count($writers);
     }

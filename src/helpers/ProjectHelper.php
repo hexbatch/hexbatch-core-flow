@@ -35,6 +35,15 @@ class ProjectHelper extends BaseHelper {
 
     }
 
+    public static function get_entry_helper() : EntryHelper {
+        try {
+            return static::get_container()->get('entryHelper');
+        } catch (DependencyException|NotFoundException $e) {
+            throw new LogicException($e->getMessage());
+        }
+
+    }
+
     public function get_root_url() : string {
 
         if (!array_key_exists('HTTP_HOST',$_SERVER)) {
@@ -476,6 +485,18 @@ class ProjectHelper extends BaseHelper {
         $ret['no-x-on-files'] =   implode("\n",$output);
 
         return $ret;
+    }
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    public function get_projects_base_directory() : string {
+        $check =  $this->get_settings()->project->parent_directory;
+        if (!is_readable($check)) {
+            throw new RuntimeException("The directory of $check is not readable");
+        }
+        return $check;
     }
 
 

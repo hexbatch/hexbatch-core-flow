@@ -2,8 +2,10 @@
 
 namespace app\hexlet;
 
+use app\models\entry\entry_node\IFlowEntryNode;
 use Exception;
 use Highlight\Highlighter;
+use JBBCode\validators\FnValidator;
 use JetBrains\PhpStorm\NoReturn;
 use PHPHtmlParser\Dom;
 use app\hexlet\hexlet_exceptions\JsonHelperException;
@@ -520,6 +522,12 @@ class JsonHelper {
         }
     }
 
+    public static function print_nice(mixed $what) :string {
+        ob_start();
+        static::print_nice_internal($what);
+        return ob_get_clean();
+    }
+
     /**
      * Use this to inspect json returns
      * Debug, prints array information to the screen in an easy to read html table
@@ -533,7 +541,7 @@ class JsonHelper {
      *
      * @noinspection PhpUnused
      */
-    public static function print_nice(mixed $elem, int $max_level=15, array $print_nice_stack=array()): void
+    public static function print_nice_internal(mixed $elem, int $max_level=15, array $print_nice_stack=array()): void
     {
         //if (is_object($elem)) {$elem = object_to_array($elem);}
         if(is_array($elem) || is_object($elem)){
@@ -565,7 +573,7 @@ class JsonHelper {
                 /** @noinspection HtmlDeprecatedAttribute */
                 echo '<tr><td valign="top" style="width:40px;background-color:' . $rgb . ';">';
                 echo '<strong style="color:black">'.$k."</strong></td><td style='background-color:white;color:black'>";
-                self::print_nice($v,$max_level,$print_nice_stack);
+                self::print_nice_internal($v,$max_level,$print_nice_stack);
                 echo "</td></tr>";
             }
             echo "</table><br><br>";
@@ -652,19 +660,31 @@ class JsonHelper {
     }
 
 
+    public static function get_parsed_bb_code($original) : ?Parser {
 
-    public static function html_from_bb_code($original) : ?string {
 
-       // will_send_to_error_log('original',$original);
+
+        // will_send_to_error_log('original',$original);
         $safe_encoding = self::to_utf8($original);
-       // will_send_to_error_log('$safe_encoding',$safe_encoding);
+        // will_send_to_error_log('$safe_encoding',$safe_encoding);
         $trimmed = trim($safe_encoding);
-        if (empty($trimmed)) {return '';}
+        if (empty($trimmed)) {return null;}
+
+        //replace flow_tag with closing
+        $flow_tag_name = IFlowEntryNode::FLOW_TAG_BB_CODE_NAME;
+        $trimmed = preg_replace(
+            "/(?P<da_tag>\[$flow_tag_name\s+tag=(?P<guid>[\da-fA-F]+)\s*])/",
+            "$1[/$flow_tag_name]",
+            $trimmed);
+
+        $trimmed = str_replace('<?php','≺?php',$trimmed);//php
+        $trimmed = str_replace('<?=','≺?=',$trimmed);//php
+        $trimmed = str_replace('<=','≺?',$trimmed);//php
 
         //convert any p , br and non linux line returns to /n
         $lines_standardized = self::tags_to_n($trimmed,false,false);
 
-      //  will_send_to_error_log('$lines_standardized',$lines_standardized);
+        //  will_send_to_error_log('$lines_standardized',$lines_standardized);
 
 
 
@@ -677,6 +697,7 @@ class JsonHelper {
 
         $body = str_replace('] ',']&nbsp',$body);//unicode space
         $body = str_replace('] ',']&nbsp;',$body);//regular space
+        $body = str_replace('<','≺',$body);//php
 
 
 
@@ -792,13 +813,30 @@ class JsonHelper {
             /** @lang text */ '<img src="{param}" alt="bb image">'
         ));
 
-
-
-
+        $builder = new CodeDefinitionBuilder(
+            $flow_tag_name,
+            '<span class="flow-bb-tag flow-tag-display flow-tag-{tag} d-none" data-tag_guid="{tag}"></span>'
+        );
+        $builder->setUseOption(true)->setOptionValidator(new FnValidator(
+            function($input) {
+                return WillFunctions::is_valid_guid_format($input);
+            }),'tag')->setParseContent(false);
+        //flow_tag
+        $parser->addCodeDefinition( $builder->build());
 
 
         $parser->parse($body);
+        return $parser;
+    }
+
+    public static function html_from_bb_code($original) : ?string {
+
+        $parser = static::get_parsed_bb_code($original);
+        if (empty($parser)) {return  null;}
+
         $post =  $parser->getAsHtml();
+
+
         //will_send_to_error_log('after parse ',$post);
 
         //add in image dimensions, if they exist

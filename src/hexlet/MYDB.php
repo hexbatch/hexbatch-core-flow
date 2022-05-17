@@ -67,9 +67,9 @@ class MYDB
     private bool $destroyMe = false;
 
     /**
-     * @var mysqli_result|null is used in the static connection helper methods
+     * @var mysqli_result|bool|null is used in the static connection helper methods
      */
-    protected null|mysqli_result $result = null;
+    protected null|bool|mysqli_result $result = null;
 
     //  $transactionCount is  in $mysqli;
     //for storing and reusing prepared statements as requested, they are put into
@@ -275,14 +275,14 @@ class MYDB
 
     /**
      * Object wrapper for doing a mysqli_query. If one needs to not use @param $sql
-     * @return mysqli_result|null
+     * @return bool|mysqli_result|null
      * @throws SQLException
      *@see MYDB::staticExecute()
      * @see MYDB::execSQL()
      * Can be used with @see MYDB::fetch()
      * and @see MYDB::fetchThrowIfNull()
      */
-    public function execute($sql): ?mysqli_result
+    public function execute($sql): bool|null|mysqli_result
     {
         $this->result = self::staticExecute($sql, $this->mysqli);
         return $this->result;

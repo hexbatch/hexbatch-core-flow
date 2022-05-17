@@ -14,6 +14,7 @@
         <form action="{{ url_to_action }}" class="dropzone w-100" id="flow-resource-file-upload" style="min-height: 20em">
 
             {{ form_token( url_to_action)  }}
+            <input type="hidden" id="flow_project_git_hash" value="{{ flow_project_git_hash }}">
 
             <!--  fallback form -->
             <div class="fallback"> <!-- This div will be removed if the fallback is not necessary -->
@@ -29,8 +30,17 @@
         let myDropzone = new Dropzone("form#flow-resource-file-upload", {
             url: "{{ url_to_action }}",
             paramName: "flow_resource_file", // The name that will be used to transfer the file
-            maxFilesize: 10 // MB
+            maxFilesize: 20 // MB
 
+        });
+
+        myDropzone.on('sending', function(file, xhr, formData) {
+            // Append all form inputs to the formData Dropzone will POST
+            var data = $(`form#flow-resource-file-upload`).serializeArray();
+            $.each(data, function(key, el) {
+                formData.append(el.name, el.value);
+            });
+            formData.append('flow_project_git_hash',$(`input#flow_project_git_hash`).val());
         });
 
         myDropzone.on("error", function(file, response) {

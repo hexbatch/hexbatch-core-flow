@@ -29,41 +29,6 @@ Interface IFlowEntry extends IFlowEntryReadBasicProperties {
      */
     public function get_ancestor_guids(): array;
 
-    /**
-     * @return IFlowEntry[]
-     */
-    public function get_children() : array;
-
-    /**
-     * @return string[]
-     */
-    public function get_children_guids() : array;
-
-    /**
-     * @return int[]
-     */
-    public function get_children_ids() : array;
-
-
-
-    /**
-     * @return IFlowEntry[]
-     */
-    public function get_members() : array;
-
-    /**
-     * @return string[]
-     */
-    public function get_member_guids() : array;
-
-
-    public function get_host_guids() : array;
-
-    /**
-     * @return IFlowEntry[]
-     */
-    public function get_hosts() : array;
-
 
     public function set_id(?int $what): void;
     public function set_guid(?string $what): void;
@@ -78,9 +43,6 @@ Interface IFlowEntry extends IFlowEntryReadBasicProperties {
     public function set_title(?string $what): void;
     public function set_blurb(?string $what): void;
 
-
-    public function add_child(IFlowEntry $what): void;
-    public function remove_child(IFlowEntry $what): void;
 
 
     /**
@@ -112,10 +74,6 @@ Interface IFlowEntry extends IFlowEntryReadBasicProperties {
     public function validate_entry_before_save() :void ;
 
     /**
-     * called after the save is made
-     */
-    public function on_after_save_entry() :void ;
-    /**
      * @throws Exception
      */
     public function save_entry(bool $b_do_transaction = false, bool $b_save_children = false) :void ;
@@ -125,11 +83,6 @@ Interface IFlowEntry extends IFlowEntryReadBasicProperties {
      */
     public function delete_entry(): void;
 
-    /**
-     * called after the delete is done
-     * @throws
-     */
-    public function on_after_delete_entry() :void ;
 
     /**
      * @param IFlowProject $project

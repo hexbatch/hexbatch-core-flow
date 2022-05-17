@@ -1,6 +1,6 @@
 <?php
 
-namespace app\models\entry;
+namespace app\models\entry\levels;
 
 
 use app\hexlet\JsonHelper;
@@ -8,12 +8,17 @@ use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\entry\archive\FlowEntryArchive;
 use app\models\entry\archive\IFlowEntryArchive;
+use app\models\entry\FlowEntry;
+use app\models\entry\FlowEntrySearch;
+use app\models\entry\FlowEntrySearchParams;
+use app\models\entry\FlowEntryYaml;
+use app\models\entry\IFlowEntry;
+use app\models\entry\IFlowEntryReadBasicProperties;
 use app\models\entry\public_json\FlowEntryJsonBase;
 use app\models\entry\public_json\IFlowEntryJson;
 use app\models\project\IFlowProject;
 use Exception;
 use InvalidArgumentException;
-
 use JetBrains\PhpStorm\ArrayShape;
 use JsonSerializable;
 use LogicException;
@@ -21,6 +26,7 @@ use malkusch\lock\mutex\FlockMutex;
 use PDO;
 use RuntimeException;
 use stdClass;
+
 
 
 abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowEntry {
@@ -122,7 +128,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
         $b_min_ok =  static::minimum_check_valid_name($words,static::LENGTH_ENTRY_TITLE);
         if (!$b_min_ok) {return false;}
         //no special punctuation
-        if (preg_match('/[\'"<>`]/', $words, $output_array)) {
+        if (preg_match('/[\'"<>`. _]/', $words, $output_array)) {
             WillFunctions::will_do_nothing($output_array);
             return false;
         }
@@ -343,9 +349,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     }
 
     public function delete_entry() : void {
-        if (count($this->get_children()) || count($this->get_children_ids())) {
-            throw new InvalidArgumentException("Cannot delete entry, it has children");
-        }
+
         $db = static::get_connection();
         if ($this->get_id()) {
             $db->delete('flow_entries',['id'=>$this->get_id()]);
@@ -408,7 +412,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     public function set_title(?string $what): void {
         $safe_what = JsonHelper::to_utf8($what);
 
-        if (mb_strlen($safe_what > static::LENGTH_ENTRY_TITLE)) {
+        if (mb_strlen($safe_what) > static::LENGTH_ENTRY_TITLE) {
             throw new InvalidArgumentException(
                 sprintf("Title Must be %s or less characters ",static::LENGTH_ENTRY_TITLE)
             );
@@ -419,7 +423,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
             throw new InvalidArgumentException(
                 "Entry title invalid! ".
                 "First character cannot be a number. ".
-                " Title cannot be a hex number greater than 25 and cannot be a decimal number. No quotes or greater or less than");
+                " Title cannot be a hex number greater than 25 and cannot be a decimal number. No spaces or punctuation. No quotes or greater or less than");
         }
 
         $this->flow_entry_title = $safe_what;
@@ -428,7 +432,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     public function set_blurb(?string $what): void {
         $safe_what = JsonHelper::to_utf8($what);
 
-        if (mb_strlen($safe_what > static::LENGTH_ENTRY_BLURB)) {
+        if (mb_strlen($safe_what) > static::LENGTH_ENTRY_BLURB) {
             throw new InvalidArgumentException(
                 sprintf("Blurb Must be %s or less characters ",static::LENGTH_ENTRY_BLURB)
             );
@@ -451,7 +455,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
         return new FlowEntryJsonBase($this);
     }
 
-    #[ArrayShape(["flow_entry_guid" => "\null|string", "flow_entry_parent_guid" => "\null|string", "flow_project_guid" => "\null|string", "entry_created_at_ts" => "\int|null", "entry_updated_at_ts" => "\int|null", "flow_entry_title" => "\null|string", "flow_entry_blurb" => "\null|string", "flow_entry_body_bb_code" => "\null|string"])]
+    #[ArrayShape(["flow_entry_guid" => "null|string", "flow_entry_parent_guid" => "null|string", "flow_project_guid" => "null|string", "entry_created_at_ts" => "\int|null", "entry_updated_at_ts" => "\int|null", "flow_entry_title" => "null|string", "flow_entry_blurb" => "null|string", "flow_entry_body_bb_code" => "null|string"])]
     public function jsonSerialize() : array {
         return $this->to_public_json()->to_array();
     }
@@ -528,7 +532,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     /**
      * called after the save is made
      */
-    public function on_after_save_entry() :void {
+    protected function on_after_save_entry() :void {
         WillFunctions::will_do_nothing("base method");
     }
 
@@ -536,7 +540,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
      * called after the delete is done
      * @throws
      */
-    public function on_after_delete_entry() :void {
+    protected function on_after_delete_entry() :void {
         $mutex = new FlockMutex(fopen(__FILE__, "r"));
         $mutex->synchronized(function ()  {
             $archive = FlowEntryArchive::create_archive($this);

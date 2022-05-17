@@ -1,12 +1,66 @@
 <li class="list-group-item flow-entry-listed">
-    <a
-            href="{{ url_for('show_entry',{
-                user_name: project.get_admin_user().flow_user_name ,
-                project_name: project.get_project_title(),
-                entry_name: entry.get_guid()
-            } )
-            }}"
-    >
-        {{  entry.title }} {{ entry.blurb }}
-    </a>
+    <div class="row m-0 p-0">
+        <div class="col-7 col-sm-9">
+            <a
+                    href="{{ url_for('show_entry',{
+                        user_name: project.get_admin_user().flow_user_name ,
+                        project_name: project.get_project_title(),
+                        entry_name: entry.get_guid()
+                    } )
+                    }}"
+                    class = "pe-1"
+            >
+                {{  entry.title }}
+            </a>
+
+            <div class="ms-2 d-md-inline-block">
+                {{ entry.blurb }}
+            </div>
+
+            <div class="ms-2 d-md-inline-block float-md-end me-md-2 small">
+                <span class="flow-long-date-time" data-ts="{{ entry.get_updated_at_ts() }}"></span>
+            </div>
+        </div> <!-- col -->
+
+        <div class="col-2 col-sm-1 ps-0 pe-0">
+            {% if project.get_current_user_permissions().can_write %}
+
+                <button class="btn btn-primary   flow-action flow-entry-edit-action"
+                        data-guid="{{ entry.get_guid() }}"
+                        data-title="{{ entry.get_title() }}"
+                        data-url="{{ url_for('edit_entry',{
+                            user_name: entry.get_project().get_admin_user().flow_user_name ,
+                            project_name: entry.get_project().get_project_title(),
+                            entry_name: entry.get_guid()
+                        } )
+                        }}"
+                >
+                    <i class="bi bi-pencil  "></i>
+                </button>
+            {% endif %}
+        </div> <!-- col -->
+
+        <div class="col-1 ps-0 pe-0 ">
+        </div>
+
+        <div class="col-2 col-sm-1 ps-0 pe-0">
+            {% if project.get_current_user_permissions().can_write %}
+                <button class="btn btn-danger  flow-action flow-entry-delete-action "
+                        data-guid="{{ entry.get_guid() }}"
+                        data-title="{{ entry.get_title() }}"
+                        data-url="{{ url_for('delete_entry_ajax',{
+                            user_name: entry.get_project().get_admin_user().flow_user_name ,
+                            project_name: entry.get_project().get_project_title(),
+                            entry_name: entry.get_guid()
+                        } )
+                        }}"
+                >
+                    <i class="bi bi-trash  "></i>
+                    <i class="fas fa-spinner fa-pulse flow-spinner"  style="display: none"></i>
+                </button>
+            {% endif %}
+        </div> <!-- col -->
+
+    </div> <!-- row -->
+
 </li>

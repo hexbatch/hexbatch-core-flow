@@ -110,10 +110,14 @@ class PageProjectController extends BaseProjectController
             if (!$project) {
                 throw new HttpNotFoundException($request,"Project $project_name Not Found");
             }
+            $node_navigation = $this->get_project_helper()->get_entry_helper()
+                ->get_entry_nodes()->navigate_node_commands(request: $request,project: $project);
+
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/single_project_home.twig',
                 'page_title' => 'Project ' . $project->get_project_title(),
                 'page_description' => 'Shows projects for user',
+                'node_navigation' => $node_navigation,
                 'project' => $project
             ]);
         } catch (Exception $e) {
@@ -369,10 +373,7 @@ class PageProjectController extends BaseProjectController
                 }
             }
 
-            $old_git_hash = $args['flow_project_git_hash'];
-            if ($project->get_head_commit_hash() !== $old_git_hash) {
-                throw new InvalidArgumentException("Git hash is too old, project was saved since this page loaded");
-            }
+
 
             $project->save();
             $_SESSION[static::REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY] = null;
@@ -669,10 +670,10 @@ class PageProjectController extends BaseProjectController
     {
 
         $ret_tag = $ret_attribute = $setting_tag = $setting_standard_value = $standard_attribute_name=  null;
-
+        $call = null;
         try {
             $option = new AjaxCallData([
-                AjaxCallData::OPTION_IS_AJAX,
+                AjaxCallData::OPTION_ENFORCE_AJAX,
                 AjaxCallData::OPTION_MAKE_NEW_TOKEN,
                 AjaxCallData::OPTION_VALIDATE_TOKEN
             ]);
@@ -699,8 +700,9 @@ class PageProjectController extends BaseProjectController
 
                 $setting_tag_guid = $call->args->tag_guid;
                 $tag_params = new FlowTagSearchParams();
-                $tag_params->tag_guids[] = $setting_tag_guid;
-                $setting_tag_array  = FlowTagSearch::get_tags($tag_params);
+                $tag_params->addGuidsOrNames($setting_tag_guid);
+                $tag_search = new FlowTagSearch();
+                $setting_tag_array = $tag_search->get_tags($tag_params)->get_found_tags();
                 if (empty($setting_tag_array)) {
                     throw new InvalidArgumentException("[set_project_setting] could not find tag by tag_guid ". $setting_tag_guid);
                 }
@@ -752,7 +754,7 @@ class PageProjectController extends BaseProjectController
                 'setting_name'=>$setting_name,
                 'standard_name'=>$standard_attribute_name,
                 'standard_value'=>$setting_standard_value,
-                'token'=> $call->new_token
+                'token'=> $call->get_token_with_project_hash($call->project)
             ];
             $payload = JsonHelper::toString($data);
 
@@ -772,7 +774,7 @@ class PageProjectController extends BaseProjectController
                 'setting_name'=>$setting_name,
                 'standard_name'=>$standard_attribute_name,
                 'standard_value'=>$setting_standard_value,
-                'token'=> $call->new_token?? null
+                'token'=> $call->get_token_with_project_hash($call->project)
             ];
             $payload = JsonHelper::toString($data);
 

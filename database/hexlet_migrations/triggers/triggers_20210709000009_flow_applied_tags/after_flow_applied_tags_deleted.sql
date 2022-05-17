@@ -35,6 +35,15 @@ BEGIN
         FROM flow_projects p
         WHERE p.id = OLD.tagged_flow_project_id;
 
+    ELSEIF OLD.tagged_flow_entry_node_id IS NOT NULL THEN
+
+        SELECT
+            HEX(n.entry_node_guid)
+        INTO
+            target_guid
+        FROM flow_entry_nodes n
+        WHERE n.id = OLD.tagged_flow_entry_node_id;
+
     END IF;
 
 

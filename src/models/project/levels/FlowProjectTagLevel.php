@@ -43,11 +43,12 @@ abstract class FlowProjectTagLevel extends FlowProjectFileLevel {
         }
         $search_params = new FlowTagSearchParams();
         $search_params->flag_get_applied = $b_get_applied;
-        $search_params->owning_project_guid = $this->flow_project_guid;
+        $search_params->setOwningProjectGuid($this->flow_project_guid);
 
         $search_params->setPage(1);
         $search_params->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
-        $unsorted_array = FlowTagSearch::get_tags($search_params);
+        $tag_search = new FlowTagSearch();
+        $unsorted_array = $tag_search->get_tags($search_params)->get_found_tags();
 
         $this->owned_tags = FlowTagSearch::sort_tag_array_by_parent($unsorted_array);
 
@@ -76,12 +77,13 @@ abstract class FlowProjectTagLevel extends FlowProjectFileLevel {
         }
         $search_params = new FlowTagSearchParams();
         $search_params->flag_get_applied = true;
-        $search_params->owning_project_guid = $this->flow_project_guid;
+        $search_params->setOwningProjectGuid($this->flow_project_guid);
         $search_params->only_applied_to_guids[] = $this->flow_project_guid;
 
         $search_params->setPage(1);
         $search_params->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
-        $this->tags_applied_to_this = FlowTagSearch::get_tags($search_params);
+        $tag_search = new FlowTagSearch();
+        $this->tags_applied_to_this = $tag_search->get_tags($search_params)->get_found_tags();
         return $this->tags_applied_to_this;
     }
 

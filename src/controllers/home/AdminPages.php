@@ -29,6 +29,8 @@ class AdminPages extends BasePages
             ->withHeader('Content-Type', 'application/json');
     }
 
+
+
     /**
      * @param ResponseInterface $response
      * @return ResponseInterface

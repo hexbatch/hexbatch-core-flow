@@ -20,8 +20,7 @@
                         user_name: project.get_admin_user().flow_user_name ,
                         project_name: project.get_project_title()
                     } )) }}
-
-                    <input type="hidden" name="flow_project_git_hash" value="{{ project.get_head_commit_hash() }}">
+                    <input type="hidden" id="flow_project_git_hash" value="{{ flow_project_git_hash }}">
 
                     <div class="col-12">
                         {% if project.get_project_guid() %}

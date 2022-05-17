@@ -22,7 +22,7 @@ return function (Container $container) {
         $path = HEXLET_BASE_PATH. DIRECTORY_SEPARATOR. HEXBATCH_LOG_ROOT. DIRECTORY_SEPARATOR.$settings->file_name;
         $level = Logger::toMonologLevel($settings->level);
 
-        $handler = new StreamHandler($path, $level);
+        $handler = new StreamHandler($path, $level); //for named pipe use stream too
         $logger->pushHandler($handler);
 
         return $logger;

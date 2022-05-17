@@ -70,7 +70,8 @@
          */
         function walk_with_tags(tag_array) {
             let tags_here = $('.flow-tag-display');
-            if (!tags_here.length) {return;}
+            let tags_there = $("iframe").contents().find("span.flow-tag-display");
+            if (!tags_here.length && !tags_there.length) {return;}
 
             /**
              *
@@ -81,9 +82,13 @@
                 let node = tag_array[i];
                 tag_map[node.flow_tag_guid] = node;
             }
+
+
             // noinspection JSCheckFunctionSignatures
             add_tag_attributes_to_dom(tag_map,tags_here,false);
+            add_tag_attributes_to_dom(tag_map,tags_there,false);
             tags_here.show();
+            tags_there.show();
         }
         /**
          *

@@ -3,6 +3,7 @@
 namespace app\helpers;
 
 
+use app\hexlet\WillFunctions;
 use app\models\project\FlowProject;
 use app\models\project\FlowProjectSearch;
 use app\models\project\FlowProjectSearchParams;
@@ -10,11 +11,11 @@ use app\models\project\IFlowProject;
 use DI\Container;
 use DI\DependencyException;
 use DI\NotFoundException;
-use DirectoryIterator;
 use Exception;
 use PDO;
 use Psr\Http\Message\ServerRequestInterface;
-use doesnot\Exist\at\all;
+use Slim\Exception\HttpNotImplementedException;
+
 
 class AdminHelper extends BaseHelper {
 
@@ -102,10 +103,12 @@ class AdminHelper extends BaseHelper {
      * @throws Exception
      */
     public  function admin_test(ServerRequestInterface $request) : array  {
+        WillFunctions::will_do_nothing($request,$this->get_admin_project_guid());
 
         $ret = [static::get_current_user()];
         return $ret;
     }
+
 
 
 }

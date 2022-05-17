@@ -1,6 +1,6 @@
 {{ include('project/partials/project-breadcrumbs.twig') }}
 
-<div class="container container-xxl">
+<div class="container container-sm container-md container-lg container-xl container-xxl">
     <div class="card col-12">
         <div class="card-header">
             <h4>
@@ -13,7 +13,7 @@
                         project_name: project.get_project_title()
                     } )
                     }}"
-                    class="btn btn-lg btn-primary float-end"
+                    class="btn btn-lg btn-success float-end"
                 >
                     <i class="bi bi-plus-circle pe-1"></i>
                     New Entry
@@ -31,3 +31,11 @@
         </div>
     </div> <!-- /.card -->
 </div> <!-- .container -->
+
+<script src="{{ root_url }}/public/resources/js/entry/edit-entry.js"></script>
+
+<script>
+    jQuery(function() {
+        refresh_auto_formatted_times();
+    });
+</script>

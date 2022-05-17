@@ -75,10 +75,7 @@ span.flow-attribute-text-value-preview {
 
 /*Displaying the tag */
 span.flow-tag-display {
-    padding-top: 0.25em;
-    padding-bottom: 0.15em;
-    padding-left: 0.5em;
-    padding-right: 0.5em;
+    padding: 0.25em 0.5em 0.15em;
     cursor: pointer;
     box-shadow: 0.25em 0.25em 1px rgba(0, 0, 0, .35);
     border-radius: 1em;
@@ -89,4 +86,8 @@ span.flow-tag-display.flow-tag-no-borders-padding {
     padding: 0;
     box-shadow: none;
     border-radius: 0;
+}
+
+.flow-tag-no-pointer-events {
+    pointer-events: none !important;
 }

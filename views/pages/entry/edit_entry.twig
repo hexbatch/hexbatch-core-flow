@@ -1,3 +1,146 @@
-{{ include('project/partials/project-breadcrumbs.twig') }}
+{{ include('entry/partials/entry-breadcrumbs.twig') }}
 
-Edit Entry
+{% set update_entry_url =  url_for('update_entry_ajax',
+    {
+        user_name: project.get_admin_user().flow_user_name ,
+        project_name: project.get_project_title(),
+        entry_name: entry.get_guid()
+    }) %}
+
+
+<script src="{{ root_url }}/public/resources/js/entry/edit-entry.js"></script>
+
+<div class="container container-sm container-md container-lg container-xl container-xxl">
+    <div class="card col-12">
+        <form method="post" action="{{update_entry_url}}" class="flow-ajax-post" id="flow-entry-updator">
+            <input type="hidden" id="flow_project_git_hash" value="{{ flow_project_git_hash }}">
+            <div class="card-header">
+                <h4 class="d-inline-block">
+                    Edit Entry
+
+                </h4>
+
+                <button type="submit" class="btn btn-lg btn-primary float-end pb-0 pt-0 mb-1 mb-sm-0" >
+                    <i class="far fa-save pe-1"></i>
+                    Update
+                </button>
+
+                <div class="text-black-50 ms-2 d-inline-block me-sm-2 small float-md-end">
+                    <span class="flow-long-date-time" data-ts="{{ entry.get_updated_at_ts() }}"></span>
+                </div>
+
+                <div class="text-black-50 small d-inline-block ms-md-4" style="text-decoration: none">
+                    <code class="small text-black-50" style="text-decoration: initial !important;">
+                        {{ entry.get_guid() }}
+                    </code>
+                    <button class="btn btn-outline-secondary btn-sm clipy-btn small"
+                            type="button"
+                            data-clipboard-text="{{ entry.get_guid() }}"
+                            data-popover_on_success="Copied!"
+                            data-popover_on_fail="Use Control-C"
+                    >
+                        Copy
+                    </button>
+                </div>
+
+
+
+
+            </div> <!-- /.card-header -->
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12 col-xxl-6">
+                        <label for="flow_entry_title">
+                            Title
+                        </label>
+                        <input type="text" id="flow_entry_title" name="flow_entry_title"
+                               class="form-control" placeholder="Title" required autofocus
+                               maxlength="{{ entry.max_title_length }}" value="{{ entry.title }}"
+                        >
+                        <label class="input-group-text flow-tags-for-bb">
+                            <span class="me-2">
+                                Tag
+                            </span>
+                            <select id="flow-tags-for-bb-list"
+                                    title="Parents"
+                                    class="form-control">
+
+                            </select>
+                            <span class="float-end">
+                                <button type="button" class="btn btn-sm btn-success ms-1" id="flow-new-tag-into-bb-action">
+                                    <i class="bi bi-bookmark-star"></i>
+                                </button>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="col-12 col-xxl-6">
+                        <label for="flow_entry_blurb">
+                            Blurb
+                        </label>
+                        <textarea type="text" id="flow_entry_blurb" name="flow_entry_blurb"
+                                  class="form-control" placeholder="Blurb" required
+                                  rows="3" maxlength="{{ entry.max_blurb_length }}"
+                        >{{ entry.blurb }}</textarea>
+                    </div>
+                </div> <!-- /.row -->
+
+                <div class="row">
+                    <div class="col-12">
+                        <input type="hidden" name="flow_entry_body_bb_code" id="flow_entry_body_bb_code"
+                               value="{{ entry.bb_code }}">
+
+                        <label for="flow_entry_body_bb_code_area">Body</label>
+
+                        <textarea type="text" id="flow_entry_body_bb_code_area"
+                                  class="form-control" placeholder="Body" required
+                                  rows="40"
+                        >{{ entry.bb_code }}</textarea>
+                    </div> <!-- /.col  -->
+                </div> <!-- /.row  -->
+            </div>
+        </form>
+    </div> <!-- /.card -->
+</div> <!-- .container -->
+
+
+
+<script>
+    jQuery(function ($){
+        create_living_bb_editor('flow_entry_body_bb_code_area','flow_entry_body_bb_code')
+        let da_form = $(`#flow-entry-updator`)
+        da_form.on('flow-ajax-post-success',
+
+            /**
+             * @param e
+             * @param {FlowEntryLifetimeResponse} data
+             */
+            function(e,data) {
+                if (data.entry_url) {
+                    window.location.href = data.entry_url;
+                } else {
+                    my_swal.fire("Cound not find the url after succesful entry save",data.message ,'warning')
+                }
+                data[FLOW_AJAX_RESPONSE_FLAG] = true;
+            }
+        );
+
+        da_form.on('flow-ajax-post-fail',
+
+            /**
+             * @param e
+             * @param {FlowEntryLifetimeResponse} data
+             */
+            function(e,data) {
+
+                my_swal.fire("Cound not update entry!",data.message ,'warning')
+
+                data[FLOW_AJAX_RESPONSE_FLAG] = true;
+            }
+        );
+
+
+    });
+</script>
+
+{{ include('tag/partials/tag-js-support.twig') }}

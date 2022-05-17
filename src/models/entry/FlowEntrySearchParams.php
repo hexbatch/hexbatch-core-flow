@@ -78,4 +78,34 @@ class FlowEntrySearchParams extends SearchParamBase {
             }
         }
     }
+
+    public function setOwningProjectGuid(?string $project_guid) : FlowEntrySearchParams {
+        $this->owning_project_guid = $project_guid;
+        return $this;
+    }
+
+    function addGuidsOrNames(mixed $thing) : FlowEntrySearchParams{
+        if ($thing instanceof IFlowEntry) {
+            $this->entry_guids[] = $thing->get_guid();
+        } else {
+            $filter = [];
+            if (is_array($thing)) {
+                foreach ($thing as $thang ) {
+                    if ($thang instanceof IFlowEntry) {
+                        $this->entry_guids[] = $thang->get_guid();
+                    } else {
+                        $filter[] = $thang;
+                    }
+                }
+            } else {
+                $filter = $thing;
+            }
+            $what = static::validate_cast_guid_array($filter,false);
+            $this->entry_guids = array_unique(array_merge($this->entry_guids,$what));
+
+            $what = static::validate_cast_name_array($filter,false,false);
+            $this->entry_titles = array_unique(array_merge($this->entry_titles,$what));
+        }
+        return $this;
+    }
 }

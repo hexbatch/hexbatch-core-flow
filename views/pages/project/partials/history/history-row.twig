@@ -56,18 +56,34 @@
         </li>
     {% for git_file in history.changed_files %}
         {% if git_file.is_public %}
-        <li class="list-group-item bg-light text-dark"
-            data-commit="{{ git_file.commit }}"
-            data-file_path="{{ git_file.file }}"
-        >
+            {% if git_file.b_file_deleted %}
+                <li class="list-group-item bg-light text-dark"
+                    data-commit="{{ git_file.commit }}"
+                    data-file_path="{{ git_file.file }}"
+                >
+                    <span class="line text-decoration-line-through">
+                        {{ git_file.short_name }}
+                    </span>
+
+                    <button class="btn  btn-sm btn-outline-danger float-end flow-show-file-diff pe-none" disabled>
+                        <i class="bi bi-file-x"></i>
+                    </button>
+                </li>
+            {% else %}
+                <li class="list-group-item bg-light text-dark"
+                    data-commit="{{ git_file.commit }}"
+                    data-file_path="{{ git_file.file }}"
+                >
             <span>
                 {{ git_file.short_name }}
             </span>
 
-            <button class="btn  btn-sm btn-outline-info float-end flow-show-file-diff">
-                <i class="bi bi-file-diff"></i>
-            </button>
-        </li>
+                    <button class="btn  btn-sm btn-outline-info float-end flow-show-file-diff">
+                        <i class="bi bi-file-diff"></i>
+                    </button>
+                </li>
+            {%endif%}
+
         {% endif %}
     {% endfor %}
     </ul>

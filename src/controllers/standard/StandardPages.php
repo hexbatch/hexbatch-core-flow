@@ -17,11 +17,11 @@ class StandardPages extends BasePages
                                         string                 $user_name, string $project_name,
                                         string                 $tag_guid, string $standard_name) :ResponseInterface {
 
-
+        $call = null;
         try {
             $copy_valid_update = [];
             $option = new AjaxCallData([
-                AjaxCallData::OPTION_IS_AJAX,AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
+                AjaxCallData::OPTION_ENFORCE_AJAX,AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'delete_tag_standard';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_guid);
             $tag = $call->tag;
@@ -58,7 +58,7 @@ class StandardPages extends BasePages
                 'standard_name'=>$standard_name,
                 'standard_data'=>$valid_update,
                 'removed_attributes' => $deleted_attributes,
-                'token'=> $call->new_token
+                'token'=> $call->get_token_with_project_hash($call->project)
             ];
 
             $payload = JsonHelper::toString($data);
@@ -75,7 +75,8 @@ class StandardPages extends BasePages
                 'standard_name'=>$standard_name,
                 'standard_data'=>$copy_valid_update,
                 'removed_attributes' => [],
-                'token'=> $call->new_token?? null];
+                'token'=> $call?->get_token_with_project_hash($call->project)
+                ];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -93,11 +94,11 @@ class StandardPages extends BasePages
                                         string                 $user_name, string $project_name,
                                         string                 $tag_guid, string $standard_name) :ResponseInterface {
 
-
+        $call = null;
         try {
             $valid_update = [];
             $option = new AjaxCallData([
-                AjaxCallData::OPTION_IS_AJAX,AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
+                AjaxCallData::OPTION_ENFORCE_AJAX,AjaxCallData::OPTION_MAKE_NEW_TOKEN,AjaxCallData::OPTION_VALIDATE_TOKEN]);
             $option->note = 'update_tag_standard';
             $call = TagHelper::get_tag_helper()->validate_ajax_call($option,$request,null,$user_name,$project_name,$tag_guid);
             $tag = $call->tag;
@@ -116,7 +117,9 @@ class StandardPages extends BasePages
             $new_tag = $tag->clone_refresh();
             $call->project->save();
             $data = ['success'=>true,'message'=>'ok','tag'=>$new_tag,'action'=> 'update_tag_standard',
-                            'standard_name'=>$standard_name,'standard_data'=>$valid_update,'token'=> $call->new_token];
+                            'standard_name'=>$standard_name,'standard_data'=>$valid_update,
+                        'token'=> $call->get_token_with_project_hash($call->project)
+            ];
 
             $payload = JsonHelper::toString($data);
             $response->getBody()->write($payload);
@@ -129,7 +132,9 @@ class StandardPages extends BasePages
             $this->logger->error("Could not update tag standard: ".$e->getMessage(),['exception'=>$e]);
             $data = ['success'=>false,'message'=>$e->getMessage(),
                 'action'=> 'update_tag_standard',
-                'standard_name'=>$standard_name,'standard_data'=>$valid_update,'token'=> $call->new_token?? null];
+                'standard_name'=>$standard_name,'standard_data'=>$valid_update,
+                'token'=> $call->get_token_with_project_hash($call->project)
+            ];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);

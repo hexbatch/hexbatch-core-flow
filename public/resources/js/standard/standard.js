@@ -121,11 +121,6 @@ function FlowInheritedAttribute() {
     /**
      * @type {?string}
      */
-    this.ancestor_name = null;
-
-    /**
-     * @type {?string}
-     */
     this.standard_name = null;
 
 
@@ -170,7 +165,6 @@ function flow_standards_get_inherited(standard_name,tag) {
                 }
                 let node = new FlowInheritedAttribute();
                 node.ancestor_guid = parent_for_attribute.flow_tag_guid;
-                node.ancestor_name = parent_for_attribute.flow_tag_name;
                 node.attribute_name = attribute.tag_attribute_name;
                 node.standard_name = standard_name;
                 node.ancestor_tag = parent_for_attribute;

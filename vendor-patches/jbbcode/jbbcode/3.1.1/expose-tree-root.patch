@@ -1,0 +1,21 @@
+commit 58f357dc72a64d36f20af5d9805c5988964a79d6
+Author: willwoodlief <willwoodlief@gmail.com>
+Date:   Wed May 4 16:19:05 2022 -0500
+
+    exposed the treeRoot in a public getter
+
+diff --git a/JBBCode/Parser.php b/JBBCode/Parser.php
+index d1424b1..d056648 100644
+--- a/JBBCode/Parser.php
++++ b/JBBCode/Parser.php
+@@ -45,6 +45,10 @@ class Parser
+         $this->treeRoot = new DocumentElement();
+     }
+ 
++    public function getRoot() : ?DocumentElement {
++        return $this->treeRoot??null;
++    }
++
+     /**
+      * Adds a simple (text-replacement only) bbcode definition
+      *

@@ -1,6 +1,5 @@
 <script>
     jQuery(function($){ //should execute immediately after load happens if late loading
-        let max_length_for_chapter = {{ constant('app\\models\\project\\IFlowProject::MAX_SIZE_READ_ME_IN_CHARACTERS') }};
         let textarea_jq = $('textarea#flow_project_readme_textarea');
         let textarea = textarea_jq[0];
         let hidden_input = $('input#flow_project_readme_bb_code');
@@ -19,8 +18,8 @@
         da_editor.bind('valuechange  keyup blur paste pasteraw',function(/* e */) {
             let words = da_editor.val();
 
-            if (words.length > max_length_for_chapter) {
-                do_toast({title:'ReadMe is too long, Max size is ${ max_length_for_chapter }',subtitle:'',
+            if (words.length > MAX_LENGTH_FOR_CHAPTER) {
+                do_toast({title:`ReadMe is too long, Max size is ${ MAX_LENGTH_FOR_CHAPTER }`,subtitle:'',
                     content: 'There was an issue saving the readme',delay:10000,type:'warning'});
                 return;
             }

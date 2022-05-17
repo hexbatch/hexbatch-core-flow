@@ -41,6 +41,15 @@
 
             });
 
+            myDropzone.on('sending', function(file, xhr, formData) {
+                // Append all form inputs to the formData Dropzone will POST
+                var data = $(`form#${form_id}`).serializeArray();
+                $.each(data, function(key, el) {
+                    formData.append(el.name, el.value);
+                });
+                formData.append('flow_project_git_hash',$(`input#flow_project_git_hash`).val());
+            });
+
             myDropzone.on("error", function (file, response) {
                 let message;
                 if ($.type(response) === "string") {

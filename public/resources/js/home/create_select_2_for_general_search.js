@@ -34,7 +34,10 @@ function create_select_2_for_general_search(bare_select_control,b_multi,
             }
             let display = `<span class="d-inline p-1">${icon} <span class="${extra_class}">${general.title}</span></span>`;
             let tode = jQuery(display);
-            tode.css(general.css_object);
+            if(!_.isEmpty(general.css_object)) {
+                tode.css(general.css_object);
+            }
+
             return tode;
         } else {
             let display = `<span class="${extra_class}">${general.text}</span>`;

@@ -65,7 +65,7 @@ function edit_standard_meta(tag,success_callback,fail_callback) {
         set_preview_pic(meta.meta_picture_url)
     }
 
-    // noinspection JSUnresolvedVariable
+    // noinspection JSUnresolvedVariable,JSCheckFunctionSignatures
     new tempusDominus.TempusDominus(date_picker[0],{
         display : {
             buttons : {
@@ -102,6 +102,7 @@ function edit_standard_meta(tag,success_callback,fail_callback) {
 
         });
 
+
         myDropzone.on('sending', function(file, xhr, formData){
             let extra_params = { b_use_rootless_auth: true };
             set_object_with_flow_ajax_token_data(extra_params);
@@ -109,6 +110,7 @@ function edit_standard_meta(tag,success_callback,fail_callback) {
                 if (!extra_params.hasOwnProperty(param_name)) {continue;}
                 formData.append(param_name, extra_params[param_name]);
             }
+            formData.append('flow_project_git_hash',$(`#flow_project_git_hash`).val());
 
         });
 
