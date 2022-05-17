@@ -274,9 +274,30 @@ class EntryNodeDocument extends EntryNodeContainer implements  IFlowEntryNodeDoc
         foreach ($top_found_nodes as $found_node) {
             $found_bb_code[] = $found_node->get_as_bb_code();
         }
+        $source_bb_code = implode("",$found_bb_code);
         if (!$target_doc) {
-            return implode("",$found_bb_code);
+            return $source_bb_code;
         }
-        return null;
+        if (!$target_tag) {throw new InvalidArgumentException("Need a target tag with the target doc");}
+
+        $params_target = new EntryNodeSearchParams();
+        $params_target->addEntryGuid($target_doc->get_entry());
+
+        $search_target = new EntryNodeSearch();
+        $top_target_nodes =$search_target->search($params_target)->getTopContents();
+        $target_bb_code =  $top_target_nodes[0]->get_as_bb_code();
+
+        $params_target->addTagGuid($target_tag);
+        $top_target_bb_codes =$search_target->search($params_target)->getFlatContents();
+
+        $bb_out = null;
+        foreach ($top_target_bb_codes as $bb_tag) {
+            if ($bb_tag->get_node_bb_tag_name() === IFlowEntryNode::FLOW_TAG_BB_CODE_NAME) {
+                $bb_code_of_tag = $bb_tag->get_as_bb_code();
+                $bb_out = str_replace($bb_code_of_tag,$source_bb_code,$target_bb_code);
+            }
+
+        }
+        return $bb_out;
     }
 }

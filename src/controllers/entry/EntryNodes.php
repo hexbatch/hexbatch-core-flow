@@ -7,6 +7,7 @@ use app\models\entry\FlowEntrySearch;
 use app\models\entry\FlowEntrySearchParams;
 use app\models\entry\IFlowEntry;
 use app\models\project\IFlowProject;
+use app\models\tag\FlowTag;
 use app\models\tag\FlowTagSearch;
 use app\models\tag\FlowTagSearchParams;
 use Exception;
@@ -37,15 +38,38 @@ class EntryNodes extends EntryBase {
 
         $doc = new EntryNodeDocument($entry);
 
-        if (JsonHelper::var_to_boolean($params['echo']??0) && $params['from_tags']??null) {
+
+        $from_tag_name = $params['from_tags']??null;
+        $target_doc_name = $params['target_entry']??null;
+        $target_tag_name = $params['target_tag']??null;
+
+        if ($from_tag_name) {
             $tag_params = new FlowTagSearchParams();
-            $tag_params->addGuidsOrNames($params['from_tags']??null)->setOwningProjectGuid($project?->get_project_guid());
+            $tag_params->addGuidsOrNames($from_tag_name)->addGuidsOrNames($target_tag_name)->
+            setOwningProjectGuid($project?->get_project_guid());
             $tag_search = new FlowTagSearch();
-            $from_tags = $tag_search->get_tags($tag_params)->get_direct_match_tags();
-            $bb_code =  $doc->insert_at(from_tags: $from_tags);
+            $all_tags = $tag_search->get_tags($tag_params)->get_direct_match_tags();
+            /**
+             * @var FlowTag|null $from_tag
+             */
+            $from_tag = null;
+            $target_tag = null;
+            foreach ($all_tags as $a_tag) {
+                if ($a_tag->flow_tag_name === $from_tag_name) { $from_tag = $a_tag;}
+                if ($a_tag->flow_tag_name === $target_tag_name) { $target_tag = $a_tag;}
+            }
+
+            $entry_params = new FlowEntrySearchParams();
+            $entry_params->addGuidsOrNames($target_doc_name);
+            $found_entries =  FlowEntrySearch::search($entry_params);
+            $target_doc = null;
+            $target_entry = $found_entries[0]??null;
+            if ($target_entry) { $target_doc = new EntryNodeDocument($target_entry);}
+            $bb_code =  $doc->insert_at(from_tags: [$from_tag],target_doc: $target_doc,target_tag: $target_tag);
             return $this->process_bb_code($request,$bb_code);
         }
         return null;
+
     }
 
     /**

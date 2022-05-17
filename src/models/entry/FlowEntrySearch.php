@@ -22,34 +22,7 @@ class FlowEntrySearch extends FlowBase {
      */
    public static function search(?FlowEntrySearchParams $params): array {
        if (empty($params)) {return [];}
-       /*
-        $this->owning_project_guid = null;
-        $this->owning_user_guid = null;
-        $this->full_text_term = null;
-        $this->parent_entry_guid = null;
-        $this->host_entry_guid = null;
-        $this->entry_guids = [];
-        $this->entry_titles = [];
-        $this->entry_ids = [];
-        $this->flag_full_text_natural_languages = false;
-        $this->flag_top_entries_only = false;
 
-
-
-        public ?string $flow_entry_body_html;
-
-
-
-       public array $child_entries;
-
-
-       public array $child_guids;
-
-
-       public array $child_entry_ids;
-
-       protected ?string $child_id_list_as_string;
-        */
 
        $start_place = ($params->getPage() - 1) * $params->getPageSize();
        $page_size = $params->getPageSize();
@@ -82,6 +55,18 @@ class FlowEntrySearch extends FlowBase {
            if (count($in_question_array)) {
                $comma_delimited_unhex_question = implode(",",$in_question_array);
                $where_entry_guid = "driver_entry.flow_entry_guid in ($comma_delimited_unhex_question)";
+           }
+       }
+
+       if (count($params->entry_titles)) {
+           $in_question_array = [];
+           foreach ($params->entry_titles as $a_name) {
+               $args[] = $a_name;
+               $in_question_array[] = "?";
+           }
+           if (count($in_question_array)) {
+               $comma_delimited_unhex_question = implode(",",$in_question_array);
+               $where_entry_guid = "driver_entry.flow_entry_title in ($comma_delimited_unhex_question)";
            }
        }
 
