@@ -55,7 +55,7 @@
                         </label>
                         <input type="text" id="flow_entry_title" name="flow_entry_title"
                                class="form-control" placeholder="Title" required autofocus
-                               maxlength="{{ entry.max_title_length }}" value="{{ entry.title }}"
+                               maxlength="{{ entry.get_max_title_length() }}" value="{{ entry.get_title() }}"
                         >
                         <label class="input-group-text flow-tags-for-bb">
                             <span class="me-2">
@@ -80,22 +80,22 @@
                         </label>
                         <textarea type="text" id="flow_entry_blurb" name="flow_entry_blurb"
                                   class="form-control" placeholder="Blurb" required
-                                  rows="3" maxlength="{{ entry.max_blurb_length }}"
-                        >{{ entry.blurb }}</textarea>
+                                  rows="3" maxlength="{{ entry.get_max_blurb_length() }}"
+                        >{{ entry.get_blurb() }}</textarea>
                     </div>
                 </div> <!-- /.row -->
 
                 <div class="row">
                     <div class="col-12">
                         <input type="hidden" name="flow_entry_body_bb_code" id="flow_entry_body_bb_code"
-                               value="{{ entry.bb_code }}">
+                               value="{{ entry.get_bb_code() }}">
 
                         <label for="flow_entry_body_bb_code_area">Body</label>
 
                         <textarea type="text" id="flow_entry_body_bb_code_area"
                                   class="form-control" placeholder="Body" required
                                   rows="40"
-                        >{{ entry.bb_code }}</textarea>
+                        >{{ entry.get_bb_code() }}</textarea>
                     </div> <!-- /.col  -->
                 </div> <!-- /.row  -->
             </div>

@@ -55,8 +55,8 @@ class EntryNodes extends EntryBase {
             $from_tag = null;
             $target_tag = null;
             foreach ($all_tags as $a_tag) {
-                if ($a_tag->flow_tag_name === $from_tag_name) { $from_tag = $a_tag;}
-                if ($a_tag->flow_tag_name === $target_tag_name) { $target_tag = $a_tag;}
+                if ($a_tag->getName() === $from_tag_name) { $from_tag = $a_tag;}
+                if ($a_tag->getName() === $target_tag_name) { $target_tag = $a_tag;}
             }
 
             $entry_params = new FlowEntrySearchParams();

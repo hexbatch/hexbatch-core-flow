@@ -6,8 +6,8 @@ namespace app\models\entry\entry_node;
 use app\helpers\Utilities;
 use app\hexlet\JsonHelper;
 use app\models\entry\IFlowEntry;
-use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
+use app\models\tag\IFlowAppliedTag;
 use BlueM\Tree;
 use Exception;
 use InvalidArgumentException;
@@ -207,7 +207,7 @@ class EntryNodeDocument extends EntryNodeContainer implements  IFlowEntryNodeDoc
      *                              If passed by itself, without entry or node, it will find all node across the project that link to it,
      *                              and return the bb code of the parents one each to an index in string array
      *
-     * @param FlowAppliedTag[]|string[] $applied can be used to filter the above bb code to the children of the parent that has this applied
+     * @param IFlowAppliedTag[]|string[] $applied can be used to filter the above bb code to the children of the parent that has this applied
      *                                  If passed by itself, without entry or node, it will find the node in the project, return its html
      *                                  or nothing if missing
      * @return string[]

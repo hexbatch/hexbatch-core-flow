@@ -71,13 +71,13 @@ class FlowTagSearchParams  extends SearchParamBase {
 
     function addGuidsOrNames(mixed $thing) : FlowTagSearchParams{
         if ($thing instanceof FlowTag) {
-            $this->tag_guids[] = $thing->flow_tag_guid;
+            $this->tag_guids[] = $thing->getGuid();
         } else {
             $filter = [];
             if (is_array($thing)) {
                 foreach ($thing as $thang ) {
                     if ($thang instanceof FlowTag) {
-                        $this->tag_guids[] = $thang->flow_tag_guid;
+                        $this->tag_guids[] = $thang->getGuid();
                     } else {
                         $filter[] = $thang;
                     }

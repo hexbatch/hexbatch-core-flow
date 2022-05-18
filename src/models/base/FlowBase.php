@@ -5,7 +5,6 @@ namespace app\models\base;
 use app\hexlet\WillFunctions;
 use DI\Container;
 use Exception;
-use InvalidArgumentException;
 use ParagonIE\EasyDB\EasyDB;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -77,39 +76,6 @@ class FlowBase  {
     }
     public function get_brief_json_flag() : bool { return $this->b_brief_json_flag ; }
 
-
-    /**
-     * Used for twig integration, so we can use entry.guid in the twig, and it still go uses get_guid()
-     * only start functions with get_ if you want them public, and do not use non default params
-     * @param $varName
-     * @return bool
-     */
-    public function __isset($varName)
-    {
-        $allMethods = get_class_methods(get_class($this));
-        $getMethods = preg_grep('/^get_/i', $allMethods);
-        $maybe_function = 'get_'.$varName;
-
-        return in_array($maybe_function,$getMethods);
-    }
-
-    /**
-     * Used for twig integration, so we can use entry.guid in the twig, and it still go uses get_guid()
-     * only start functions with get_ if you want them public, and do not use non default params
-     * @param $varName
-     * @return mixed
-     */
-    public function __get($varName)
-    {
-        $allMethods = get_class_methods(get_class($this));
-        $getMethods = preg_grep('/^get_/i', $allMethods);
-        $maybe_function = 'get_'.$varName;
-
-        if ( in_array($maybe_function,$getMethods) ) {
-            return $this->$maybe_function();
-        }
-        throw new InvalidArgumentException("$varName not supported");
-    }
 
     public static function check_valid_title($words) : bool  {
 

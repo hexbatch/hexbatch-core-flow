@@ -139,8 +139,8 @@ class BaseHelper extends BaseConnection {
             $tags = $project->get_all_owned_tags_in_project($options->has_option(AjaxCallData::OPTION_GET_APPLIED));
 
             foreach ($tags as $look_tag) {
-                if ($look_tag->flow_tag_guid === $tag_name) { $ret->tag = $look_tag; break;}
-                if ($look_tag->flow_tag_name === $tag_name) { $ret->tag = $look_tag; break;}
+                if ($look_tag->getGuid() === $tag_name) { $ret->tag = $look_tag; break;}
+                if ($look_tag->getName() === $tag_name) { $ret->tag = $look_tag; break;}
             }
 
             if (!$ret->tag) {
@@ -148,9 +148,9 @@ class BaseHelper extends BaseConnection {
             }
 
             if ($attribute_name) {
-                foreach ($ret->tag->attributes as $look_at) { //clever name!!
-                    if ($look_at->getFlowTagAttributeGuid() === $attribute_name) { $ret->attribute = $look_at; break;}
-                    if ($look_at->getTagAttributeName() === $attribute_name) { $ret->attribute = $look_at; break;}
+                foreach ($ret->tag->getAttributes() as $look_at) { //clever name!!
+                    if ($look_at->getGuid() === $attribute_name) { $ret->attribute = $look_at; break;}
+                    if ($look_at->getName() === $attribute_name) { $ret->attribute = $look_at; break;}
                 }
 
                 if (!$ret->attribute) {

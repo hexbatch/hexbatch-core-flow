@@ -8,6 +8,7 @@ use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
+use app\models\tag\IFlowAppliedTag;
 use Exception;
 use JsonSerializable;
 use LogicException;
@@ -39,7 +40,7 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
 
     protected ?int $flow_applied_tag_id;
     protected ?string $flow_applied_tag_guid;
-    protected ?FlowAppliedTag $flow_applied_tag = null;
+    protected ?IFlowAppliedTag $flow_applied_tag = null;
 
     protected ?FlowTag $flow_tag = null;
     protected ?string $flow_tag_guid = null;
@@ -75,7 +76,7 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
 
     public function get_applied_flow_tag_id() : ?int {return $this->flow_applied_tag_id ;}
     public function get_applied_flow_tag_guid() : ?string {return $this->flow_applied_tag_guid ;}
-    public function get_applied() : ?FlowAppliedTag {return $this->flow_applied_tag ;}
+    public function get_applied() : ?IFlowAppliedTag {return $this->flow_applied_tag ;}
 
     public function add_child(IFlowEntryNode $node): void {
 
@@ -163,7 +164,7 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
                 }
             }
             elseif ($key === 'applied_tag') {
-                if ($val instanceof FlowAppliedTag) {
+                if ($val instanceof IFlowAppliedTag) {
                     $this->flow_applied_tag = $val;
                 } else {
                     $this->flow_applied_tag= new FlowAppliedTag($val);
@@ -353,13 +354,13 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
                         $this->flow_tag_guid);
                 }
                 //instantiate applied tag object and save it
-                if (!$this->flow_applied_tag?->flow_tag_id) {
+                if (!$this->flow_applied_tag?->getParentTagId()) {
                     $this->flow_applied_tag = new FlowAppliedTag();
                 }
-                $this->flow_applied_tag->flow_tag_id = $this->flow_tag_id;
-                $this->flow_applied_tag->tagged_flow_entry_node_id = $this->node_id;
-                $this->flow_applied_tag->flow_tag_guid = $this->flow_applied_tag_guid;
-                $this->flow_applied_tag->id = $this->flow_applied_tag_id;
+                $this->flow_applied_tag->setParentTagId($this->flow_tag_id);
+                $this->flow_applied_tag->setXEntryGuid($this->node_id);
+                $this->flow_applied_tag->setGuid($this->flow_applied_tag_guid);
+                $this->flow_applied_tag->setID($this->flow_applied_tag_id);
                 $this->flow_applied_tag->save();
             }
 

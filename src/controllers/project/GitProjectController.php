@@ -476,7 +476,7 @@ class GitProjectController extends BaseProjectController {
                     $setting_tag = $setting_tag_array[0];
 
                     $setting_project = $this->get_project_helper()->get_project_with_permissions(
-                        $request,$setting_tag->flow_project_admin_user_guid,$setting_tag->flow_project_guid,
+                        $request,$setting_tag->getAdminGuid(),$setting_tag->getProjectGuid(),
                         FlowProjectUser::PERMISSION_COLUMN_READ);
                     if (!$setting_project) {
                         throw new InvalidArgumentException(
@@ -488,7 +488,7 @@ class GitProjectController extends BaseProjectController {
                     if (!$setting_standard_object) {
                         throw new LogicException(
                             "[clone_project_from_git] Could not find git standard attribute for tag ".
-                            $setting_tag->flow_tag_guid);
+                            $setting_tag->getGuid());
                     }
                     $setting = new FlowProjectGitSettings($setting_standard_object->getStandardValue());
                     break;

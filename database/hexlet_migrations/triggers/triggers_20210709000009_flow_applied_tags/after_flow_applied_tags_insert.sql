@@ -43,6 +43,15 @@ BEGIN
         FROM flow_entry_nodes n
         WHERE n.id = NEW.tagged_flow_entry_node_id;
 
+    ELSEIF NEW.tagged_pointer_id IS NOT NULL THEN
+
+        SELECT
+            HEX(n.flow_tag_guid)
+        INTO
+            target_guid
+        FROM flow_tags n
+        WHERE n.id = NEW.tagged_pointer_id;
+
     END IF;
 
     IF  target_guid IS NOT NULL THEN

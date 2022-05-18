@@ -197,14 +197,14 @@ class ProjectHelper extends BaseHelper {
             //copy tags
             $tags = $origonal_project->get_all_owned_tags_in_project(true,true);
             foreach ($tags as $tag) {
-                if ($tag->parent_tag_guid) {
-                    if (!array_key_exists($tag->parent_tag_guid,$guid_map)) {
-                        throw new LogicException(sprintf("Parent tag of %s does not have a new guid",$tag->parent_tag_guid));
+                if ($tag->getParentGuid()) {
+                    if (!array_key_exists($tag->getParentGuid(),$guid_map)) {
+                        throw new LogicException(sprintf("Parent tag of %s does not have a new guid",$tag->getParentGuid()));
                     }
                 }
 
                 $new_tag = $tag->clone_change_project($guid_map);
-                $guid_map[$tag->flow_tag_guid] = $new_tag->flow_tag_guid;
+                $guid_map[$tag->getGuid()] = $new_tag->getGuid();
             }
             $new_project->do_tag_save_and_commit();
 

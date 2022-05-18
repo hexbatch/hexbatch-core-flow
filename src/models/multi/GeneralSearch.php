@@ -15,6 +15,7 @@ class GeneralSearch extends FlowBase {
     const TYPE_USER = 'user';
     const TYPE_PROJECT = 'project';
     const TYPE_ENTRY = 'entry';
+    const TYPE_TAG_POINTER = 'tag_pointer';
     const TYPE_ENTRY_NODE = 'entry_node';
     const TYPE_TAG = 'tag';
 

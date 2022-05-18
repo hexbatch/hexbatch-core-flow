@@ -14,9 +14,9 @@ use PDO;
 use RuntimeException;
 use Slim\Interfaces\RouteParserInterface;
 
-class FlowTagAttribute extends FlowBase implements JsonSerializable {
+class FlowTagAttribute extends FlowBase implements JsonSerializable,IFlowTagAttribute {
 
-    const LENGTH_ATTRIBUTE_NAME = 40;
+
 
 
     protected ?int $flow_tag_attribute_id;
@@ -93,7 +93,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     /**
      * @param int|null $tag_attribute_long
      */
-    public function setTagAttributeLong(?int $tag_attribute_long): void
+    public function setLong(?int $tag_attribute_long): void
     {
         $this->tag_attribute_long = $tag_attribute_long;
     }
@@ -101,7 +101,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     /**
      * @param string|null $tag_attribute_text
      */
-    public function setTagAttributeText(?string $tag_attribute_text): void
+    public function setText(?string $tag_attribute_text): void
     {
         $this->tag_attribute_text = $tag_attribute_text;
     }
@@ -109,7 +109,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     /**
      * @param string|null $tag_attribute_name
      */
-    public function setTagAttributeName(?string $tag_attribute_name): void
+    public function setName(?string $tag_attribute_name): void
     {
         $this->tag_attribute_name = $tag_attribute_name;
     }
@@ -117,7 +117,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     /**
      * @param string|null $flow_tag_attribute_guid
      */
-    public function setFlowTagAttributeGuid(?string $flow_tag_attribute_guid): void
+    public function setGuid(?string $flow_tag_attribute_guid): void
     {
         $this->flow_tag_attribute_guid = $flow_tag_attribute_guid;
     }
@@ -159,7 +159,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     /**
      * @param int|null $flow_tag_id
      */
-    public function setFlowTagId(?int $flow_tag_id): void
+    public function setTagId(?int $flow_tag_id): void
     {
         $this->flow_tag_id = $flow_tag_id;
     }
@@ -168,7 +168,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     /**
      * @param int|null $flow_tag_attribute_id
      */
-    public function setFlowTagAttributeId(?int $flow_tag_attribute_id): void
+    public function setId(?int $flow_tag_attribute_id): void
     {
         $this->flow_tag_attribute_id = $flow_tag_attribute_id;
     }
@@ -176,7 +176,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     /**
      * @return int|null
      */
-    public function getFlowTagAttributeId(): ?int
+    public function getId(): ?int
     {
         return $this->flow_tag_attribute_id;
     }
@@ -185,7 +185,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     /**
      * @return int|null
      */
-    public function getAttributeCreatedAtTs(): ?int
+    public function getCreatedAtTs(): ?int
     {
         return $this->attribute_created_at_ts;
     }
@@ -193,7 +193,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     /**
      * @return int|null
      */
-    public function getAttributeUpdatedAtTs(): ?int
+    public function getUpdatedAtTs(): ?int
     {
         return $this->attribute_updated_at_ts;
     }
@@ -238,7 +238,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     /**
      * @return string|null
      */
-    public function getFlowTagAttributeGuid(): ?string
+    public function getGuid(): ?string
     {
         return $this->flow_tag_attribute_guid;
     }
@@ -246,7 +246,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     /**
      * @return string|null
      */
-    public function getTagAttributeName(): ?string
+    public function getName(): ?string
     {
         return $this->tag_attribute_name;
     }
@@ -254,7 +254,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     /**
      * @return int|null
      */
-    public function getTagAttributeLong(): ?int
+    public function getLong(): ?int
     {
         return $this->tag_attribute_long;
     }
@@ -262,7 +262,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     /**
      * @return string|null
      */
-    public function getTagAttributeText(): ?string
+    public function getText(): ?string
     {
         return $this->tag_attribute_text;
     }
@@ -270,7 +270,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
     /**
      * @return string|null
      */
-    public function getFlowTagGuid(): ?string
+    public function getTagGuid(): ?string
     {
         return $this->flow_tag_guid;
     }
@@ -315,11 +315,11 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         return true;
     }
 
-    public function update_fields_with_public_data(FlowTagAttribute $attribute) {
+    public function update_fields_with_public_data(IFlowTagAttribute $attribute) {
         $this->tag_attribute_name = $attribute->tag_attribute_name ;
 
-        $this->setTagAttributeLong($attribute->getTagAttributeLong()) ;
-        $this->setTagAttributeText($attribute->getTagAttributeText()) ;
+        $this->setLong($attribute->getLong()) ;
+        $this->setText($attribute->getText()) ;
 
         $this->points_to_flow_entry_guid = $attribute->points_to_flow_entry_guid ;
         $this->points_to_flow_user_guid = $attribute->points_to_flow_user_guid ;
@@ -366,6 +366,20 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
             return;
         }
 
+        if ($object instanceof BriefFlowTagAttribute) {
+            $this->attribute_created_at_ts = $object->getCreatedAtTs();
+            $this->attribute_updated_at_ts = $object->getUpdatedAtTs();
+            $this->flow_tag_attribute_guid = $object->getGuid();
+            $this->flow_tag_guid = $object->getTagGuid();
+            $this->tag_attribute_name = $object->getName();
+            $this->tag_attribute_long = $object->getLong();
+            $this->tag_attribute_text = $object->getText();
+            $this->points_to_flow_entry_guid = $object->getPointsToFlowEntryGuid();
+            $this->points_to_flow_user_guid = $object->getPointsToFlowUserGuid();
+            $this->points_to_flow_project_guid = $object->getPointsToFlowProjectGuid();
+            $this->points_to_flow_tag_guid = $object->getPointsToFlowTagGuid();
+        }
+
         foreach ($object as $key => $val) {
             if (property_exists($this,$key)) {
                 if ($key === 'tag_attribute_long') {
@@ -384,8 +398,8 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         if (empty($this->project_guid_of_pointee)) { $this->project_guid_of_pointee = null;}
         if (empty($this->project_admin_guid_of_pointee)) { $this->project_admin_guid_of_pointee = null;}
 
-        $this->setTagAttributeLong($this->getTagAttributeLong());
-        $this->setTagAttributeText($this->getTagAttributeText());
+        $this->setLong($this->getLong());
+        $this->setText($this->getText());
 
 
 
@@ -394,7 +408,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
 
     public static function check_valid_name($words) : bool  {
 
-        $b_min_ok =  static::minimum_check_valid_name($words,static::LENGTH_ATTRIBUTE_NAME);
+        $b_min_ok =  static::minimum_check_valid_name($words,IFlowTagAttribute::LENGTH_ATTRIBUTE_NAME);
         if (!$b_min_ok) {return false;}
         //no special punctuation
         if (preg_match('/[\'"<>`]/', $words, $output_array)) {
@@ -420,7 +434,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
 
             $b_match = static::check_valid_name($this->tag_attribute_name);
             if (!$b_match) {
-                $max_len = static::LENGTH_ATTRIBUTE_NAME;
+                $max_len = IFlowTagAttribute::LENGTH_ATTRIBUTE_NAME;
                 throw new InvalidArgumentException(
                     "Attribute name either empty OR invalid! ".
                     "First character cannot be a number. Name Cannot be greater than $max_len. ".
@@ -459,10 +473,10 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                     $this->points_to_flow_user_guid);
             }
 
-            if (empty($this->getTagAttributeText())) {
-                $this->setTagAttributeText(null);
+            if (empty($this->getText())) {
+                $this->setText(null);
             } else {
-                $this->setTagAttributeText($this->getTagAttributeText());
+                $this->setText($this->getText());
             }
 
 
@@ -473,8 +487,8 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                 'points_to_project_id' => $this->points_to_project_id ,
                 'points_to_tag_id' => $this->points_to_tag_id ,
                 'tag_attribute_name' => $this->tag_attribute_name ,
-                'tag_attribute_long' => $this->getTagAttributeLong() ,
-                'tag_attribute_text' => $this->getTagAttributeText()
+                'tag_attribute_long' => $this->getLong() ,
+                'tag_attribute_text' => $this->getText()
             ];
 
             if ($this->flow_tag_attribute_id && $this->flow_tag_attribute_guid) {
@@ -510,8 +524,8 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                     $this->points_to_tag_id,
                     $this->flow_tag_attribute_guid,
                     $this->tag_attribute_name,
-                    $this->getTagAttributeLong(),
-                    $this->getTagAttributeText()
+                    $this->getLong(),
+                    $this->getText()
 
                 ];
                 $db->safeQuery($insert_sql, $insert_params, PDO::FETCH_BOTH, true);
@@ -541,7 +555,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
         }
     }
 
-    public static function merge_attribute(FlowTagAttribute $top, ?FlowTagAttribute $parent ) : FlowTagAttribute {
+    public static function merge_attribute(IFlowTagAttribute $top, ?IFlowTagAttribute $parent ) : IFlowTagAttribute {
         if (empty($parent)) {
             return new FlowTagAttribute($top);
         }
@@ -584,8 +598,8 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable {
                 "points_to_flow_project_guid" => $this->points_to_flow_project_guid,
                 "points_to_flow_tag_guid" => $this->points_to_flow_tag_guid,
                 "tag_attribute_name" => $this->tag_attribute_name,
-                "tag_attribute_long" => $this->getTagAttributeLong(),
-                "tag_attribute_text" => $this->getTagAttributeText(),
+                "tag_attribute_long" => $this->getLong(),
+                "tag_attribute_text" => $this->getText(),
                 "created_at_ts" => $this->attribute_created_at_ts,
                 "updated_at_ts" => $this->attribute_updated_at_ts,
                 "is_inherited" => $this->is_inherited,

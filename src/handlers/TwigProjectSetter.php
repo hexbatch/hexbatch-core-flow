@@ -35,7 +35,7 @@ class TwigProjectSetter extends Twig {
 
         } elseif (array_key_exists('tag',$data)) {
             if ($data['tag'] instanceof FlowTag) {
-                $found_project = $data['tag']->flow_project;
+                $found_project = $data['tag']->getProject();
             }
         } elseif (array_key_exists('entry',$data)) {
             if ($data['entry'] instanceof IFlowEntry) {

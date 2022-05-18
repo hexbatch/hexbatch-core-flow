@@ -97,11 +97,11 @@ abstract class FlowProjectTagLevel extends FlowProjectFileLevel {
     protected function get_tag_by_name(string $name) : FlowTag {
         $all_tags = $this->get_all_owned_tags_in_project();
         foreach ($all_tags as $tag) {
-            if ($tag->flow_tag_name === $name) { return $tag;}
+            if ($tag->getName() === $name) { return $tag;}
         }
         $baby_steps = new FlowTag();
-        $baby_steps->flow_project_id = $this->id;
-        $baby_steps->flow_tag_name = $name;
+        $baby_steps->setProjectId($this->id);
+        $baby_steps->setName($name);
         $baby_steps->save();
         return $baby_steps->clone_refresh();
     }

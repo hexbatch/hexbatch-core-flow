@@ -14,7 +14,6 @@ use DI\NotFoundException;
 use Exception;
 use PDO;
 use Psr\Http\Message\ServerRequestInterface;
-use Slim\Exception\HttpNotImplementedException;
 
 
 class AdminHelper extends BaseHelper {

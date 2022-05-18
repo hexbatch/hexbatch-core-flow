@@ -163,7 +163,7 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
         $params = new StandardAttributeSearchParams();
 
         foreach ($flow_tags as $tag) {
-            $params->addTagGuid($tag->flow_tag_guid);
+            $params->addTagGuid($tag->getGuid());
         }
 
         $found = StandardAttributeSearch::search($params);

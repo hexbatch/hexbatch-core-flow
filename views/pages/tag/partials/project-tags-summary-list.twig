@@ -3,22 +3,20 @@
     {% for tag in project.get_all_owned_tags_in_project(true) %}
     <li class="list-group-item">
         <div class="row">
-            <div class="col-12 col-xl-6 flow-tag-show-edit-on-click" data-tag_guid="{{ tag.flow_tag_guid }}">
+            <div class="col-12 col-xl-6 flow-tag-show-edit-on-click" data-tag_guid="{{ tag.getGuid() }}">
                 <span class="flow-tag-list-name flow-tag-display  flow-tag-{{ project.get_project_guid() }}"
-                      data-tag_guid="{{ tag.flow_tag_guid }}"
+                      data-tag_guid="{{ tag.getGuid() }}"
                       style="display: none"
                 >
-                    {{ tag.flow_tag_name }}
+                    {{ tag.getName() }}
                 </span>
             </div> <!-- /.col -->
 
             <div class="col-12 col-xl-6">
                 <ul class="list-group">
-                    {% for applied in tag.applied %}
-                        <a href="{% include 'tag/partials/applied/applied-url.twig' with {'applied': applied} %}"
-                           class="list-group-item list-group-item-action "
-                        >
-                            <span class="flow-tag-applied-target-title" data-applied_guid="{{ applied.flow_applied_tag_guid }}">
+                    {% for applied in tag.getApplied() %}
+                        <a href="{{applied.getZTaggedUrl}}" class="list-group-item list-group-item-action ">
+                            <span class="flow-tag-applied-target-title" data-applied_guid="{{ applied.getGuid() }}">
                             {% include 'tag/partials/applied/applied-title.twig' with {'applied': applied} %}
                             </span>
                         </a>

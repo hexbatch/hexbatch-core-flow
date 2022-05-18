@@ -709,9 +709,9 @@ class PageProjectController extends BaseProjectController
 
                 $setting_tag = $setting_tag_array[0];
                 //make sure can read the tag
-                if ($setting_tag->flow_project_guid !== $project->get_project_guid()) {
+                if ($setting_tag->getProjectGuid() !== $project->get_project_guid()) {
                     $setting_project = $this->get_project_helper()->get_project_with_permissions(
-                        $request,$setting_tag->flow_project_admin_user_guid,$setting_tag->flow_project_guid,
+                        $request,$setting_tag->getAdminGuid(),$setting_tag->getProjectGuid(),
                         FlowProjectUser::PERMISSION_COLUMN_READ);
                     if (!$setting_project) {
                         throw new InvalidArgumentException(
@@ -724,7 +724,7 @@ class PageProjectController extends BaseProjectController
                 if (!$setting_standard_value) {
                     throw new LogicException(
                         "[set_project_setting] Could not find standard attribute of type $setting_name for tag ".
-                        $setting_tag->flow_tag_guid);
+                        $setting_tag->getGuid());
                 }
             } else {
                 //remove setting

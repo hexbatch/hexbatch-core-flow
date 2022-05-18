@@ -17,37 +17,37 @@ use PDO;
 class FlowTagSearch  extends FlowBase{
 
     /**
-     * @var FlowTag[] $tags_found
+     * @var IFlowTag[] $tags_found
      */
     protected array $tags_found = [];
     protected ?FlowTagSearchParams $last_search = null;
 
     /**
-     * @return FlowTag[]
+     * @return IFlowTag[]
      */
     public function get_found_tags() : array { return $this->tags_found;}
 
     /**
      * get only the tags that have guid or name asked for
-     * @return FlowTag[]
+     * @return IFlowTag[]
      */
     public function get_direct_match_tags() : array {
         $ret = [];
         if (!$this->last_search) {return [];}
 
         foreach ($this->tags_found as $tag) {
-            if (in_array($tag->flow_tag_guid,$this->last_search->get_guids())) {
+            if (in_array($tag->getGuid(),$this->last_search->get_guids())) {
                 $ret[] = $tag;
             }
-            elseif (in_array($tag->flow_tag_name,$this->last_search->get_names())) {
+            elseif (in_array($tag->getName(),$this->last_search->get_names())) {
                 $ret[] = $tag;
             }
-            elseif (in_array($tag->flow_tag_id,$this->last_search->get_ids())) {
+            elseif (in_array($tag->getID(),$this->last_search->get_ids())) {
                 $ret[] = $tag;
             }
 
             elseif ($this->last_search->tag_name_term) {
-                if (false !== stripos($tag->flow_tag_name, $this->last_search->tag_name_term) ) {
+                if (false !== stripos($tag->getName(), $this->last_search->tag_name_term) ) {
                     $ret[] = $tag;
                 }
             }
@@ -353,18 +353,18 @@ class FlowTagSearch  extends FlowBase{
             $rem_tags = [];
             foreach ($res as $row) {
                 $tag_node = new FlowTag($row);
-                if (array_key_exists($tag_node->flow_tag_guid,$rem_tags)) {
-                    $tag_node = $rem_tags[$tag_node->flow_tag_guid];
+                if (array_key_exists($tag_node->getGuid(),$rem_tags)) {
+                    $tag_node = $rem_tags[$tag_node->getGuid()];
                 } else {
-                    $rem_tags[$tag_node->flow_tag_guid] = $tag_node;
+                    $rem_tags[$tag_node->getGuid()] = $tag_node;
                     $ret[] = $tag_node;
 
-                    $map_all_tags_by_id[$map_prefix.$tag_node->flow_tag_id] = $tag_node;
+                    $map_all_tags_by_id[$map_prefix.$tag_node->getID()] = $tag_node;
                 }
 
                 $attribute_node = new FlowTagAttribute($row);
-                if ($attribute_node->getFlowTagAttributeId()) {
-                    $tag_node->attributes[] = $attribute_node;
+                if ($attribute_node->getId()) {
+                    $tag_node->addAttribute($attribute_node);
                 }
 
 
@@ -373,14 +373,15 @@ class FlowTagSearch  extends FlowBase{
             //put parents in
             foreach ($map_all_tags_by_id as $prefix_id => $dat_tag_you_do ) {
                 WillFunctions::will_do_nothing($prefix_id);
-                if ($dat_tag_you_do->parent_tag_id) {
-                    $what_prefix = $map_prefix. $dat_tag_you_do->parent_tag_id;
+                if ($dat_tag_you_do->getParentId()) {
+                    $what_prefix = $map_prefix. $dat_tag_you_do->getParentId();
                     if (!array_key_exists($what_prefix,$map_all_tags_by_id)) {
-                        throw new LogicException(sprintf("Could not find parent %s for %s ",$dat_tag_you_do->parent_tag_id,$dat_tag_you_do->flow_tag_id));
+                        throw new LogicException(sprintf(
+                            "Could not find parent %s for %s ",$dat_tag_you_do->getParentId(),$dat_tag_you_do->getID()));
                     }
                     $proud_parent = $map_all_tags_by_id[$what_prefix];
                     if (empty($proud_parent)) {throw new LogicException("Parent is empty at index of $what_prefix");}
-                    $dat_tag_you_do->flow_tag_parent = $proud_parent;
+                    $dat_tag_you_do->setParent($proud_parent);
                 }
             }
 
@@ -391,17 +392,17 @@ class FlowTagSearch  extends FlowBase{
             //filter out the ones that  are not top level searches, the rest will be in the parent list
             foreach ($ret as $item) {
                 if ($search->getOwningProjectGuid()) {
-                    if ($item->flow_project_guid !== $search->getOwningProjectGuid() ) {continue;}
+                    if ($item->getProjectGuid() !== $search->getOwningProjectGuid() ) {continue;}
                 }
 
                 if ($search->tag_name_term) {
-                    if (false === stripos($item->flow_tag_name, $search->tag_name_term) ) {continue;}
+                    if (false === stripos($item->getName(), $search->tag_name_term) ) {continue;}
                 }
 
                 if (count($search->get_guids())) {
                     $found_guid = false;
                     foreach ($search->get_guids() as $a_search_guid) {
-                        if ($item->flow_tag_guid === $a_search_guid) {$found_guid = true; break;}
+                        if ($item->getGuid() === $a_search_guid) {$found_guid = true; break;}
                     }
 
                     if (!$found_guid) {continue;}
@@ -410,7 +411,7 @@ class FlowTagSearch  extends FlowBase{
                 if (count($search->tag_ids)) {
                     $found_id = false;
                     for($i = 0; $i < count($search->tag_ids); $i++) {
-                        if ($item->flow_tag_id === $search->tag_ids[$i]) {$found_id = true; break;}
+                        if ($item->getID() === $search->tag_ids[$i]) {$found_id = true; break;}
                     }
                     if (!$found_id) {continue;}
                 }
@@ -427,15 +428,15 @@ class FlowTagSearch  extends FlowBase{
                  */
                 $match_map = [];
                 foreach ($filtered as $tag_rehydrated) {
-                    $tag_id_array[] = $tag_rehydrated->flow_tag_id;
-                    $match_map[$tag_rehydrated->flow_tag_guid] = $tag_rehydrated;
+                    $tag_id_array[] = $tag_rehydrated->getID();
+                    $match_map[$tag_rehydrated->getGuid()] = $tag_rehydrated;
                 }
 
                 $attached_map = FlowAppliedTag::get_applied_tags($tag_id_array);
 
                 foreach ($attached_map as $tag_guid => $applied_array) {
                     if (array_key_exists($tag_guid,$match_map)) {
-                        $match_map[$tag_guid]->applied = $applied_array;
+                        $match_map[$tag_guid]->setApplied($applied_array);
                     }
                 }
             }
@@ -494,7 +495,7 @@ class FlowTagSearch  extends FlowBase{
         $data = [];
         $data[] = ['id' => 0, 'parent' => -1, 'title' => 'dummy_root','tag'=>null];
         foreach ($tag_array_to_sort as $tag) {
-            $data[] = ['id' => $tag->flow_tag_id, 'parent' => $tag->parent_tag_id??0, 'title' => $tag->flow_tag_name,'tag'=>$tag];
+            $data[] = ['id' => $tag->getID(), 'parent' => $tag->getParentId()??0, 'title' => $tag->getName(),'tag'=>$tag];
         }
         $tree = new Tree(
             $data,

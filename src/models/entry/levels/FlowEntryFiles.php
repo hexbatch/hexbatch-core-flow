@@ -11,6 +11,7 @@ use app\models\entry\archive\IFlowEntryArchive;
 use app\models\entry\entry_node\EntryNodeDocument;
 use app\models\entry\FlowEntryYaml;
 use app\models\entry\IFlowEntry;
+use app\models\entry\IFlowEntryReadBasicProperties;
 use app\models\project\IFlowProject;
 use DirectoryIterator;
 use Exception;
@@ -33,7 +34,7 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
 
 
     /**
-     * @param array|object|IFlowEntry|IFlowEntryArchive|null $object
+     * @param array|object|IFlowEntry|IFlowEntryArchive|IFlowEntryReadBasicProperties|null $object
      * @param IFlowProject|null $project
      * @throws Exception
      */

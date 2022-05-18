@@ -14,7 +14,7 @@ final class FlowEntry extends FlowEntryFiles  {
 
     /**
      * @param IFlowProject $project
-     * @param object|array|IFlowEntry
+     * @param object|array|IFlowEntry|IFlowEntryReadBasicProperties
      * @return IFlowEntry
      * @throws
      */

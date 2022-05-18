@@ -12,7 +12,7 @@
                 b_view_only = false;
             {% endif %}
             get_tag_by_guid(
-                "{{ tag.flow_tag_guid }}",
+                "{{ tag.getGuid() }}",
                 function(found_tag) {
                     flow_tag_show_editor(found_tag,null,null,b_view_only);
                 }

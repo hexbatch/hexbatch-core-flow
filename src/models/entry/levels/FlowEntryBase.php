@@ -62,10 +62,12 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
 
 
     /**
-     * @param IFlowEntryArchive|stdClass|array|IFlowEntry|null $object
+     * @param IFlowEntryArchive|stdClass|array|IFlowEntry|IFlowEntryReadBasicProperties|null $object
      * @param IFlowProject|null $project
      */
-    public function __construct(IFlowEntryArchive|stdClass|array|IFlowEntry|null $object, ?IFlowProject $project){
+    public function __construct(IFlowEntryArchive|stdClass|array|IFlowEntry|IFlowEntryReadBasicProperties|null $object,
+                                ?IFlowProject $project
+    ){
 
         $this->project = $project;
         $this->flow_entry_id = null;
@@ -250,15 +252,6 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                 $this->set_created_at_ts($update_info['created_at_ts']);
                 $this->set_updated_at_ts($update_info['updated_at_ts']);
 
-                if ($b_save_children) {
-                    /**
-                     * @var IFlowEntry $child_entry
-                     */
-                    foreach ($this->child_entries as $child_entry) {
-                        $child_entry->set_parent_id($this->flow_entry_id);
-                        $child_entry->save_entry();
-                    }
-                }
 
 
                 if ($b_do_transaction && $db->inTransaction()) {

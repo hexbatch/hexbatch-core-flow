@@ -218,8 +218,13 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
         $yaml_found =  RecursiveClasses::rsearch_for_paths($folder_path,$pattern);
         foreach ($yaml_found as $yaml_path) {
             if ($folder_path === dirname($yaml_path,2) ) {
+                $directory = dirname($yaml_path);
+                $maybe_ignore_path = $directory.DIRECTORY_SEPARATOR.static::FILENAME_TO_MARK_INVALID;
+                if (is_readable($maybe_ignore_path)) {
+                    continue; //its ignored
+                }
                 $goods = Yaml::parseFile($yaml_path);
-                $node = new static($goods,$project);
+                $node = new FlowEntryYaml($goods,$project);
                 $node->setFolderPath($yaml_path);
                 if ($node->is_valid()) {
                     if (!isset($guid_hash[$node->get_guid()])) {

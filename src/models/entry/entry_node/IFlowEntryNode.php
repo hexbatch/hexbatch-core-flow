@@ -2,8 +2,8 @@
 
 namespace app\models\entry\entry_node;
 
-use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
+use app\models\tag\IFlowAppliedTag;
 
 interface IFlowEntryNode {
     const FLOW_TAG_BB_CODE_NAME = 'flow_tag';
@@ -36,7 +36,7 @@ interface IFlowEntryNode {
 
     public function get_applied_flow_tag_id() : ?int;
     public function get_applied_flow_tag_guid() : ?string;
-    public function get_applied() : ?FlowAppliedTag;
+    public function get_applied() : ?IFlowAppliedTag;
 
     public function save(bool $b_do_transaction = false, bool $b_save_children = false) :void;
     public function get_as_bb_code() :string ;

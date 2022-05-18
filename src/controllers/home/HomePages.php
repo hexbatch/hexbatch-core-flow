@@ -129,9 +129,9 @@ class HomePages extends BasePages
                     }
                     $tag = $tag_res[0];
                     $route_to_go_to = $routeParser->urlFor('show_tag',[
-                        "user_name" => $tag->flow_project_admin_user_guid,
-                        "project_name" => $tag->flow_project_guid,
-                        "tag_name" => $tag->flow_tag_guid,
+                        "user_name" => $tag->getAdminGuid(),
+                        "project_name" => $tag->getProjectGuid(),
+                        "tag_name" => $tag->getGuid(),
                     ]);
 
                     break;

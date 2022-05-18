@@ -155,7 +155,7 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
     public static function createWriters(array $flow_tags) : array {
         $params = new RawAttributeSearchParams();
         foreach ($flow_tags as $tag) {
-            $params->addTagID($tag->flow_tag_id);
+            $params->addTagID($tag->getID());
         }
 
         $attributes = RawAttributeSearch::search($params);
@@ -257,8 +257,8 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
 
         $tags_ids_with_no_standards = [];
         foreach ($flow_tags as $tag) {
-            if (!isset($tag_has_property_names[$tag->flow_tag_guid])) {
-                $tags_ids_with_no_standards[] = $tag->flow_tag_id;
+            if (!isset($tag_has_property_names[$tag->getGuid()])) {
+                $tags_ids_with_no_standards[] = $tag->getID();
             }
         }
         static::trim_tags($tags_ids_with_no_standards); //remove standards that might have been erased with no attributes behind
@@ -267,8 +267,8 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
         //finally, if a tag has no attributes, copy over its parent's standard attributes,
         // because the loop above only lets a tag inherit its parent's standards if the tag has one attribute
         foreach ($flow_tags as $tag_maybe_with_no_attributes) {
-            if (count($tag_maybe_with_no_attributes->attributes)) { continue;}
-            if (!$tag_maybe_with_no_attributes->parent_tag_id) { continue;}
+            if (count($tag_maybe_with_no_attributes->getAttributes())) { continue;}
+            if (!$tag_maybe_with_no_attributes->getParentId()) { continue;}
             static::copy_parent_standards_to_child($tag_maybe_with_no_attributes);
         }
         return $ret;
@@ -276,7 +276,7 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
     }
 
     protected static function copy_parent_standards_to_child(FlowTag $flowTag) : int  {
-        if (!$flowTag->parent_tag_id) { return 0;}
+        if (!$flowTag->getParentId()) { return 0;}
         $sql = "INSERT INTO flow_standard_attributes (flow_tag_id,standard_name, standard_json)
                 SELECT 
                     ? as flow_tag_id, standard_name, standard_json
@@ -285,7 +285,7 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
                 ON DUPLICATE KEY UPDATE 
                    standard_json = VALUES(standard_json) ";
         $db = static::get_connection();
-        $args = [$flowTag->flow_tag_id, $flowTag->parent_tag_id];
+        $args = [$flowTag->getID(), $flowTag->getParentId()];
         return $db->safeQuery($sql,$args,PDO::FETCH_BOTH,true);
 
     }

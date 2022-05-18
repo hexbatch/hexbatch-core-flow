@@ -30,6 +30,10 @@ BEGIN
         SET number_fields = number_fields + 1;
     END IF;
 
+    IF NEW.tagged_pointer_id THEN
+        SET number_fields = number_fields + 1;
+    END IF;
+
     IF number_fields > 1 THEN
         SET msg := CONCAT('Tags can only point to one thing, not ',number_fields);
         SIGNAL SQLSTATE '45000'
