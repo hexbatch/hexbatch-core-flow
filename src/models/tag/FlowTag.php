@@ -4,7 +4,6 @@ namespace app\models\tag;
 
 
 use app\helpers\Utilities;
-use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\project\IFlowProject;
@@ -185,6 +184,7 @@ class FlowTag extends FlowBase implements JsonSerializable, IFlowTag
      */
     public function setGuid(?string $flow_tag_guid): void
     {
+        Utilities::throw_if_not_valid_guid_format($flow_tag_guid);
         $this->flow_tag_guid = $flow_tag_guid;
     }
 
@@ -217,6 +217,7 @@ class FlowTag extends FlowBase implements JsonSerializable, IFlowTag
      */
     public function setProjectGuid(?string $flow_project_guid): void
     {
+        Utilities::throw_if_not_valid_guid_format($flow_project_guid);
         $this->flow_project_guid = $flow_project_guid;
     }
 
@@ -233,6 +234,7 @@ class FlowTag extends FlowBase implements JsonSerializable, IFlowTag
      */
     public function setAdminGuid(?string $flow_project_admin_user_guid): void
     {
+        Utilities::throw_if_not_valid_guid_format($flow_project_admin_user_guid);
         $this->flow_project_admin_user_guid = $flow_project_admin_user_guid;
     }
 
@@ -249,6 +251,7 @@ class FlowTag extends FlowBase implements JsonSerializable, IFlowTag
      */
     public function setParentGuid(?string $parent_tag_guid): void
     {
+        Utilities::throw_if_not_valid_guid_format($parent_tag_guid);
         $this->parent_tag_guid = $parent_tag_guid;
     }
 
@@ -868,7 +871,7 @@ class FlowTag extends FlowBase implements JsonSerializable, IFlowTag
                     " Title cannot be a hex number greater than 25 and cannot be a decimal number");
             }
 
-            $this->flow_tag_name = JsonHelper::to_utf8($this->flow_tag_name);
+            $this->flow_tag_name = Utilities::to_utf8($this->flow_tag_name);
 
 
             $db = static::get_connection();

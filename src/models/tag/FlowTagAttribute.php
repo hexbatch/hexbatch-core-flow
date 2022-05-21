@@ -2,7 +2,7 @@
 
 namespace app\models\tag;
 
-use app\hexlet\JsonHelper;
+use app\helpers\Utilities;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\tag\brief\BriefFlowTagAttribute;
@@ -62,6 +62,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable,IFlowTagAttr
      */
     public function setPointsToFlowEntryGuid(?string $points_to_flow_entry_guid): void
     {
+        Utilities::throw_if_not_valid_guid_format($points_to_flow_entry_guid);
         $this->points_to_flow_entry_guid = $points_to_flow_entry_guid;
     }
 
@@ -70,6 +71,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable,IFlowTagAttr
      */
     public function setPointsToFlowUserGuid(?string $points_to_flow_user_guid): void
     {
+        Utilities::throw_if_not_valid_guid_format($points_to_flow_user_guid);
         $this->points_to_flow_user_guid = $points_to_flow_user_guid;
     }
 
@@ -78,6 +80,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable,IFlowTagAttr
      */
     public function setPointsToFlowProjectGuid(?string $points_to_flow_project_guid): void
     {
+        Utilities::throw_if_not_valid_guid_format($points_to_flow_project_guid);
         $this->points_to_flow_project_guid = $points_to_flow_project_guid;
     }
 
@@ -86,6 +89,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable,IFlowTagAttr
      */
     public function setPointsToFlowTagGuid(?string $points_to_flow_tag_guid): void
     {
+        Utilities::throw_if_not_valid_guid_format($points_to_flow_tag_guid);
         $this->points_to_flow_tag_guid = $points_to_flow_tag_guid;
     }
 
@@ -429,7 +433,8 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable,IFlowTagAttr
                 throw new InvalidArgumentException("Attribute Name cannot be empty");
             }
 
-            $this->tag_attribute_name = JsonHelper::to_utf8($this->tag_attribute_name);
+            $this->tag_attribute_name = Utilities::to_utf8($this->tag_attribute_name);
+            $this->tag_attribute_text = Utilities::to_utf8($this->tag_attribute_text);
 
 
             $b_match = static::check_valid_name($this->tag_attribute_name);

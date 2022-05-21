@@ -358,7 +358,7 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
                     $this->flow_applied_tag = new FlowAppliedTag();
                 }
                 $this->flow_applied_tag->setParentTagId($this->flow_tag_id);
-                $this->flow_applied_tag->setXEntryGuid($this->node_id);
+                $this->flow_applied_tag->setXNodeGuid($this->node_guid);
                 $this->flow_applied_tag->setGuid($this->flow_applied_tag_guid);
                 $this->flow_applied_tag->setID($this->flow_applied_tag_id);
                 $this->flow_applied_tag->save();

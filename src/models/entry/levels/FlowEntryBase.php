@@ -3,7 +3,7 @@
 namespace app\models\entry\levels;
 
 
-use app\hexlet\JsonHelper;
+use app\helpers\Utilities;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\entry\archive\FlowEntryArchive;
@@ -386,11 +386,25 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
 
 
     public function set_id(?int $what): void {$this->flow_entry_id = $what;}
-    public function set_guid(?string $what): void {$this->flow_entry_guid = $what;}
+
+    public function set_guid(?string $what): void {
+        Utilities::throw_if_not_valid_guid_format($what);
+        $this->flow_entry_guid = $what;
+    }
+
     public function set_parent_id(?int $what): void {$this->flow_entry_parent_id = $what;}
-    public function set_parent_guid(?string $what): void {$this->flow_entry_parent_guid = $what;}
+
+    public function set_parent_guid(?string $what): void {
+        Utilities::throw_if_not_valid_guid_format($what);
+        $this->flow_entry_parent_guid = $what;
+    }
+
     public function set_project_id(?int $what): void {$this->flow_project_id = $what;}
-    public function set_project_guid(?string $what) : void {$this->flow_project_guid = $what;}
+
+    public function set_project_guid(?string $what) : void {
+        Utilities::throw_if_not_valid_guid_format($what);
+        $this->flow_project_guid = $what;
+    }
 
     public function set_created_at_ts(?int $what) : void {
         if ($what <0 ) {throw new InvalidArgumentException("Timestamps cannot be negative");}
@@ -403,7 +417,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     }
 
     public function set_title(?string $what): void {
-        $safe_what = JsonHelper::to_utf8($what);
+        $safe_what = Utilities::to_utf8($what);
 
         if (mb_strlen($safe_what) > static::LENGTH_ENTRY_TITLE) {
             throw new InvalidArgumentException(
@@ -423,7 +437,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     }
 
     public function set_blurb(?string $what): void {
-        $safe_what = JsonHelper::to_utf8($what);
+        $safe_what = Utilities::to_utf8($what);
 
         if (mb_strlen($safe_what) > static::LENGTH_ENTRY_BLURB) {
             throw new InvalidArgumentException(

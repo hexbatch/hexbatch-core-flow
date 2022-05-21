@@ -2,10 +2,10 @@
 
 namespace app\models\tag;
 
+use app\helpers\Utilities;
 use app\models\base\FlowBase;
 use app\models\multi\GeneralSearch;
 use app\models\tag\brief\BriefFlowAppliedTag;
-use app\models\tag\brief\BriefFlowTag;
 use Exception;
 use InvalidArgumentException;
 use JsonSerializable;
@@ -196,6 +196,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
      */
     public function setGuid(?string $flow_applied_tag_guid): void
     {
+        Utilities::throw_if_not_valid_guid_format($flow_applied_tag_guid);
         $this->flow_applied_tag_guid = $flow_applied_tag_guid;
     }
 
@@ -212,6 +213,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
      */
     public function setParentTagGuid(?string $flow_tag_guid): void
     {
+        Utilities::throw_if_not_valid_guid_format($flow_tag_guid);
         $this->flow_tag_guid = $flow_tag_guid;
     }
 
@@ -228,6 +230,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
      */
     public function setXEntryGuid(?string $tagged_flow_entry_guid): void
     {
+        Utilities::throw_if_not_valid_guid_format($tagged_flow_entry_guid);
         $this->tagged_flow_entry_guid = $tagged_flow_entry_guid;
     }
 
@@ -244,6 +247,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
      */
     public function setXPointerGuid(?string $tagged_pointer_guid): void
     {
+        Utilities::throw_if_not_valid_guid_format($tagged_pointer_guid);
         $this->tagged_pointer_guid = $tagged_pointer_guid;
     }
 
@@ -260,6 +264,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
      */
     public function setXNodeGuid(?string $tagged_flow_entry_node_guid): void
     {
+        Utilities::throw_if_not_valid_guid_format($tagged_flow_entry_node_guid);
         $this->tagged_flow_entry_node_guid = $tagged_flow_entry_node_guid;
     }
 
@@ -276,6 +281,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
      */
     public function setXUserGuid(?string $tagged_flow_user_guid): void
     {
+        Utilities::throw_if_not_valid_guid_format($tagged_flow_user_guid);
         $this->tagged_flow_user_guid = $tagged_flow_user_guid;
     }
 
@@ -292,6 +298,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
      */
     public function setXProjectGuid(?string $tagged_flow_project_guid): void
     {
+        Utilities::throw_if_not_valid_guid_format($tagged_flow_project_guid);
         $this->tagged_flow_project_guid = $tagged_flow_project_guid;
     }
 
@@ -783,6 +790,16 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
         else {
             $db->insert('flow_applied_tags',$saving_info);
             $this->id = $db->lastInsertId();
+        }
+
+        if (!$this->flow_applied_tag_guid) {
+            $this->flow_applied_tag_guid = $db->cell(
+                "SELECT HEX(flow_applied_tag_guid) as guid FROM flow_applied_tags WHERE id = ?",
+                $this->id);
+
+            if (!$this->flow_applied_tag_guid) {
+                throw new RuntimeException("Could not get applied guid using id of ". $this->id);
+            }
         }
     }//end function save
 

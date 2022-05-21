@@ -2,7 +2,8 @@
 namespace app\models\project\levels;
 
 use app\helpers\ProjectHelper;
-use app\hexlet\JsonHelper;
+use app\helpers\Utilities;
+use app\hexlet\BBHelper;
 use app\hexlet\RecursiveClasses;
 use app\hexlet\WillFunctions;
 use app\models\entry\FlowEntryYaml;
@@ -90,7 +91,7 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
         if (mb_strlen($bb_code) > IFlowProject::MAX_SIZE_READ_ME_IN_CHARACTERS) {
             throw new InvalidArgumentException("bb code is too large");
         }
-        $bb_code = JsonHelper::to_utf8($bb_code);
+        $bb_code = Utilities::to_utf8($bb_code);
         $origonal_bb_code = $bb_code;
 
         $this->flow_project_readme_bb_code = ProjectHelper::get_project_helper()->
@@ -101,7 +102,7 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
         $nu_read_me = ProjectHelper::get_project_helper()->
         stub_to_file_paths($this,$origonal_bb_code);
 
-        $this->flow_project_readme_html = JsonHelper::html_from_bb_code($nu_read_me);
+        $this->flow_project_readme_html = BBHelper::html_from_bb_code($nu_read_me);
         $this->flow_project_readme = str_replace('&nbsp;',' ',strip_tags($this->flow_project_readme_html));
     }
 

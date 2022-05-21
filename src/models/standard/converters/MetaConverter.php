@@ -4,7 +4,6 @@ namespace app\models\standard\converters;
 
 use app\helpers\ProjectHelper;
 use app\helpers\Utilities;
-use app\hexlet\JsonHelper;
 use app\models\standard\IFlowTagStandardAttribute;
 use Carbon\Carbon;
 use Exception;
@@ -45,7 +44,7 @@ class MetaConverter extends BaseConverter {
                                 stub_from_file_paths_calculated($target->getOwnerUserGuid(),$target->getProjectGuid(),
                                                                 $target->getTextVal());
                 if ($outbound) {
-                    $outbound = strip_tags(JsonHelper::to_utf8($outbound));
+                    $outbound = strip_tags(Utilities::to_utf8($outbound));
                 }
                 return $outbound;
             }
@@ -53,7 +52,7 @@ class MetaConverter extends BaseConverter {
             case IFlowTagStandardAttribute::META_KEY_WEBSITE: {
                 $outbound = parent::getFinalOfKey($key);
                 if ($outbound) {
-                    $outbound = strip_tags(JsonHelper::to_utf8($outbound));
+                    $outbound = strip_tags(Utilities::to_utf8($outbound));
                 }
                 return $outbound;
             }
@@ -65,7 +64,7 @@ class MetaConverter extends BaseConverter {
              {
                 $outbound = parent::getFinalOfKey($key);
                  if ($outbound) {
-                     $outbound = htmlspecialchars(JsonHelper::to_utf8($outbound),
+                     $outbound = htmlspecialchars(Utilities::to_utf8($outbound),
                          ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5,'UTF-8',false);
                  }
                  return $outbound;
@@ -105,7 +104,7 @@ class MetaConverter extends BaseConverter {
 
         foreach ($keys_to_encode as $a_key) {
             if (property_exists($original,$a_key) && $original->$a_key) {
-                $original->$a_key = htmlspecialchars(JsonHelper::to_utf8($original->$a_key),
+                $original->$a_key = htmlspecialchars(Utilities::to_utf8($original->$a_key),
                     ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5,'UTF-8',false);
             }
         }
@@ -118,7 +117,7 @@ class MetaConverter extends BaseConverter {
 
         foreach ($keys_to_strip as $a_key) {
             if (property_exists($original,$a_key) && $original->$a_key) {
-                $original->$a_key = strip_tags(JsonHelper::to_utf8($original->$a_key));
+                $original->$a_key = strip_tags(Utilities::to_utf8($original->$a_key));
             }
         }
 

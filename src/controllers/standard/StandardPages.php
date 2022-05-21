@@ -4,6 +4,7 @@ namespace app\controllers\standard;
 use app\controllers\base\BasePages;
 use app\helpers\AjaxCallData;
 use app\helpers\TagHelper;
+use app\helpers\Utilities;
 use app\hexlet\JsonHelper;
 use app\models\standard\FlowTagStandardAttribute;
 use Exception;
@@ -108,7 +109,7 @@ class StandardPages extends BasePages
 
             foreach ($call->args as $standard_key_name => $new_standard_key_val) {
                 if (in_array($standard_key_name,$standard_keys)) {
-                    $valid_update[$standard_key_name] = JsonHelper::to_utf8($new_standard_key_val);
+                    $valid_update[$standard_key_name] = Utilities::to_utf8($new_standard_key_val);
                 }
             }
 

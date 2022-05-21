@@ -2,7 +2,7 @@
 
 namespace app\models\standard\converters;
 
-use app\hexlet\JsonHelper;
+use app\helpers\Utilities;
 use app\models\standard\IFlowTagStandardAttribute;
 use Exception;
 
@@ -24,7 +24,7 @@ class GitConverter extends BaseConverter  {
             case IFlowTagStandardAttribute::GIT_KEY_BRANCH: {
                 $outbound = parent::getFinalOfKey($key);
                 if ($outbound) {
-                    $outbound = strip_tags(JsonHelper::to_utf8($outbound));
+                    $outbound = strip_tags(Utilities::to_utf8($outbound));
                 }
                 return $outbound;
             }
@@ -60,7 +60,7 @@ class GitConverter extends BaseConverter  {
 
         foreach ($keys_to_strip as $a_key) {
             if (property_exists($original,$a_key) && $original->$a_key) {
-                $original->$a_key = strip_tags(JsonHelper::to_utf8($original->$a_key));
+                $original->$a_key = strip_tags(Utilities::to_utf8($original->$a_key));
             }
         }
 

@@ -5,6 +5,7 @@ use app\controllers\base\BasePages;
 use app\helpers\AjaxCallData;
 use app\helpers\ProjectHelper;
 use app\helpers\TagHelper;
+use app\helpers\Utilities;
 use app\hexlet\JsonHelper;
 use app\models\base\SearchParamBase;
 use app\models\multi\GeneralSearch;
@@ -97,25 +98,25 @@ class TagPages extends BasePages
                 }
 
                 if (isset($args['search']['term'])) {
-                    $search_params->tag_name_term = trim(JsonHelper::to_utf8($args['search']['term']));
+                    $search_params->tag_name_term = trim(Utilities::to_utf8($args['search']['term']));
                 }
 
                 if (isset($args['search']['not_applied_to_guids']) && $args['search']['not_applied_to_guids']) {
                     if (is_array($args['search']['not_applied_to_guids'])) {
                         foreach ($args['search']['not_applied_to_guids'] as $not_for_guid) {
-                            $search_params->not_applied_to_guids[] = trim(JsonHelper::to_utf8($not_for_guid));
+                            $search_params->not_applied_to_guids[] = trim(Utilities::to_utf8($not_for_guid));
                         }
                     } else {
-                        $search_params->not_applied_to_guids[] = trim(JsonHelper::to_utf8($args['search']['not_applied_to_guid']));
+                        $search_params->not_applied_to_guids[] = trim(Utilities::to_utf8($args['search']['not_applied_to_guid']));
                     }
                 }
                 if (isset($args['search']['only_applied_to_guids']) && $args['search']['only_applied_to_guids']) {
                     if (is_array($args['search']['only_applied_to_guids'])) {
                         foreach ($args['search']['only_applied_to_guids'] as $not_for_guid) {
-                            $search_params->only_applied_to_guids[] = trim(JsonHelper::to_utf8($not_for_guid));
+                            $search_params->only_applied_to_guids[] = trim(Utilities::to_utf8($not_for_guid));
                         }
                     } else {
-                        $search_params->only_applied_to_guids[] = trim(JsonHelper::to_utf8($args['search']['only_applied_to_guids']));
+                        $search_params->only_applied_to_guids[] = trim(Utilities::to_utf8($args['search']['only_applied_to_guids']));
                     }
                 }
 

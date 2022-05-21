@@ -2,8 +2,10 @@
 
 namespace app\helpers;
 
+use app\hexlet\hexlet_exceptions\GuidException;
 use app\hexlet\hexlet_exceptions\JsonHelperException;
 use app\hexlet\JsonHelper;
+use app\hexlet\WillFunctions;
 use Carbon\Carbon;
 use DI\DependencyException;
 use DI\NotFoundException;
@@ -118,5 +120,26 @@ class Utilities extends BaseHelper {
             return JsonHelper::print_nice(static::convert_to_object($what));
         }
         return JsonHelper::print_nice($what);
+    }
+
+    /**
+     * Converts a string to proper unicode, for when utf8 is really needed
+     * nulls are returned as null
+     * @param string|null $what
+     * @return string|null
+     */
+    public static function to_utf8(?string $what): ?string
+    {
+        if (is_null($what)) {return null;}
+        return JsonHelper::to_utf8($what);
+    }
+
+    public static function throw_if_not_valid_guid_format(?string $guid): void
+    {
+        if (is_null($guid)) return;
+        $b_what =  WillFunctions::is_valid_guid_format($guid);
+        if (!$b_what) {
+            throw new GuidException(sprintf("Invalid guid[%s]",$guid));
+        }
     }
 }

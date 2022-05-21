@@ -1,6 +1,7 @@
 <?php
 namespace app\models\project\levels;
 
+use app\helpers\Utilities;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\project\IFlowProject;
@@ -151,6 +152,9 @@ abstract class FlowProjectDataLevel extends FlowBase implements JsonSerializable
             if ($b_do_transaction && !$db->inTransaction()) {
                 $db->beginTransaction();
             }
+
+            $this->flow_project_title = Utilities::to_utf8($this->flow_project_title);
+            $this->flow_project_blurb = Utilities::to_utf8($this->flow_project_blurb);
 
             if ($this->flow_project_guid) {
                 $db->update('flow_projects',[

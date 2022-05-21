@@ -4,7 +4,7 @@ namespace app\models\entry\entry_node;
 
 
 use app\helpers\Utilities;
-use app\hexlet\JsonHelper;
+use app\hexlet\BBHelper;
 use app\models\entry\IFlowEntry;
 use app\models\tag\FlowTag;
 use app\models\tag\IFlowAppliedTag;
@@ -156,7 +156,7 @@ class EntryNodeDocument extends EntryNodeContainer implements  IFlowEntryNodeDoc
      */
     protected  function parse_root(string $bb_code): array
     {
-        $parser = JsonHelper::get_parsed_bb_code($bb_code);
+        $parser = BBHelper::get_parsed_bb_code($bb_code);
         $root =  $parser->getRoot();
 
         $temp_counter = 0;

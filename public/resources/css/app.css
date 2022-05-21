@@ -22,3 +22,38 @@ footer {
 .hexbatch-top-nav-menu .select2-container {
     /*display: inline-block;*/
 }
+
+div.flow-quote {
+    background-color:#fff7d9;
+    margin: 0.25em;
+    border-left: .3em solid #f4e59f;
+    padding:0.25em
+}
+
+div.flow-justify {
+    text-align: justify;
+    display: inline-block;
+    width: 100%;
+}
+
+div.flow-center {
+    text-align: center;
+    display: inline-block;
+    width: 100%;
+}
+
+div.flow-right {
+    text-align: right;
+    display: inline-block;
+    width: 100%;
+}
+
+div.flow-left {
+    text-align: left;
+    display: inline-block
+    ;width: 100%;
+}
+
+span.flow-strike-through {
+    text-decoration: line-through
+}

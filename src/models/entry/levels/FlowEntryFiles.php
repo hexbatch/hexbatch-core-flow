@@ -5,7 +5,7 @@ namespace app\models\entry\levels;
 
 use app\helpers\ProjectHelper;
 use app\helpers\Utilities;
-use app\hexlet\JsonHelper;
+use app\hexlet\BBHelper;
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\IFlowEntryArchive;
 use app\models\entry\entry_node\EntryNodeDocument;
@@ -286,7 +286,7 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
             return;
         }
 
-        $bb_code = JsonHelper::to_utf8($bb_code);
+        $bb_code = Utilities::to_utf8($bb_code);
         $origonal_bb_code = $bb_code;
 
         $this->flow_entry_body_bb_code = ProjectHelper::get_project_helper()->
@@ -296,7 +296,7 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
         //may need to convert from the stubs back to the full paths for the html !
         $nu_read_me = ProjectHelper::get_project_helper()->
                                             stub_to_file_paths($this->get_project(),$origonal_bb_code);
-        $this->flow_entry_body_html = JsonHelper::html_from_bb_code($nu_read_me);
+        $this->flow_entry_body_html = BBHelper::html_from_bb_code($nu_read_me);
         $this->flow_entry_body_text = str_replace('&nbsp;',' ',strip_tags($this->flow_entry_body_html));
 
     }
