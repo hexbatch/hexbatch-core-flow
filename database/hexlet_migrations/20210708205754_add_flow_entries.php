@@ -38,7 +38,6 @@ class AddFlowEntries extends AbstractMigration
                 `flow_entry_title` VARCHAR(40) NULL DEFAULT NULL,
                 `flow_entry_blurb` VARCHAR(120) NULL DEFAULT NULL,
                 `flow_entry_body_bb_code` MEDIUMTEXT NULL DEFAULT NULL,
-                `flow_entry_body_text` MEDIUMTEXT NULL DEFAULT NULL,
                 PRIMARY KEY (`id`)
            ) ENGINE = InnoDB COMMENT = 'defines the entries made in a project';
 
@@ -50,7 +49,6 @@ class AddFlowEntries extends AbstractMigration
         $this->execute("ALTER TABLE `flow_entries` ADD FULLTEXT `ft_flow_entry_title` (`flow_entry_title`);");
         $this->execute("ALTER TABLE `flow_entries` ADD FULLTEXT `ft_flow_entry_blurb` (`flow_entry_blurb`);");
         $this->execute("ALTER TABLE `flow_entries` ADD FULLTEXT `ft_flow_entry_body` (flow_entry_body_bb_code);");
-        $this->execute("ALTER TABLE `flow_entries` ADD FULLTEXT `ft_flow_entry_body_text` (flow_entry_body_text);");
         $this->execute("CREATE UNIQUE INDEX udx_unique_title_in_project ON flow_entries (flow_project_id, flow_entry_title);");
 
         $this->execute("ALTER TABLE `flow_entries` ADD CONSTRAINT `fk_flow_entries_has_flow_project_id` 

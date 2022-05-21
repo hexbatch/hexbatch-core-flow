@@ -163,6 +163,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                 $this->flow_entry_parent_id = $db->cell(
                     "SELECT id  FROM flow_entries WHERE flow_entry_guid = UNHEX(?)",
                     $this->get_parent_guid());
+                $this->flow_entry_parent_id = Utilities::if_empty_null($this->flow_entry_parent_id);
             }
 
             if (empty($this->get_parent_id())) {$this->set_parent_id(null) ;}
@@ -174,7 +175,6 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                 'flow_entry_title' => $this->get_title(),
                 'flow_entry_blurb' => $this->get_blurb(),
                 'flow_entry_body_bb_code' => $this->get_bb_code(),
-                'flow_entry_body_text' => $this->get_text(),
             ];
 
             try {
@@ -190,15 +190,14 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                 } elseif ($this->get_guid()) {
                     $insert_sql = "
                     INSERT INTO flow_entries(flow_project_id, flow_entry_parent_id, created_at_ts, flow_entry_guid,
-                                             flow_entry_title, flow_entry_blurb, flow_entry_body_bb_code, flow_entry_body_text)  
-                    VALUES (?,?,?,UNHEX(?),?,?,?,?)
+                                             flow_entry_title, flow_entry_blurb, flow_entry_body_bb_code)  
+                    VALUES (?,?,?,UNHEX(?),?,?,?)
                     ON DUPLICATE KEY UPDATE flow_project_id =           VALUES(flow_project_id),
                                             flow_entry_parent_id =      VALUES(flow_entry_parent_id),
                                                   
                                             flow_entry_title =          VALUES(flow_entry_title) ,      
                                             flow_entry_blurb =          VALUES(flow_entry_blurb) ,      
-                                            flow_entry_body_bb_code =   VALUES(flow_entry_body_bb_code) ,      
-                                            flow_entry_body_text =   VALUES(flow_entry_body_text)       
+                                            flow_entry_body_bb_code =   VALUES(flow_entry_body_bb_code)        
                 ";
                     $insert_params = [
                         $this->get_project()->get_id(),
@@ -207,8 +206,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                         $this->get_guid(),
                         $this->get_title(),
                         $this->get_blurb(),
-                        $this->get_bb_code(),
-                        $this->get_text()
+                        $this->get_bb_code()
                     ];
                     $db->safeQuery($insert_sql, $insert_params, PDO::FETCH_BOTH, true);
                     $maybe_new_id = (int)$db->lastInsertId();
@@ -388,21 +386,21 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     public function set_id(?int $what): void {$this->flow_entry_id = $what;}
 
     public function set_guid(?string $what): void {
-        Utilities::throw_if_not_valid_guid_format($what);
+        Utilities::valid_guid_format_or_null_or_throw($what);
         $this->flow_entry_guid = $what;
     }
 
     public function set_parent_id(?int $what): void {$this->flow_entry_parent_id = $what;}
 
     public function set_parent_guid(?string $what): void {
-        Utilities::throw_if_not_valid_guid_format($what);
+        Utilities::valid_guid_format_or_null_or_throw($what);
         $this->flow_entry_parent_guid = $what;
     }
 
     public function set_project_id(?int $what): void {$this->flow_project_id = $what;}
 
     public function set_project_guid(?string $what) : void {
-        Utilities::throw_if_not_valid_guid_format($what);
+        Utilities::valid_guid_format_or_null_or_throw($what);
         $this->flow_project_guid = $what;
     }
 

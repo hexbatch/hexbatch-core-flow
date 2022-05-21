@@ -74,6 +74,13 @@ abstract class FlowEntryArchiveFiles extends FlowEntryArchiveBase {
             throw new RuntimeException("Could not write entry title to $title_path");
         }
 
+        $html_path = $this->get_entry()->get_html_path();
+        $html = $this->get_entry()->get_html(false);
+        $b_ok = file_put_contents($html_path,$html);
+        if ($b_ok === false) {
+            throw new RuntimeException("Could not write entry html to $html_path");
+        }
+
     }
 
 

@@ -22,7 +22,9 @@ class AddFlowThing extends AbstractMigration
                 `thing_title` VARCHAR(40) NULL DEFAULT NULL ,
                 owning_user_guid BINARY(16) DEFAULT NULL ,
                 owning_project_guid BINARY(16) DEFAULT NULL ,
+                owning_entry_guid BINARY(16) DEFAULT NULL ,
                 thing_blurb VARCHAR(120) DEFAULT NULL,
+                thing_text mediumtext DEFAULT NULL,
                 allowed_readers_json JSON DEFAULT (JSON_ARRAY()) ,
                 tag_used_by_json JSON DEFAULT (JSON_ARRAY()) ,
                 css_json json default NULL,
@@ -37,6 +39,7 @@ class AddFlowThing extends AbstractMigration
         $this->execute("ALTER TABLE `flow_things` ADD INDEX `idx_title` (`thing_title`);");
         $this->execute("ALTER TABLE `flow_things` ADD INDEX `idx_type` (`thing_type`);");
         $this->execute("ALTER TABLE `flow_things` ADD FULLTEXT `ft_thing_blurb` (`thing_blurb`);");
+        $this->execute("ALTER TABLE `flow_things` ADD FULLTEXT `ft_thing_text` (`thing_text`);");
     }
 
     protected function down(): void

@@ -3,6 +3,7 @@
 namespace app\models\multi;
 
 use app\hexlet\JsonHelper;
+use JsonException;
 use JsonSerializable;
 use stdClass;
 
@@ -54,6 +55,9 @@ class GeneralSearchResult implements JsonSerializable  {
     public ?GeneralSearchResult $owning_user_result = null;
 
 
+    /**
+     * @throws JsonException
+     */
     function __construct($object=null){
         $this->id = null;
         $this->title = null;

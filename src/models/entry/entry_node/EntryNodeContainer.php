@@ -49,9 +49,9 @@ class EntryNodeContainer extends FlowBase{
 
         foreach ($this->getFlatContents() as $spike) {
             if ($spike->get_parent_guid() && isset($hash[$spike->get_parent_guid()])) {
-                $spike->set_pass_through_value($hash[$spike->get_parent_guid()]);
+                $spike->set_pass_through_int($hash[$spike->get_parent_guid()]);
             } else {
-                $spike->set_pass_through_value(0);
+                $spike->set_pass_through_int(0);
             }
 
         }
@@ -60,7 +60,7 @@ class EntryNodeContainer extends FlowBase{
         $data = [];
         $data[] = ['id' => 0, 'parent' => -1, 'title' => 'dummy_root','entry_node'=>null];
         foreach ($this->getFlatContents() as $whrat) {
-            $data[] = ['id' => $whrat->get_node_id(), 'parent' => $whrat->get_pass_through_value()??0,
+            $data[] = ['id' => $whrat->get_node_id(), 'parent' => $whrat->get_pass_through_int()??0,
                 'title' => $whrat->get_node_guid(),'entry_node'=>$whrat];
         }
 

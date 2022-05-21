@@ -11,6 +11,7 @@ use app\models\tag\FlowTag;
 use app\models\tag\IFlowAppliedTag;
 use app\models\tag\IFlowTagAttribute;
 use Exception;
+use JsonException;
 use LogicException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -158,6 +159,9 @@ class BriefDiffFromYaml {
         return $ret;
     }
 
+    /**
+     * @throws JsonException
+     */
     public function get_changed_applied_summary_line() : string {
 
         /**

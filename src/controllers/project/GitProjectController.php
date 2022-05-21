@@ -247,7 +247,7 @@ class GitProjectController extends BaseProjectController {
                 ->withStatus(201);
 
         } catch (Exception $e) {
-            $this->logger->error("Could not push_project: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not push_project: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = [
                 'success'=>false,
                 'message'=>$e->getMessage(),
@@ -328,7 +328,7 @@ class GitProjectController extends BaseProjectController {
                 ->withStatus(200);
         }
         catch (Exception $e) {
-            $this->logger->error("Could not pull_project: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not pull_project: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = [
                 'success'=>false,
                 'message'=>$e->getMessage(),
@@ -413,7 +413,7 @@ class GitProjectController extends BaseProjectController {
                 ->withStatus(200);
         }
         catch (Exception $e) {
-            $this->logger->error("Could not pull_project: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not pull_project: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = [
                 'success'=>false,
                 'message'=>$e->getMessage(),
@@ -530,7 +530,7 @@ class GitProjectController extends BaseProjectController {
 
         }
         catch (Exception $e) {
-            $this->logger->error("Could not clone project: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not clone project: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = [
                 'success'=>false,
                 'message'=>$e->getMessage(),
@@ -599,7 +599,7 @@ class GitProjectController extends BaseProjectController {
 
         }
         catch (Exception $e) {
-            $this->logger->error("Could not copy project: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not copy project: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = [
                 'success'=>false,
                 'message'=>$e->getMessage(),

@@ -15,6 +15,7 @@ use DirectoryIterator;
 use InvalidArgumentException;
 
 use JetBrains\PhpStorm\ArrayShape;
+use JsonException;
 use JsonSerializable;
 use PDO;
 use RuntimeException;
@@ -80,8 +81,10 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
     }
 
 
-
-    public function __construct($object,? IFlowProject $project = null ) {
+    /**
+     * @throws JsonException
+     */
+    public function __construct($object, ? IFlowProject $project = null ) {
         $this->folder_hash = null;
         $this->folder_path = null;
         if (is_array($object)) {
@@ -151,7 +154,10 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
 
     public function get_folder_path() : ?string { return $this->folder_path;}
 
-    public static function maybe_read_yaml_in_folder(string $folder_path,?IFlowProject $project = null) : ?FlowEntryYaml {
+    /**
+     * @throws JsonException
+     */
+    public static function maybe_read_yaml_in_folder(string $folder_path, ?IFlowProject $project = null) : ?FlowEntryYaml {
         if (empty($folder_path) || !is_dir($folder_path)) {return null;}
         $real_path = realpath($folder_path);
         if (!$real_path) {return null;}
@@ -167,6 +173,9 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
         return $node;
     }
 
+    /**
+     * @throws JsonException
+     */
     public static function read_yaml_entry(IFlowEntry $e) : FlowEntryYaml {
 
         $maybe_folder = $e->deduce_existing_entry_folder();
@@ -189,6 +198,9 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
         return $node;
     }
 
+    /**
+     * @throws JsonException
+     */
     public static function write_yaml_entry(IFlowEntry $e) : FlowEntryYaml {
 
         $stuff = new FlowEntryYaml($e);
@@ -203,6 +215,7 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
     /**
      * @param IFlowProject $project
      * @return FlowEntryYaml[]
+     * @throws JsonException
      */
     public static function get_yaml_data_from_directory(IFlowProject $project) :array  {
         $folder_path = $project->get_project_directory();
@@ -259,6 +272,7 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
     /**
      * @param IFlowProject $project
      * @return FlowEntryYaml[]
+     * @throws JsonException
      */
     public static function get_yaml_data_from_database(IFlowProject $project) :array {
         $db = static::get_connection();
@@ -290,8 +304,9 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
     /**
      *
      * @param IFlowProject $project
-     * @param bool $b_use_db  if true, valid are only what are now in db, else any valid entry yaml is ok
+     * @param bool $b_use_db if true, valid are only what are now in db, else any valid entry yaml is ok
      * @return string[]  returns array of invalid folder paths
+     * @throws JsonException
      */
     public static function mark_invalid_folders_in_project_folder(IFlowProject $project,bool $b_use_db ) :array
     {

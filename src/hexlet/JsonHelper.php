@@ -5,6 +5,7 @@ namespace app\hexlet;
 use app\hexlet\hexlet_exceptions\JsonHelperException;
 use ForceUTF8\Encoding;
 use JetBrains\PhpStorm\NoReturn;
+use JsonException;
 use ReflectionClass;
 use ReflectionException;
 
@@ -130,7 +131,7 @@ class JsonHelper {
      * </p>
      * @param bool $b_association - default true (which is the reverse of normal)
      * @return array|mixed|null
-     * @throws JsonHelperException if json error
+     * @throws JsonException
      */
     public static function fromString(mixed $what, bool $b_exception=true, bool $b_association=true): mixed {
         if (is_null($what) ) { return null;}
@@ -150,7 +151,7 @@ class JsonHelper {
             if ($b_exception) {
                 $oops =  json_last_error_msg();
                 $oops .= "\n Data: \n". $what;
-                throw  new JsonHelperException($oops);
+                throw  new JsonException($oops);
             }else {
                 return $original_what;
             }
@@ -342,7 +343,7 @@ class JsonHelper {
      *                       else needs to be a string and is assumed to be in the UTC timezone,returned as integer
      *                  </p>
      *
-     *@throws JsonHelperException if not a recognized name, if json what is not an array
+     *@throws JsonHelperException|JsonException if not a recognized name, if json what is not an array
      * @noinspection PhpUnused
      */
     public static function dataFromString(?string $data_type, ?string $what): mixed
@@ -640,6 +641,7 @@ class JsonHelper {
         if (empty($what) && !is_numeric($what)) {return '';}
         return Encoding::toUTF8($what);
     }
+
 
 
 

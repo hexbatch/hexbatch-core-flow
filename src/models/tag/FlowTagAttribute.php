@@ -8,6 +8,7 @@ use app\models\base\FlowBase;
 use app\models\tag\brief\BriefFlowTagAttribute;
 use Exception;
 use InvalidArgumentException;
+use JsonException;
 use JsonSerializable;
 use LogicException;
 use PDO;
@@ -62,7 +63,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable,IFlowTagAttr
      */
     public function setPointsToFlowEntryGuid(?string $points_to_flow_entry_guid): void
     {
-        Utilities::throw_if_not_valid_guid_format($points_to_flow_entry_guid);
+        Utilities::valid_guid_format_or_null_or_throw($points_to_flow_entry_guid);
         $this->points_to_flow_entry_guid = $points_to_flow_entry_guid;
     }
 
@@ -71,7 +72,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable,IFlowTagAttr
      */
     public function setPointsToFlowUserGuid(?string $points_to_flow_user_guid): void
     {
-        Utilities::throw_if_not_valid_guid_format($points_to_flow_user_guid);
+        Utilities::valid_guid_format_or_null_or_throw($points_to_flow_user_guid);
         $this->points_to_flow_user_guid = $points_to_flow_user_guid;
     }
 
@@ -80,7 +81,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable,IFlowTagAttr
      */
     public function setPointsToFlowProjectGuid(?string $points_to_flow_project_guid): void
     {
-        Utilities::throw_if_not_valid_guid_format($points_to_flow_project_guid);
+        Utilities::valid_guid_format_or_null_or_throw($points_to_flow_project_guid);
         $this->points_to_flow_project_guid = $points_to_flow_project_guid;
     }
 
@@ -89,7 +90,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable,IFlowTagAttr
      */
     public function setPointsToFlowTagGuid(?string $points_to_flow_tag_guid): void
     {
-        Utilities::throw_if_not_valid_guid_format($points_to_flow_tag_guid);
+        Utilities::valid_guid_format_or_null_or_throw($points_to_flow_tag_guid);
         $this->points_to_flow_tag_guid = $points_to_flow_tag_guid;
     }
 
@@ -458,24 +459,28 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable,IFlowTagAttr
                 $this->points_to_entry_id = $db->cell(
                     "SELECT id  FROM flow_entries WHERE flow_entry_guid = UNHEX(?)",
                     $this->points_to_flow_entry_guid);
+                $this->points_to_entry_id = Utilities::if_empty_null($this->points_to_entry_id);
             }
 
             if (!$this->points_to_project_id && $this->points_to_flow_project_guid) {
                 $this->points_to_project_id = $db->cell(
                     "SELECT id  FROM flow_projects WHERE flow_project_guid = UNHEX(?)",
                     $this->points_to_flow_project_guid);
+                $this->points_to_project_id = Utilities::if_empty_null($this->points_to_project_id);
             }
 
             if (!$this->points_to_tag_id && $this->points_to_flow_tag_guid) {
                 $this->points_to_tag_id = $db->cell(
                     "SELECT id  FROM flow_tags WHERE flow_tag_guid = UNHEX(?)",
                     $this->points_to_flow_tag_guid);
+                $this->points_to_tag_id = Utilities::if_empty_null($this->points_to_tag_id);
             }
 
             if (!$this->points_to_user_id && $this->points_to_flow_user_guid) {
                 $this->points_to_user_id = $db->cell(
                     "SELECT id  FROM flow_users WHERE flow_user_guid = UNHEX(?)",
                     $this->points_to_flow_user_guid);
+                $this->points_to_user_id = Utilities::if_empty_null($this->points_to_user_id);
             }
 
             if (empty($this->getText())) {
@@ -588,7 +593,10 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable,IFlowTagAttr
         }
         return $ret;
     }
-    
+
+    /**
+     * @throws JsonException
+     */
     public function jsonSerialize(): array
     {
         if ($this->get_brief_json_flag()) {

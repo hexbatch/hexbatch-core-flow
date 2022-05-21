@@ -118,6 +118,10 @@ class BriefFlowAppliedTag implements JsonSerializable {
             $this->created_at_ts = $app->created_at_ts??null;
         }
 
+        if ($this->tagged_flow_entry_node_guid) {
+            $this->tagged_flow_entry_guid = null;
+        }
+
     }
 
     #[ArrayShape(["flow_applied_tag_guid" => "null|string", "flow_tag_guid" => "null|string", "tagged_flow_entry_guid" => "null|string", "tagged_flow_user_guid" => "null|string", "tagged_flow_project_guid" => "null|string", "tagged_flow_entry_node_guid" => "null|string","tagged_pointer_guid" => "null|string","created_at_ts" => "int|null"])]
@@ -158,6 +162,8 @@ class BriefFlowAppliedTag implements JsonSerializable {
             ($this->flow_tag_guid && WillFunctions::is_valid_guid_format($this->flow_tag_guid)  ) &&
             $this->created_at_ts &&
             (
+                ($this->tagged_flow_entry_node_guid && WillFunctions::is_valid_guid_format($this->tagged_flow_entry_node_guid) ) ||
+                ($this->tagged_pointer_guid && WillFunctions::is_valid_guid_format($this->tagged_pointer_guid) ) ||
                 ($this->tagged_flow_entry_guid && WillFunctions::is_valid_guid_format($this->tagged_flow_entry_guid) ) ||
                 ($this->tagged_flow_user_guid && WillFunctions::is_valid_guid_format($this->tagged_flow_user_guid) ) ||
                 ($this->tagged_flow_project_guid && WillFunctions::is_valid_guid_format($this->tagged_flow_project_guid) )
@@ -169,6 +175,8 @@ class BriefFlowAppliedTag implements JsonSerializable {
         if (!$this->created_at_ts) {$missing_list[] = 'timestamp';}
 
         if (!(
+            ($this->tagged_flow_entry_node_guid && WillFunctions::is_valid_guid_format($this->tagged_flow_entry_node_guid) ) ||
+            ($this->tagged_pointer_guid && WillFunctions::is_valid_guid_format($this->tagged_pointer_guid) ) ||
             ($this->tagged_flow_entry_guid && WillFunctions::is_valid_guid_format($this->tagged_flow_entry_guid) ) ||
             ($this->tagged_flow_user_guid && WillFunctions::is_valid_guid_format($this->tagged_flow_user_guid) ) ||
             ($this->tagged_flow_project_guid && WillFunctions::is_valid_guid_format($this->tagged_flow_project_guid) )

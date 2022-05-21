@@ -11,6 +11,7 @@ use app\models\tag\IFlowTagBasic;
 use InvalidArgumentException;
 
 use JetBrains\PhpStorm\ArrayShape;
+use JsonException;
 use JsonSerializable;
 use stdClass;
 
@@ -47,6 +48,7 @@ class BriefFlowTag implements JsonSerializable,IFlowTagBasic {
 
     /**
      * @param FlowTag|BriefFlowTag|stdClass|array $tag
+     * @throws JsonException
      */
     public function __construct(FlowTag|BriefFlowTag|stdClass|array $tag){
 

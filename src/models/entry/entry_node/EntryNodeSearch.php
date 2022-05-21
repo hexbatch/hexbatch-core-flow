@@ -128,6 +128,8 @@ class EntryNodeSearch extends EntryNodeContainer {
                     node.flow_entry_id                          as flow_entry_id,
                     HEX(parent.entry_node_guid)                 as parent_guid,
                     node.flow_entry_node_parent_id              as parent_id,
+                    node.child_position                         as child_position,
+                    node.lot_number                             as lot_number,
                     node.entry_node_attributes                  as node_attributes,
                     HEX(applied.flow_applied_tag_guid)          as flow_applied_tag_guid,
                     applied.id                                  as flow_applied_tag_id,
@@ -168,7 +170,7 @@ class EntryNodeSearch extends EntryNodeContainer {
                 LEFT JOIN flow_applied_tags applied on applied.tagged_flow_entry_node_id = node.id
                 LEFT JOIN flow_tags tag  on tag.id = applied.flow_tag_id
                 WHERE 1
-                ORDER BY node.id ASC ;
+                ORDER BY node.flow_entry_node_parent_id, node.child_position ASC ;
 
 
                 ";

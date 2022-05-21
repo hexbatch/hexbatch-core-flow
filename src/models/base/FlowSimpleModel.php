@@ -2,11 +2,13 @@
 namespace app\models\base;
 
 use app\helpers\Utilities;
+use JsonException;
 
 abstract class FlowSimpleModel {
 
     /**
      * @param object|array|null $object
+     * @throws JsonException
      */
     public function __construct(object|array $object=null)
     {

@@ -82,7 +82,6 @@ class FlowEntrySearch extends FlowBase {
                 entry.flow_entry_title                  as flow_entry_title,
                 entry.flow_entry_blurb                  as flow_entry_blurb,
                 entry.flow_entry_body_bb_code           as flow_entry_body_bb_code,
-                entry.flow_entry_body_text              as flow_entry_body_text ,
                 HEX(parent_entry.flow_entry_guid)       as flow_entry_parent_guid ,
                 HEX(project.flow_project_guid)          as flow_project_guid,
                 HEX(admin_user.flow_user_guid)          as flow_user_guid,

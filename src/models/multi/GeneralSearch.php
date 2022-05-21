@@ -6,6 +6,7 @@ namespace app\models\multi;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\base\SearchParamBase;
+use JsonException;
 use PDO;
 
 class GeneralSearch extends FlowBase {
@@ -15,8 +16,8 @@ class GeneralSearch extends FlowBase {
     const TYPE_USER = 'user';
     const TYPE_PROJECT = 'project';
     const TYPE_ENTRY = 'entry';
-    const TYPE_TAG_POINTER = 'tag_pointer';
-    const TYPE_ENTRY_NODE = 'entry_node';
+    const TYPE_TAG_POINTER = 'tag_pointer'; //tag-pointers are not put directly into the things yet, but indirect data
+    const TYPE_NODE = 'node';
     const TYPE_TAG = 'tag';
 
     const ALL_TYPES_KEYWORD = 'all';
@@ -25,14 +26,17 @@ class GeneralSearch extends FlowBase {
     const ALL_SEARCH_TYPES_BUT_TAGS = [
         GeneralSearch::TYPE_PROJECT,
         GeneralSearch::TYPE_ENTRY,
-        GeneralSearch::TYPE_USER
+        GeneralSearch::TYPE_USER,
+        //note all but tags means all but nodes and tags as this is only used in the applied box, and there is no
+        // way yet to directly add a tag to a node without altering the bb code
     ];
 
     const ALL_SEARCH_TYPES = [
         GeneralSearch::TYPE_PROJECT,
         GeneralSearch::TYPE_ENTRY,
         GeneralSearch::TYPE_USER,
-        GeneralSearch::TYPE_TAG
+        GeneralSearch::TYPE_TAG,
+        GeneralSearch::TYPE_NODE
     ];
 
 
@@ -79,6 +83,7 @@ class GeneralSearch extends FlowBase {
     /**
      * @param GeneralSearchParams $search
      * @return GeneralSearchResult[]
+     * @throws JsonException
      */
     public static function general_search(GeneralSearchParams $search): array {
 

@@ -2,6 +2,7 @@
 namespace app\models\project\setting_models;
 
 use app\models\base\FlowSimpleModel;
+use JsonException;
 
 class FlowProjectGitSettings extends FlowSimpleModel{
 
@@ -15,7 +16,8 @@ class FlowProjectGitSettings extends FlowSimpleModel{
 
 
     /**
-     * @param array|object|null $object
+     * @param null $object |null $object
+     * @throws JsonException
      */
     public function __construct($object=null)
     {

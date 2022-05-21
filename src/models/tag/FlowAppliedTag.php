@@ -196,7 +196,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
      */
     public function setGuid(?string $flow_applied_tag_guid): void
     {
-        Utilities::throw_if_not_valid_guid_format($flow_applied_tag_guid);
+        Utilities::valid_guid_format_or_null_or_throw($flow_applied_tag_guid);
         $this->flow_applied_tag_guid = $flow_applied_tag_guid;
     }
 
@@ -213,7 +213,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
      */
     public function setParentTagGuid(?string $flow_tag_guid): void
     {
-        Utilities::throw_if_not_valid_guid_format($flow_tag_guid);
+        Utilities::valid_guid_format_or_null_or_throw($flow_tag_guid);
         $this->flow_tag_guid = $flow_tag_guid;
     }
 
@@ -230,7 +230,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
      */
     public function setXEntryGuid(?string $tagged_flow_entry_guid): void
     {
-        Utilities::throw_if_not_valid_guid_format($tagged_flow_entry_guid);
+        Utilities::valid_guid_format_or_null_or_throw($tagged_flow_entry_guid);
         $this->tagged_flow_entry_guid = $tagged_flow_entry_guid;
     }
 
@@ -247,7 +247,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
      */
     public function setXPointerGuid(?string $tagged_pointer_guid): void
     {
-        Utilities::throw_if_not_valid_guid_format($tagged_pointer_guid);
+        Utilities::valid_guid_format_or_null_or_throw($tagged_pointer_guid);
         $this->tagged_pointer_guid = $tagged_pointer_guid;
     }
 
@@ -264,7 +264,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
      */
     public function setXNodeGuid(?string $tagged_flow_entry_node_guid): void
     {
-        Utilities::throw_if_not_valid_guid_format($tagged_flow_entry_node_guid);
+        Utilities::valid_guid_format_or_null_or_throw($tagged_flow_entry_node_guid);
         $this->tagged_flow_entry_node_guid = $tagged_flow_entry_node_guid;
     }
 
@@ -281,7 +281,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
      */
     public function setXUserGuid(?string $tagged_flow_user_guid): void
     {
-        Utilities::throw_if_not_valid_guid_format($tagged_flow_user_guid);
+        Utilities::valid_guid_format_or_null_or_throw($tagged_flow_user_guid);
         $this->tagged_flow_user_guid = $tagged_flow_user_guid;
     }
 
@@ -298,7 +298,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
      */
     public function setXProjectGuid(?string $tagged_flow_project_guid): void
     {
-        Utilities::throw_if_not_valid_guid_format($tagged_flow_project_guid);
+        Utilities::valid_guid_format_or_null_or_throw($tagged_flow_project_guid);
         $this->tagged_flow_project_guid = $tagged_flow_project_guid;
     }
 
@@ -600,7 +600,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
                 app.tagged_flow_entry_node_id as taggee_id,
                 HEX(ne.entry_node_guid) as taggee_guid,      
                 ne.bb_tag_name as tagged_title,   
-                '{$I(GeneralSearch::TYPE_ENTRY_NODE)}' as taggie_type
+                '{$I(GeneralSearch::TYPE_NODE)}' as taggie_type
             FROM flow_applied_tags app
                      INNER JOIN flow_tags retag ON retag.id = app.flow_tag_id
                      INNER JOIN flow_entry_nodes ne on app.tagged_flow_entry_node_id = ne.id
@@ -659,7 +659,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
                         break;
                     }
 
-                    case GeneralSearch::TYPE_ENTRY_NODE: {
+                    case GeneralSearch::TYPE_NODE: {
                         $node->tagged_flow_entry_node_guid = $row->taggee_guid;
                         $node->tagged_flow_entry_node_id = $row->taggee_id;
                         $node->tagged_flow_entry_guid = $owning_entry_guid_list_array[0]?? null;
@@ -712,30 +712,35 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
             $this->tagged_flow_entry_id = $db->cell(
                 "SELECT id  FROM flow_entries WHERE flow_entry_guid = UNHEX(?)",
                 $this->tagged_flow_entry_guid);
+            $this->tagged_flow_entry_id = Utilities::if_empty_null($this->tagged_flow_entry_id);
         }
 
         if (!$this->tagged_pointer_id && $this->tagged_pointer_guid) {
             $this->tagged_pointer_id = $db->cell(
                 "SELECT id  FROM flow_tags WHERE flow_tag_guid = UNHEX(?)",
                 $this->tagged_pointer_guid);
+            $this->tagged_pointer_id = Utilities::if_empty_null($this->tagged_pointer_id);
         }
 
         if (!$this->tagged_flow_entry_node_id && $this->tagged_flow_entry_node_guid) {
             $this->tagged_flow_entry_node_id = $db->cell(
                 "SELECT id  FROM flow_entry_nodes WHERE entry_node_guid = UNHEX(?)",
                 $this->tagged_flow_entry_node_guid);
+            $this->tagged_flow_entry_node_id = Utilities::if_empty_null($this->tagged_flow_entry_node_id);
         }
 
         if (!$this->tagged_flow_project_id && $this->tagged_flow_project_guid) {
             $this->tagged_flow_project_id = $db->cell(
                 "SELECT id  FROM flow_projects WHERE flow_project_guid = UNHEX(?)",
                 $this->tagged_flow_project_guid);
+            $this->tagged_flow_project_id = Utilities::if_empty_null($this->tagged_flow_project_id);
         }
 
         if (!$this->tagged_flow_user_id && $this->tagged_flow_user_guid) {
             $this->tagged_flow_user_id = $db->cell(
                 "SELECT id  FROM flow_users WHERE flow_user_guid = UNHEX(?)",
                 $this->tagged_flow_user_guid);
+            $this->tagged_flow_user_guid = Utilities::if_empty_null($this->tagged_flow_user_guid);
         }
 
         if (!($this->tagged_flow_user_id || $this->tagged_flow_project_id ||

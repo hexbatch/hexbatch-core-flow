@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use DI\DependencyException;
 use DI\NotFoundException;
 use InvalidArgumentException;
+use JsonException;
 use LogicException;
 
 class Utilities extends BaseHelper {
@@ -82,6 +83,14 @@ class Utilities extends BaseHelper {
         return $program->timezone ?? null;
     }
 
+    /**
+     * @return string[]
+     */
+    function get_fonts() : array {
+        $fonts = $this->get_settings()->fonts ?? [];
+        return $fonts;
+    }
+
     public static function generate_iso_time_stamp() : string {
         $me = static::get_utilities();
         $tz = $me->get_program_timezone();
@@ -89,6 +98,10 @@ class Utilities extends BaseHelper {
         return $now->toIso8601String();
     }
 
+
+    /**
+     * @throws JsonException
+     */
     public static function convert_to_object($what) : null|array|object {
         if (is_null($what)) { return null;}
         if (is_array($what) || is_object($what)) {
@@ -106,7 +119,10 @@ class Utilities extends BaseHelper {
         return $converted;
     }
 
-    public static function deep_copy($what,$b_to_array = false) {
+    /**
+     * @throws JsonException
+     */
+    public static function deep_copy($what, $b_to_array = false) {
         if (!(is_array($what) || is_object($what))) { return $what; } //will copy if primitive
         $json = JsonHelper::toString($what);
         $to_array_flag = false;
@@ -114,6 +130,9 @@ class Utilities extends BaseHelper {
         return JsonHelper::fromString($json,true,$to_array_flag);
     }
 
+    /**
+     * @throws JsonException
+     */
     public static function print_nice($what): string
     {
         if (is_object($what)) {
@@ -134,12 +153,66 @@ class Utilities extends BaseHelper {
         return JsonHelper::to_utf8($what);
     }
 
-    public static function throw_if_not_valid_guid_format(?string $guid): void
+    public static function valid_guid_format_or_null_or_throw(?string $guid): ?string
     {
-        if (is_null($guid)) return;
+        if (is_null($guid)) return null ;
         $b_what =  WillFunctions::is_valid_guid_format($guid);
         if (!$b_what) {
             throw new GuidException(sprintf("Invalid guid[%s]",$guid));
         }
+        return $guid;
     }
+
+    public static function if_empty_null(mixed $what) : mixed {
+        if (empty($what)) {return null;}
+        return $what;
+    }
+
+    /**
+     *
+     * if values and keys is empty throw
+     * if only one $values_and_keys returns the key to that
+     * then looks for direct match and returns first key of that found
+     * if master is one unicode letter and the smallest of the values is also one unicode letter return key one of the 1 size values
+     *
+     * Then loops through and finds the closest size to the master and returns that key
+     *
+     * It was not a trivial task to find a good way to find closest text match based on content if the characters were not 2 byte unicode or less
+     *  (so would have not worked for emoticons or many asian characters)
+     *  Thus, temporarily using the above approach
+     *
+     * @param string $master
+     * @param array<string,string> $keys_and_values
+     * @return string
+     */
+    public  function return_most_matching_key(string $master,array $keys_and_values): string {
+        if (empty($keys_and_values)) {
+            throw new LogicException("[return_most_matching_key] Empty array ");}
+
+        if (count($keys_and_values) === 1) { return array_key_first($keys_and_values);}
+
+        foreach ($keys_and_values as $return_key => $value) {
+            if ($value === $master) {return $return_key;}
+        }
+        unset($return_key); unset($value);
+        $values_and_keys = array_flip($keys_and_values);
+        $values = array_values($keys_and_values);
+        array_multisort(array_map('mb_strlen', $values), $values);
+        if (mb_strlen($master) === 1 && mb_strlen($values[0]) === 1) { return $values_and_keys[$values[0]];}
+
+        //return the closest size
+        $target_size = mb_strlen($master);
+
+        $smallest_delta_i = 0;
+        $smallest_delta = PHP_INT_MAX;
+        for ($i=0; $i < count($values); $i++) {
+            $me = $values[$i];
+            $my_size = mb_strlen($me);
+            if (abs($my_size-$target_size) < $smallest_delta) {$smallest_delta_i = $i;}
+        }
+        return $values_and_keys[$values[$smallest_delta_i]];
+
+
+    }
+
 }

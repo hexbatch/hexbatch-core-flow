@@ -97,12 +97,12 @@ class HexBatchBBCodeSet implements CodeDefinitionSet{
         $builder = new HexBatchCodeBuilder('td', '<td data-guid="{guid}" >{param}</td>');
         $this->definitions[] = $builder->build();
 
-        $builder = new HexBatchCodeBuilder("font", '<span style="font-family:{option}" data-guid="{guid}" >{param}</span>');
+        $builder = new HexBatchCodeBuilder("font", '<span style="font-family:{font}" data-guid="{guid}" >{param}</span>');
         $builder->setUseOption(true);
         $this->definitions[] = $builder->build();
 
         $builder = new HexBatchCodeBuilder("size",
-            '<span style="font-size:{option}px" data-guid="{guid}" >{param}</span>');
+            '<span style="font-size:{size}px" data-guid="{guid}" >{param}</span>');
         $builder->setUseOption(true);
         $this->definitions[] = $builder->build();
 
@@ -137,6 +137,11 @@ class HexBatchBBCodeSet implements CodeDefinitionSet{
         $this->definitions[] = $builder->build();
 
 
+        $builder = new HexBatchCodeBuilder("hr", '<hr data-guid="{guid}"/>');
+        $builder->setUseOption(false)->setParseContent(false);
+        $this->definitions[] = $builder->build();
+
+
 
         $builder = new HexBatchCodeBuilder(
             IFlowEntryNode::FLOW_TAG_BB_CODE_NAME,
@@ -145,7 +150,7 @@ class HexBatchBBCodeSet implements CodeDefinitionSet{
         $builder->setUseOption(true)->setOptionValidator(new FnValidator(
             function($input) {
                 return WillFunctions::is_valid_guid_format($input);
-            }),'tag')->setParseContent(false);
+            }),IFlowEntryNode::FLOW_TAG_BB_ATTR_GUID_NAME)->setParseContent(false);
         //flow_tag
         $this->definitions[] = $builder->build();
         

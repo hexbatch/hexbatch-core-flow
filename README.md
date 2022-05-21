@@ -258,6 +258,7 @@ Below is a list of additional items that can be used in the twig markup
     standard_editable_scripts - lists standards that have javascript edit support
     standard_viewable_frames - lists standards that have twig (html) view support
     standard_editable_frames - lists standards that have twig (html) edit support
+    font_names - lists the font names installed on webpage
 
 # Notes
 

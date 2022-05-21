@@ -15,6 +15,7 @@ return function (App $app) {
 
     $app->group('/admin', function (RouteCollectorProxy $group)   {
         $group->get('/thing_management', ['adminPages', 'thing_management'])->setName('thing_management');
+        /** @uses \app\controllers\home\AdminPages::redo_triggers() */
         $group->get('/db/redo_triggers', ['adminPages', 'redo_triggers'])->setName('redo_triggers');
         $group->get('/phpinfo', ['adminPages', 'php_info'])->setName('phpinfo');
 

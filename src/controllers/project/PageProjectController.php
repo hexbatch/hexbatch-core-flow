@@ -392,7 +392,7 @@ class PageProjectController extends BaseProjectController
                 throw $e;
             }
         } catch (Exception $e) {
-            $this->get_logger()->error("cannot update project: ".$e->getMessage(),['exception'=>$e]);
+            $this->get_logger()->error("cannot update project: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             try {
                 UserPages::add_flash_message('warning', "Cannot update project " . $e->getMessage());
                 $_SESSION[static::REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY] = $project;
@@ -764,7 +764,7 @@ class PageProjectController extends BaseProjectController
                 ->withStatus(201);
 
         } catch (Exception $e) {
-            $this->logger->error("Could not set_standard_setting: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not set_standard_setting: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = [
                 'success'=>false,
                 'message'=>$e->getMessage(),

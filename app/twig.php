@@ -63,7 +63,8 @@ class Hexlet_Twig_Extension extends AbstractExtension implements GlobalsInterfac
             'standard_viewable_scripts' => $viewable_standard_scripts,
             'standard_editable_scripts' => $editable_standard_scripts,
             'standard_viewable_frames' => $viewable_standard_frames,
-            'standard_editable_frames' => $editable_standard_frames
+            'standard_editable_frames' => $editable_standard_frames,
+            'font_names' => Utilities::get_utilities()->get_fonts()
         ];
     }
 

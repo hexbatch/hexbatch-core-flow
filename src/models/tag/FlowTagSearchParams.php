@@ -3,6 +3,7 @@
 namespace app\models\tag;
 
 use app\models\base\SearchParamBase;
+use JsonException;
 
 class FlowTagSearchParams  extends SearchParamBase {
 
@@ -68,7 +69,9 @@ class FlowTagSearchParams  extends SearchParamBase {
     }
 
 
-
+    /**
+     * @throws JsonException
+     */
     function addGuidsOrNames(mixed $thing) : FlowTagSearchParams{
         if ($thing instanceof FlowTag) {
             $this->tag_guids[] = $thing->getGuid();

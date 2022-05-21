@@ -140,7 +140,7 @@ class StandardPages extends BasePages
 
 
         } catch(Exception $e) {
-            $this->logger->error("Could not update tag standard: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not update tag standard: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = ['success'=>false,'message'=>$e->getMessage(),
                 'action'=> 'update_tag_standard',
                 'standard_name'=>$standard_name,'standard_data'=>$valid_update,

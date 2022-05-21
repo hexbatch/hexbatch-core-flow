@@ -4,6 +4,7 @@ namespace app\models\standard;
 
 use app\hexlet\JsonHelper;
 use InvalidArgumentException;
+use JsonException;
 
 class StandardAttributeSearchParams  extends RawAttributeSearchParams {
 
@@ -43,6 +44,7 @@ class StandardAttributeSearchParams  extends RawAttributeSearchParams {
 
     /**
      * @param mixed $project_guid_or_name
+     * @throws JsonException
      */
     public function addOwningProject(mixed $project_guid_or_name): void
     {

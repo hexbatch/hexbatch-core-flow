@@ -10,6 +10,7 @@ use app\models\tag\FlowTag;
 use InvalidArgumentException;
 
 use JetBrains\PhpStorm\ArrayShape;
+use JsonException;
 use JsonSerializable;
 use LogicException;
 use PDO;
@@ -32,7 +33,10 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
     protected object $standard_attribute_value ;
 
 
-    public function __construct(string $standard_attribute_name,int $tag_id,string $tag_guid, array $raw_array)
+    /**
+     * @throws JsonException
+     */
+    public function __construct(string $standard_attribute_name, int $tag_id, string $tag_guid, array $raw_array)
     {
         $this->tag_guid = $tag_guid;
         $this->tag_id = $tag_id;
@@ -56,6 +60,9 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
 
     }
 
+    /**
+     * @throws JsonException
+     */
     protected function call_converter() : object {
         $callable = IFlowTagStandardAttribute::STANDARD_ATTRIBUTES[$this->standard_attribute_name]['converter']??[];
         if (empty($callable) || count($callable) !== 2) {
@@ -147,10 +154,10 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
     }
 
 
-
     /**
      * @param FlowTag[] $flow_tags
      * @return FlowTagStandardAttribute[]
+     * @throws JsonException
      */
     public static function createWriters(array $flow_tags) : array {
         $params = new RawAttributeSearchParams();
@@ -340,6 +347,7 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
      * @param string $tag_guid
      * @param array<string,RawAttributeData[]> $array_of_attribute_arrays
      * @return StandardAttributeWrite[]
+     * @throws JsonException
      */
     protected static function getWritersFromBunch(int $tag_id, string $tag_guid, array $array_of_attribute_arrays) :array  {
 

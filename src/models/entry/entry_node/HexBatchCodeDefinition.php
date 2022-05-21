@@ -17,7 +17,9 @@ class HexBatchCodeDefinition extends CodeDefinition {
     {
         $def = new HexBatchCodeDefinition();
         $def->elCounter = 0;
+        /** @noinspection PhpDeprecationInspection */
         $def->setTagName($tagName);
+        /** @noinspection PhpDeprecationInspection */
         $def->setReplacementText($replacementText);
         $def->useOption = $useOption;
         $def->parseContent = $parseContent;
@@ -39,6 +41,14 @@ class HexBatchCodeDefinition extends CodeDefinition {
 
         if (isset($options['color']) && !empty($options['color'])) {
             $html = str_ireplace('style="color: {option}"', 'style="color: '.$options['color'].'"', $html);
+        }
+
+        if (isset($options['size']) && !empty($options['size'])) {
+            $html = str_ireplace('style="font-size:{size}px"', 'style="font-size: '.$options['size'].'"', $html);
+        }
+
+        if (isset($options['font']) && !empty($options['font'])) {
+            $html = str_ireplace('style="font-family:{option}"', 'style="font-family: '.$options['font'].'"', $html);
         }
 
         if (isset($options['img']) && !empty($options['img'])) {

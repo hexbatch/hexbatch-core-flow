@@ -11,6 +11,7 @@ use app\models\tag\FlowTag;
 use InvalidArgumentException;
 
 use JetBrains\PhpStorm\ArrayShape;
+use JsonException;
 use JsonSerializable;
 use LogicException;
 use RuntimeException;
@@ -35,6 +36,9 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
     protected ?int $standard_id;
 
 
+    /**
+     * @throws JsonException
+     */
     public function __construct($object=null) {
         $this->standard_name = null;
         $this->standard_value = null;
@@ -121,6 +125,9 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
         return $this->standard_id;
     }
 
+    /**
+     * @throws JsonException
+     */
     public function getStandardValueToArray() : array  {
         return JsonHelper::fromString(JsonHelper::toString($this->standard_value));
     }
@@ -157,6 +164,7 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
      * (reads these from db)
      * @param FlowTag[] $flow_tags
      * @return array<string,IFlowTagStandardAttribute[]>
+     * @throws JsonException
      */
     public static function read_standard_attributes_of_tags(array $flow_tags): array
     {
@@ -178,6 +186,7 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
     /**
      * @param string|string[] $project_guid
      * @return array<string,IFlowTagStandardAttribute[]>  mapped to project guid
+     * @throws JsonException
      */
     public  static function read_standard_attributes_of_projects(array|string $project_guid) : array {
         $params = new StandardAttributeSearchParams();
@@ -217,6 +226,7 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
      * Writes standard attributes to db
      * @param FlowTag[] $flow_tags
      * @return StandardAttributeWrite[]
+     * @throws JsonException
      */
     public static function write_standard_attributes(array $flow_tags): array
     {
@@ -282,6 +292,9 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
         return false;
     }
 
+    /**
+     * @throws JsonException
+     */
     public function preProcessForGui() : IFlowTagStandardAttribute {
         if (!isset(IFlowTagStandardAttribute::STANDARD_ATTRIBUTES[$this->standard_name]['pre_process_for_gui'])) {
             return $this;

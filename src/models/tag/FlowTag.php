@@ -13,6 +13,7 @@ use app\models\tag\brief\BriefFlowTag;
 use Error;
 use Exception;
 use InvalidArgumentException;
+use JsonException;
 use JsonSerializable;
 use LogicException;
 use PDO;
@@ -184,7 +185,7 @@ class FlowTag extends FlowBase implements JsonSerializable, IFlowTag
      */
     public function setGuid(?string $flow_tag_guid): void
     {
-        Utilities::throw_if_not_valid_guid_format($flow_tag_guid);
+        Utilities::valid_guid_format_or_null_or_throw($flow_tag_guid);
         $this->flow_tag_guid = $flow_tag_guid;
     }
 
@@ -217,7 +218,7 @@ class FlowTag extends FlowBase implements JsonSerializable, IFlowTag
      */
     public function setProjectGuid(?string $flow_project_guid): void
     {
-        Utilities::throw_if_not_valid_guid_format($flow_project_guid);
+        Utilities::valid_guid_format_or_null_or_throw($flow_project_guid);
         $this->flow_project_guid = $flow_project_guid;
     }
 
@@ -234,7 +235,7 @@ class FlowTag extends FlowBase implements JsonSerializable, IFlowTag
      */
     public function setAdminGuid(?string $flow_project_admin_user_guid): void
     {
-        Utilities::throw_if_not_valid_guid_format($flow_project_admin_user_guid);
+        Utilities::valid_guid_format_or_null_or_throw($flow_project_admin_user_guid);
         $this->flow_project_admin_user_guid = $flow_project_admin_user_guid;
     }
 
@@ -251,7 +252,7 @@ class FlowTag extends FlowBase implements JsonSerializable, IFlowTag
      */
     public function setParentGuid(?string $parent_tag_guid): void
     {
-        Utilities::throw_if_not_valid_guid_format($parent_tag_guid);
+        Utilities::valid_guid_format_or_null_or_throw($parent_tag_guid);
         $this->parent_tag_guid = $parent_tag_guid;
     }
 
@@ -428,6 +429,9 @@ class FlowTag extends FlowBase implements JsonSerializable, IFlowTag
     }
 
 
+    /**
+     * @throws JsonException
+     */
     public function jsonSerialize(): array
     {
 
@@ -494,6 +498,9 @@ class FlowTag extends FlowBase implements JsonSerializable, IFlowTag
 
 
     /** @noinspection PhpConditionAlreadyCheckedInspection */ //due to editor bug
+    /**
+     * @throws JsonException
+     */
     public function __construct($object=null){
         $this->attributes = [];
         $this->standard_attributes = [];
@@ -882,6 +889,7 @@ class FlowTag extends FlowBase implements JsonSerializable, IFlowTag
                 $this->flow_project_id = $db->cell(
                     "SELECT id  FROM flow_projects WHERE flow_project_guid = UNHEX(?)",
                     $this->flow_project_guid);
+                $this->flow_project_id = Utilities::if_empty_null($this->flow_project_id);
             }
 
             if(  !$this->flow_project_id) {
@@ -892,6 +900,7 @@ class FlowTag extends FlowBase implements JsonSerializable, IFlowTag
                 $this->parent_tag_id = $db->cell(
                     "SELECT id  FROM flow_tags WHERE flow_tag_guid = UNHEX(?)",
                     $this->parent_tag_guid);
+                $this->parent_tag_id = Utilities::if_empty_null($this->parent_tag_id);
             }
 
             if (empty($this->parent_tag_id)) {$this->parent_tag_id = null;}

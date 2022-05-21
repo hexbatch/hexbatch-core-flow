@@ -8,6 +8,7 @@ use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\standard\FlowTagStandardAttribute;
 use app\models\tag\IFlowTagAttribute;
+use JsonException;
 use JsonSerializable;
 use stdClass;
 
@@ -135,11 +136,9 @@ class BriefFlowTagAttribute  implements JsonSerializable {
     }
 
 
-
-
-
     /**
-     * @param IFlowTagAttribute|BriefFlowTagAttribute|array|stdClass  $att
+     * @param IFlowTagAttribute|BriefFlowTagAttribute|array|stdClass $att
+     * @throws JsonException
      */
     public function __construct(IFlowTagAttribute|BriefFlowTagAttribute|array|stdClass $att){
         if (is_array($att)) {

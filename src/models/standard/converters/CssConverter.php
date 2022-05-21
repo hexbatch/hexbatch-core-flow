@@ -6,6 +6,7 @@ use app\helpers\Utilities;
 use app\hexlet\JsonHelper;
 use app\models\standard\FlowTagStandardAttribute;
 use app\models\standard\IFlowTagStandardAttribute;
+use JsonException;
 use LogicException;
 
 class CssConverter extends BaseConverter {
@@ -22,6 +23,7 @@ class CssConverter extends BaseConverter {
     /**
      * @param string $key
      * @return string|null
+     * @throws JsonException
      */
     protected function getFinalOfKey(string $key): ?string
     {

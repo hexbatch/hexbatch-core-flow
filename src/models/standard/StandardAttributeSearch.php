@@ -4,6 +4,7 @@ namespace app\models\standard;
 
 use app\models\base\FlowBase;
 use InvalidArgumentException;
+use JsonException;
 use ParagonIE\EasyDB\Exception\QueryError;
 use PDO;
 use TypeError;
@@ -15,6 +16,7 @@ class StandardAttributeSearch extends FlowBase {
      *
      * @param StandardAttributeSearchParams $params
      * @return IFlowTagStandardAttribute[]
+     * @throws JsonException
      */
     public static function search(StandardAttributeSearchParams $params) : array {
 

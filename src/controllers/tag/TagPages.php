@@ -252,7 +252,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
-            $this->logger->error("Could not create_tag: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not create_tag: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,
                 'token'=> $call?->get_token_with_project_hash($call?->project)];
             $payload = JsonHelper::toString($data);
@@ -337,7 +337,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
-            $this->logger->error("Could not edit_tag: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not edit_tag: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,
                 'token'=> $call?->get_token_with_project_hash($call?->project)];
             $payload = JsonHelper::toString($data);
@@ -397,7 +397,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
-            $this->logger->error("Could not delete_tag: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not delete_tag: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,
                 'token'=> $call?->get_token_with_project_hash($call?->project)];
             $payload = JsonHelper::toString($data);
@@ -482,7 +482,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
-            $this->logger->error("Could not create_attribute: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not create_attribute: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,
                 'token'=> $call?->get_token_with_project_hash($call?->project)];
             $payload = JsonHelper::toString($data);
@@ -564,7 +564,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
-            $this->logger->error("Could not edit_attribute: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not edit_attribute: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,
                 'token'=> $call?->get_token_with_project_hash($call?->project)];
             $payload = JsonHelper::toString($data);
@@ -645,7 +645,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
-            $this->logger->error("Could not delete_attribute: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not delete_attribute: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,
                 'token'=> $call?->get_token_with_project_hash($call?->project)];
             $payload = JsonHelper::toString($data);
@@ -719,7 +719,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
-            $this->logger->error("Could not create_applied: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not create_applied: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,
                 'token'=> $call?->get_token_with_project_hash($call?->project)];
             $payload = JsonHelper::toString($data);
@@ -793,7 +793,7 @@ class TagPages extends BasePages
 
 
         } catch (Exception $e) {
-            $this->logger->error("Could not delete_applied: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not delete_applied: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = ['success'=>false,'message'=>$e->getMessage(),'data'=>null,
                         'token'=> $call?->get_token_with_project_hash($call?->project)];
             $payload = JsonHelper::toString($data);

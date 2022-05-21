@@ -4,6 +4,7 @@ namespace app\models\entry;
 
 use app\hexlet\JsonHelper;
 use app\models\base\SearchParamBase;
+use JsonException;
 
 class FlowEntrySearchParams extends SearchParamBase {
 
@@ -46,10 +47,9 @@ class FlowEntrySearchParams extends SearchParamBase {
     public array $entry_ids = [];
 
 
-
-
-
-
+    /**
+     * @throws JsonException
+     */
     function __construct($object=null){
         parent::__construct();
         $this->owning_project_guid = null;
@@ -84,6 +84,9 @@ class FlowEntrySearchParams extends SearchParamBase {
         return $this;
     }
 
+    /**
+     * @throws JsonException
+     */
     function addGuidsOrNames(mixed $thing) : FlowEntrySearchParams{
         if ($thing instanceof IFlowEntry) {
             $this->entry_guids[] = $thing->get_guid();
