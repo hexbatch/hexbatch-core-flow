@@ -85,6 +85,7 @@ class FlowEntryYaml extends FlowBase implements JsonSerializable,IFlowEntryReadB
      * @throws JsonException
      */
     public function __construct($object, ? IFlowProject $project = null ) {
+        parent::__construct();
         $this->folder_hash = null;
         $this->folder_path = null;
         if (is_array($object)) {

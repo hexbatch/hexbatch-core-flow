@@ -68,7 +68,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     public function __construct(IFlowEntryArchive|stdClass|array|IFlowEntry|IFlowEntryReadBasicProperties|null $object,
                                 ?IFlowProject $project
     ){
-
+        parent::__construct();
         $this->project = $project;
         $this->flow_entry_id = null;
         $this->flow_entry_parent_id = null;

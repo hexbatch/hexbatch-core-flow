@@ -8,11 +8,39 @@ use Exception;
 use ParagonIE\EasyDB\EasyDB;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Slim\Interfaces\RouteParserInterface;
 
 class FlowBase  {
 
     const MAX_SIZE_TITLE = 40;
     const MAX_SIZE_BLURB = 120;
+
+    private ?RouteParserInterface $routeParser;
+
+    public function __construct()
+    {
+        $this->routeParser = null;
+    }
+
+
+    /**
+     * @return RouteParserInterface|null
+     */
+    protected function getRouteParser(): ?RouteParserInterface
+    {
+        return $this->routeParser;
+    }
+
+    /**
+     * @param RouteParserInterface $routeParser
+     */
+    public function setRouteParser(RouteParserInterface $routeParser): void
+    {
+        $this->routeParser = $routeParser;
+    }
+
+
+
 
     /**
      * @var Container $container

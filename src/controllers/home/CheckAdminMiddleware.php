@@ -13,6 +13,7 @@ use Slim\Psr7\Response;
 
 class CheckAdminMiddleware extends FlowBase
 {
+
     /**
      *
      * @param RequestInterface $request PSR-7 request

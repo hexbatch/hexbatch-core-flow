@@ -35,7 +35,7 @@ interface IFlowAppliedTag
 
 
     public function getXEntryGuid(): ?string;
-    public function getPointerGuid(): ?string;
+    public function getXPointerGuid(): ?string;
     public function getXNodeGuid(): ?string;
     public function getXUserGuid(): ?string;
     public function getXProjectGuid(): ?string;

@@ -23,7 +23,7 @@ abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable
      * @param IFlowEntry $entry
      */
     public function __construct(IFlowEntry $entry){
-
+        parent::__construct();
         $this->entry = $entry;
 
     }

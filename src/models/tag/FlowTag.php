@@ -502,6 +502,7 @@ class FlowTag extends FlowBase implements JsonSerializable, IFlowTag
      * @throws JsonException
      */
     public function __construct($object=null){
+        parent::__construct();
         $this->attributes = [];
         $this->standard_attributes = [];
         $this->applied = [];

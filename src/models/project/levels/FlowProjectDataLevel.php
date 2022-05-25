@@ -64,6 +64,9 @@ abstract class FlowProjectDataLevel extends FlowBase implements JsonSerializable
      * @throws Exception
      */
     public function __construct(object|array $object=null){
+
+        parent::__construct();
+
         $this->b_new_project = false;
 
         if (empty($object)) {

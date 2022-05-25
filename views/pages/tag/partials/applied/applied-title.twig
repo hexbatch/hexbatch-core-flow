@@ -17,8 +17,16 @@
         {{ applied.getZTaggedTitle() }}
     {% endif %}
 
+{% elseif applied.getXNodeGuid() %}
+    <i class="bi bi-type"></i>
+    {{ applied.getZTaggedTitle() }}
+
+{% elseif applied.getXPointerGuid() %}
+    <i class="bi bi-hand-index-thumb"></i>
+    {{ applied.getZTaggedTitle() }}
+
 {% elseif applied.getXEntryGuid() %}
     <i class="bi bi-columns"></i>
     {{ applied.getZTaggedTitle() }}
-{#todo add pointer here#}
+
 {% endif %}

@@ -237,7 +237,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
     /**
      * @return string|null
      */
-    public function getPointerGuid(): ?string
+    public function getXPointerGuid(): ?string
     {
         return $this->tagged_pointer_guid;
     }
@@ -344,6 +344,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
 
     public function __construct($object=null){
 
+        parent::__construct();
         $this->id = null;
         $this->flow_tag_id = null;
         $this->flow_tag_guid = null;
@@ -599,7 +600,7 @@ class FlowAppliedTag extends FlowBase implements JsonSerializable, IFlowAppliedT
                 GROUP_CONCAT( app.id order by app.id) as applied_id_list, 
                 app.tagged_flow_entry_node_id as taggee_id,
                 HEX(ne.entry_node_guid) as taggee_guid,      
-                ne.bb_tag_name as tagged_title,   
+                CONCAT('Tagged inside ', fe.flow_entry_title) as tagged_title,   
                 '{$I(GeneralSearch::TYPE_NODE)}' as taggie_type
             FROM flow_applied_tags app
                      INNER JOIN flow_tags retag ON retag.id = app.flow_tag_id

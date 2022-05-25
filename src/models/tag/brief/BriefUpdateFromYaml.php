@@ -31,6 +31,7 @@ class BriefUpdateFromYaml extends FlowBase {
      * @throws Exception
      */
     public function __construct( IFlowProject $project){
+        parent::__construct();
         $this->project = $project;
         $this->yaml_diff = new BriefDiffFromYaml($this->project,null,true);
 

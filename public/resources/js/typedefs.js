@@ -77,6 +77,8 @@
  * @property {string} tagged_flow_entry_guid
  * @property {string} tagged_flow_user_guid
  * @property {string} tagged_flow_project_guid
+ * @property {string} tagged_flow_entry_node_guid
+ * @property {string} tagged_pointer_guid
  * @property {?string} tagged_url
  * @property {string} [tagged_title]
  * @property {number} [created_at_ts]

@@ -341,6 +341,7 @@ class FlowTagAttribute extends FlowBase implements JsonSerializable,IFlowTagAttr
 
 
     public function __construct($object=null){
+        parent::__construct();
         $this->flow_tag_attribute_id = null ;
         $this->flow_tag_id = null ;
         $this->points_to_entry_id = null ;

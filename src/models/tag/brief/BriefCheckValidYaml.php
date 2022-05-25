@@ -25,6 +25,8 @@ class BriefCheckValidYaml extends FlowBase {
      * @throws Exception
      */
     public function __construct( IFlowProject $project){
+        parent::__construct();
+
         $this->n_is_valid = 1;
         $this->project = $project;
         $this->yaml_diff = new BriefDiffFromYaml($this->project,null,true);

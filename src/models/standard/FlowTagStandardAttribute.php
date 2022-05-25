@@ -40,6 +40,8 @@ class FlowTagStandardAttribute extends FlowBase implements JsonSerializable,IFlo
      * @throws JsonException
      */
     public function __construct($object=null) {
+
+        parent::__construct();
         $this->standard_name = null;
         $this->standard_value = null;
         $this->standard_updated_ts = null;

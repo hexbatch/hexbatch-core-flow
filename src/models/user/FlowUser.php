@@ -97,6 +97,7 @@ class FlowUser extends FlowBase implements JsonSerializable {
     }
 
     public function __construct($object=null){
+        parent::__construct();
         if (empty($object)) {
             $this->flow_user_id = null;
             $this->flow_user_name = null;

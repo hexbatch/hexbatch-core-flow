@@ -416,10 +416,20 @@ function flow_tag_show_editor(tag,
             } else if (applied.tagged_flow_user_guid) {
                 li.find('.flow-applied-icon-user').show();
                 applied_type = 'User';
-            } else if (applied.tagged_flow_entry_guid) {
+            }
+            else if (applied.tagged_flow_entry_node_guid) {
+                li.find('.flow-applied-icon-node').show();
+                applied_type = 'Node';
+            }
+            else if (applied.tagged_pointer_guid) {
+                li.find('.flow-applied-icon-pointer').show();
+                applied_type = 'Pointer';
+            }
+            else if (applied.tagged_flow_entry_guid) {
                 li.find('.flow-applied-icon-entry').show();
                 applied_type = 'Entry';
             }
+
             li.find('.flow-applied-type').text(applied_type);
 
             li.find('a.flow-applied-link').attr('href', applied.tagged_url);

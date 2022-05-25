@@ -169,6 +169,7 @@ class FlowEntryNode extends FlowBase implements JsonSerializable,IFlowEntryNode 
      * @throws JsonException
      */
     public function __construct($object=null){
+        parent::__construct();
         $this->pass_through_int = null;
         $this->node_id = null;
         $this->flow_entry_id = null;

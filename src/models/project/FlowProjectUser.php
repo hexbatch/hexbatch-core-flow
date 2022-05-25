@@ -35,6 +35,7 @@ class FlowProjectUser extends FlowBase implements JsonSerializable {
 
 
     public function __construct($object=null){
+        parent::__construct();
         if (empty($object)) {
             $this->flow_project_user_id = null;
             $this->can_read = null;

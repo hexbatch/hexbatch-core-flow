@@ -640,6 +640,8 @@ class PageProjectController extends BaseProjectController
             if (isset($args['tag_guid']) && WillFunctions::is_valid_guid_format($args['tag_guid'])) {
                 $tag_guid = $args['tag_guid'];
             }
+
+            $project->setRouteParser(RouteContext::fromRequest($request)->getRouteParser());
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/project_tags.twig',
                 'page_title' => "Edit Tags for Project $project_name",

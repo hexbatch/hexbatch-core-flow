@@ -38,6 +38,7 @@ class StandardAttributeWrite extends FlowBase implements JsonSerializable {
      */
     public function __construct(string $standard_attribute_name, int $tag_id, string $tag_guid, array $raw_array)
     {
+        parent::__construct();
         $this->tag_guid = $tag_guid;
         $this->tag_id = $tag_id;
         $this->standard_attribute_name = $standard_attribute_name;
