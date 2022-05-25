@@ -28,7 +28,9 @@ class AddFlowThing extends AbstractMigration
                 allowed_readers_json JSON DEFAULT (JSON_ARRAY()) ,
                 tag_used_by_json JSON DEFAULT (JSON_ARRAY()) ,
                 css_json json default NULL,
-                PRIMARY KEY (`id`)
+                PRIMARY KEY (`id`),
+                INDEX idx_owning_entry_guid (owning_entry_guid),
+                INDEX idx_owning_project_guid (owning_project_guid)
            ) ENGINE = InnoDB COMMENT = 'stores general search stuff in one table';
 
        ");

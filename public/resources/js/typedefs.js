@@ -240,6 +240,7 @@
  * @property {number} updated_at_ts
  * @property {string} title
  * @property {string} blurb
+ * @property {string} words
  * @property {string} type
  * @property {string} url
  * @property {boolean} is_public
@@ -247,7 +248,9 @@
  * @property {Array} tag_used_by
  * @property {Array} allowed_readers
  * @property {string} owning_project_guid
+ * @property {string} owning_entry_guid
  * @property {string} owning_user_guid
+ * @property {string} owning_entry_title
  * @property {GeneralSearchResult[]} allowed_readers_results
  * @property {GeneralSearchResult[]} tag_used_by_results
  * @property {?GeneralSearchResult} owning_user_result

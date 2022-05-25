@@ -84,6 +84,27 @@ class HomePages extends BasePages
 
                     break;
                 }
+
+                case GeneralSearch::TYPE_NODE: {
+
+                    $entry_search = new FlowEntrySearchParams();
+                    $entry_search->addNodeGuid($guid);
+                    $entry_res = FlowEntrySearch::search($entry_search);
+                    if (empty($entry_res)) {
+                        throw new HttpNotFoundException($request,"Cannot find node ". $guid);
+                    }
+                    $entry = $entry_res[0];
+                    $entry_project = $entry->get_project();
+
+                    $route_to_go_to = $routeParser->urlFor('show_entry',[
+                        "user_name" => $entry_project->get_admin_user()->flow_user_guid,
+                        "project_name" => $entry_project->get_project_guid(),
+                        "entry_name" => $entry->get_guid()
+                    ]);
+
+                    break;
+                }
+
                 case GeneralSearch::TYPE_PROJECT: {
 
                     $project = null;
