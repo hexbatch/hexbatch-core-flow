@@ -4,6 +4,8 @@ namespace app\models\entry;
 
 use app\hexlet\JsonHelper;
 use app\models\base\SearchParamBase;
+use app\models\entry\entry_node\IFlowEntryNode;
+use JsonException;
 
 class FlowEntrySearchParams extends SearchParamBase {
 
@@ -35,6 +37,12 @@ class FlowEntrySearchParams extends SearchParamBase {
      */
     public array $entry_guids = [];
 
+
+    /**
+     * @var string[] $child_node_guids
+     */
+    public array $child_node_guids = [];
+
     /**
      * @var string[] $entry_titles
      */
@@ -46,10 +54,9 @@ class FlowEntrySearchParams extends SearchParamBase {
     public array $entry_ids = [];
 
 
-
-
-
-
+    /**
+     * @throws JsonException
+     */
     function __construct($object=null){
         parent::__construct();
         $this->owning_project_guid = null;
@@ -84,6 +91,9 @@ class FlowEntrySearchParams extends SearchParamBase {
         return $this;
     }
 
+    /**
+     * @throws JsonException
+     */
     function addGuidsOrNames(mixed $thing) : FlowEntrySearchParams{
         if ($thing instanceof IFlowEntry) {
             $this->entry_guids[] = $thing->get_guid();
@@ -107,5 +117,33 @@ class FlowEntrySearchParams extends SearchParamBase {
             $this->entry_titles = array_unique(array_merge($this->entry_titles,$what));
         }
         return $this;
+    }
+
+
+    /**
+     * @param mixed $guid_thing
+     * @throws JsonException
+     */
+    public function addNodeGuid(mixed $guid_thing): void
+    {
+        if ($guid_thing instanceof IFlowEntryNode) {
+            $this->child_node_guids[] = $guid_thing->get_node_guid();
+        } else {
+            $filter = [];
+            if (is_array($guid_thing)) {
+                foreach ($guid_thing as $thang ) {
+                    if ($thang instanceof IFlowEntryNode) {
+                        $this->child_node_guids[] = $thang->get_node_guid();
+                    } else {
+                        $filter[] = $thang;
+                    }
+                }
+            } else {
+                $filter = $guid_thing;
+            }
+            $what = static::validate_cast_guid_array($filter);
+            $this->child_node_guids = array_unique(array_merge($this->child_node_guids,$what));
+        }
+
     }
 }

@@ -7,15 +7,16 @@ use app\helpers\UserHelper;
 use app\hexlet\JsonHelper;
 use app\models\base\FlowBase;
 use app\models\user\FlowUser;
-use Delight\Auth\AuthError;
-use Delight\Auth\EmailNotVerifiedException;
-use Delight\Auth\InvalidEmailException;
-use Delight\Auth\InvalidPasswordException;
-use Delight\Auth\InvalidSelectorTokenPairException;
-use Delight\Auth\TokenExpiredException;
-use Delight\Auth\TooManyRequestsException;
-use Delight\Auth\UnknownUsernameException;
-use Delight\Auth\UserAlreadyExistsException;
+use app\models\user\IFlowUser;
+use app\models\user\auth\AuthError;
+use app\models\user\auth\EmailNotVerifiedException;
+use app\models\user\auth\InvalidEmailException;
+use app\models\user\auth\InvalidPasswordException;
+use app\models\user\auth\InvalidSelectorTokenPairException;
+use app\models\user\auth\TokenExpiredException;
+use app\models\user\auth\TooManyRequestsException;
+use app\models\user\auth\UnknownUsernameException;
+use app\models\user\auth\UserAlreadyExistsException;
 use Exception;
 use InvalidArgumentException;
 use LogicException;
@@ -162,7 +163,7 @@ class UserPages extends BasePages {
             }
 
 
-            if (filter_var($email_or_username, FILTER_VALIDATE_EMAIL)) {
+            if (str_contains($email_or_username, '@')) {
                 // valid address
                 try {
                     $this->auth->login($email_or_username, $password, $remember_me);
@@ -177,7 +178,7 @@ class UserPages extends BasePages {
                 }
 
             } else {
-                // invalid address
+                // login with username
                 try {
                     $this->auth->loginWithUsername($email_or_username, $password, $remember_me);
                 } catch (UnknownUsernameException ) {
@@ -300,14 +301,14 @@ class UserPages extends BasePages {
             });
 
             if (empty($error_message)) {
-                $b_found = FlowUser::get_base_details($userId, $base_email, $base_username);
+                $b_found = $auth->get_base_details($userId, $base_email, $base_username);
                 if (!$b_found) {
                     throw new RuntimeException("Could not find just created user");
                 }
                 $flow_user = new FlowUser();
-                $flow_user->base_user_id = $userId;
-                $flow_user->flow_user_name = $base_username;
-                $flow_user->flow_user_email = $base_email;
+                $flow_user->setBaseUserId($userId);
+                $flow_user->setFlowUserName( $base_username);
+                $flow_user->setFlowUserEmail($base_email);
                 $flow_user->save();
             }
         } catch (InvalidEmailException ) {
@@ -362,7 +363,7 @@ class UserPages extends BasePages {
     public function user_home( ResponseInterface $response) :ResponseInterface {
         $user_home = $this->get_user_helper()->get_user_home_project();
 
-        $meta_tags = $this->get_user_helper()->get_user_meta_tags($this->user->flow_user_guid);
+        $meta_tags = $this->get_user_helper()->get_user_meta_tags($this->user->getFlowUserGuid());
 
         return $this->view->render($response, 'main.twig', [
             'page_template_path' => 'user/user_home.twig',
@@ -382,14 +383,14 @@ class UserPages extends BasePages {
     public function user_settings( ResponseInterface $response) :ResponseInterface {
         try {
 
-            $edit_user = FlowUser::find_one($this->user->flow_user_guid);
+            $edit_user = FlowUser::find_one($this->user->getFlowUserGuid());
             if (!$edit_user) {
                 throw new LogicException("Username not found from logged in user");
             }
 
             if (array_key_exists(static::REM_USER_SETTINGS_WITH_ERROR_SESSION_KEY,$_SESSION)) {
                 /**
-                 * @var ?FlowUser $form_in_progress
+                 * @var ?IFlowUser $form_in_progress
                  */
                 $form_in_progress = $_SESSION[static::REM_USER_SETTINGS_WITH_ERROR_SESSION_KEY];
                 $_SESSION[static::REM_USER_SETTINGS_WITH_ERROR_SESSION_KEY] = null;
@@ -429,7 +430,7 @@ class UserPages extends BasePages {
     public function update_settings(ServerRequestInterface $request,ResponseInterface $response) :ResponseInterface {
 
 
-        $edit_user = FlowUser::find_one($this->user->flow_user_guid);
+        $edit_user = FlowUser::find_one($this->user->getFlowUserGuid());
         if (!$edit_user) {
             throw new LogicException("Username not found from logged in user");
         }
@@ -444,8 +445,8 @@ class UserPages extends BasePages {
             }
 
             $args = $request->getParsedBody();
-            $edit_user->flow_user_name = $args['flow_user_name'] ?? '';
-            $edit_user->flow_user_email = $args['flow_user_email'] ?? '';
+            $edit_user->setFlowUserName($args['flow_user_name'] ?? '');
+            $edit_user->setFlowUserEmail($args['flow_user_email'] ?? '');
             $new_password = $args['new_password'] ?? '';
             $new_password_repeated = $args['new_password_repeated'] ?? '';
             $old_password = $args['old_password'] ?? '';
@@ -466,7 +467,7 @@ class UserPages extends BasePages {
             $_SESSION[static::REM_USER_SETTINGS_WITH_ERROR_SESSION_KEY] = null;
 
             try {
-                UserPages::add_flash_message('success', "Updated Settings for " . $edit_user->flow_user_name);
+                UserPages::add_flash_message('success', "Updated Settings for " . $edit_user->getFlowUserName());
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
                 $url = $routeParser->urlFor('user_home');
                 $response = $response->withStatus(302);
@@ -537,7 +538,7 @@ class UserPages extends BasePages {
 
         $matches = FlowUser::find_users_by_project($in_project,$project_guid,$role_in_project,false,$term,$page);
         $b_more = true;
-        if (count($matches) < FlowUser::DEFAULT_USER_PAGE_SIZE) {
+        if (count($matches) < IFlowUser::DEFAULT_USER_PAGE_SIZE) {
             $b_more = false;
         }
 
@@ -578,10 +579,10 @@ class UserPages extends BasePages {
             if (empty($dat_user)) {
                 throw new HttpNotFoundException($request,"Cannot find this user");
             }
-            $user_home = $this->get_user_helper()->get_user_home_project($dat_user->flow_user_guid);
+            $user_home = $this->get_user_helper()->get_user_home_project($dat_user->getFlowUserGuid());
             $user_home->get_admin_user();
 
-            $meta_tags = $this->get_user_helper()->get_user_meta_tags($dat_user->flow_user_guid);
+            $meta_tags = $this->get_user_helper()->get_user_meta_tags($dat_user->getFlowUserGuid());
 
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'user/user_page.twig',

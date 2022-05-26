@@ -6,20 +6,15 @@ use app\controllers\home\CheckAdminMiddleware;
 use app\controllers\user\CheckLoggedInMiddleware;
 use app\controllers\user\PingUserMiddleware;
 use app\models\user\FlowUser;
-use Delight\Auth\Auth;
-use Delight\Auth\AuthError;
+
 use DI\Container;
 use Psr\Log\LoggerInterface;
 
 return function (Container $container) {
     $container->set('auth', function() use ($container) {
 
-        $connection = $container->get('connection');
-        $db = $connection->getPdo();
-
-
         try {
-            $auth = new Auth($db);
+            $auth = FlowUser::create_auth();
             return $auth;
         } catch (AuthError $e) {
             $container->get(LoggerInterface::class)->alert('cannot start user auth to db',['exception'=>$e]);

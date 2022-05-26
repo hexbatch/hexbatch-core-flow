@@ -74,10 +74,10 @@ abstract class FlowProjectSettingLevel extends FlowProjectTagLevel {
         }
         $pointee_tag = $pointee_tag_array[0];
 
-        if ($pointee_tag->flow_project_guid !== $this->flow_project_guid) {
+        if ($pointee_tag->getProjectGuid() !== $this->flow_project_guid) {
             //check for read permission
             $other_project = ProjectHelper::get_project_helper()->get_project_with_permissions(
-                null,$pointee_tag->flow_project_admin_user_guid,$pointee_tag->flow_project_guid,
+                null,$pointee_tag->getAdminGuid(),$pointee_tag->getProjectGuid(),
                 FlowProjectUser::PERMISSION_COLUMN_READ
             );
             if (!$other_project) {

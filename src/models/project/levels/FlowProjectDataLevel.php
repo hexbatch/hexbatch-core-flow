@@ -1,6 +1,7 @@
 <?php
 namespace app\models\project\levels;
 
+use app\helpers\Utilities;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\project\IFlowProject;
@@ -63,6 +64,9 @@ abstract class FlowProjectDataLevel extends FlowBase implements JsonSerializable
      * @throws Exception
      */
     public function __construct(object|array $object=null){
+
+        parent::__construct();
+
         $this->b_new_project = false;
 
         if (empty($object)) {
@@ -125,11 +129,11 @@ abstract class FlowProjectDataLevel extends FlowBase implements JsonSerializable
             if (empty($this->flow_project_title)) {
                 throw new InvalidArgumentException("Project Title cannot be empty");
             }
-            if (mb_strlen($this->flow_project_title) > static::MAX_SIZE_TITLE) {
+            if ($this->flow_project_title && mb_strlen($this->flow_project_title) > static::MAX_SIZE_TITLE) {
                 throw new InvalidArgumentException("Project Title cannot be more than ".static::MAX_SIZE_TITLE." characters");
             }
 
-            if (mb_strlen($this->flow_project_blurb) > static::MAX_SIZE_BLURB) {
+            if ($this->flow_project_blurb && mb_strlen($this->flow_project_blurb) > static::MAX_SIZE_BLURB) {
                 throw new InvalidArgumentException("Project Blurb cannot be more than ".static::MAX_SIZE_BLURB." characters");
             }
             if ($this->flow_project_blurb) {
@@ -151,6 +155,9 @@ abstract class FlowProjectDataLevel extends FlowBase implements JsonSerializable
             if ($b_do_transaction && !$db->inTransaction()) {
                 $db->beginTransaction();
             }
+
+            $this->flow_project_title = Utilities::to_utf8($this->flow_project_title);
+            $this->flow_project_blurb = Utilities::to_utf8($this->flow_project_blurb);
 
             if ($this->flow_project_guid) {
                 $db->update('flow_projects',[

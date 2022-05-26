@@ -52,6 +52,18 @@ abstract class FlowProjectTagLevel extends FlowProjectFileLevel {
 
         $this->owned_tags = FlowTagSearch::sort_tag_array_by_parent($unsorted_array);
 
+        if ($this->getRouteParser() && $b_get_applied) {
+            foreach ($this->owned_tags as $tag) {
+                foreach ( $tag->getApplied() as $mapp) {
+                    $mapp->set_link_for_tagged($this->getRouteParser() );
+                }
+
+                foreach ( $tag->getAttributes() as $matt) {
+                    $matt->set_link_for_pointee($this->getRouteParser() );
+                }
+            }
+        }
+
         if ($b_get_applied) {
             $this->b_did_applied_for_owned_tags = true;
         }
@@ -97,11 +109,11 @@ abstract class FlowProjectTagLevel extends FlowProjectFileLevel {
     protected function get_tag_by_name(string $name) : FlowTag {
         $all_tags = $this->get_all_owned_tags_in_project();
         foreach ($all_tags as $tag) {
-            if ($tag->flow_tag_name === $name) { return $tag;}
+            if ($tag->getName() === $name) { return $tag;}
         }
         $baby_steps = new FlowTag();
-        $baby_steps->flow_project_id = $this->id;
-        $baby_steps->flow_tag_name = $name;
+        $baby_steps->setProjectId($this->id);
+        $baby_steps->setName($name);
         $baby_steps->save();
         return $baby_steps->clone_refresh();
     }

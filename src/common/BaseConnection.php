@@ -2,8 +2,8 @@
 
 namespace app\common;
 
-use app\models\user\FlowUser;
-use Delight\Auth\Auth;
+use app\models\user\IFlowUser;
+use app\models\user\IFlowUserAuth;
 use DI\Container;
 use DI\DependencyException;
 use DI\NotFoundException;
@@ -14,7 +14,7 @@ use Slim\Views\Twig;
 use stdClass;
 
 class BaseConnection {
-    protected Auth $auth;
+    protected IFlowUserAuth $auth;
     protected Logger $logger;
     /**
      * @var Container $container
@@ -23,10 +23,7 @@ class BaseConnection {
 
     protected Twig $view;
 
-    /**
-     * @var FlowUser $user
-     */
-    protected FlowUser $user;
+    protected IFlowUser $user;
 
     private static ?Container $dat_container = null;
 
@@ -34,13 +31,13 @@ class BaseConnection {
 
     /**
      * UserLogInPages constructor.
-     * @param Auth $auth
+     * @param IFlowUserAuth $auth
      * @param Logger $logger
      * @param Container $container
      * @throws NotFoundException
      * @throws DependencyException
      */
-    public function __construct(Auth $auth, Logger $logger, Container $container)
+    public function __construct(IFlowUserAuth $auth, Logger $logger, Container $container)
     {
         static::$dat_container = $container;
         $this->auth = $auth;
@@ -50,7 +47,7 @@ class BaseConnection {
         $this->user = $this->container->get('user');
     }
 
-   public function get_current_user() : ?FlowUser{
+   public function get_current_user() : ?IFlowUser{
         return $this->user;
    }
 

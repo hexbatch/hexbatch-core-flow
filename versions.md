@@ -1,22 +1,37 @@
 # Version History
 
 ## Releases
-| Date              | Version | Name                                  |
-|-------------------|---------|---------------------------------------|
-| May 17, 2022      | 0.6.0   | Entries Upgraded                      |
-| May 4, 2022       | 0.5.3   | Upgrade to php 8.1.5                  |
-| May 3, 2022       | 0.5.2   | Git Revamp                            |
-| April 20, 2022    | 0.5.1   | Git Bit!                              |
-| April 13, 2022    | 0.5.0.1 | Standard views and Edits              |
-| March 30, 2022    | 0.5.0   | Standard Attributes are in the house! |
-| March 26, 2022    | 0.4.4   | Working with tag attributes           |
-| March 22, 2022    | 0.4.3   | Back into the workflow                |
-| March 15, 2022    | 0.4.2   | Searching Things                      |
-| October 31, 2021  | 0.4.1   | Entries First                         |
-| October 26, 2021  | 0.4.0   | Tags Oh My!                           |
-| September 2, 2021 | 0.3.0   | Import Export                         |
-| August 9, 2021    | 0.2.0   | Projects and Users Exist              |
-| July 4, 2021      | 0.1.0   | First Commit                          |
+| Date              | Version | Name                                       |
+|-------------------|---------|--------------------------------------------|
+| May 25, 2022      | 0.6.1   | 0.6.1 BB Code is now a first class citizen |
+| May 17, 2022      | 0.6.0   | Entries Upgraded                           |
+| May 4, 2022       | 0.5.3   | Upgrade to php 8.1.5                       |
+| May 3, 2022       | 0.5.2   | Git Revamp                                 |
+| April 20, 2022    | 0.5.1   | Git Bit!                                   |
+| April 13, 2022    | 0.5.0.1 | Standard views and Edits                   |
+| March 30, 2022    | 0.5.0   | Standard Attributes are in the house!      |
+| March 26, 2022    | 0.4.4   | Working with tag attributes                |
+| March 22, 2022    | 0.4.3   | Back into the workflow                     |
+| March 15, 2022    | 0.4.2   | Searching Things                           |
+| October 31, 2021  | 0.4.1   | Entries First                              |
+| October 26, 2021  | 0.4.0   | Tags Oh My!                                |
+| September 2, 2021 | 0.3.0   | Import Export                              |
+| August 9, 2021    | 0.2.0   | Projects and Users Exist                   |
+| July 4, 2021      | 0.1.0   | First Commit                               |
+
+### May 25, 2022      | 0.6.1   | 0.6.1 BB Code is now a first class citizen
+
+* Make interfaces for the applied and attributes
+* Have the BB tags remember their guids
+* Change the BB editor and parser to accommodate the new attributes in the BB code
+* Make sure the applied tags are remembered, without changing their guids, from save to save
+* Have the new nodes work with imports and exports
+* Have the new nodes put into the flow things for easy searching
+* Add a tagged_flow_tag_id to applied
+* Add tag link display for applied (what it points too, and its name)
+* Add gui support for applied pointing to nodes
+
+
 
 ### May 17, 2022       | 0.6.0   | Entries upgraded
 * Able to embed tags into the BB Code, and then do changes on it by tag searches and substitution to show a view of the code

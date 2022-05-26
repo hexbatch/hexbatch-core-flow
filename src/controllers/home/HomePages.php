@@ -77,13 +77,34 @@ class HomePages extends BasePages
                     $entry_project = $entry->get_project();
 
                     $route_to_go_to = $routeParser->urlFor('show_entry',[
-                        "user_name" => $entry_project->get_admin_user()->flow_user_guid,
+                        "user_name" => $entry_project->get_admin_user()->getFlowUserGuid(),
                         "project_name" => $entry_project->get_project_guid(),
                         "entry_name" => $entry->get_guid()
                     ]);
 
                     break;
                 }
+
+                case GeneralSearch::TYPE_NODE: {
+
+                    $entry_search = new FlowEntrySearchParams();
+                    $entry_search->addNodeGuid($guid);
+                    $entry_res = FlowEntrySearch::search($entry_search);
+                    if (empty($entry_res)) {
+                        throw new HttpNotFoundException($request,"Cannot find node ". $guid);
+                    }
+                    $entry = $entry_res[0];
+                    $entry_project = $entry->get_project();
+
+                    $route_to_go_to = $routeParser->urlFor('show_entry',[
+                        "user_name" => $entry_project->get_admin_user()->getFlowUserGuid(),
+                        "project_name" => $entry_project->get_project_guid(),
+                        "entry_name" => $entry->get_guid()
+                    ]);
+
+                    break;
+                }
+
                 case GeneralSearch::TYPE_PROJECT: {
 
                     $project = null;
@@ -101,7 +122,7 @@ class HomePages extends BasePages
 
                     $user_class = $project->get_admin_user();
                     $user_name = '';
-                    if ($user_class) { $user_name = $user_class->flow_user_guid; }
+                    if ($user_class) { $user_name = $user_class->getFlowUserGuid(); }
                     $project_name = $project->get_project_guid();
 
                     /**
@@ -129,9 +150,9 @@ class HomePages extends BasePages
                     }
                     $tag = $tag_res[0];
                     $route_to_go_to = $routeParser->urlFor('show_tag',[
-                        "user_name" => $tag->flow_project_admin_user_guid,
-                        "project_name" => $tag->flow_project_guid,
-                        "tag_name" => $tag->flow_tag_guid,
+                        "user_name" => $tag->getAdminGuid(),
+                        "project_name" => $tag->getProjectGuid(),
+                        "tag_name" => $tag->getGuid(),
                     ]);
 
                     break;
@@ -161,7 +182,7 @@ class HomePages extends BasePages
 
         $search = new GeneralSearchParams();
         if ($this->auth->isLoggedIn()) {
-            $search->against_user_guid = $this->user->flow_user_guid;
+            $search->against_user_guid = $this->user->getFlowUserGuid();
         } else {
             $search->b_only_public = true;
         }

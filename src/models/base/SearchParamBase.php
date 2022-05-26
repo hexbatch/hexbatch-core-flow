@@ -6,6 +6,7 @@ use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\tag\FlowTag;
 use InvalidArgumentException;
+use JsonException;
 
 class SearchParamBase {
 
@@ -89,6 +90,7 @@ class SearchParamBase {
      * @param mixed $guid_thing
      * @param bool $b_throw_exception
      * @return string[]
+     * @throws JsonException
      */
     public static function validate_cast_guid_array(mixed $guid_thing, bool $b_throw_exception = true): array
     {
@@ -121,6 +123,7 @@ class SearchParamBase {
      * @param bool $b_allow_tag_name
      * @param bool $b_throw_exception
      * @return string[]
+     * @throws JsonException
      */
     public static function validate_cast_name_array(mixed $name_thing,
                                                     bool $b_allow_tag_name = false, bool $b_throw_exception = true)

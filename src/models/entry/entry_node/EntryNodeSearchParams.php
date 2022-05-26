@@ -5,8 +5,9 @@ namespace app\models\entry\entry_node;
 use app\hexlet\JsonHelper;
 use app\models\base\SearchParamBase;
 use app\models\entry\IFlowEntry;
-use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
+use app\models\tag\IFlowAppliedTag;
+use JsonException;
 
 class EntryNodeSearchParams extends SearchParamBase {
 
@@ -110,8 +111,9 @@ class EntryNodeSearchParams extends SearchParamBase {
     }
 
 
-
-
+    /**
+     * @throws JsonException
+     */
     function __construct(object|array|null $object=null){
         parent::__construct();
         $this->parent_guid = null;
@@ -144,17 +146,18 @@ class EntryNodeSearchParams extends SearchParamBase {
 
     /**
      * @param mixed $guid_thing
+     * @throws JsonException
      */
     public function addTagGuid(mixed $guid_thing): void
     {
         if ($guid_thing instanceof FlowTag) {
-            $this->tag_guids[] = $guid_thing->flow_tag_guid;
+            $this->tag_guids[] = $guid_thing->getGuid();
         } else {
             $filter = [];
             if (is_array($guid_thing)) {
                 foreach ($guid_thing as $thang ) {
                     if ($thang instanceof FlowTag) {
-                        $this->tag_guids[] = $thang->flow_tag_guid;
+                        $this->tag_guids[] = $thang->getGuid();
                     } else {
                         $filter[] = $thang;
                     }
@@ -169,6 +172,7 @@ class EntryNodeSearchParams extends SearchParamBase {
 
     /**
      * @param mixed $guid_thing
+     * @throws JsonException
      */
     public function addEntryGuid(mixed $guid_thing): void
     {
@@ -195,6 +199,7 @@ class EntryNodeSearchParams extends SearchParamBase {
 
     /**
      * @param mixed $guid_thing
+     * @throws JsonException
      */
     public function addNodeGuid(mixed $guid_thing): void
     {
@@ -221,17 +226,18 @@ class EntryNodeSearchParams extends SearchParamBase {
 
     /**
      * @param mixed $guid_thing
+     * @throws JsonException
      */
     public function addAppliedGuid(mixed $guid_thing): void
     {
-        if ($guid_thing instanceof FlowAppliedTag) {
-            $this->applied_guids[] = $guid_thing->flow_applied_tag_guid;
+        if ($guid_thing instanceof IFlowAppliedTag) {
+            $this->applied_guids[] = $guid_thing->getGuid();
         } else {
             $filter = [];
             if (is_array($guid_thing)) {
                 foreach ($guid_thing as $thang ) {
-                    if ($thang instanceof FlowAppliedTag) {
-                        $this->applied_guids[] = $thang->flow_applied_tag_guid;
+                    if ($thang instanceof IFlowAppliedTag) {
+                        $this->applied_guids[] = $thang->getGuid();
                     } else {
                         $filter[] = $thang;
                     }

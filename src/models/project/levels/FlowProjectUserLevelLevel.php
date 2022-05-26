@@ -3,6 +3,7 @@ namespace app\models\project\levels;
 
 use app\models\project\FlowProjectUser;
 use app\models\user\FlowUser;
+use app\models\user\IFlowUser;
 use Exception;
 use InvalidArgumentException;
 use JetBrains\PhpStorm\ArrayShape;
@@ -10,7 +11,7 @@ use JetBrains\PhpStorm\ArrayShape;
 
 abstract class FlowProjectUserLevelLevel extends FlowProjectDataLevel {
 
-    protected ?FlowUser $admin_user ;
+    protected ?IFlowUser $admin_user ;
     protected ?FlowProjectUser $current_user_permissions;
 
     /**
@@ -36,7 +37,7 @@ abstract class FlowProjectUserLevelLevel extends FlowProjectDataLevel {
      * @return array
      * @throws Exception
      */
-    #[ArrayShape(['flow_project_title' => "null|string", 'flow_project_guid' => "null|string", 'created_at_ts' => "\int|null", 'flow_project_blurb' => "null|string", 'admin_user' => "\app\models\user\FlowUser|null"])]
+    #[ArrayShape(['flow_project_title' => "null|string", 'flow_project_guid' => "null|string", 'created_at_ts' => "\int|null", 'flow_project_blurb' => "null|string", 'admin_user' => "\app\models\user\IFlowUser|null"])]
     public function jsonSerialize() : array
     {
         $ret = parent::jsonSerialize();
@@ -45,14 +46,14 @@ abstract class FlowProjectUserLevelLevel extends FlowProjectDataLevel {
     }
 
     /**
-     * @return FlowUser|null
+     * @return IFlowUser|null
      * @throws Exception
      */
-    public function get_admin_user(): ?FlowUser
+    public function get_admin_user(): ?IFlowUser
     {
         if ($this->admin_user) {return $this->admin_user;}
         if ($this->admin_flow_user_id) {
-            $this->admin_user =  FlowUser::find_one($this->admin_flow_user_id);
+            $this->admin_user =  FlowUser::find_one(null,$this->admin_flow_user_id);
         }
         return $this->admin_user;
     }
@@ -64,11 +65,11 @@ abstract class FlowProjectUserLevelLevel extends FlowProjectDataLevel {
     public function get_owner_user_guid() : ?string {
         $admin_user = $this->get_admin_user();
         if (!$admin_user) {return null;}
-        return $this->get_admin_user()->flow_user_guid;
+        return $this->get_admin_user()->getFlowUserGuid();
     }
 
     /**
-     * @return FlowUser[]
+     * @return IFlowUser[]
      * @throws Exception
      */
     public function get_flow_project_users() : array {
@@ -95,12 +96,12 @@ abstract class FlowProjectUserLevelLevel extends FlowProjectDataLevel {
     {
         if (!isset($this->current_user_permissions)) {
             $user_permissions = FlowUser::find_users_by_project(true,
-                $this->flow_project_guid, null, true, $this->get_admin_user()->flow_user_guid);
+                $this->flow_project_guid, null, true, $this->get_admin_user()->getFlowUserGuid());
 
             if (empty($user_permissions)) {
                 throw new InvalidArgumentException("No permissions set for this");
             }
-            $permissions_array = $user_permissions[0]->get_permissions();
+            $permissions_array = $user_permissions[0]->getPermissions();
             if (empty($permissions_array)) {
                 throw new InvalidArgumentException("No permissions found, although in project");
             }

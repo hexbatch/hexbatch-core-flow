@@ -44,7 +44,7 @@ class PageProjectController extends BaseProjectController
      * 
      */
     public function all_projects(  ResponseInterface $response) :ResponseInterface {
-        if ($this->user->flow_user_id) {
+        if ($this->user->getFlowUserId()) {
             return $this->all_projects_overview_logged_in($response);
         } else {
             return $this->all_projects_overview_for_anon($response);
@@ -59,7 +59,7 @@ class PageProjectController extends BaseProjectController
      */
     public function all_projects_overview_for_anon( ResponseInterface $response) :ResponseInterface {
         try {
-            $my_projects= $this->get_project_helper()->get_all_top_projects( FlowUser::get_logged_in_user()->flow_user_id);
+            $my_projects= $this->get_project_helper()->get_all_top_projects( FlowUser::get_logged_in_user()->getFlowUserId());
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/all_projects_overview_for_anon.twig',
                 'page_title' => 'All Projects',
@@ -80,7 +80,7 @@ class PageProjectController extends BaseProjectController
      */
     public function all_projects_overview_logged_in( ResponseInterface $response) :ResponseInterface {
         try {
-            $my_projects= $this->get_project_helper()->get_all_top_projects( FlowUser::get_logged_in_user()->flow_user_id);
+            $my_projects= $this->get_project_helper()->get_all_top_projects( FlowUser::get_logged_in_user()->getFlowUserId());
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/all_projects_overview_logged_in.twig',
                 'page_title' => 'Your Projects',
@@ -148,7 +148,7 @@ class PageProjectController extends BaseProjectController
             } else {
                 $form_in_progress = new FlowProject();
             }
-            $form_in_progress->set_admin_user_id( $this->user->flow_user_id);
+            $form_in_progress->set_admin_user_id( $this->user->getFlowUserId());
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/new_project.twig',
                 'page_title' => 'Make A New Project',
@@ -173,7 +173,7 @@ class PageProjectController extends BaseProjectController
     public function clone_project( ResponseInterface $response) :ResponseInterface {
 
         $git_tags = UserHelper::get_user_helper()->
-        get_user_tags_of_standard($this->user->flow_user_guid,IFlowTagStandardAttribute::STD_ATTR_NAME_GIT);
+        get_user_tags_of_standard($this->user->getFlowUserGuid(),IFlowTagStandardAttribute::STD_ATTR_NAME_GIT);
 
         return $this->view->render($response, 'main.twig', [
             'page_template_path' => 'project/clone_project.twig',
@@ -208,7 +208,7 @@ class PageProjectController extends BaseProjectController
                 UserPages::add_flash_message('success', "Created Project " . $project->get_project_title());
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
                 $url = $routeParser->urlFor('single_project_home',[
-                    "user_name" => $project->get_admin_user()->flow_user_name,
+                    "user_name" => $project->get_admin_user()->getFlowUserName(),
                     "project_name" => $project->get_project_title()
                 ]);
                 $response = $response->withStatus(302);
@@ -253,7 +253,7 @@ class PageProjectController extends BaseProjectController
             }
             $project = new FlowProject();
             $project->set_project_type( IFlowProject::FLOW_PROJECT_TYPE_TOP);
-            $project->set_admin_user_id( FlowUser::get_logged_in_user()->flow_user_id);
+            $project->set_admin_user_id( FlowUser::get_logged_in_user()->getFlowUserId());
 
             $args = $request->getParsedBody();
             $project->set_project_title($args['flow_project_title']);
@@ -382,7 +382,7 @@ class PageProjectController extends BaseProjectController
                 UserPages::add_flash_message('success', "Updated Project  " . $project->get_project_title(). " <br> Saved");
                 $routeParser = RouteContext::fromRequest($request)->getRouteParser();
                 $url = $routeParser->urlFor('single_project_home',[
-                    "user_name" => $project->get_admin_user()->flow_user_name,
+                    "user_name" => $project->get_admin_user()->getFlowUserName(),
                     "project_name" => $project->get_project_title()
                 ]);
                 $response = $response->withStatus(302);
@@ -392,7 +392,7 @@ class PageProjectController extends BaseProjectController
                 throw $e;
             }
         } catch (Exception $e) {
-            $this->get_logger()->error("cannot update project: ".$e->getMessage(),['exception'=>$e]);
+            $this->get_logger()->error("cannot update project: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             try {
                 UserPages::add_flash_message('warning', "Cannot update project " . $e->getMessage());
                 $_SESSION[static::REM_EDIT_PROJECT_WITH_ERROR_SESSION_KEY] = $project;
@@ -437,7 +437,7 @@ class PageProjectController extends BaseProjectController
             $read_users = [];
             $users_in_project = $project->get_flow_project_users();
             foreach ($users_in_project as $user_to_scan) {
-                foreach ( $user_to_scan->get_permissions() as $up ) {
+                foreach ( $user_to_scan->getPermissions() as $up ) {
                     if ($up->can_write) {
                         $write_users[] = $user_to_scan;
                     }
@@ -521,7 +521,7 @@ class PageProjectController extends BaseProjectController
                         throw new InvalidArgumentException("Need both project and user guids to complete this");
                     }
                     $target_user_array = FlowUser::find_users_by_project(true,$flow_project_guid,null,true,$flow_user_guid);
-                    if (empty($target_user_array) || empty($target_user_array[0]->get_permissions())) {
+                    if (empty($target_user_array) || empty($target_user_array[0]->getPermissions())) {
                         $target_user = FlowUser::find_one($flow_user_guid);
                         if (empty($target_user)) {
                             throw new InvalidArgumentException("Cannot find user by guid of $flow_user_guid");
@@ -530,10 +530,10 @@ class PageProjectController extends BaseProjectController
                         $perm->can_write = false;
                         $perm->can_read = false;
                         $perm->can_admin = false;
-                        $perm->flow_user_id = $target_user->flow_user_id;
+                        $perm->flow_user_id = $target_user->getFlowUserId();
                         $perm->flow_project_id = $project->get_id();
                     } else {
-                        $perm = $target_user_array[0]->get_permissions()[0];
+                        $perm = $target_user_array[0]->getPermissions()[0];
                     }
                     $inner_data = $perm;
 
@@ -544,7 +544,7 @@ class PageProjectController extends BaseProjectController
                             break;
                         }
                         case 'permission_read_remove': {
-                            if ($perm->flow_user_guid === $project->get_admin_user()->flow_user_guid) {
+                            if ($perm->flow_user_guid === $project->get_admin_user()->getFlowUserGuid()) {
                                 throw new InvalidArgumentException("Cannot remove read from the project owner");
                             }
                             $perm->can_read = false;
@@ -556,7 +556,7 @@ class PageProjectController extends BaseProjectController
                             break;
                         }
                         case 'permission_write_remove': {
-                            if ($perm->flow_user_guid === $project->get_admin_user()->flow_user_guid) {
+                            if ($perm->flow_user_guid === $project->get_admin_user()->getFlowUserGuid()) {
                                 throw new InvalidArgumentException("Cannot remove write from the project owner");
                             }
                             $perm->can_write = false;
@@ -569,7 +569,7 @@ class PageProjectController extends BaseProjectController
                             break;
                         }
                         case 'permission_admin_remove': {
-                            if ($perm->flow_user_guid === $project->get_admin_user()->flow_user_guid) {
+                            if ($perm->flow_user_guid === $project->get_admin_user()->getFlowUserGuid()) {
                                 throw new InvalidArgumentException("Cannot remove admin from the project owner");
                             }
                             $perm->can_admin = false;
@@ -640,6 +640,8 @@ class PageProjectController extends BaseProjectController
             if (isset($args['tag_guid']) && WillFunctions::is_valid_guid_format($args['tag_guid'])) {
                 $tag_guid = $args['tag_guid'];
             }
+
+            $project->setRouteParser(RouteContext::fromRequest($request)->getRouteParser());
             return $this->view->render($response, 'main.twig', [
                 'page_template_path' => 'project/project_tags.twig',
                 'page_title' => "Edit Tags for Project $project_name",
@@ -709,9 +711,9 @@ class PageProjectController extends BaseProjectController
 
                 $setting_tag = $setting_tag_array[0];
                 //make sure can read the tag
-                if ($setting_tag->flow_project_guid !== $project->get_project_guid()) {
+                if ($setting_tag->getProjectGuid() !== $project->get_project_guid()) {
                     $setting_project = $this->get_project_helper()->get_project_with_permissions(
-                        $request,$setting_tag->flow_project_admin_user_guid,$setting_tag->flow_project_guid,
+                        $request,$setting_tag->getAdminGuid(),$setting_tag->getProjectGuid(),
                         FlowProjectUser::PERMISSION_COLUMN_READ);
                     if (!$setting_project) {
                         throw new InvalidArgumentException(
@@ -724,7 +726,7 @@ class PageProjectController extends BaseProjectController
                 if (!$setting_standard_value) {
                     throw new LogicException(
                         "[set_project_setting] Could not find standard attribute of type $setting_name for tag ".
-                        $setting_tag->flow_tag_guid);
+                        $setting_tag->getGuid());
                 }
             } else {
                 //remove setting
@@ -764,7 +766,7 @@ class PageProjectController extends BaseProjectController
                 ->withStatus(201);
 
         } catch (Exception $e) {
-            $this->logger->error("Could not set_standard_setting: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not set_standard_setting: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = [
                 'success'=>false,
                 'message'=>$e->getMessage(),

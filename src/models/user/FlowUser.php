@@ -3,38 +3,151 @@
 namespace app\models\user;
 use app\models\base\FlowBase;
 use app\models\project\FlowProjectUser;
-use Delight\Auth\AuthError;
-use Delight\Auth\EmailNotVerifiedException;
-use Delight\Auth\InvalidEmailException;
-use Delight\Auth\InvalidPasswordException;
-use Delight\Auth\NotLoggedInException;
-use Delight\Auth\TooManyRequestsException;
-use Delight\Auth\UserAlreadyExistsException;
-use Delight\Auth\UserManager;
+
+use app\models\user\auth\AuthError;
 use Exception;
 use InvalidArgumentException;
 
 use JetBrains\PhpStorm\ArrayShape;
 use JsonSerializable;
 use PDO;
-use Delight\Auth\Auth;
 use RuntimeException;
 
-class FlowUser extends FlowBase implements JsonSerializable {
-    const DEFAULT_USER_PAGE_SIZE = 20;
-    const MAX_SIZE_NAME = 39;
-    const SESSION_USER_KEY = 'flow_user';
+class FlowUser extends FlowBase implements JsonSerializable, IFlowUser
+{
 
-    public ?int $flow_user_id;
-    public ?int $flow_user_created_at_ts;
-    public ?int $last_logged_in_page_ts;
-    public ?string $flow_user_name;
-    public ?string $flow_user_email;
-    public ?string $flow_user_guid;
-    public ?string $base_user_id;
+
+    protected ?int $flow_user_id;
+    protected ?int $flow_user_created_at_ts;
+    protected ?int $last_logged_in_page_ts;
+    protected ?string $flow_user_name;
+    protected ?string $flow_user_email;
+    protected ?string $flow_user_guid;
+    protected ?string $base_user_id;
 
     protected ?string $old_email;
     protected ?string $old_username;
+
+    /**
+     * @return IFlowUserAuth
+     */
+    public static function create_auth() : IFlowUserAuth {
+
+        return new FlowUserAuthDelightBridge();
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getFlowUserId(): ?int
+    {
+        return $this->flow_user_id;
+    }
+
+    /**
+     * @param int|null $flow_user_id
+     */
+    public function setFlowUserId(?int $flow_user_id): void
+    {
+        $this->flow_user_id = $flow_user_id;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getFlowUserCreatedAtTs(): ?int
+    {
+        return $this->flow_user_created_at_ts;
+    }
+
+    /**
+     * @param int|null $flow_user_created_at_ts
+     */
+    public function setFlowUserCreatedAtTs(?int $flow_user_created_at_ts): void
+    {
+        $this->flow_user_created_at_ts = $flow_user_created_at_ts;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getLastLoggedInPageTs(): ?int
+    {
+        return $this->last_logged_in_page_ts;
+    }
+
+    /**
+     * @param int|null $last_logged_in_page_ts
+     */
+    public function setLastLoggedInPageTs(?int $last_logged_in_page_ts): void
+    {
+        $this->last_logged_in_page_ts = $last_logged_in_page_ts;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getFlowUserName(): ?string
+    {
+        return $this->flow_user_name;
+    }
+
+    /**
+     * @param string|null $flow_user_name
+     */
+    public function setFlowUserName(?string $flow_user_name): void
+    {
+        $this->flow_user_name = $flow_user_name;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getFlowUserEmail(): ?string
+    {
+        return $this->flow_user_email;
+    }
+
+    /**
+     * @param string|null $flow_user_email
+     */
+    public function setFlowUserEmail(?string $flow_user_email): void
+    {
+        $this->flow_user_email = $flow_user_email;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getFlowUserGuid(): ?string
+    {
+        return $this->flow_user_guid;
+    }
+
+    /**
+     * @param string|null $flow_user_guid
+     */
+    public function setFlowUserGuid(?string $flow_user_guid): void
+    {
+        $this->flow_user_guid = $flow_user_guid;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getBaseUserId(): ?string
+    {
+        return $this->base_user_id;
+    }
+
+    /**
+     * @param string|null $base_user_id
+     */
+    public function setBaseUserId(?string $base_user_id): void
+    {
+        $this->base_user_id = $base_user_id;
+    }
+
 
     /**
      * @var FlowProjectUser[] $permissions
@@ -44,23 +157,19 @@ class FlowUser extends FlowBase implements JsonSerializable {
     /**
      * @return FlowProjectUser[]
      */
-    public function get_permissions() :array {
+    public function getPermissions() :array {
         return $this->permissions;
     }
 
     /** @noinspection PhpUnused */
     public  function max_name(): int
     {
-        return static::MAX_SIZE_NAME;
+        return IFlowUser::MAX_SIZE_NAME;
     }
 
 
 
-
-    /**
-     * @return Auth
-     */
-    public  static function get_user_auth() : Auth {
+    public  static function get_user_auth() : IFlowUserAuth {
         try {
             return  static::$container->get('auth');
         } catch (Exception $e) {
@@ -70,9 +179,9 @@ class FlowUser extends FlowBase implements JsonSerializable {
     }
 
     /**
-     * @return FlowUser|null
+     * @return IFlowUser|null
      */
-    public static function get_logged_in_user() : ?FlowUser {
+    public static function get_logged_in_user() : ?IFlowUser {
         try {
             return  static::$container->get('user');
         } catch (Exception $e) {
@@ -83,20 +192,8 @@ class FlowUser extends FlowBase implements JsonSerializable {
 
 
 
-    public static function get_base_details($base_user_id,&$base_email, &$base_username) :?int{
-        $db = static::get_connection();
-        $sql = "SELECT u.email, u.username FROM users u WHERE u.id = ?";
-        $what = $db->safeQuery($sql, [(int)$base_user_id], PDO::FETCH_OBJ);
-        if (empty($what)) {
-            return null;
-        }
-        $base_email = $what[0]->email;
-        $base_username = $what[0]->username;
-        return (int)$base_user_id;
-
-    }
-
     public function __construct($object=null){
+        parent::__construct();
         if (empty($object)) {
             $this->flow_user_id = null;
             $this->flow_user_name = null;
@@ -199,12 +296,9 @@ class FlowUser extends FlowBase implements JsonSerializable {
 
 
                 if ($this->old_username !== $this->flow_user_name) {
-                    $db->update('users',[
-                        'username' => $this->flow_user_name,
-                    ],[
-                        'id' => $this->base_user_id
-                    ]);
-                    $_SESSION[UserManager::SESSION_FIELD_USERNAME] = $this->flow_user_name;
+                    static::get_user_auth()->changeUsername($this->flow_user_name,function () {
+                        static::get_logger()->notice("User email changed from $this->old_email to $this->flow_user_email");
+                    });
                 }
 
                 $db->update('flow_users',[
@@ -238,16 +332,21 @@ class FlowUser extends FlowBase implements JsonSerializable {
 
     /**
      * @param ?string $user_name_or_guid_or_base_user_id
-     * @return FlowUser|null
+     * @param int|null $flow_user_id
+     * @return IFlowUser|null
      * @throws Exception
      */
-    public static function find_one(?string $user_name_or_guid_or_base_user_id): ?FlowUser
+    public static function find_one(?string $user_name_or_guid_or_base_user_id,?int $flow_user_id = null): ?IFlowUser
     {
         $db = static::get_connection();
 
 
-        if (ctype_digit($user_name_or_guid_or_base_user_id)) {
+        if ($flow_user_id) {
             $where_condition = " u.id = ?";
+            $args = [(int)$flow_user_id];
+        }
+        else if (ctype_digit($user_name_or_guid_or_base_user_id)) {
+            $where_condition = " u.base_user_id = ?";
             $args = [(int)$user_name_or_guid_or_base_user_id];
         } else {
             $where_condition = " ( u.flow_user_name = ? OR u.flow_user_guid = UNHEX(?) )";
@@ -280,7 +379,7 @@ class FlowUser extends FlowBase implements JsonSerializable {
 
     /**
      * @param array $guid_array
-     * @return FlowUser[]
+     * @return IFlowUser[]
      * @throws Exception
      */
     public static function get_basic_info_by_guid_array(array $guid_array) : array {
@@ -332,7 +431,7 @@ class FlowUser extends FlowBase implements JsonSerializable {
      * @param ?string $user_name_search_or_guid
      * @param int $page ,
      * @param int $page_size ,
-     * @return FlowUser[]
+     * @return IFlowUser[]
      *
      * @throws
      */
@@ -343,7 +442,7 @@ class FlowUser extends FlowBase implements JsonSerializable {
         ?bool   $b_is_user_guid =null,
         ?string $user_name_search_or_guid =null,
         int     $page = 1,
-        int     $page_size =  FlowUser::DEFAULT_USER_PAGE_SIZE
+        int     $page_size =  IFlowUser::DEFAULT_USER_PAGE_SIZE
     ): array
     {
 
@@ -478,7 +577,7 @@ class FlowUser extends FlowBase implements JsonSerializable {
             $ret = [];
 
             /**
-             * @var array<string, FlowUser> $rem_users
+             * @var array<string, IFlowUser> $rem_users
              */
             $rem_users = [];
             foreach ($res as $row) {
@@ -517,7 +616,7 @@ class FlowUser extends FlowBase implements JsonSerializable {
              "last_logged_in_page_ts" => $this->last_logged_in_page_ts,
              "flow_user_name" => $this->flow_user_name,
              "flow_user_email" => $this->flow_user_email,
-             "permissions" => $this->get_permissions()
+             "permissions" => $this->getPermissions()
         ];
     }
 }

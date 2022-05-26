@@ -135,15 +135,27 @@ function create_living_bb_editor(textarea_id,hidden_id) {
 
         format: function(element, content) {
             let el_dom_tag = $(element);
-            if(!el_dom_tag.data('tag_guid'))
+            if(!el_dom_tag.data('tag_guid')) {
                 return content;
+            }
+            let guid_val = _filterGuidString(element.getAttribute('data-guid')??'');
+            let guid_attribute = '';
+            if (guid_val) {
+                guid_attribute = ` guid=${guid_val}`;
+            }
 
-            return `[${FLOW_TAG_BB_CODE} tag=${el_dom_tag.data('tag_guid')}]`;
+            return `[${FLOW_TAG_BB_CODE} tag=${el_dom_tag.data('tag_guid')}${guid_attribute}]`;
         },
         html: function(token, attrs, content) {
             if(  attrs.hasOwnProperty('tag') ) {
                 if (attrs.tag) {
-                    content = `<span class="flow-bb-tag flow-tag-display flow-tag-no-pointer-events flow-tag-${attrs.tag}" data-tag_guid="${attrs.tag}"></span>`;
+                    let guid_val = (  attrs.hasOwnProperty('guid') && attrs.guid)? _filterGuidString(attrs.guid) : '';
+                    let guid_data = '';
+                    if (guid_val) {
+                        guid_data = ` data-guid="${guid_val}"`;
+                    }
+                    content = `<span class="flow-bb-tag flow-tag-display flow-tag-no-pointer-events flow-tag-${attrs.tag}"`+
+                        ` data-tag_guid="${attrs.tag}"${guid_data}></span>`;
                     setTimeout(function() {
                         update_tags_in_display(false);
                     },100)
@@ -174,6 +186,7 @@ function create_living_bb_editor(textarea_id,hidden_id) {
         emoticonsEnabled: false,
         bbcodeTrim: false,
         height:400,
+        fonts: FLOW_FONT_NAMES.join(',').replaceAll('+',' ')
 
     });
     da_bb_code_editor = textarea._sceditor;

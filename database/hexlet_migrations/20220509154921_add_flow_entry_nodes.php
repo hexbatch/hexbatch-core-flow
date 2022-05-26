@@ -39,7 +39,9 @@ class AddFlowEntryNodes extends AbstractMigration
             CREATE TABLE flow_entry_nodes (
                 `id` INT NOT NULL AUTO_INCREMENT ,
                 `flow_entry_id` INT NULL DEFAULT NULL ,
-                `flow_entry_node_parent_id` INT NULL DEFAULT NULL ,
+                `flow_entry_node_parent_id` INT NULL DEFAULT NULL , 
+                `child_position` INT NULL DEFAULT NULL ,
+                `lot_number` INT DEFAULT NULL NULL ,
                 `entry_node_created_at` DATETIME NOT NULL DEFAULT current_timestamp,
                 `entry_node_updated_at` TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
                  entry_node_guid BINARY(16) DEFAULT NULL ,
@@ -50,6 +52,7 @@ class AddFlowEntryNodes extends AbstractMigration
                 KEY idx_flow_entry_id (flow_entry_id),
                 KEY idx_flow_entry_parent_id (flow_entry_node_parent_id),
                 UNIQUE KEY udx_entry_node_guid (entry_node_guid),
+                UNIQUE KEY udx_parent_child_position (flow_entry_node_parent_id, child_position,lot_number),
                 constraint fk_flow_entry_nodes_has_entry_id
                     foreign key (flow_entry_id) references flow_entries (id)
                         on update cascade on delete cascade,
@@ -69,7 +72,7 @@ class AddFlowEntryNodes extends AbstractMigration
                                 on update cascade on delete set null ;");
 
 
-        //add column to the tag applied
+        $this->execute("ALTER TABLE `flow_entry_nodes` ADD FULLTEXT `ft_flow_entry_nodes_text` (entry_node_words);");
 
 
 

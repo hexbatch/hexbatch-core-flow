@@ -34,8 +34,13 @@ class AddFlowAppliedTags extends AbstractMigration
                 `tagged_flow_entry_id` INT NULL DEFAULT NULL,
                 `tagged_flow_user_id` INT NULL DEFAULT NULL ,
                 `tagged_flow_project_id` INT NULL DEFAULT NULL ,
+                `tagged_flow_entry_node_id` INT NULL DEFAULT NULL ,
+                `tagged_pointer_id` INT NULL DEFAULT NULL ,
                 `created_at_ts` INT NULL DEFAULT NULL,
                 `flow_applied_tag_guid` BINARY(16) NOT NULL ,
+                constraint fk_flow_applied_tags_has_pointer
+                    foreign key (tagged_pointer_id) references flow_tags (id)
+                        on update cascade on delete cascade,
                 PRIMARY KEY (`id`)
            ) ENGINE = InnoDB COMMENT = 'allows applying the tag to something, can only be one thing a row';
 
@@ -91,6 +96,7 @@ class AddFlowAppliedTags extends AbstractMigration
             $mydb->dropTriggersLike( static::NAME_PART );
         }
 
+        $this->execute("ALTER TABLE `flow_applied_tags` DROP FOREIGN KEY fk_flow_applied_tags_has_pointer");
         $this->execute("ALTER TABLE `flow_applied_tags` DROP FOREIGN KEY `fk_flow_applied_tags_has_tagged_flow_user_id`");
         $this->execute("ALTER TABLE `flow_applied_tags` DROP FOREIGN KEY `fk_flow_applied_tags_has_tagged_project_id`");
         $this->execute("ALTER TABLE `flow_applied_tags` DROP FOREIGN KEY `fk_flow_applied_tags_has_tagged_entry_id`");

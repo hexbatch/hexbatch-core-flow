@@ -1,6 +1,6 @@
 
 {% set patch_url = url_for('patch_project_ajax',{
-                                                            user_name: project.get_admin_user().flow_user_name ,
+                                                            user_name: project.get_admin_user().getFlowUserName() ,
                                                             project_name: project.get_project_title()
                                                         } )
 %}

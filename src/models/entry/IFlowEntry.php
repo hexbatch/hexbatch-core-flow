@@ -2,6 +2,7 @@
 
 namespace app\models\entry;
 
+use app\models\entry\entry_node\EntryNodeDocument;
 use app\models\entry\public_json\IFlowEntryJson;
 use app\models\project\IFlowProject;
 use Exception;
@@ -20,9 +21,9 @@ Interface IFlowEntry extends IFlowEntryReadBasicProperties {
     public function get_entry() : IFlowEntry;
 
     public function get_bb_code() : ?string;
-    public function get_html() : ?string;
+    public function get_html(bool $b_try_file_first = true) : ?string;
+    public function  get_document() : EntryNodeDocument;
 
-    public function get_text() : ?string;
 
     /**
      * @return string[]

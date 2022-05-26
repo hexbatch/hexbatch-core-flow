@@ -7,6 +7,7 @@ use app\models\standard\FlowTagStandardAttribute;
 use app\models\standard\RawAttributeData;
 use app\models\tag\FlowTag;
 use BlueM\Tree;
+use JsonException;
 use LogicException;
 
 abstract class BaseConverter implements IAttributeConverter {
@@ -62,6 +63,9 @@ abstract class BaseConverter implements IAttributeConverter {
 
     }
 
+    /**
+     * @throws JsonException
+     */
     public function convert(): ?object
     {
         $ret_array = [];

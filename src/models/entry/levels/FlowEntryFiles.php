@@ -5,16 +5,18 @@ namespace app\models\entry\levels;
 
 use app\helpers\ProjectHelper;
 use app\helpers\Utilities;
-use app\hexlet\JsonHelper;
+use app\hexlet\BBHelper;
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\IFlowEntryArchive;
 use app\models\entry\entry_node\EntryNodeDocument;
 use app\models\entry\FlowEntryYaml;
 use app\models\entry\IFlowEntry;
+use app\models\entry\IFlowEntryReadBasicProperties;
 use app\models\project\IFlowProject;
 use DirectoryIterator;
 use Exception;
 use InvalidArgumentException;
+use JsonException;
 use RuntimeException;
 
 
@@ -26,14 +28,20 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
 
 
 
-    public ?string $flow_entry_body_html;
-    public ?string $flow_entry_body_bb_code;
-    public ?string $flow_entry_body_text;
+    protected ?string $flow_entry_body_html;
+    protected ?string $flow_entry_body_bb_code;
 
+    protected ?EntryNodeDocument $node_document ;
 
+    public function  get_document() : EntryNodeDocument {
+        if (!$this->node_document) {
+            $this->node_document = new EntryNodeDocument($this);
+        }
+        return $this->node_document;
+    }
 
     /**
-     * @param array|object|IFlowEntry|IFlowEntryArchive|null $object
+     * @param array|object|IFlowEntry|IFlowEntryArchive|IFlowEntryReadBasicProperties|null $object
      * @param IFlowProject|null $project
      * @throws Exception
      */
@@ -41,12 +49,10 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
         parent::__construct($object,$project);
         $this->flow_entry_body_html = null;
         $this->flow_entry_body_bb_code = null;
-        $this->flow_entry_body_text = null;
 
         if ($object instanceof IFlowEntry || $object instanceof IFlowEntryArchive) {
             $this->flow_entry_body_html = $object->get_html();
             $this->flow_entry_body_bb_code = $object->get_bb_code();
-            $this->flow_entry_body_text = $object->get_text();
 
         } else {
             if (is_array($object)) {
@@ -57,7 +63,6 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
             {
                 $this->flow_entry_body_bb_code = $object->flow_entry_body_bb_code?? null;
                 $this->flow_entry_body_html = $object->flow_entry_body_html?? null;
-                $this->flow_entry_body_text = $object->flow_entry_body_text?? null;
             }
 
         }
@@ -76,6 +81,9 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
     }
 
 
+    /**
+     * @throws JsonException
+     */
     public function deduce_existing_entry_folder() : ?string {
         $calculated_path = $this->get_calculated_entry_folder();
         if (!$calculated_path) {return null;}
@@ -127,11 +135,13 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
 
         return null;
     }
+
     /**
      * returns folder with no trailing slash
      *
      * @param string|null $new_folder_name a folder name to use instead, can be name or path
      * @return string|null
+     * @throws JsonException
      */
     public function get_entry_folder(?string $new_folder_name = null) : ?string{
 
@@ -234,21 +244,24 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
     }
 
 
-
     /**
+     * @param bool $b_try_file_first
      * @return string|null
      * @throws Exception
      */
-    public function get_html() : ?string {
+    public function get_html(bool $b_try_file_first = true) : ?string {
         if (!$this->flow_entry_body_html) {
             $path = $this->get_html_path();
-            if (is_readable($path)){
+            if ($b_try_file_first && is_readable($path)){
                 $this->flow_entry_body_html = file_get_contents($this->get_html_path());
                 if ($this->flow_entry_body_html === false) {
                     throw new RuntimeException("Entry html path exists but could not read");
                 }
             } else {
-                $this->flow_entry_body_html = null;
+                //may need to convert from the stubs back to the full paths for the html !
+                $nu_read_me = ProjectHelper::get_project_helper()->
+                stub_to_file_paths($this->get_project(),$this->get_bb_code());
+                $this->flow_entry_body_html = BBHelper::html_from_bb_code($nu_read_me);
             }
 
         }
@@ -256,7 +269,6 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
 
     }
 
-    public function get_text() : ?string { return $this->flow_entry_body_text;}
     public function get_bb_code(): ?string { return $this->flow_entry_body_bb_code;}
 
 
@@ -268,7 +280,7 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
     public function get_html_path() : ?string{
         $base_path = $this->get_entry_folder();
         if (!$base_path) {return null;}
-        $path = $base_path . DIRECTORY_SEPARATOR . "entry.html";
+        $path = $base_path . DIRECTORY_SEPARATOR . IFlowEntryArchive::HTML_FILE_NAME;
         return $path;
     }
 
@@ -281,22 +293,15 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
         if (empty($bb_code)) {
             $this->flow_entry_body_bb_code = null;
             $this->flow_entry_body_html = null;
-            $this->flow_entry_body_text = null;
             return;
         }
 
-        $bb_code = JsonHelper::to_utf8($bb_code);
-        $origonal_bb_code = $bb_code;
+        $bb_code = Utilities::to_utf8($bb_code);
 
         $this->flow_entry_body_bb_code = ProjectHelper::get_project_helper()->
                                             stub_from_file_paths($this->get_project(),$bb_code);
 
 
-        //may need to convert from the stubs back to the full paths for the html !
-        $nu_read_me = ProjectHelper::get_project_helper()->
-                                            stub_to_file_paths($this->get_project(),$origonal_bb_code);
-        $this->flow_entry_body_html = JsonHelper::html_from_bb_code($nu_read_me);
-        $this->flow_entry_body_text = str_replace('&nbsp;',' ',strip_tags($this->flow_entry_body_html));
 
     }
 
@@ -316,21 +321,40 @@ abstract class FlowEntryFiles extends FlowEntryBase  {
 
     public function save_entry(bool $b_do_transaction = false, bool $b_save_children = false): void
     {
-        parent::save_entry($b_do_transaction,$b_save_children);
-        $this->set_body_bb_code($this->get_bb_code());
         $db = static::get_connection();
+        try {
+            if ($b_do_transaction && !$db->inTransaction()) { $db->beginTransaction();}
 
-        $db->update('flow_entries',[
+
+            parent::save_entry(false,$b_save_children);
+
+
+
+            $this->node_document = new EntryNodeDocument($this);
+            $this->node_document->save();
+
+            $bb_code_with_updated_guids = $this->node_document->get_top_node_of_entry()?->get_as_bb_code();
+            $this->set_body_bb_code($bb_code_with_updated_guids);
+
+            $db->update('flow_entries',[
                 'flow_entry_body_bb_code'=> $this->get_bb_code(),
-                'flow_entry_body_text'=> $this->get_text()
             ],
-            [
-                'id' => $this->get_id()
-            ]
-        );
+                [
+                    'id' => $this->get_id()
+                ]
+            );
 
-        $node_document = new EntryNodeDocument($this);
-        $node_document->save($b_do_transaction);
+            if ($b_do_transaction && $db->inTransaction()) { $db->commit();}
+        } catch (Exception $e) {
+            if ($b_do_transaction && $db->inTransaction()) { $db->rollBack();}
+            throw $e;
+        }
+
+
+
+
+
+
 
     }
 

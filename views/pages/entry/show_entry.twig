@@ -16,7 +16,7 @@
                                 data-guid="{{ entry.get_guid() }}"
                                 data-title="{{ entry.get_title() }}"
                                 data-url="{{ url_for('edit_entry',{
-                                    user_name: entry.get_project().get_admin_user().flow_user_name ,
+                                    user_name: entry.get_project().get_admin_user().getFlowUserName() ,
                                     project_name: entry.get_project().get_project_title(),
                                     entry_name: entry.get_guid()
                                 } )
@@ -39,7 +39,7 @@
                                 data-guid="{{ entry.get_guid() }}"
                                 data-title="{{ entry.get_title() }}"
                                 data-url="{{ url_for('delete_entry_ajax',{
-                                    user_name: entry.get_project().get_admin_user().flow_user_name ,
+                                    user_name: entry.get_project().get_admin_user().getFlowUserName() ,
                                     project_name: entry.get_project().get_project_title(),
                                     entry_name: entry.get_guid()
                                 } )

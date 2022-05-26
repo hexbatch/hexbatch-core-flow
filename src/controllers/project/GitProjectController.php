@@ -166,7 +166,7 @@ class GitProjectController extends BaseProjectController {
             $status_array = $project->get_git_status();
 
             $git_tags = UserHelper::get_user_helper()->
-            get_user_tags_of_standard($this->user->flow_user_guid,IFlowTagStandardAttribute::STD_ATTR_NAME_GIT);
+            get_user_tags_of_standard($this->user->getFlowUserGuid(),IFlowTagStandardAttribute::STD_ATTR_NAME_GIT);
 
 
 
@@ -247,7 +247,7 @@ class GitProjectController extends BaseProjectController {
                 ->withStatus(201);
 
         } catch (Exception $e) {
-            $this->logger->error("Could not push_project: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not push_project: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = [
                 'success'=>false,
                 'message'=>$e->getMessage(),
@@ -328,7 +328,7 @@ class GitProjectController extends BaseProjectController {
                 ->withStatus(200);
         }
         catch (Exception $e) {
-            $this->logger->error("Could not pull_project: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not pull_project: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = [
                 'success'=>false,
                 'message'=>$e->getMessage(),
@@ -413,7 +413,7 @@ class GitProjectController extends BaseProjectController {
                 ->withStatus(200);
         }
         catch (Exception $e) {
-            $this->logger->error("Could not pull_project: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not pull_project: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = [
                 'success'=>false,
                 'message'=>$e->getMessage(),
@@ -476,7 +476,7 @@ class GitProjectController extends BaseProjectController {
                     $setting_tag = $setting_tag_array[0];
 
                     $setting_project = $this->get_project_helper()->get_project_with_permissions(
-                        $request,$setting_tag->flow_project_admin_user_guid,$setting_tag->flow_project_guid,
+                        $request,$setting_tag->getAdminGuid(),$setting_tag->getProjectGuid(),
                         FlowProjectUser::PERMISSION_COLUMN_READ);
                     if (!$setting_project) {
                         throw new InvalidArgumentException(
@@ -488,7 +488,7 @@ class GitProjectController extends BaseProjectController {
                     if (!$setting_standard_object) {
                         throw new LogicException(
                             "[clone_project_from_git] Could not find git standard attribute for tag ".
-                            $setting_tag->flow_tag_guid);
+                            $setting_tag->getGuid());
                     }
                     $setting = new FlowProjectGitSettings($setting_standard_object->getStandardValue());
                     break;
@@ -530,7 +530,7 @@ class GitProjectController extends BaseProjectController {
 
         }
         catch (Exception $e) {
-            $this->logger->error("Could not clone project: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not clone project: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = [
                 'success'=>false,
                 'message'=>$e->getMessage(),
@@ -599,7 +599,7 @@ class GitProjectController extends BaseProjectController {
 
         }
         catch (Exception $e) {
-            $this->logger->error("Could not copy project: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not copy project: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = [
                 'success'=>false,
                 'message'=>$e->getMessage(),

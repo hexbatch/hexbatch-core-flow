@@ -173,7 +173,7 @@ class EntryLifeTime extends EntryBase {
 
 
         } catch (Exception $e) {
-            $this->logger->error("Could not update entry",['exception'=>$e]);
+            $this->logger->error("Could not update entry",['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = ['success'=>false,'message'=>$e->getMessage(),
                     'entry'=>$call?->entry,
                     'entry_url' =>EntryRoutes::get_entry_url(EntryRoutes::SHOW,$request,$call),

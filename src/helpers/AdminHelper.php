@@ -14,7 +14,6 @@ use DI\NotFoundException;
 use Exception;
 use PDO;
 use Psr\Http\Message\ServerRequestInterface;
-use Slim\Exception\HttpNotImplementedException;
 
 
 class AdminHelper extends BaseHelper {
@@ -28,11 +27,11 @@ class AdminHelper extends BaseHelper {
      */
     public  function is_current_user_admin() : bool  {
 
-        if (!$this->get_current_user()->flow_user_id) {return false;}
+        if (!$this->get_current_user()->getFlowUserId()) {return false;}
 
         $params = new FlowProjectSearchParams();
         $params->setFlowProjectSpecialFlag(IFlowProject::SPECIAL_FLAG_ADMIN);
-        $params->setPermissionUserNameOrGuidOrId($this->get_current_user()->flow_user_id);
+        $params->setPermissionUserNameOrGuidOrId($this->get_current_user()->getFlowUserId());
         $params->setCanAdmin(true);
         $res = FlowProjectSearch::find_projects($params);
 

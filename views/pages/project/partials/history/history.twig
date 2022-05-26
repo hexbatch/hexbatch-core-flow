@@ -1,6 +1,6 @@
 <script>
     let flow_project_get_file_change_ajax_url = "{{-  url_for('get_file_change_ajax',{
-        user_name: project.get_admin_user().flow_user_name ,
+        user_name: project.get_admin_user().getFlowUserName() ,
         project_name: project.get_project_title()
     }) -}}";
 
@@ -37,7 +37,7 @@
 
         {{ include('main/partials/paginition.twig'  , {
             'link_template': url_for('project_history',{
-                                        user_name: project.get_admin_user().flow_user_name ,
+                                        user_name: project.get_admin_user().getFlowUserName() ,
                                         project_name: project.get_project_title()}) ~ '/page/%page%',
 
             'page_number' : history_page_number,

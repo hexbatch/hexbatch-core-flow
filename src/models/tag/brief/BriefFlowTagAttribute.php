@@ -7,30 +7,66 @@ namespace app\models\tag\brief;
 use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\standard\FlowTagStandardAttribute;
-use app\models\tag\FlowTagAttribute;
+use app\models\tag\IFlowTagAttribute;
+use JsonException;
 use JsonSerializable;
 use stdClass;
 
 class BriefFlowTagAttribute  implements JsonSerializable {
 
-    public string $flow_tag_attribute_guid ;
-    public ?string $flow_tag_guid ;
-    public ?string $points_to_flow_entry_guid ;
-    public ?string $points_to_flow_user_guid ;
-    public ?string $points_to_flow_project_guid ;
-    public ?string $points_to_flow_tag_guid ;
-    public string $tag_attribute_name ;
-    public ?int $tag_attribute_long ;
-    public ?string $tag_attribute_text ;
-    public int $attribute_created_at_ts ;
-    public int $attribute_updated_at_ts ;
+    protected string $flow_tag_attribute_guid ;
+    protected ?string $flow_tag_guid ;
+    protected ?string $points_to_flow_entry_guid ;
+    protected ?string $points_to_flow_user_guid ;
+    protected ?string $points_to_flow_project_guid ;
+    protected ?string $points_to_flow_tag_guid ;
+    protected string $tag_attribute_name ;
+    protected ?int $tag_attribute_long ;
+    protected ?string $tag_attribute_text ;
+    protected int $attribute_created_at_ts ;
+    protected int $attribute_updated_at_ts ;
 
-    public ?string $new_name;
+    protected ?string $new_name;
+
+    /**
+     * @return int|mixed|null
+     */
+    public function getCreatedAtTs(): mixed
+    {
+        return $this->attribute_created_at_ts;
+    }
+
+    /**
+     * @return int|mixed|null
+     */
+    public function getUpdatedAtTs(): mixed
+    {
+        return $this->attribute_updated_at_ts;
+    }
+
+    /**
+     * @param string|null $new_name
+     */
+    public function setNewName(?string $new_name): void
+    {
+        $this->new_name = $new_name;
+    }
+
+
 
     /**
      * @return string|null
      */
-    public function getFlowTagAttributeGuid(): ?string
+    public function getNewName(): ?string
+    {
+        return $this->new_name;
+    }
+
+
+    /**
+     * @return string|null
+     */
+    public function getGuid(): ?string
     {
         return $this->flow_tag_attribute_guid;
     }
@@ -38,7 +74,7 @@ class BriefFlowTagAttribute  implements JsonSerializable {
     /**
      * @return string|null
      */
-    public function getFlowTagGuid(): ?string
+    public function getTagGuid(): ?string
     {
         return $this->flow_tag_guid;
     }
@@ -78,7 +114,7 @@ class BriefFlowTagAttribute  implements JsonSerializable {
     /**
      * @return string|null
      */
-    public function getTagAttributeName(): ?string
+    public function getName(): ?string
     {
         return $this->tag_attribute_name;
     }
@@ -86,7 +122,7 @@ class BriefFlowTagAttribute  implements JsonSerializable {
     /**
      * @return string|null
      */
-    public function getTagAttributeLong(): ?string
+    public function getLong(): ?string
     {
         return $this->tag_attribute_long;
     }
@@ -94,56 +130,59 @@ class BriefFlowTagAttribute  implements JsonSerializable {
     /**
      * @return string|null
      */
-    public function getTagAttributeText(): ?string
+    public function getText(): ?string
     {
         return $this->tag_attribute_text;
     }
 
-    /**
-     * @return int|mixed|null
-     */
-    public function getAttributeCreatedAtTs(): mixed
-    {
-        return $this->attribute_created_at_ts;
-    }
 
     /**
-     * @return int
+     * @param IFlowTagAttribute|BriefFlowTagAttribute|array|stdClass $att
+     * @throws JsonException
      */
-    public function getAttributeUpdatedAtTs(): int
-    {
-        return $this->attribute_updated_at_ts;
-    }
-
-
-
-    /**
-     * @param FlowTagAttribute|BriefFlowTagAttribute|array|stdClass  $att
-     */
-    public function __construct(FlowTagAttribute|BriefFlowTagAttribute|array|stdClass $att){
+    public function __construct(IFlowTagAttribute|BriefFlowTagAttribute|array|stdClass $att){
         if (is_array($att)) {
             $att = JsonHelper::fromString(JsonHelper::toString($att),true,false);
         }
-        $b_standard = false;
-        if($att instanceof stdClass){
-            $b_standard = true;
-        }
         $this->new_name = null;
-        $this->flow_tag_attribute_guid = $b_standard? $att->flow_tag_attribute_guid??null  :$att->getFlowTagAttributeGuid();
-        $this->flow_tag_guid = $b_standard? $att->flow_tag_guid??null :$att->getFlowTagGuid();
-        $this->points_to_flow_entry_guid = $b_standard? $att->points_to_flow_entry_guid??null : $att->getPointsToFlowEntryGuid();
-        $this->points_to_flow_user_guid = $b_standard? $att->points_to_flow_user_guid??null : $att->getPointsToFlowUserGuid();
-        $this->points_to_flow_project_guid = $b_standard? $att->points_to_flow_project_guid??null : $att->getPointsToFlowProjectGuid();
-        $this->points_to_flow_tag_guid = $b_standard? $att->points_to_flow_tag_guid??null : $att->getPointsToFlowTagGuid();
-        $this->tag_attribute_name = $b_standard? $att->tag_attribute_name??null : $att->getTagAttributeName();
-        $this->tag_attribute_long = (int)($b_standard? $att->tag_attribute_long??null : $att->getTagAttributeLong());
-        $this->tag_attribute_text = $b_standard? $att->tag_attribute_text??null : $att->getTagAttributeText();
-        $this->attribute_created_at_ts =  $b_standard?
-                            WillFunctions::value_from_property_names_or_default($att,['attribute_created_at_ts','created_at_ts']):
-                                            $att->getAttributeCreatedAtTs();
-        $this->attribute_updated_at_ts = $b_standard?
-                            WillFunctions::value_from_property_names_or_default($att,['attribute_updated_at_ts','updated_at_ts']):
-                                            $att->getAttributeUpdatedAtTs();
+        if($att instanceof IFlowTagAttribute){
+            $this->flow_tag_attribute_guid = $att->getGuid();
+            $this->flow_tag_guid = $att->getTagGuid();
+            $this->points_to_flow_entry_guid = $att->getPointsToFlowEntryGuid();
+            $this->points_to_flow_user_guid = $att->getPointsToFlowUserGuid();
+            $this->points_to_flow_project_guid =  $att->getPointsToFlowProjectGuid();
+            $this->points_to_flow_tag_guid = $att->getPointsToFlowTagGuid();
+            $this->tag_attribute_name =  $att->getName();
+            $this->tag_attribute_long = $att->getLong();
+            $this->tag_attribute_text = $att->getText();
+            $this->attribute_created_at_ts = $att->getCreatedAtTs();
+            $this->attribute_updated_at_ts = $att->getUpdatedAtTs();
+        } else {
+            $this->flow_tag_attribute_guid = $att->flow_tag_attribute_guid??null;
+            $this->flow_tag_guid = $att->flow_tag_guid??null ;
+            $this->points_to_flow_entry_guid = $att->points_to_flow_entry_guid??null ;
+            $this->points_to_flow_user_guid = $att->points_to_flow_user_guid??null ;
+            $this->points_to_flow_project_guid = $att->points_to_flow_project_guid??null ;
+            $this->points_to_flow_tag_guid = $att->points_to_flow_tag_guid??null ;
+            $this->tag_attribute_name = $att->tag_attribute_name??null ;
+            $this->tag_attribute_long = (int)($att->tag_attribute_long??null);
+            $this->tag_attribute_text = $att->tag_attribute_text??null ;
+
+            if ($att instanceof BriefFlowTagAttribute) {
+                $this->attribute_created_at_ts =$att->getCreatedAtTs();
+                $this->attribute_updated_at_ts =$att->getUpdatedAtTs();
+            } else {
+                $this->attribute_created_at_ts =
+                    WillFunctions::value_from_property_names_or_default($att,
+                        ['attribute_created_at_ts','created_at_ts']);
+
+                $this->attribute_updated_at_ts =
+                    WillFunctions::value_from_property_names_or_default($att,
+                        ['attribute_updated_at_ts','updated_at_ts']);
+            }
+
+        }
+        
     }
 
 

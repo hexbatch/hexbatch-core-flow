@@ -190,15 +190,15 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
                 $current_user = ProjectHelper::get_project_helper()->get_current_user();
                 if (!$current_user) {throw new RuntimeException("Cannot save, nobody logged in");}
 
-                $author_email_command = sprintf('config  user.email "%s"',$this->get_admin_user()->flow_user_email);
+                $author_email_command = sprintf('config  user.email "%s"',$this->get_admin_user()->getFlowUserEmail());
                 $this->do_git_command($author_email_command);
 
-                $author_name_command = sprintf('config  user.name "%s"',$this->get_admin_user()->flow_user_name);
+                $author_name_command = sprintf('config  user.name "%s"',$this->get_admin_user()->getFlowUserName());
                 $this->do_git_command($author_name_command);
 
 
                 $this->do_git_command("commit  -m '$commit_message'");
-                $user_info = "$current_user->flow_user_guid <$current_user->flow_user_email>";
+                $user_info = "{$current_user->getFlowUserGuid()} <{$current_user->getFlowUserEmail()}>";
                 $this->do_git_command("commit --amend --author='$user_info' --no-edit");
                 if ($this->getGitExportSettings()->isGitAutomatePush()) {
                     $this->push_repo();
@@ -354,7 +354,7 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
         try {
             $project = new FlowProject();
             $project->set_project_type( IFlowProject::FLOW_PROJECT_TYPE_TOP);
-            $project->set_admin_user_id( FlowUser::get_logged_in_user()->flow_user_id);
+            $project->set_admin_user_id( FlowUser::get_logged_in_user()->getFlowUserId());
 
             $project->set_project_title($flow_project_title);
             $project->set_project_blurb('');
@@ -698,7 +698,9 @@ class FlowProjectGitLevel extends FlowProjectSettingLevel {
 
             if ($b_do_transaction && $db->inTransaction()) { $db->commit();}
         } catch (Exception $e) {
-            if ($b_do_transaction && $db->inTransaction()) { $db->rollBack();}
+            if ($b_do_transaction && $db->inTransaction()) {
+                $db->rollBack();
+            }
             throw $e;
         }
 

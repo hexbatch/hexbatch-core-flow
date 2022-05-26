@@ -4,15 +4,16 @@ namespace app\models\entry\entry_node;
 
 
 use app\helpers\Utilities;
-use app\hexlet\JsonHelper;
+use app\hexlet\BBHelper;
 use app\models\entry\IFlowEntry;
-use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
+use app\models\tag\IFlowAppliedTag;
 use BlueM\Tree;
 use Exception;
 use InvalidArgumentException;
 use JBBCode\ElementNode;
 use JBBCode\TextNode;
+use JsonException;
 use LogicException;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
@@ -26,6 +27,7 @@ class EntryNodeDocument extends EntryNodeContainer implements  IFlowEntryNodeDoc
     public function get_entry() : IFlowEntry {return $this->entry;}
 
     public function __construct(IFlowEntry $entry){
+        parent::__construct();
         $this->entry = $entry;
     }
 
@@ -35,16 +37,29 @@ class EntryNodeDocument extends EntryNodeContainer implements  IFlowEntryNodeDoc
      * @throws Exception
      */
     public function save(bool $b_do_transaction = false) : void{
-        $older_top_node = $this->get_top_node_of_entry();
-        $older_top_node?->delete_node();
-        $this->flat_contents = $this->parse_root($this->entry->get_bb_code());
-        foreach ($this->flat_contents as $node) {
-            $node->set_entry_id($this->entry->get_id());
-            $node->set_entry_guid($this->entry->get_guid());
-            $node->save($b_do_transaction,true);
-            if ($node->get_parent()) { break;}
+        $remember_top_node = $this->get_top_node_of_entry()->copy();
+
+        $new_lot_number = $remember_top_node->get_lot_number() + 1;
+        $this->flat_contents = $this->parse_root($this->entry->get_bb_code(),$new_lot_number);
+
+        if (empty($this->flat_contents)) {
+           return;
         }
+
+        $new_root = $this->flat_contents[0];
+        $new_root->set_node_guid($remember_top_node?->get_node_guid());
+        $new_root->set_entry_id($this->entry->get_id());
+        $new_root->set_entry_guid($this->entry->get_guid());
+
+        $new_root->match_text_nodes_with_existing($remember_top_node);
+
+        $new_root->save($b_do_transaction,true);
+
+
         $this->save_as_yaml($this->flat_contents);
+
+        //remove guids not used
+        $remember_top_node?->prune_node(false,$new_root,IFlowEntryNode::PRUNE_KEEP_THESE);
     }
 
     /**
@@ -63,6 +78,7 @@ class EntryNodeDocument extends EntryNodeContainer implements  IFlowEntryNodeDoc
     /**
      * @param IFlowEntryNode[] $nodes
      * @return void
+     * @throws JsonException
      */
     protected function save_as_yaml(array $nodes): void
     {
@@ -80,14 +96,18 @@ class EntryNodeDocument extends EntryNodeContainer implements  IFlowEntryNodeDoc
     }
 
 
-
     /**
      * @param ElementNode|TextNode $node
      * @param IFlowEntryNode|null $parent
-     * @param $temp_counter
+     * @param int $temp_counter
+     * @param array<string,int> $guid_lib
+     * @param int $lot_number
      * @return IFlowEntryNode[]
+     * @throws JsonException
      */
-    protected  function parse_root_inner(ElementNode|TextNode $node,?IFlowEntryNode $parent,&$temp_counter) :array {
+    protected  function parse_root_inner(ElementNode|TextNode $node,?IFlowEntryNode $parent,
+                                         int &$temp_counter,array &$guid_lib,int $lot_number) :array
+    {
 
         /**
          * @var IFlowEntryNode $ret
@@ -100,19 +120,36 @@ class EntryNodeDocument extends EntryNodeContainer implements  IFlowEntryNodeDoc
             case "JBBCode\DocumentElement":
             case "JBBCode\ElementNode":
             {
+                $attributes = $node->getAttribute()??[];
+                if (!is_object($attributes)) {
+                    $attributes = Utilities::convert_to_object($attributes);
+                }
+                $found_guid = $attributes?->guid??null;
+                if ($found_guid && array_key_exists($found_guid,$guid_lib)) {
+                    $found_guid = null; //if a repeat do not use again
+                    unset($attributes->guid);
+                }
+                if ($found_guid) {
+                    Utilities::valid_guid_format_or_null_or_throw($found_guid);
+                    $guid_lib[$found_guid] = 1+ ($guid_lib[$found_guid]??0);
+                }
+
                 $entry_node =
                     new FlowEntryNode([
+                        'node_guid' => $found_guid,
                         'bb_tag_name' => $node->getTagName(),
-                        'parent' => $parent,
-                        'node_attributes'=>$node->getAttribute() ?? []
+                        'parent' => null,
+                        'node_attributes'=>$attributes,
+                        'lot_number' => $lot_number
                     ]);
-                $entry_node->set_pass_through_value($temp_counter++);
+                $entry_node->set_pass_through_int($temp_counter++);
                 $entry_node->set_parent($parent);
                 $ret[] = $entry_node;
 
                 $children_returns = [];
                 foreach ($node->getChildren() as $child) {
-                    $children_returns[] = $this->parse_root_inner($child, $entry_node,$temp_counter);
+                    $children_returns[] =
+                        $this->parse_root_inner($child, $entry_node,$temp_counter,$guid_lib,$lot_number);
                 }
                 foreach ($children_returns as $chit) {
                     if (is_array($chit)) {
@@ -133,9 +170,10 @@ class EntryNodeDocument extends EntryNodeContainer implements  IFlowEntryNodeDoc
                 $entry_node = new FlowEntryNode( [
                     'bb_tag_name' => 'text',
                     'node_words'=> $node->getAsText(),
-                    'parent' => $parent
+                    'parent' => null,
+                    'lot_number' => $lot_number
                 ]);
-                $entry_node->set_pass_through_value($temp_counter++);
+                $entry_node->set_pass_through_int($temp_counter++);
                 $entry_node->set_parent($parent);
 
 
@@ -152,21 +190,27 @@ class EntryNodeDocument extends EntryNodeContainer implements  IFlowEntryNodeDoc
 
     /**
      * @param string $bb_code
+     * @param int $lot_number
      * @return IFlowEntryNode[]
+     * @throws JsonException
      */
-    protected  function parse_root(string $bb_code): array
+    protected  function parse_root(string $bb_code,int $lot_number): array
     {
-        $parser = JsonHelper::get_parsed_bb_code($bb_code);
+        $parser = BBHelper::get_parsed_bb_code($bb_code);
         $root =  $parser->getRoot();
 
         $temp_counter = 0;
-        $found_nodes =  $this->parse_root_inner($root,null,$temp_counter);
+        /**
+         * @var array<string,int> $guid_lib
+         */
+        $guid_lib = [];
+        $found_nodes =  $this->parse_root_inner($root,null,$temp_counter,$guid_lib,$lot_number);
 
         //do the tree
         $data = [];
         $data[] = ['id' => 0, 'parent' => -1, 'title' => 'dummy_root','entry_node'=>null];
         foreach ($found_nodes as $whrat) {
-            $data[] = ['id' => $whrat->get_pass_through_value(), 'parent' => $whrat->get_parent()?->get_pass_through_value()??0,
+            $data[] = ['id' => $whrat->get_pass_through_int(), 'parent' => $whrat->get_parent()?->get_pass_through_int()??0,
                 'title' => $whrat->get_node_text(),'entry_node'=>$whrat];
         }
 
@@ -207,7 +251,7 @@ class EntryNodeDocument extends EntryNodeContainer implements  IFlowEntryNodeDoc
      *                              If passed by itself, without entry or node, it will find all node across the project that link to it,
      *                              and return the bb code of the parents one each to an index in string array
      *
-     * @param FlowAppliedTag[]|string[] $applied can be used to filter the above bb code to the children of the parent that has this applied
+     * @param IFlowAppliedTag[]|string[] $applied can be used to filter the above bb code to the children of the parent that has this applied
      *                                  If passed by itself, without entry or node, it will find the node in the project, return its html
      *                                  or nothing if missing
      * @return string[]

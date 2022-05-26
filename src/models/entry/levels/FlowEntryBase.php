@@ -3,7 +3,7 @@
 namespace app\models\entry\levels;
 
 
-use app\hexlet\JsonHelper;
+use app\helpers\Utilities;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\entry\archive\FlowEntryArchive;
@@ -62,11 +62,13 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
 
 
     /**
-     * @param IFlowEntryArchive|stdClass|array|IFlowEntry|null $object
+     * @param IFlowEntryArchive|stdClass|array|IFlowEntry|IFlowEntryReadBasicProperties|null $object
      * @param IFlowProject|null $project
      */
-    public function __construct(IFlowEntryArchive|stdClass|array|IFlowEntry|null $object, ?IFlowProject $project){
-
+    public function __construct(IFlowEntryArchive|stdClass|array|IFlowEntry|IFlowEntryReadBasicProperties|null $object,
+                                ?IFlowProject $project
+    ){
+        parent::__construct();
         $this->project = $project;
         $this->flow_entry_id = null;
         $this->flow_entry_parent_id = null;
@@ -161,6 +163,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                 $this->flow_entry_parent_id = $db->cell(
                     "SELECT id  FROM flow_entries WHERE flow_entry_guid = UNHEX(?)",
                     $this->get_parent_guid());
+                $this->flow_entry_parent_id = Utilities::if_empty_null($this->flow_entry_parent_id);
             }
 
             if (empty($this->get_parent_id())) {$this->set_parent_id(null) ;}
@@ -172,7 +175,6 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                 'flow_entry_title' => $this->get_title(),
                 'flow_entry_blurb' => $this->get_blurb(),
                 'flow_entry_body_bb_code' => $this->get_bb_code(),
-                'flow_entry_body_text' => $this->get_text(),
             ];
 
             try {
@@ -188,15 +190,14 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                 } elseif ($this->get_guid()) {
                     $insert_sql = "
                     INSERT INTO flow_entries(flow_project_id, flow_entry_parent_id, created_at_ts, flow_entry_guid,
-                                             flow_entry_title, flow_entry_blurb, flow_entry_body_bb_code, flow_entry_body_text)  
-                    VALUES (?,?,?,UNHEX(?),?,?,?,?)
+                                             flow_entry_title, flow_entry_blurb, flow_entry_body_bb_code)  
+                    VALUES (?,?,?,UNHEX(?),?,?,?)
                     ON DUPLICATE KEY UPDATE flow_project_id =           VALUES(flow_project_id),
                                             flow_entry_parent_id =      VALUES(flow_entry_parent_id),
                                                   
                                             flow_entry_title =          VALUES(flow_entry_title) ,      
                                             flow_entry_blurb =          VALUES(flow_entry_blurb) ,      
-                                            flow_entry_body_bb_code =   VALUES(flow_entry_body_bb_code) ,      
-                                            flow_entry_body_text =   VALUES(flow_entry_body_text)       
+                                            flow_entry_body_bb_code =   VALUES(flow_entry_body_bb_code)        
                 ";
                     $insert_params = [
                         $this->get_project()->get_id(),
@@ -205,8 +206,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                         $this->get_guid(),
                         $this->get_title(),
                         $this->get_blurb(),
-                        $this->get_bb_code(),
-                        $this->get_text()
+                        $this->get_bb_code()
                     ];
                     $db->safeQuery($insert_sql, $insert_params, PDO::FETCH_BOTH, true);
                     $maybe_new_id = (int)$db->lastInsertId();
@@ -250,15 +250,6 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
                 $this->set_created_at_ts($update_info['created_at_ts']);
                 $this->set_updated_at_ts($update_info['updated_at_ts']);
 
-                if ($b_save_children) {
-                    /**
-                     * @var IFlowEntry $child_entry
-                     */
-                    foreach ($this->child_entries as $child_entry) {
-                        $child_entry->set_parent_id($this->flow_entry_id);
-                        $child_entry->save_entry();
-                    }
-                }
 
 
                 if ($b_do_transaction && $db->inTransaction()) {
@@ -393,11 +384,25 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
 
 
     public function set_id(?int $what): void {$this->flow_entry_id = $what;}
-    public function set_guid(?string $what): void {$this->flow_entry_guid = $what;}
+
+    public function set_guid(?string $what): void {
+        Utilities::valid_guid_format_or_null_or_throw($what);
+        $this->flow_entry_guid = $what;
+    }
+
     public function set_parent_id(?int $what): void {$this->flow_entry_parent_id = $what;}
-    public function set_parent_guid(?string $what): void {$this->flow_entry_parent_guid = $what;}
+
+    public function set_parent_guid(?string $what): void {
+        Utilities::valid_guid_format_or_null_or_throw($what);
+        $this->flow_entry_parent_guid = $what;
+    }
+
     public function set_project_id(?int $what): void {$this->flow_project_id = $what;}
-    public function set_project_guid(?string $what) : void {$this->flow_project_guid = $what;}
+
+    public function set_project_guid(?string $what) : void {
+        Utilities::valid_guid_format_or_null_or_throw($what);
+        $this->flow_project_guid = $what;
+    }
 
     public function set_created_at_ts(?int $what) : void {
         if ($what <0 ) {throw new InvalidArgumentException("Timestamps cannot be negative");}
@@ -410,7 +415,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     }
 
     public function set_title(?string $what): void {
-        $safe_what = JsonHelper::to_utf8($what);
+        $safe_what = Utilities::to_utf8($what);
 
         if (mb_strlen($safe_what) > static::LENGTH_ENTRY_TITLE) {
             throw new InvalidArgumentException(
@@ -430,7 +435,7 @@ abstract class FlowEntryBase extends FlowBase implements JsonSerializable,IFlowE
     }
 
     public function set_blurb(?string $what): void {
-        $safe_what = JsonHelper::to_utf8($what);
+        $safe_what = Utilities::to_utf8($what);
 
         if (mb_strlen($safe_what) > static::LENGTH_ENTRY_BLURB) {
             throw new InvalidArgumentException(

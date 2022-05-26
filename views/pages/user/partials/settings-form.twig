@@ -18,7 +18,7 @@
                             </p>
                             <input type="text" id="flow_user_name" name="flow_user_name"
                                    class="form-control" placeholder="User Name" required autofocus
-                                   maxlength="{{ edit_user.max_name }}" value="{{ edit_user.flow_user_name }}"
+                                   maxlength="{{ edit_user.max_name }}" value="{{ edit_user.getFlowUserName() }}"
                             >
                         </div>
                     </div>
@@ -33,7 +33,7 @@
 
                             <input type="email" id="flow_user_email" name="flow_user_email"
                                    class="form-control" placeholder="Email@where.at" required autofocus
-                                   value="{{ edit_user.flow_user_email }}"
+                                   value="{{ edit_user.getFlowUserEmail() }}"
                             >
                         </div>
                     </div>

@@ -15,6 +15,7 @@ return function (App $app) {
 
     $app->group('/admin', function (RouteCollectorProxy $group)   {
         $group->get('/thing_management', ['adminPages', 'thing_management'])->setName('thing_management');
+        /** @uses \app\controllers\home\AdminPages::redo_triggers() */
         $group->get('/db/redo_triggers', ['adminPages', 'redo_triggers'])->setName('redo_triggers');
         $group->get('/phpinfo', ['adminPages', 'php_info'])->setName('phpinfo');
 
@@ -30,6 +31,7 @@ return function (App $app) {
 
         $group->get('/', ['homePages', 'root'])->setName('root');
 
+        /** @uses \app\controllers\home\HomePages::link_show() */
         $group->get('/link/{guid:[[:alnum:]\-]+}/show', ['homePages', 'link_show'])->setName('link_show');
 
         $group->group('/project', function (RouteCollectorProxy $group) use($container) {

@@ -32,6 +32,12 @@ class FlowEntrySearch extends FlowBase {
        $where_project = 2;
        $where_user = 4;
        $where_entry_guid = 8;
+       $where_node_guid = 16;
+
+       $used_inner_joins = [];
+       $inner_joins = [];
+       $inner_joins['child_nodes'] = "INNER JOIN flow_entry_nodes driver_node on ".
+           "driver_node.flow_entry_id = driver_entry.id";
 
        if ($params->owning_project_guid) {
            $where_project = "driver_project.flow_project_guid = UNHEX(?)";
@@ -58,6 +64,21 @@ class FlowEntrySearch extends FlowBase {
            }
        }
 
+       if (count($params->child_node_guids)) {
+           $in_question_array = [];
+           foreach ($params->child_node_guids as $a_guid) {
+               if ( ctype_xdigit($a_guid) ) {
+                   $args[] = $a_guid;
+                   $in_question_array[] = "UNHEX(?)";
+               }
+           }
+           if (count($in_question_array)) {
+               $comma_delimited_unhex_question = implode(",",$in_question_array);
+               $where_node_guid = "driver_node.entry_node_guid in ($comma_delimited_unhex_question)";
+               $used_inner_joins['child_nodes'] = $inner_joins['child_nodes'];
+           }
+       }
+
        if (count($params->entry_titles)) {
            $in_question_array = [];
            foreach ($params->entry_titles as $a_name) {
@@ -69,6 +90,8 @@ class FlowEntrySearch extends FlowBase {
                $where_entry_guid = "driver_entry.flow_entry_title in ($comma_delimited_unhex_question)";
            }
        }
+
+       $inner_joins_combined = implode("\n",$used_inner_joins);
 
        $sql = /** @lang MySQL */
            "
@@ -82,7 +105,6 @@ class FlowEntrySearch extends FlowBase {
                 entry.flow_entry_title                  as flow_entry_title,
                 entry.flow_entry_blurb                  as flow_entry_blurb,
                 entry.flow_entry_body_bb_code           as flow_entry_body_bb_code,
-                entry.flow_entry_body_text              as flow_entry_body_text ,
                 HEX(parent_entry.flow_entry_guid)       as flow_entry_parent_guid ,
                 HEX(project.flow_project_guid)          as flow_project_guid,
                 HEX(admin_user.flow_user_guid)          as flow_user_guid,
@@ -102,11 +124,12 @@ class FlowEntrySearch extends FlowBase {
                         FROM flow_entries driver_entry
                         INNER JOIN flow_projects driver_project ON driver_project.id = driver_entry.flow_project_id
                         INNER JOIN flow_users driver_user ON driver_project.admin_flow_user_id = driver_user.id
-                        
+                        $inner_joins_combined
                         WHERE 1 
                             AND $where_project  
                             AND $where_user  
                             AND $where_entry_guid
+                            AND $where_node_guid
                             ORDER BY driver_entry.id 
                             LIMIT $start_place , $page_size
                     )

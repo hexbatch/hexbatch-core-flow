@@ -6,8 +6,12 @@ namespace app\models\multi;
 use app\hexlet\WillFunctions;
 use app\models\base\FlowBase;
 use app\models\base\SearchParamBase;
+use JsonException;
 use PDO;
 
+/**
+ * todo @uses \app\models\multi\GeneralSearch::TYPE_NODE_TAG can be used to show tags in an entry within general search
+ */
 class GeneralSearch extends FlowBase {
 
     const DEFAULT_PAGE_SIZE = 20;
@@ -15,7 +19,9 @@ class GeneralSearch extends FlowBase {
     const TYPE_USER = 'user';
     const TYPE_PROJECT = 'project';
     const TYPE_ENTRY = 'entry';
-    const TYPE_ENTRY_NODE = 'entry_node';
+    const TYPE_TAG_POINTER = 'tag_pointer'; //tag-pointers are not put directly into the things yet, but indirect data
+    const TYPE_NODE = 'node';
+    const TYPE_NODE_TAG = 'node_tag';
     const TYPE_TAG = 'tag';
 
     const ALL_TYPES_KEYWORD = 'all';
@@ -24,14 +30,17 @@ class GeneralSearch extends FlowBase {
     const ALL_SEARCH_TYPES_BUT_TAGS = [
         GeneralSearch::TYPE_PROJECT,
         GeneralSearch::TYPE_ENTRY,
-        GeneralSearch::TYPE_USER
+        GeneralSearch::TYPE_USER,
+        //note all but tags means all but nodes and tags as this is only used in the applied box, and there is no
+        // way yet to directly add a tag to a node without altering the bb code
     ];
 
     const ALL_SEARCH_TYPES = [
         GeneralSearch::TYPE_PROJECT,
         GeneralSearch::TYPE_ENTRY,
         GeneralSearch::TYPE_USER,
-        GeneralSearch::TYPE_TAG
+        GeneralSearch::TYPE_TAG,
+        GeneralSearch::TYPE_NODE
     ];
 
 
@@ -78,6 +87,7 @@ class GeneralSearch extends FlowBase {
     /**
      * @param GeneralSearchParams $search
      * @return GeneralSearchResult[]
+     * @throws JsonException
      */
     public static function general_search(GeneralSearchParams $search): array {
 
@@ -101,10 +111,21 @@ class GeneralSearch extends FlowBase {
         }
 
         if ($search->words) {
-            $where_array[] = "( thing.thing_title like ? OR MATCH(thing.thing_blurb) AGAINST( ? IN BOOLEAN MODE) OR MATCH(parent.flow_project_title) AGAINST( ? IN BOOLEAN MODE))";
+
+            $where_array[] = "( 
+                thing.thing_title like ?
+           OR   MATCH(thing.thing_blurb) AGAINST(? IN BOOLEAN MODE)
+           OR   MATCH(thing.thing_text) AGAINST(? IN BOOLEAN MODE)
+           OR   MATCH(project_parent.thing_blurb) AGAINST(? IN BOOLEAN MODE)
+           OR   project_parent.thing_title like ?
+            )";
+
+
             $args[] = $search->words . '%';
             $args[] = $search->words . '*';
             $args[] = $search->words . '*';
+            $args[] = $search->words . '*';
+            $args[] = $search->words . '%';
         }
 
         if ($search->created_at_ts) {
@@ -126,14 +147,21 @@ class GeneralSearch extends FlowBase {
         }
 
         if ($search->against_user_guid) {
-            $where_array[] = "( thing.is_public > 0 OR  JSON_SEARCH(thing.allowed_readers_json,'one',?) IS NOT NULL ".
-                "OR thing.owning_user_guid = UNHEX(?) ) ";
+            $where_array[] = "( 
+             thing.is_public > 0
+            OR  project_parent.is_public > 0
+            OR  JSON_SEARCH(thing.allowed_readers_json, 'one', ?) IS NOT NULL
+            OR  JSON_SEARCH(project_parent.allowed_readers_json, 'one', ?) IS NOT NULL
+            OR  thing.owning_user_guid = UNHEX(?)
+             ) ";
+
+            $args[] = $search->against_user_guid;
             $args[] = $search->against_user_guid;
             $args[] = $search->against_user_guid;
         }
 
         if ($search->b_only_public && empty($search->against_user_guid)) {
-            $where_array[] = "thing.is_public > 0 ";
+            $where_array[] = "(thing.is_public > 0 OR  project_parent.is_public > 0)";
         }
 
 
@@ -150,20 +178,24 @@ class GeneralSearch extends FlowBase {
 
         $sql_final = "SELECT 
                             HEX(thing.thing_guid) as guid ,
-                            thing.thing_id as id,
-                            thing.thing_title as title,
-                            thing.thing_blurb as blurb,
-                            thing.thing_type as type,
-                            HEX(thing.owning_user_guid) as owning_user_guid,
-                            HEX(thing.owning_project_guid) as owning_project_guid,
+                            thing.thing_id                          as id,
+                            thing.thing_title                       as title,
+                            thing.thing_blurb                       as blurb,
+                            thing.thing_type                        as type,
+                            thing.thing_text                        as words,
+                            HEX(thing.owning_user_guid)             as owning_user_guid,
+                            HEX(thing.owning_project_guid)          as owning_project_guid,
+                            HEX(thing.owning_entry_guid)            as owning_entry_guid,
                             thing.allowed_readers_json,
                             thing.tag_used_by_json,
                             thing.css_json,
-                            UNIX_TIMESTAMP(thing.thing_created_at) as created_at_ts,
-                            UNIX_TIMESTAMP(thing.thing_updated_at) as updated_at_ts,
-                            thing.is_public
+                            UNIX_TIMESTAMP(thing.thing_created_at)  as created_at_ts,
+                            UNIX_TIMESTAMP(thing.thing_updated_at)  as updated_at_ts,
+                            thing.is_public,
+                            entry_parent.thing_title               as owning_entry_title
                         FROM flow_things thing 
-                        LEFT JOIN flow_projects parent ON parent.flow_project_guid = thing.owning_project_guid
+                        LEFT JOIN flow_things project_parent ON project_parent.thing_guid = thing.owning_project_guid
+                        LEFT JOIN flow_things entry_parent ON entry_parent.thing_guid = thing.owning_entry_guid
                         WHERE 1 AND $where_conditions
                         ORDER BY title ASC
                         LIMIT $start_place, $page_size

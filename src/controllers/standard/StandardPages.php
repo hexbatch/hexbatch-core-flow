@@ -4,6 +4,7 @@ namespace app\controllers\standard;
 use app\controllers\base\BasePages;
 use app\helpers\AjaxCallData;
 use app\helpers\TagHelper;
+use app\helpers\Utilities;
 use app\hexlet\JsonHelper;
 use app\models\standard\FlowTagStandardAttribute;
 use Exception;
@@ -36,23 +37,24 @@ class StandardPages extends BasePages
             $db = $this->get_connection();
 
             try {
-                if(!$db->inTransaction()){$db->beginTransaction();}
+                $db->beginTransaction();
                 $deleted_attributes = [];
-                foreach ($tag->attributes as $existing_attribute) {
-                    if (isset($valid_update[$existing_attribute->getTagAttributeName()])) {
-                        $deleted_attributes[] = $tag->delete_attribute_by_name($existing_attribute->getTagAttributeName());
+                foreach ($tag->getAttributes() as $existing_attribute) {
+                    if (isset($valid_update[$existing_attribute->getName()])) {
+                        $deleted_attributes[] = $tag->delete_attribute_by_name($existing_attribute->getName());
                     }
                 }
                 $tag->save(false,true);
-                if ($db->inTransaction()) {$db->commit();}
+                $new_tag = $tag->clone_refresh();
+                $call->project->save(false);
+                $db->commit();
             } catch (Exception $e) {
-                if ($db->inTransaction()) {$db->rollBack();}
+                $db->rollBack();
                 throw $e;
             }
 
 
-            $new_tag = $tag->clone_refresh();
-            $call->project->save();
+
             $data = [
                 'success'=>true,'message'=>'ok','tag'=>$new_tag,'action'=> 'delete_tag_standard',
                 'standard_name'=>$standard_name,
@@ -107,15 +109,24 @@ class StandardPages extends BasePages
 
             foreach ($call->args as $standard_key_name => $new_standard_key_val) {
                 if (in_array($standard_key_name,$standard_keys)) {
-                    $valid_update[$standard_key_name] = JsonHelper::to_utf8($new_standard_key_val);
+                    $valid_update[$standard_key_name] = Utilities::to_utf8($new_standard_key_val);
                 }
             }
 
-            $tag->set_standard_by_raw($standard_name,$call->args);
+            $db = static::get_connection();
+            try {
+                $db->beginTransaction();
+                $tag->set_standard_by_raw($standard_name,$call->args);
 
-            $tag->save(true,true);
-            $new_tag = $tag->clone_refresh();
-            $call->project->save();
+                $tag->save(false ,true);
+                $new_tag = $tag->clone_refresh();
+                $call->project->save(false);
+                $db->commit();
+            } catch (Exception $e) {
+                $db->rollBack();
+                throw $e;
+            }
+
             $data = ['success'=>true,'message'=>'ok','tag'=>$new_tag,'action'=> 'update_tag_standard',
                             'standard_name'=>$standard_name,'standard_data'=>$valid_update,
                         'token'=> $call->get_token_with_project_hash($call->project)
@@ -129,7 +140,7 @@ class StandardPages extends BasePages
 
 
         } catch(Exception $e) {
-            $this->logger->error("Could not update tag standard: ".$e->getMessage(),['exception'=>$e]);
+            $this->logger->error("Could not update tag standard: ".$e->getMessage(),['exception'=>$e,'trace'=>$e->getTraceAsString()]);
             $data = ['success'=>false,'message'=>$e->getMessage(),
                 'action'=> 'update_tag_standard',
                 'standard_name'=>$standard_name,'standard_data'=>$valid_update,

@@ -7,10 +7,11 @@ use app\models\multi\GeneralSearch;
 use app\models\multi\GeneralSearchParams;
 use app\models\multi\GeneralSearchResult;
 use app\models\project\IFlowProject;
-use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
-use app\models\tag\FlowTagAttribute;
+use app\models\tag\IFlowAppliedTag;
+use app\models\tag\IFlowTagAttribute;
 use Exception;
+use JsonException;
 use LogicException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -97,15 +98,15 @@ class BriefDiffFromYaml {
         $changes = [];
 
         foreach ($this->added_tags as $tag) {
-            $changes[] = "Added tag $tag->flow_tag_name";
+            $changes[] = "Added tag ".$tag->getName();
         }
 
         foreach ($this->removed_tags as $tag) {
-            $changes[] = "Removed tag $tag->flow_tag_name";
+            $changes[] = "Removed tag ".$tag->getName();
         }
 
         foreach ($this->changed_tags as $tag) {
-            $name_to_use = $tag->new_name ?? $tag->flow_tag_name;
+            $name_to_use = $tag->getNewName() ?? $tag->getName();
             $changes[] = "Changed tag $name_to_use";
         }
 
@@ -123,30 +124,33 @@ class BriefDiffFromYaml {
         $changes = [];
 
         foreach ($this->added_attributes as $att) {
-            if (!array_key_exists($att->flow_tag_guid,$this->brief_tag_map)) {
-                throw new LogicException("[get_changed_attribute_summary_line:added] tag guid $att->flow_tag_guid is not in map ");
+            if (!array_key_exists($att->getTagGuid(),$this->brief_tag_map)) {
+                throw new LogicException(sprintf(
+                    "[get_changed_attribute_summary_line:added] tag guid %s is not in map ",$att->getTagGuid()));
             }
-            $tag = $this->brief_tag_map[$att->flow_tag_guid];
-            $tag_name_to_use = $tag->new_name ?? $tag->flow_tag_name;
-            $changes[] = "Added attribute $att->tag_attribute_name to tag $tag_name_to_use";
+            $tag = $this->brief_tag_map[$att->getTagGuid()];
+            $tag_name_to_use = $tag->getNewName() ?? $tag->getName();
+            $changes[] = sprintf("Added attribute %s to tag $tag_name_to_use",$att->getName());
         }
 
         foreach ($this->removed_attributes as $att) {
-            if (!array_key_exists($att->flow_tag_guid,$this->brief_tag_map)) {
-                throw new LogicException("[get_changed_attribute_summary_line:added] tag guid $att->flow_tag_guid is not in map ");
+            if (!array_key_exists($att->getTagGuid(),$this->brief_tag_map)) {
+                throw new LogicException(sprintf(
+                    "[get_changed_attribute_summary_line:added] tag guid %s is not in map ",$att->getTagGuid()));
             }
-            $tag = $this->brief_tag_map[$att->flow_tag_guid];
-            $tag_name_to_use = $tag->new_name ?? $tag->flow_tag_name;
-            $changes[] = "Removed attribute $att->tag_attribute_name from tag $tag_name_to_use";
+            $tag = $this->brief_tag_map[$att->getTagGuid()];
+            $tag_name_to_use = $tag->getNewName() ?? $tag->getName();
+            $changes[] = sprintf("Removed attribute %s  from tag $tag_name_to_use",$att->getName());
         }
 
         foreach ($this->changed_attributes as $att) {
-            if (!array_key_exists($att->flow_tag_guid,$this->brief_tag_map)) {
-                throw new LogicException("[get_changed_attribute_summary_line:added] tag guid $att->flow_tag_guid is not in map ");
+            if (!array_key_exists($att->getTagGuid(),$this->brief_tag_map)) {
+                throw new LogicException(sprintf(
+                    "[get_changed_attribute_summary_line:added] tag guid %s  is not in map ",$att->getTagGuid()));
             }
-            $tag = $this->brief_tag_map[$att->flow_tag_guid];
-            $tag_name_to_use = $tag->new_name ?? $tag->flow_tag_name;
-            $name_to_use = $att->new_name ?? $att->tag_attribute_name;
+            $tag = $this->brief_tag_map[$att->getTagGuid()];
+            $tag_name_to_use = $tag->getNewName() ?? $tag->getName();
+            $name_to_use = $att->getNewName() ?? $att->getName();
             $changes[] = "Changed attribute $name_to_use in tag $tag_name_to_use";
         }
 
@@ -155,6 +159,9 @@ class BriefDiffFromYaml {
         return $ret;
     }
 
+    /**
+     * @throws JsonException
+     */
     public function get_changed_applied_summary_line() : string {
 
         /**
@@ -195,11 +202,12 @@ class BriefDiffFromYaml {
         }
 
         foreach ($this->added_applied as $app) {
-            if (!array_key_exists($app->flow_tag_guid,$this->brief_tag_map)) {
-                throw new LogicException("[get_changed_applied_summary_line:added] tag guid $app->flow_tag_guid is not in map ");
+            if (!array_key_exists($app->getTagGuid(),$this->brief_tag_map)) {
+                throw new LogicException(
+                    sprintf("[get_changed_applied_summary_line:added] tag guid  %s  is not in map ",$app->getTagGuid()));
             }
-            $tag = $this->brief_tag_map[$app->flow_tag_guid];
-            $tag_name_to_use = $tag->new_name ?? $tag->flow_tag_name;
+            $tag = $this->brief_tag_map[$app->getTagGuid()];
+            $tag_name_to_use = $tag->getNewName() ?? $tag->getName();
             $tagged_guid = $app->get_tagged_guid();
             if (!array_key_exists($tagged_guid,$target_map)) {
                 throw new LogicException("[get_changed_applied_summary_line:added] target guid $tagged_guid is not in map ");
@@ -210,11 +218,12 @@ class BriefDiffFromYaml {
         }
 
         foreach ($this->removed_applied as $app) {
-            if (!array_key_exists($app->flow_tag_guid,$this->brief_tag_map)) {
-                throw new LogicException("[get_changed_applied_summary_line:removed] tag guid $app->flow_tag_guid is not in map ");
+            if (!array_key_exists($app->getTagGuid(),$this->brief_tag_map)) {
+                throw new LogicException(
+                    sprintf("[get_changed_applied_summary_line:removed] tag guid %s is not in map ",$app->getTagGuid()));
             }
-            $tag = $this->brief_tag_map[$app->flow_tag_guid];
-            $tag_name_to_use = $tag->new_name ?? $tag->flow_tag_name;
+            $tag = $this->brief_tag_map[$app->getTagGuid()];
+            $tag_name_to_use = $tag->getNewName() ?? $tag->getName();
             $tagged_guid = $app->get_tagged_guid();
             $target_name = $target_map[$tagged_guid]->title;
             $target_type = $target_map[$tagged_guid]->type;
@@ -289,13 +298,13 @@ class BriefDiffFromYaml {
 
 
         /**
-         * @var array<string,FlowTagAttribute> $attribute_map
+         * @var array<string,IFlowTagAttribute> $attribute_map
          */
         $attribute_map = [];
 
 
         /**
-         * @var array<string,FlowAppliedTag> $applied_map
+         * @var array<string,IFlowAppliedTag> $applied_map
          */
         $applied_map = [];
 
@@ -303,41 +312,41 @@ class BriefDiffFromYaml {
         foreach ($saved as $btag) {
 
             $btag_object = new BriefFlowTag($btag);
-            $btag_object->flow_project_guid = $project->get_project_guid();
-            $b_tag_map[$btag_object->flow_tag_guid] = $btag_object;
-            $this->brief_tag_map[$btag_object->flow_tag_guid] = $btag_object;
-            $this->from_yaml_as_brief_tag_map[$btag_object->flow_tag_guid] = $btag_object;
+            $btag_object->setProjectGuid($project->get_project_guid());
+            $b_tag_map[$btag_object->getGuid()] = $btag_object;
+            $this->brief_tag_map[$btag_object->getGuid()] = $btag_object;
+            $this->from_yaml_as_brief_tag_map[$btag_object->getGuid()] = $btag_object;
 
-            foreach ($btag_object->attributes as $batt) {
-                $b_attribute_map[$batt->flow_tag_attribute_guid] = new BriefFlowTagAttribute($batt);
+            foreach ($btag_object->getAttributes() as $batt) {
+                $b_attribute_map[$batt->getGuid()] = new BriefFlowTagAttribute($batt);
             }
 
-            foreach ($btag_object->applied as $bapp) {
-                $b_applied_map[$bapp->flow_applied_tag_guid] = new BriefFlowAppliedTag($bapp);
+            foreach ($btag_object->getApplied() as $bapp) {
+                $b_applied_map[$bapp->getGuid()] = new BriefFlowAppliedTag($bapp);
             }
 
         }
 
         foreach ($current_tags as $tag) {
-            $tag_map[$tag->flow_tag_guid] = $tag;
-            if (!array_key_exists($tag->flow_tag_guid,$this->brief_tag_map)) {
-                $this->brief_tag_map[$tag->flow_tag_guid] = new BriefFlowTag($tag);
+            $tag_map[$tag->getGuid()] = $tag;
+            if (!array_key_exists($tag->getGuid(),$this->brief_tag_map)) {
+                $this->brief_tag_map[$tag->getGuid()] = new BriefFlowTag($tag);
             }
 
-            foreach ($tag->attributes as $att) {
-                $attribute_map[$att->getFlowTagAttributeGuid()] = $att;
+            foreach ($tag->getAttributes() as $att) {
+                $attribute_map[$att->getGuid()] = $att;
             }
 
-            foreach ($tag->applied as $app) {
-                $applied_map[$app->flow_applied_tag_guid] = $app;
+            foreach ($tag->getApplied() as $app) {
+                $applied_map[$app->getGuid()] = $app;
             }
         }
 
         foreach ($b_tag_map as $tag_guid => $btag) {
             if (array_key_exists($tag_guid,$tag_map)) {
                 $tag = $tag_map[$tag_guid];
-                if ($tag->flow_tag_name !== $btag->flow_tag_name ||
-                    $tag->parent_tag_guid !== $btag->parent_tag_guid)
+                if ($tag->getName() !== $btag->getName() ||
+                    $tag->getParentGuid() !== $btag->getParentGuid())
                 {
                     if ($b_changed_is_set_from_file) {
                         $this->changed_tags[] = $btag;
@@ -347,8 +356,8 @@ class BriefDiffFromYaml {
 
                 }
 
-                if ($tag->flow_tag_name !== $btag->flow_tag_name) {
-                    $btag->new_name = $tag->flow_tag_name;
+                if ($tag->getName() !== $btag->getName()) {
+                    $btag->setName($tag->getName());
                 }
             } else {
                 $this->removed_tags[] = $btag;
@@ -366,13 +375,13 @@ class BriefDiffFromYaml {
             if (array_key_exists($attribute_guid,$attribute_map)) {
                 $attribute = $attribute_map[$attribute_guid];
                 if (
-                    $attribute->getPointsToFlowEntryGuid() !== $battribute->points_to_flow_entry_guid ||
-                    $attribute->getPointsToFlowUserGuid() !== $battribute->points_to_flow_user_guid ||
-                    $attribute->getPointsToFlowProjectGuid() !== $battribute->points_to_flow_project_guid ||
-                    $attribute->getPointsToFlowTagGuid() !== $battribute->points_to_flow_tag_guid ||
-                    $attribute->getTagAttributeText() !== $battribute->tag_attribute_text ||
-                    intval($attribute->getTagAttributeLong()) !== intval($battribute->tag_attribute_long) ||
-                    $attribute->getTagAttributeName() !== $battribute->tag_attribute_name
+                    $attribute->getPointsToFlowEntryGuid() !== $battribute->getPointsToFlowEntryGuid() ||
+                    $attribute->getPointsToFlowUserGuid() !== $battribute->getPointsToFlowUserGuid() ||
+                    $attribute->getPointsToFlowProjectGuid() !== $battribute->getPointsToFlowProjectGuid() ||
+                    $attribute->getPointsToFlowTagGuid() !== $battribute->getPointsToFlowTagGuid() ||
+                    $attribute->getText() !== $battribute->getText() ||
+                    intval($attribute->getLong()) !== intval($battribute->getLong()) ||
+                    $attribute->getName() !== $battribute->getName()
                 ) {
                     if ($b_changed_is_set_from_file) {
                         $this->changed_attributes[] = $battribute;
@@ -382,8 +391,8 @@ class BriefDiffFromYaml {
 
                 }
 
-                if ($attribute->getTagAttributeName() !== $battribute->tag_attribute_name) {
-                    $battribute->new_name = $attribute->getTagAttributeName();
+                if ($attribute->getName() !== $battribute->getName()) {
+                    $battribute->setNewName($attribute->getName());
                 }
             } else {
                 $this->removed_attributes[] = $battribute;

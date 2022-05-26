@@ -31,8 +31,12 @@ function create_select_2_for_general_search(bare_select_control,b_multi,
                 icon = `<i class="bi bi-tag"></i>`;
             } else if (general.type === 'entry') {
                 icon = `<i class="bi bi-columns"></i>`;
+            } else if (general.type === 'node') {
+                icon = `<i class="bi bi-type"></i>`;
+                extra_class += " fst-italic ";
             }
-            let display = `<span class="d-inline p-1">${icon} <span class="${extra_class}">${general.title}</span></span>`;
+
+            let display = `<span class="d-inline p-1">${icon} <span class="${extra_class}">${general.title??general.words}</span></span>`;
             let tode = jQuery(display);
             if(!_.isEmpty(general.css_object)) {
                 tode.css(general.css_object);
@@ -92,6 +96,16 @@ function create_select_2_for_general_search(bare_select_control,b_multi,
                                 <span class="d-block ms-1">
                                     ${security} ${general.owning_project_result.title}
                                 </span>
+                            </span>
+                        </span>`);
+            }
+            case 'node': {
+
+
+                return jQuery(`<span class="d-inline">
+                            
+                            <span class="d-block">
+                                <span class="fw-bold d-inline me-1">From ${general.owning_entry_title}</span>
                             </span>
                         </span>`);
             }

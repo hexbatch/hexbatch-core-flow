@@ -36,7 +36,7 @@ class UserHelper extends BaseHelper {
    public function get_user_home_project(?string $user_guid = null) : ?IFlowProject {
 
         if (!$user_guid) {
-            $user_guid = $this->user->flow_user_guid;
+            $user_guid = $this->user->getFlowUserGuid();
         }
 
        if (!$user_guid) {throw new InvalidArgumentException("If not logged in, must provide a user guid to get the user home");}
@@ -56,7 +56,7 @@ class UserHelper extends BaseHelper {
                 $user_home_project->set_project_title(static::USER_HOME_TITLE);
                 $user_home_project->set_public(false);
                 $user_home_project->set_project_type(IFlowProject::FLOW_PROJECT_TYPE_USER_HOME);
-                $user_home_project->set_admin_user_id($target_user->flow_user_id);
+                $user_home_project->set_admin_user_id($target_user->getFlowUserId());
                 $user_home_project->save();
             }
 

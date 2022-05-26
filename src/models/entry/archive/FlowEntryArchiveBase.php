@@ -10,6 +10,7 @@ use app\models\entry\FlowEntryYaml;
 use app\models\entry\IFlowEntry;
 
 use JetBrains\PhpStorm\ArrayShape;
+use JsonException;
 use JsonSerializable;
 
 abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable, IFlowEntryArchive {
@@ -22,7 +23,7 @@ abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable
      * @param IFlowEntry $entry
      */
     public function __construct(IFlowEntry $entry){
-
+        parent::__construct();
         $this->entry = $entry;
 
     }
@@ -129,6 +130,7 @@ abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable
 
     /**
      * Writes the entry, and its children , to the archive
+     * @throws JsonException
      */
     public function write_archive() : void {
         FlowEntryYaml::write_yaml_entry($this->get_entry());
@@ -137,6 +139,7 @@ abstract class FlowEntryArchiveBase extends FlowBase implements JsonSerializable
 
     /**
      * sets any data found in archive into this, over-writing data in entry object
+     * @throws JsonException
      */
     public function read_archive() : void  {
 

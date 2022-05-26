@@ -3,8 +3,8 @@
 
 <div class="col-12 col-md-6 col-xl-4">
 
-    {%  if history.get_author().flow_user_name %}
-        <a href="{{  url_for('user_page', {user_name: history.author_guid})  }}">{{ history.get_author().flow_user_name  }}</a>
+    {%  if history.get_author().getFlowUserName() %}
+        <a href="{{  url_for('user_page', {user_name: history.author_guid})  }}">{{ history.get_author().getFlowUserName()  }}</a>
     {%  else %}
         {{  history.author_email }}
     {%  endif %}

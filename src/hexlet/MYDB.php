@@ -190,6 +190,7 @@ class MYDB
 
     /**
      *  notice that it will not close out the mysqli if this object is being used as a smart pointer
+     * @noinspection PhpMissingReturnTypeInspection
      */
     public function __destruct()
     {
@@ -207,6 +208,8 @@ class MYDB
         }
 
     }
+
+
 
     /**
      * Gets the underlying mysqli object

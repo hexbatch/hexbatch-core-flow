@@ -4,6 +4,7 @@ namespace app\models\project;
 use app\hexlet\JsonHelper;
 use app\models\base\SearchParamBase;
 use InvalidArgumentException;
+use JsonException;
 
 class FlowProjectSearchParams extends SearchParamBase {
 
@@ -47,9 +48,9 @@ class FlowProjectSearchParams extends SearchParamBase {
     }
 
 
-
     /**
      * @param mixed $project_title_guid_or_id
+     * @throws JsonException
      */
     public function addProjectTitleGuidOrId(mixed $project_title_guid_or_id): void
     {

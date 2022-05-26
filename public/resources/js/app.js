@@ -10,6 +10,22 @@ function will_do_nothing() {}
  */
 function will_echo_tag_array(what) {return what}
 
+
+/**
+ * @author will@hexbatch.com
+ * @param guid_string
+ * @return {string}
+ */
+function _filterGuidString(guid_string) {
+    if (!guid_string) {return '';}
+    let pattern = /^[\da-f]{32}$/i;
+    if (pattern.test(guid_string)) {
+        return guid_string;
+    }
+    console.warn("Bad guid",guid_string);
+    return '';
+}
+
 function flow_check_if_promise (obj) {
     const normal = !!obj && typeof obj === 'object' &&
         ((obj.constructor && obj.constructor.name === 'Promise') || typeof obj.then === 'function');
@@ -301,3 +317,5 @@ jQuery(function($) {
             );
     });
 });
+
+

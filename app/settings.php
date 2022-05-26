@@ -17,6 +17,11 @@ return function(Container $container) {
             $ret->$what_key = $what_thing;
         }
 
+        $what = Yaml::parseFile(HEXLET_BASE_PATH . '/config/gui.yaml',Yaml::PARSE_OBJECT_FOR_MAP);
+        foreach ($what as $what_key => $what_thing) {
+            $ret->$what_key = $what_thing;
+        }
+
         return $ret;
     });
 };

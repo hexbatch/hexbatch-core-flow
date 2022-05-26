@@ -12,6 +12,8 @@ use app\models\project\IFlowProject;
 use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
 use app\models\tag\FlowTagAttribute;
+use app\models\tag\IFlowAppliedTag;
+use app\models\tag\IFlowTagAttribute;
 use Exception;
 use RuntimeException;
 
@@ -29,6 +31,7 @@ class BriefUpdateFromYaml extends FlowBase {
      * @throws Exception
      */
     public function __construct( IFlowProject $project){
+        parent::__construct();
         $this->project = $project;
         $this->yaml_diff = new BriefDiffFromYaml($this->project,null,true);
 
@@ -40,13 +43,13 @@ class BriefUpdateFromYaml extends FlowBase {
         $guids_needed = [];
 
         /**
-         * @var FlowAppliedTag[] $saved_applied
+         * @var IFlowAppliedTag[] $saved_applied
          */
         $saved_applied = [];
 
 
         /**
-         * @var FlowTagAttribute[] $saved_attributes
+         * @var IFlowTagAttribute[] $saved_attributes
          */
         $saved_attributes = [];
 
@@ -122,8 +125,10 @@ class BriefUpdateFromYaml extends FlowBase {
             foreach ($saved_tags as $tag) {
                 $tag->fill_ids_from_guids($guid_map_to_ids);
                 if (count($tag->get_needed_guids_for_empty_ids())) {
+                    $err_name = $tag->getName();
+                    $err_guid = $tag->getGuid();
                     throw new RuntimeException(
-                        "[BriefUpdateFromYaml] Missing some filled guids for tag $tag->flow_tag_guid  $tag->flow_tag_name");
+                        "[BriefUpdateFromYaml] Missing some filled guids for tag $err_guid  $err_name");
                 }
             }
 
@@ -131,7 +136,7 @@ class BriefUpdateFromYaml extends FlowBase {
             //so save tags without the children, then fill in the guid map, can save again below if skipping this step
             foreach ($saved_tags as $tag) {
                 $tag->save();
-                $guid_map_to_ids[$tag->flow_tag_guid] = $tag->flow_tag_id;
+                $guid_map_to_ids[$tag->getGuid()] = $tag->getID();
             }
 
 
@@ -140,7 +145,7 @@ class BriefUpdateFromYaml extends FlowBase {
                 if (count($att->get_needed_guids_for_empty_ids())) {
                     throw new RuntimeException(
                         sprintf("[BriefUpdateFromYaml] Missing some filled guids for attribute %s %s ",
-                        $att->getFlowTagAttributeGuid() , $att->getTagAttributeName())
+                        $att->getGuid() , $att->getName())
                     );
                 }
             }
@@ -150,7 +155,7 @@ class BriefUpdateFromYaml extends FlowBase {
                 if (count($app->get_needed_guids_for_empty_ids())) {
                     throw new RuntimeException(
                         "[BriefUpdateFromYaml] Missing some filled guids for applied ".
-                        "$app->flow_applied_tag_guid ");
+                        $app->getGuid() );
                 }
             }
         }

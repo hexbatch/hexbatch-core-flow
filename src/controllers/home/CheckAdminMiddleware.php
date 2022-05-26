@@ -13,6 +13,7 @@ use Slim\Psr7\Response;
 
 class CheckAdminMiddleware extends FlowBase
 {
+
     /**
      *
      * @param RequestInterface $request PSR-7 request
@@ -27,7 +28,7 @@ class CheckAdminMiddleware extends FlowBase
     {
 
         $helper = AdminHelper::getInstance(static::$container);
-        if (!$helper->get_current_user()->flow_user_id) {
+        if (!$helper->get_current_user()->getFlowUserId()) {
             throw new HttpForbiddenException($request, "Need to be logged in as Administrator");
         }
 

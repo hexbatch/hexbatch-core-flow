@@ -6,7 +6,7 @@
 
 
     {% set clone_from_file_url = url_for('create_from_upload_ajax',{
-        user_name: user.flow_user_name
+        user_name: user.getFlowUserName()
     } )
     %}
 

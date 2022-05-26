@@ -3,6 +3,7 @@
 namespace app\models\multi;
 
 use app\hexlet\JsonHelper;
+use JsonException;
 use JsonSerializable;
 use stdClass;
 
@@ -20,9 +21,12 @@ class GeneralSearchResult implements JsonSerializable  {
     public ?string $title;
 
     public ?string $blurb;
+    public ?string $words;
     public bool $is_public;
     public ?string $owning_user_guid;
     public ?string $owning_project_guid;
+    public ?string $owning_entry_guid;
+    public ?string $owning_entry_title;
 
     public ?string $allowed_readers_json;
     public ?string $tag_used_by_json;
@@ -54,10 +58,14 @@ class GeneralSearchResult implements JsonSerializable  {
     public ?GeneralSearchResult $owning_user_result = null;
 
 
+    /**
+     * @throws JsonException
+     */
     function __construct($object=null){
         $this->id = null;
         $this->title = null;
         $this->blurb = null;
+        $this->words = null;
         $this->guid = null;
         $this->type = null;
         $this->created_at_ts = null;
@@ -65,6 +73,8 @@ class GeneralSearchResult implements JsonSerializable  {
         $this->is_public = false;
         $this->owning_user_guid = null;
         $this->owning_project_guid = null;
+        $this->owning_entry_guid = null;
+        $this->owning_entry_title = null;
         $this->allowed_readers_json = null;
         $this->tag_used_by_json = null;
         $this->css_json = null;
@@ -109,11 +119,13 @@ class GeneralSearchResult implements JsonSerializable  {
             "updated_at_ts" => $this->updated_at_ts,
             "title" => $this->title,
             "blurb" => $this->blurb,
+            "words" => $this->words,
             "type" => $this->type,
             "url" => $this->url,
             "is_public" => JsonHelper::var_to_boolean($this->is_public) ,
             "owning_user_guid" => $this->owning_user_guid ,
             "owning_project_guid" => $this->owning_project_guid ,
+            "owning_entry_guid" => $this->owning_entry_guid ,
             "allowed_readers" => $this->allowed_readers ,
             "tag_used_by" => $this->tag_used_by ,
             "css_object" => $this->css_object,
@@ -121,6 +133,7 @@ class GeneralSearchResult implements JsonSerializable  {
             "tag_used_by_results" => $this->tag_used_by_results ,
             "owning_user_result" => $this->owning_user_result ,
             "owning_project_result" => $this->owning_project_result ,
+            "owning_entry_title" => $this->owning_entry_title ,
         ];
     }
 

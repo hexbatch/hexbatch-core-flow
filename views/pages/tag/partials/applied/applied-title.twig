@@ -1,26 +1,32 @@
-{% if applied.tagged_flow_project_guid %}
-    {% if project.get_project_guid() == applied.tagged_flow_project_guid %}
+{% if applied.getXProjectGuid() %}
+    {% if project.get_project_guid() == applied.getXProjectGuid() %}
         <i class="bi bi-box flow-tag-applied-of-this " ></i>
-        {{ applied.tagged_title }}
+        {{ applied.getZTaggedTitle() }}
     {% else %}
         <i class="bi bi-box"></i>
-        {{ applied.tagged_title }}
+        {{ applied.getZTaggedTitle() }}
     {% endif %}
 
-{% elseif applied.tagged_flow_user_guid %}
+{% elseif applied.getXUserGuid() %}
 
-    {% if user.flow_user_guid == applied.tagged_flow_user_guid %}
+    {% if user.getFlowUserGuid() == applied.getXUserGuid() %}
         <i class="bi-person-circle flow-tag-applied-of-this " ></i>
-        {{ applied.tagged_title }}
+        {{ applied.getZTaggedTitle() }}
     {% else %}
         <i class="bi-person-circle"></i>
-        {{ applied.tagged_title }}
+        {{ applied.getZTaggedTitle() }}
     {% endif %}
 
-{% elseif applied.tagged_flow_entry_guid %}
+{% elseif applied.getXNodeGuid() %}
+    <i class="bi bi-type"></i>
+    {{ applied.getZTaggedTitle() }}
 
+{% elseif applied.getXPointerGuid() %}
+    <i class="bi bi-hand-index-thumb"></i>
+    {{ applied.getZTaggedTitle() }}
+
+{% elseif applied.getXEntryGuid() %}
     <i class="bi bi-columns"></i>
-
-        {{ applied.tagged_title }}
+    {{ applied.getZTaggedTitle() }}
 
 {% endif %}

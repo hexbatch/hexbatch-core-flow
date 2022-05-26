@@ -5,6 +5,7 @@ namespace app\models\standard;
 use app\hexlet\JsonHelper;
 use app\models\base\SearchParamBase;
 use InvalidArgumentException;
+use JsonException;
 
 class RawAttributeSearchParams  extends SearchParamBase {
 
@@ -69,6 +70,7 @@ class RawAttributeSearchParams  extends SearchParamBase {
 
     /**
      * @param mixed $tag_guid_thing
+     * @throws JsonException
      */
     public function addTagGuid(mixed $tag_guid_thing): void
     {
@@ -91,6 +93,7 @@ class RawAttributeSearchParams  extends SearchParamBase {
 
     /**
      * @param mixed $name_thing
+     * @throws JsonException
      */
     public function addAttributeName(mixed $name_thing): void
     {

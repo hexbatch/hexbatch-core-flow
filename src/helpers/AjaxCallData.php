@@ -6,9 +6,9 @@ use app\models\entry\FlowEntrySearchParams;
 use app\models\entry\IFlowEntry;
 use app\models\project\FlowProjectUser;
 use app\models\project\IFlowProject;
-use app\models\tag\FlowAppliedTag;
 use app\models\tag\FlowTag;
-use app\models\tag\FlowTagAttribute;
+use app\models\tag\IFlowAppliedTag;
+use app\models\tag\IFlowTagAttribute;
 use InvalidArgumentException;
 use stdClass;
 
@@ -68,14 +68,14 @@ class AjaxCallData {
 
 
     /**
-     * @var FlowTagAttribute|null $attribute
+     * @var IFlowTagAttribute|null $attribute
      */
-    public ?FlowTagAttribute $attribute = null;
+    public ?IFlowTagAttribute $attribute = null;
 
     /**
-     * @var FlowAppliedTag|null $applied
+     * @var IFlowAppliedTag|null $applied
      */
-    public ?FlowAppliedTag $applied = null;
+    public ?IFlowAppliedTag $applied = null;
 
     public ?string $permission_mode;
 
