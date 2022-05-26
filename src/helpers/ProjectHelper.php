@@ -66,7 +66,7 @@ class ProjectHelper extends BaseHelper {
     {
 
         try {
-            $project = $this->find_one($project_name,$user_name_or_guid,$permission,$this->user->flow_user_id);
+            $project = $this->find_one($project_name,$user_name_or_guid,$permission,$this->user->getFlowUserId());
         } catch (InvalidArgumentException ) {
             if ($request) {
                 throw new HttpNotFoundException($request,sprintf("Cannot Find Project %s",$project_name));
@@ -76,14 +76,14 @@ class ProjectHelper extends BaseHelper {
 
         }
 
-        if ($this->user->flow_user_id) {
+        if ($this->user->getFlowUserId()) {
             $user_permissions = FlowUser::find_users_by_project(true,
-                $project->get_project_guid(), null, true, $this->user->flow_user_guid);
+                $project->get_project_guid(), null, true, $this->user->getFlowUserGuid());
 
             if (empty($user_permissions)) {
                 throw new InvalidArgumentException("No permissions set for this");
             }
-            $permissions_array = $user_permissions[0]->get_permissions();
+            $permissions_array = $user_permissions[0]->getPermissions();
             if (empty($permissions_array)) {
                 throw new InvalidArgumentException("No permissions found, although in project");
             }
@@ -162,7 +162,7 @@ class ProjectHelper extends BaseHelper {
             $new_project = new FlowProject();
             $new_project->set_project_type(IFlowProject::FLOW_PROJECT_TYPE_TOP);
 
-            $new_project->set_admin_user_id(FlowUser::get_logged_in_user()->flow_user_id);
+            $new_project->set_admin_user_id(FlowUser::get_logged_in_user()->getFlowUserId());
 
             $new_project->set_project_title($args['flow_project_title']?? $origonal_project->get_project_title());
             $new_project->set_project_blurb($origonal_project->get_project_blurb());
@@ -189,8 +189,8 @@ class ProjectHelper extends BaseHelper {
                 $guid_map[$entry->get_guid()] = $new_entry->get_guid();
             }
 
-            if ($this->get_current_user()->flow_user_guid !== $origonal_project->get_admin_user()->flow_user_guid) {
-                $guid_map[$origonal_project->get_admin_user()->flow_user_guid] = $this->get_current_user()->flow_user_guid;
+            if ($this->get_current_user()->getFlowUserGuid() !== $origonal_project->get_admin_user()->getFlowUserGuid()) {
+                $guid_map[$origonal_project->get_admin_user()->getFlowUserGuid()] = $this->get_current_user()->getFlowUserGuid();
             }
 
 
@@ -310,14 +310,14 @@ class ProjectHelper extends BaseHelper {
             $params->setPageSize(SearchParamBase::UNLIMITED_RESULTS_PER_PAGE);
             $ret = FlowProjectSearch::find_projects($params);
 
-            if ($this->user->flow_user_id) {
+            if ($this->user->getFlowUserId()) {
                 foreach ($ret as $project) {
                     $user_permissions = FlowUser::find_users_by_project(true,
-                        $project->get_project_guid(), null, true, $this->user->flow_user_guid);
+                        $project->get_project_guid(), null, true, $this->user->getFlowUserGuid());
                     if (empty($user_permissions)) {
                         throw new InvalidArgumentException("No permissions set for this");
                     }
-                    $permissions_array = $user_permissions[0]->get_permissions();
+                    $permissions_array = $user_permissions[0]->getPermissions();
                     if (empty($permissions_array)) {
                         throw new InvalidArgumentException("No permissions found, although in project");
                     }

@@ -1,7 +1,7 @@
 <?php
 namespace app\controllers\user;
 
-use Delight\Auth\Auth;
+use app\models\user\IFlowUserAuth;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Slim\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
@@ -14,8 +14,8 @@ use Psr\Http\Server\RequestHandlerInterface ;
 
 class CheckLoggedInMiddleware
 {
-    protected  Auth $auth;
-    public function __construct (Auth $auth) {
+    protected  IFlowUserAuth $auth;
+    public function __construct (IFlowUserAuth $auth) {
         $this->auth = $auth;
     }
     /**

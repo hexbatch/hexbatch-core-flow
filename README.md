@@ -4,22 +4,23 @@ Sets up the organization and work flow for the core hexbatch library. Can be use
 The main use of this web app is to organize ideas, its useful for planning complex specifications
 
 ## Releases
-| Date              | Version | Name                                  |
-|-------------------|---------|---------------------------------------|
-| May 17, 2022      | 0.6.0   | Entries Upgraded                      |
-| May 4, 2022       | 0.5.3   | Upgrade to php 8.1.5                  |
-| May 3, 2022       | 0.5.2   | Git Revamp                            |
-| April 20, 2022    | 0.5.1   | Git Bit!                              |
-| April 13, 2022    | 0.5.0.1 | Standard views and Edits              |
-| March 30, 2022    | 0.5.0   | Standard Attributes are in the house! |
-| March 26, 2022    | 0.4.4   | Working with tag attributes           |
-| March 22, 2022    | 0.4.3   | Back into the workflow                |
-| March 15, 2022    | 0.4.2   | Searching Things                      |
-| October 31, 2021  | 0.4.1   | Entries First                         |
-| October 26, 2021  | 0.4.0   | Tags Oh My!                           |
-| September 2, 2021 | 0.3.0   | Import Export                         |
-| August 9, 2021    | 0.2.0   | Projects and Users Exist              |
-| July 4, 2021      | 0.1.0   | First Commit                          |
+| Date              | Version | Name                                       |
+|-------------------|---------|--------------------------------------------|
+| May 25, 2022      | 0.6.1   | 0.6.1 BB Code is now a first class citizen |
+| May 17, 2022      | 0.6.0   | Entries Upgraded                           |
+| May 4, 2022       | 0.5.3   | Upgrade to php 8.1.5                       |
+| May 3, 2022       | 0.5.2   | Git Revamp                                 |
+| April 20, 2022    | 0.5.1   | Git Bit!                                   |
+| April 13, 2022    | 0.5.0.1 | Standard views and Edits                   |
+| March 30, 2022    | 0.5.0   | Standard Attributes are in the house!      |
+| March 26, 2022    | 0.4.4   | Working with tag attributes                |
+| March 22, 2022    | 0.4.3   | Back into the workflow                     |
+| March 15, 2022    | 0.4.2   | Searching Things                           |
+| October 31, 2021  | 0.4.1   | Entries First                              |
+| October 26, 2021  | 0.4.0   | Tags Oh My!                                |
+| September 2, 2021 | 0.3.0   | Import Export                              |
+| August 9, 2021    | 0.2.0   | Projects and Users Exist                   |
+| July 4, 2021      | 0.1.0   | First Commit                               |
 
 ### See [Version History Page](versions.md)
 
@@ -194,6 +195,12 @@ https://github.com/hexbatch/SCEditor/tree/guids-as-optional-attributes-in-bbcode
 Any updates to the bbcode editor in the original version needs to be rebased on this branch, and the one file built again and tested
 
 Testing can be done by `npm run dev` ; both commands assume grunt is installed, see the readme in the original sceditor project
+
+### Jbb Code changes
+
+I made changes in the php bb parser and they are at https://github.com/hexbatch/jBBCode/tree/hex-batch-changes
+
+The library is updated in this project by use of putting the diffs as patches to composer when it updates
 
 ## Environmental Notes
 

@@ -4,7 +4,7 @@ namespace app\models\project;
 use app\models\project\setting_models\FlowProjectGitSettings;
 use app\models\standard\IFlowTagStandardAttribute;
 use app\models\tag\FlowTag;
-use app\models\user\FlowUser;
+use app\models\user\IFlowUser;
 
 
 interface IFlowProject {
@@ -73,11 +73,11 @@ interface IFlowProject {
     public function set_current_user_permissions(?FlowProjectUser $v);
 
     /**
-     * @return FlowUser[]
+     * @return IFlowUser[]
      */
     public function get_flow_project_users() : array;
 
-    public function get_admin_user(): ?FlowUser;
+    public function get_admin_user(): ?IFlowUser;
     public function get_owner_user_guid() : ?string;
 
     public function get_read_me_bb_code_with_paths(): string;

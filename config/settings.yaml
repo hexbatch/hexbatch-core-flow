@@ -22,7 +22,7 @@ git:
     - bitbucket.org
     - gitlab.com
 program:
-    version: 0.6.1-alpha
+    version: 0.6.1
     version_link: "https://github.com/hexbatch/hexbatch-core-flow/pull/6"
-    version_description_short: "No More Attribute Pointers"
+    version_description_short: "BB Code is now a first class citizen"
     timezone: 'America/Chicago'

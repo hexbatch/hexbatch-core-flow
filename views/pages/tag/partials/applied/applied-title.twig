@@ -9,7 +9,7 @@
 
 {% elseif applied.getXUserGuid() %}
 
-    {% if user.flow_user_guid == applied.getXUserGuid() %}
+    {% if user.getFlowUserGuid() == applied.getXUserGuid() %}
         <i class="bi-person-circle flow-tag-applied-of-this " ></i>
         {{ applied.getZTaggedTitle() }}
     {% else %}

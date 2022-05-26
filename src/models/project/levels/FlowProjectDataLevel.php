@@ -129,11 +129,11 @@ abstract class FlowProjectDataLevel extends FlowBase implements JsonSerializable
             if (empty($this->flow_project_title)) {
                 throw new InvalidArgumentException("Project Title cannot be empty");
             }
-            if (mb_strlen($this->flow_project_title) > static::MAX_SIZE_TITLE) {
+            if ($this->flow_project_title && mb_strlen($this->flow_project_title) > static::MAX_SIZE_TITLE) {
                 throw new InvalidArgumentException("Project Title cannot be more than ".static::MAX_SIZE_TITLE." characters");
             }
 
-            if (mb_strlen($this->flow_project_blurb) > static::MAX_SIZE_BLURB) {
+            if ($this->flow_project_blurb && mb_strlen($this->flow_project_blurb) > static::MAX_SIZE_BLURB) {
                 throw new InvalidArgumentException("Project Blurb cannot be more than ".static::MAX_SIZE_BLURB." characters");
             }
             if ($this->flow_project_blurb) {

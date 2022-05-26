@@ -68,6 +68,7 @@ use app\hexlet\JsonHelper;
 use app\hexlet\WillFunctions;
 use app\models\project\exceptions\FlowProjectGitException;
 use app\models\user\FlowUser;
+use app\models\user\IFlowUser;
 use Exception;
 
 class FlowGitHistory {
@@ -88,9 +89,9 @@ class FlowGitHistory {
     public ?string $commit_ts;
 
 
-    public ?FlowUser $author_object;
+    public ?IFlowUser $author_object;
 
-    public function get_author(): ?FlowUser
+    public function get_author(): ?IFlowUser
     {
         if (empty($this->author_object)) {
             $this->author_object = new FlowUser();
@@ -238,12 +239,12 @@ class FlowGitHistory {
         //get user info
         $users = FlowUser::get_basic_info_by_guid_array(array_keys($user_guid_hash));
         foreach ($users as $user) {
-            if (isset($user_guid_hash[$user->flow_user_guid])) {
+            if (isset($user_guid_hash[$user->getFlowUserGuid()])) {
 
                 /**
                  * @var FlowGitHistory $history
                  */
-                foreach ($user_guid_hash[$user->flow_user_guid] as $history) {
+                foreach ($user_guid_hash[$user->getFlowUserGuid()] as $history) {
                     $history->author_object = $user;
                 }
             }

@@ -16,6 +16,7 @@ use app\models\tag\FlowTagAttribute;
 use app\models\tag\FlowTagSearch;
 use app\models\tag\FlowTagSearchParams;
 use app\models\user\FlowUser;
+use app\models\user\IFlowUser;
 use Exception;
 use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
@@ -155,7 +156,7 @@ class TagPages extends BasePages
 
 
             $b_more = true;
-            if (count($matches) < FlowUser::DEFAULT_USER_PAGE_SIZE) {
+            if (count($matches) < IFlowUser::DEFAULT_USER_PAGE_SIZE) {
                 $b_more = false;
             }
 

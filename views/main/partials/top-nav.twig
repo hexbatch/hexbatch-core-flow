@@ -19,7 +19,7 @@
 
                     <div class="nav-item">
                         <a class="nav-link" aria-current="page" href="{{ url_for('all_projects') }}">
-                            {{  user.flow_user_id ? 'My Projects' : 'Public Projects' }}
+                            {{  user.getFlowUserId() ? 'My Projects' : 'Public Projects' }}
                         </a>
                     </div>
 
@@ -44,16 +44,16 @@
 
                 <div class="d-flex">
 
-                    {% if user.flow_user_id %}
+                    {% if user.getFlowUserId() %}
                         <a class="btn btn-outline-primary border border-light" role="button" href="{{ url_for('user_home') }}">
                             Profile
                         </a>
                     {% endif %}
 
 
-                    {% if user.flow_user_id %}
+                    {% if user.getFlowUserId() %}
                         <a  class="btn btn-outline-primary border border-light" role="button" href="{{ url_for('logout') }}">
-                            Logout {{ user.flow_user_name }}
+                            Logout {{ user.getFlowUserName() }}
                         </a>
                     {% else %}
                         <a  class="btn btn-outline-primary border border-light" role="button" href="{{ url_for('login') }}">

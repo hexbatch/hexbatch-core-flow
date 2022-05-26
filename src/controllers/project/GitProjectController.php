@@ -166,7 +166,7 @@ class GitProjectController extends BaseProjectController {
             $status_array = $project->get_git_status();
 
             $git_tags = UserHelper::get_user_helper()->
-            get_user_tags_of_standard($this->user->flow_user_guid,IFlowTagStandardAttribute::STD_ATTR_NAME_GIT);
+            get_user_tags_of_standard($this->user->getFlowUserGuid(),IFlowTagStandardAttribute::STD_ATTR_NAME_GIT);
 
 
 

@@ -77,7 +77,7 @@ class HomePages extends BasePages
                     $entry_project = $entry->get_project();
 
                     $route_to_go_to = $routeParser->urlFor('show_entry',[
-                        "user_name" => $entry_project->get_admin_user()->flow_user_guid,
+                        "user_name" => $entry_project->get_admin_user()->getFlowUserGuid(),
                         "project_name" => $entry_project->get_project_guid(),
                         "entry_name" => $entry->get_guid()
                     ]);
@@ -97,7 +97,7 @@ class HomePages extends BasePages
                     $entry_project = $entry->get_project();
 
                     $route_to_go_to = $routeParser->urlFor('show_entry',[
-                        "user_name" => $entry_project->get_admin_user()->flow_user_guid,
+                        "user_name" => $entry_project->get_admin_user()->getFlowUserGuid(),
                         "project_name" => $entry_project->get_project_guid(),
                         "entry_name" => $entry->get_guid()
                     ]);
@@ -122,7 +122,7 @@ class HomePages extends BasePages
 
                     $user_class = $project->get_admin_user();
                     $user_name = '';
-                    if ($user_class) { $user_name = $user_class->flow_user_guid; }
+                    if ($user_class) { $user_name = $user_class->getFlowUserGuid(); }
                     $project_name = $project->get_project_guid();
 
                     /**
@@ -182,7 +182,7 @@ class HomePages extends BasePages
 
         $search = new GeneralSearchParams();
         if ($this->auth->isLoggedIn()) {
-            $search->against_user_guid = $this->user->flow_user_guid;
+            $search->against_user_guid = $this->user->getFlowUserGuid();
         } else {
             $search->b_only_public = true;
         }

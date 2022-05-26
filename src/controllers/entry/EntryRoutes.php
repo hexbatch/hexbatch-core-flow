@@ -24,17 +24,17 @@ enum EntryRoutes: string
 
         return match ($route_name) {
             self::SHOW => $routeParser->urlFor('show_entry', [
-                'user_name' => $call->project->get_admin_user()->flow_user_name,
+                'user_name' => $call->project->get_admin_user()->getFlowUserName(),
                 'project_name' => $call->project->get_project_title(),
                 'entry_name' => $entry_to_use->get_guid()
             ]),
             self::UPDATE => $routeParser->urlFor('update_entry', [
-                'user_name' => $call->project->get_admin_user()->flow_user_name,
+                'user_name' => $call->project->get_admin_user()->getFlowUserName(),
                 'project_name' => $call->project->get_project_title(),
                 'entry_name' => $entry_to_use->get_guid()
             ]),
             self::LIST => $routeParser->urlFor('list_entries', [
-                'user_name' => $call->project->get_admin_user()->flow_user_name,
+                'user_name' => $call->project->get_admin_user()->getFlowUserName(),
                 'project_name' => $call->project->get_project_title()
             ])
         };

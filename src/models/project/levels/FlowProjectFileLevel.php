@@ -52,7 +52,7 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
     public function get_html() : ?string {
         if (!$this->flow_project_readme_html) {
             $path = $this->get_html_path();
-            if (is_readable($path)){
+            if ($path && is_readable($path)){
                 $this->flow_project_readme_html = file_get_contents($this->get_html_path());
                 if ($this->flow_project_readme_html === false) {
                     throw new RuntimeException("Project html path exists but could not read");
@@ -113,7 +113,12 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
     public function get_read_me_bb_code_with_paths(): string {
 
         $resource_url = $this->get_resource_url().'/';
-        $read_me_full = str_replace(IFlowProject::RESOURCE_PATH_STUB,$resource_url,$this->flow_project_readme_bb_code);
+        if ($this->flow_project_readme_bb_code) {
+            $read_me_full = str_replace(IFlowProject::RESOURCE_PATH_STUB,$resource_url,$this->flow_project_readme_bb_code);
+        } else {
+            return '';
+        }
+
 
         $file_url = $this->get_files_url().'/';
         $read_me_full = str_replace(IFlowProject::FILES_PATH_STUB,$file_url,$read_me_full);
@@ -216,7 +221,7 @@ abstract class FlowProjectFileLevel extends FlowProjectUserLevelLevel {
                 'timestamp' => time(),
                 'flow_project_guid' => $this->flow_project_guid,
                 'title' => $this->flow_project_title,
-                'author' => $this->get_admin_user()->flow_user_name,
+                'author' => $this->get_admin_user()->getFlowUserName(),
                 'human_date_time' => Carbon::now()->toIso8601String()
             ];
 

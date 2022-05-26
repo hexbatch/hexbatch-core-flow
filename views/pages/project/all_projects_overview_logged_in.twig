@@ -1,6 +1,6 @@
 <script src="{{ root_url }}/public/resources/js/project/project-list.js"></script>
 
-<h2> Projects Page for {{ user.flow_user_name}} </h2>
+<h2> Projects Page for {{ user.getFlowUserName()}} </h2>
 
 <div class="flow-project-new-button d-inline-block">
     <a  class="btn btn-outline-primary border border-light" role="button" href="{{ url_for('new_project') }}">
@@ -21,7 +21,7 @@
         <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2 col-xxl-2" >
                 <div class="d-inline">
                     <a href="{{ url_for('single_project_home',{
-                        user_name: project.get_admin_user().flow_user_name ,
+                        user_name: project.get_admin_user().getFlowUserName() ,
                         project_name: project.get_project_title()
                     } )
                     }}">
@@ -37,7 +37,7 @@
 
         <div class="col-12 col-sm-6 col-md-4 col-lg-5 col-xl-6 col-xxl-4">
             <a href="{{ url_for('single_project_home',{
-                user_name: project.get_admin_user().flow_user_name ,
+                user_name: project.get_admin_user().getFlowUserName() ,
                 project_name: project.get_project_title()
             } )
             }}">
@@ -92,7 +92,7 @@
                                 data-guid="{{ project.get_project_guid() }}"
                                 data-title="{{ project.get_project_title() }}"
                                 data-url="{{ url_for('destroy_project_ajax',{
-                                    user_name: project.get_admin_user().flow_user_name ,
+                                    user_name: project.get_admin_user().getFlowUserName() ,
                                     project_name: project.get_project_title()
                                 } )
                                 }}"

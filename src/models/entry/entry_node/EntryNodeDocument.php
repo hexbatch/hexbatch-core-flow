@@ -27,6 +27,7 @@ class EntryNodeDocument extends EntryNodeContainer implements  IFlowEntryNodeDoc
     public function get_entry() : IFlowEntry {return $this->entry;}
 
     public function __construct(IFlowEntry $entry){
+        parent::__construct();
         $this->entry = $entry;
     }
 

@@ -107,6 +107,7 @@ class FlowBase  {
 
     public static function check_valid_title($words) : bool  {
 
+        if (empty($words)) {return false;}
         if (!static::minimum_check_valid_name($words,static::MAX_SIZE_TITLE)) {return false;}
 
         $b_match = preg_match('/^[[:alnum:]\-]+$/u',$words,$matches);

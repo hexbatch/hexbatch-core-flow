@@ -17,7 +17,7 @@
                             <button type="button"
                                     class="btn btn-outline-primary py-0 flow-git-pull-now"
                                     data-url="{{ url_for('pull_project_ajax',{
-                                        user_name: project.get_admin_user().flow_user_name ,
+                                        user_name: project.get_admin_user().getFlowUserName() ,
                                         project_name: project.get_project_title()
                                     } )
                                     }}"
@@ -32,7 +32,7 @@
                     {% if project.get_current_user_permissions().can_read %}
                         <div class="" aria-current="page">
                             <a href="{{ url_for('download_project_export',{
-                                user_name: project.get_admin_user().flow_user_name ,
+                                user_name: project.get_admin_user().getFlowUserName() ,
                                 project_name: project.get_project_title()
                             } )
                             }}"
@@ -52,7 +52,7 @@
                             <button type="button"
                                     class="btn btn-outline-primary py-0 flow-git-push-now"
                                     data-url="{{ url_for('push_project_ajax',{
-                                        user_name: project.get_admin_user().flow_user_name ,
+                                        user_name: project.get_admin_user().getFlowUserName() ,
                                         project_name: project.get_project_title()
                                     } )
                                     }}"
