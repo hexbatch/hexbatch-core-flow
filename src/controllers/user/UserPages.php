@@ -248,12 +248,10 @@ class UserPages extends BasePages {
             }
         }
 
-
         $b_password_ok = false;
-        if (preg_match('/[\x00-\x1f\x7f\/:\\\\]/', $password) === 0) {
-            if ($confirm_password === $password) {
-                $b_password_ok = true;
-            }
+        if ($confirm_password === $password) {
+            if (UserHelper::get_user_helper()->check_valid_password($password))
+            $b_password_ok = true;
         }
 
 
@@ -264,7 +262,7 @@ class UserPages extends BasePages {
             }
 
             if (!$b_password_ok) {
-                throw new InvalidArgumentException('Password cannot have invisible characters;  and be between 4 and 29 characters ; and match the confirmation password');
+                throw new InvalidArgumentException('Password must match the confirmation password');
             }
 
             $b_match = FlowBase::check_valid_title($user_name);
@@ -301,8 +299,9 @@ class UserPages extends BasePages {
             });
 
             if (empty($error_message)) {
-                $b_found = $auth->get_base_details($userId, $base_email, $base_username);
-                if (!$b_found) {
+                $base_email = $auth->getUserEmail($userId);
+                $base_username = $auth->getUserName($userId);
+                if (!($base_email || $base_username)) {
                     throw new RuntimeException("Could not find just created user");
                 }
                 $flow_user = new FlowUser();

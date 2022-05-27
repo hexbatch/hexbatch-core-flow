@@ -12,6 +12,7 @@ use DI\NotFoundException;
 use InvalidArgumentException;
 use JsonException;
 use LogicException;
+use RuntimeException;
 
 class Utilities extends BaseHelper {
 
@@ -213,6 +214,15 @@ class Utilities extends BaseHelper {
         return $values_and_keys[$values[$smallest_delta_i]];
 
 
+    }
+
+    public static function throw_if_preg_error($preg_result) {
+        if ($preg_result === false) {
+            $error_preg = array_flip(array_filter(get_defined_constants(true)['pcre'], function ($value) {
+                return str_ends_with($value, '_ERROR');
+            }, ARRAY_FILTER_USE_KEY))[preg_last_error()];
+            throw new RuntimeException($error_preg);
+        }
     }
 
 }

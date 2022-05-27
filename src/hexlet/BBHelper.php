@@ -2,6 +2,7 @@
 
 namespace app\hexlet;
 
+use app\helpers\Utilities;
 use app\hexlet\hexlet_exceptions\BBException;
 use app\hexlet\hexlet_exceptions\JsonHelperException;
 use app\models\entry\entry_node\HexBatchBBCodeSet;
@@ -243,17 +244,12 @@ class BBHelper {
 
                 $hl = new Highlighter();
                 $preg_ret = preg_match_all('/#lang#(?P<language>.+)#lang#/', $my_text, $output_array);
-                if ($preg_ret === false) {
-                    $preg_error = array_flip(get_defined_constants(true)['pcre'])[preg_last_error()];
-                    throw new BBException("[html_from_bb_code] error finding language for code block".$preg_error);
-                }
+                Utilities::throw_if_preg_error($preg_ret);
+
                 if (array_key_exists('language',$output_array) && count($output_array['language'])) {
                     $lang = $output_array['language'][0];
                     $my_text = preg_replace('/#lang#(.+)#lang#/', '', $my_text);
-                    if ($my_text === null) {
-                        $preg_error = array_flip(get_defined_constants(true)['pcre'])[preg_last_error()];
-                        throw new BBException("[html_from_bb_code] error removing language from code block".$preg_error);
-                    }
+                    Utilities::throw_if_preg_error($my_text);
                     $my_text = trim($my_text);
                     try {
                         $highlighted = $hl->highlight($lang, $my_text);

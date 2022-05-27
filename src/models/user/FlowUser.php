@@ -1,17 +1,25 @@
 <?php /** @noinspection PhpInternalEntityUsedInspection */
 
 namespace app\models\user;
+use app\helpers\UserHelper;
 use app\models\base\FlowBase;
 use app\models\project\FlowProjectUser;
 
 use app\models\user\auth\AuthError;
+use app\models\user\auth\AuthException;
+use app\models\user\auth\EmailNotVerifiedException;
+use app\models\user\auth\InvalidEmailException;
+use app\models\user\auth\InvalidPasswordException;
+use app\models\user\auth\NotLoggedInException;
+use app\models\user\auth\TooManyRequestsException;
+use app\models\user\auth\UserAlreadyExistsException;
+use app\models\user\bridge\FlowUserAuthDelightBridge;
 use Exception;
 use InvalidArgumentException;
 
 use JetBrains\PhpStorm\ArrayShape;
 use JsonSerializable;
 use PDO;
-use RuntimeException;
 
 class FlowUser extends FlowBase implements JsonSerializable, IFlowUser
 {
@@ -225,14 +233,19 @@ class FlowUser extends FlowBase implements JsonSerializable, IFlowUser
         ]);
     }
 
+
+
     /**
      * @param string $old_password
      * @param string $new_password
      * @return void
-     * @throws Exception
+     * @throws AuthError|AuthException
 
      */
     public function set_password(string $old_password, string $new_password) : void {
+
+       UserHelper::get_user_helper()->check_valid_password($new_password);
+
         try {
             static::get_user_auth()->changePassword($old_password,$new_password);
             return ;
@@ -253,12 +266,8 @@ class FlowUser extends FlowBase implements JsonSerializable, IFlowUser
 
     /**
      * @param bool $b_do_transaction
-     * @throws EmailNotVerifiedException
-     * @throws InvalidEmailException
-     * @throws NotLoggedInException
-     * @throws TooManyRequestsException
-     * @throws UserAlreadyExistsException
      * @throws AuthError
+     * @throws AuthException
      */
     public function save(bool $b_do_transaction = true) {
         $db = null;
@@ -277,25 +286,31 @@ class FlowUser extends FlowBase implements JsonSerializable, IFlowUser
 
 
                 try {
-                    if ($this->old_email !== $this->flow_user_email) {
+                    if (
+                        $this->old_email !== $this->flow_user_email ||
+                        static::get_user_auth()->getUserEmail($this->base_user_id) !== $this->flow_user_email
+                    ) {
                         static::get_user_auth()->changeEmail($this->flow_user_email, function () {
                             static::get_logger()->notice("User email changed from $this->old_email to $this->flow_user_email");
                         });
                     }
                 } catch (TooManyRequestsException ) {
-                    throw new RuntimeException("Cannot save email, too many requests at once");
+                    throw new TooManyRequestsException("Cannot save email, too many requests at once");
                 } catch (InvalidEmailException $too) {
-                    throw new RuntimeException("Cannot save email, it is invalid ". $too->getMessage());
+                    throw new InvalidEmailException("Cannot save email, it is invalid ". $too->getMessage());
                 } catch (UserAlreadyExistsException $too) {
-                    throw new RuntimeException("Cannot save email, someone is using it". $too->getMessage());
+                    throw new UserAlreadyExistsException("Cannot save email, someone is using it". $too->getMessage());
                 } catch (EmailNotVerifiedException $too) {
-                    throw new RuntimeException("Cannot save email, email not verified". $too->getMessage());
+                    throw new EmailNotVerifiedException("Cannot save email, email not verified". $too->getMessage());
                 } catch (NotLoggedInException $too) {
-                    throw new RuntimeException("Cannot save email, not logged in with subsystem". $too->getMessage());
+                    throw new NotLoggedInException("Cannot save email, not logged in with subsystem". $too->getMessage());
                 }
 
 
-                if ($this->old_username !== $this->flow_user_name) {
+                if (
+                    $this->old_username !== $this->flow_user_name ||
+                    static::get_user_auth()->getUserName($this->base_user_id) !== $this->flow_user_email
+                ) {
                     static::get_user_auth()->changeUsername($this->flow_user_name,function () {
                         static::get_logger()->notice("User email changed from $this->old_email to $this->flow_user_email");
                     });
