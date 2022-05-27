@@ -18,6 +18,7 @@
         "ext-mysqli": "*",
         "ext-zip": "*",
         "ext-fileinfo": "*",
+        "ext-luasandbox": "*",
         "slim/slim": "4.*",
         "slim/psr7": "1.*",
         "php-di/slim-bridge": "^3.1",
@@ -36,7 +37,8 @@
         "bluem/tree": "^3.1",
         "malkusch/lock": "^2.2",
         "nesbot/carbon": "^2.54",
-        "cweagans/composer-patches": "^1.7"
+        "cweagans/composer-patches": "^1.7",
+
     },
     "autoload": {
         "psr-4": {"app\\": "src/"}

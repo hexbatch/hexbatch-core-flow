@@ -23,6 +23,6 @@ git:
     - gitlab.com
 program:
     version: 0.6.2-alpha
-    version_link: "https://github.com/hexbatch/hexbatch-core-flow/pull/6"
-    version_description_short: "BB Code is now a first class citizen"
+    version_link: "https://github.com/hexbatch/hexbatch-core-flow/pull/8"
+    version_description_short: "Node Selections"
     timezone: 'America/Chicago'
