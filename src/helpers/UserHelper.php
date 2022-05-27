@@ -7,6 +7,8 @@ use app\models\project\FlowProjectSearch;
 use app\models\project\FlowProjectSearchParams;
 use app\models\project\IFlowProject;
 use app\models\standard\IFlowTagStandardAttribute;
+use app\models\user\auth\AuthException;
+use app\models\user\auth\InvalidPasswordException;
 use app\models\user\FlowUser;
 use DI\DependencyException;
 use DI\NotFoundException;
@@ -97,5 +99,23 @@ class UserHelper extends BaseHelper {
             }
         }
         return $dapper_tags;
+    }
+
+    /**
+
+     * @param string $new_password
+     * @return bool
+     * @throws AuthException
+
+     */
+    public function check_valid_password( string $new_password) : bool
+    {
+
+        $preg_return = preg_match('/[\x00-\x1f\x7f\/:\\\\]/', $new_password);
+        Utilities::throw_if_preg_error($preg_return);
+        if ($preg_return !== 0) {
+            throw new InvalidPasswordException("Password cannot have invisible characters;  and be between 4 and 29 characters ;");
+        }
+        return true;
     }
 }

@@ -1,8 +1,10 @@
 <?php /** @noinspection PhpInternalEntityUsedInspection */
 
-namespace app\models\user;
+namespace app\models\user\bridge;
 
 use app\models\base\FlowBase;
+use app\models\user\auth\UserNotFoundException;
+use app\models\user\IFlowUserAuth;
 use Delight\Auth\Auth;
 
 use Delight\Auth\UserManager;
@@ -259,7 +261,7 @@ class FlowUserAuthDelightBridge extends FlowBase implements IFlowUserAuth {
 
     }
 
-    public function get_base_details(int $base_user_id,&$base_email, &$base_username) :?int {
+    protected function get_base_details(int $base_user_id,&$base_email, &$base_username) :?int {
         $db = static::get_connection();
         $sql = "SELECT u.email, u.username FROM users u WHERE u.id = ?";
         $what = $db->safeQuery($sql, [(int)$base_user_id], PDO::FETCH_OBJ);
@@ -267,7 +269,37 @@ class FlowUserAuthDelightBridge extends FlowBase implements IFlowUserAuth {
             return null;
         }
         $base_email = $what[0]->email;
+        if (empty($base_email)) { $base_email = null; }
         $base_username = $what[0]->username;
+        if (empty($base_username)) {$base_username = null;}
         return (int)$base_user_id;
+    }
+
+    /**
+     * @param int $base_user_id
+     * @return string|null
+     * @throws UserNotFoundException
+     */
+    public function getUserName(int $base_user_id) : ?string  {
+        if (!$base_user_id) {return null;}
+        $exists = $this->get_base_details($base_user_id,$email,$user_name);
+        if (!$exists) {
+            throw new UserNotFoundException("[getUserName] not found with base id of ". $base_user_id);
+        }
+        return $user_name;
+    }
+
+    /**
+     * @param int $base_user_id
+     * @return string|null
+     * @throws UserNotFoundException
+     */
+    public function getUserEmail(int $base_user_id) : ?string  {
+        if (!$base_user_id) {return null;}
+        $exists =$this->get_base_details($base_user_id,$email,$user_name);
+        if (!$exists) {
+            throw new UserNotFoundException("[getUserEmail] not found with base id of ". $base_user_id);
+        }
+        return $email;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace app\models\base;
 
+use app\helpers\Utilities;
 use app\hexlet\WillFunctions;
 use DI\Container;
 use Exception;
@@ -112,12 +113,7 @@ class FlowBase  {
 
         $b_match = preg_match('/^[[:alnum:]\-]+$/u',$words,$matches);
         WillFunctions::will_do_nothing($matches);
-        if ($b_match === false) {
-            $error_preg = array_flip(array_filter(get_defined_constants(true)['pcre'], function ($value) {
-                return str_ends_with($value, '_ERROR');
-            }, ARRAY_FILTER_USE_KEY))[preg_last_error()];
-            throw new RuntimeException($error_preg);
-        }
+        Utilities::throw_if_preg_error($b_match);
         return (bool)$b_match;
 
     }

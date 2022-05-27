@@ -14,6 +14,7 @@ use app\models\user\auth\TokenExpiredException;
 use app\models\user\auth\TooManyRequestsException;
 use app\models\user\auth\UnknownUsernameException;
 use app\models\user\auth\UserAlreadyExistsException;
+use app\models\user\auth\UserNotFoundException;
 
 interface IFlowUserAuth
 {
@@ -179,8 +180,19 @@ interface IFlowUserAuth
     public function getUserId() : ?int ;
 
 
+    /**
+     * @param int $base_user_id
+     * @return string|null
+     * @throws UserNotFoundException
+     */
+    public function getUserName(int $base_user_id) : ?string ;
 
-    public  function get_base_details(int $base_user_id,&$base_email, &$base_username) :?int;
+    /**
+     * @param int $base_user_id
+     * @return string|null
+     * @throws UserNotFoundException
+     */
+    public function getUserEmail(int $base_user_id) : ?string ;
 
 
 }
