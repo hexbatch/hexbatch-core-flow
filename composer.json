@@ -1,6 +1,6 @@
 {
-    "name": "hexbatch/core",
-    "description": "Website for organizing the ideas, and code for the core",
+    "name": "hexbatch/hexflow",
+    "description": "Website for organizing the ideas, and code",
     "version": "0.6.1",
     "type": "project",
     "license": "MIT",

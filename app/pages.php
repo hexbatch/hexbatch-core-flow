@@ -7,6 +7,7 @@ use app\controllers\entry\EntryNodes;
 use app\controllers\entry\EntryPages;
 use app\controllers\home\AdminPages;
 use app\controllers\home\HomePages;
+use app\controllers\home\LuaPages;
 use app\controllers\project\GitProjectController;
 use app\controllers\project\PageProjectController;
 use app\controllers\project\ResourceProjectController;
@@ -15,6 +16,7 @@ use app\controllers\tag\TagPages;
 use app\controllers\user\UserPages;
 use app\helpers\AdminHelper;
 use app\helpers\EntryHelper;
+use app\helpers\LuaHelper;
 use app\helpers\ProjectHelper;
 use app\helpers\StandardHelper;
 use app\helpers\TagHelper;
@@ -74,6 +76,10 @@ return function (App $app) {
         return new EntryNodes($container->get('auth'),$container->get(LoggerInterface::class),$container);
     });
 
+    $container->set('luaPages', function() use ($app, $container) {
+        return new LuaPages($container->get('auth'),$container->get(LoggerInterface::class),$container);
+    });
+
     $container->set('entryHelper', function() use ($app, $container) {
         return new EntryHelper($container->get('auth'),$container->get(LoggerInterface::class),$container);
     });
@@ -100,6 +106,10 @@ return function (App $app) {
 
     $container->set('tagHelper', function() use ($app, $container) {
         return new TagHelper($container->get('auth'),$container->get(LoggerInterface::class),$container);
+    });
+
+    $container->set('luaHelper', function() use ($app, $container) {
+        return new LuaHelper($container->get('auth'),$container->get(LoggerInterface::class),$container);
     });
 
 };

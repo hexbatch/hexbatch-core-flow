@@ -1,4 +1,4 @@
-# hexbatch-core-flow
+# Hex Flow
 Sets up the organization and work flow for the core hexbatch library. Can be used for other things too!
 
 The main use of this web app is to organize ideas, its useful for planning complex specifications

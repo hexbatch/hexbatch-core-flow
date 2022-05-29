@@ -35,7 +35,8 @@ class BaseHelper extends BaseConnection {
      * @return AjaxCallData
      * @throws Exception
      */
-    public function validate_ajax_call(AjaxCallData           $options, ServerRequestInterface $request,
+    public function validate_ajax_call(AjaxCallData           $options,
+                                       ServerRequestInterface $request,
                                        ?string                $route_name = null,
                                        ?string                $user_name = null,
                                        ?string                $project_name = null ,

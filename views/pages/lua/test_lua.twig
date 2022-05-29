@@ -1,0 +1,105 @@
+<script>
+    const TEST_LUA_CODE_URL = "{{url_for('test_lua_code_no_project')}}";
+</script>
+
+<script src="{{ root_url }}/public/resources/js/lua/hexflow_lua.js"></script>
+
+<div class="container container-sm container-md container-lg container-xl container-xxl">
+    <div class="card col-12">
+        <div class="card-header">
+            <h4>Lua Test Bed</h4>
+        </div>
+        <div class="card-body">
+            <label for="hexflow-code-test-lua">Code</label>
+            <textarea
+                    id="hexflow-code-test-lua"
+                    class="form-control h-50"
+                    placeholder="Type in Lua code"
+                    autocomplete="off"
+                    spellcheck="false"
+            ></textarea>
+        </div> <!--  card-body -->
+
+        <div class="card-footer">
+            <button id="hexflow-run-test-lua" class="btn btn-success">
+                Run
+            </button>
+        </div>
+    </div> <!--  card -->
+    <div class="card  col-12 d-none" id="hexflow-test-results">
+        <div class="card-body">
+            <pre class="hexflow-test-problem-output"></pre>
+        </div> <!--  card-body -->
+    </div>
+
+</div> <!--  container  -->
+
+<script>
+    jQuery(function($){
+        $(`button#hexflow-run-test-lua`).on('click',function() {
+           let code = $(`input#hexflow-code-test-lua`).val();
+
+           let result_panel = $(`hexflow-test-results`);
+           let output = result_panel.find(`.hexflow-test-problem-output`);
+           output.html('');
+
+           result_panel.addClass('d-none').removeClass('text-bg-info text-bg-warning text-bg-danger')
+
+            function prepare_result_to_string(result) {
+
+                let a_string;
+                let result_used = result;
+                if (_.isString(result)) {
+                    try {
+                        result_used = JSON.parse(result);
+                    } catch (error) {
+                        result_used = result
+                    }
+                    result_used = result;
+                }
+                else {
+                    result_used = result;
+                }
+
+                if (_.isString(result_used)) {
+                    a_string = result_used;
+                } else {
+                    try {
+                        a_string = JSON.stringify(result_used,null,2);
+                    } catch (error) {
+                        a_string = result_used
+                    }
+                }
+                return a_string;
+            }
+            /**
+             * @param {FlowBasicLuaResponse} ret
+             */
+           function on_normal(ret) {
+                result_panel.removeClass('d-none').addClass('text-bg-info');
+                let a_string = prepare_result_to_string(ret.result);
+                output.html(a_string);
+           }
+
+            /**
+             * @param {FlowBasicLuaResponse} ret
+             */
+            function on_problem(ret) {
+                result_panel.removeClass('d-none').addClass('text-bg-warning');
+                let a_string = prepare_result_to_string(ret.result);
+                output.html(a_string);
+            }
+
+            /**
+             * @param {FlowBasicLuaResponse} ret
+             */
+            function on_error(ret) {
+                result_panel.removeClass('d-none').addClass('text-bg-danger');
+                let a_string = prepare_result_to_string(ret.result);
+                output.html(a_string);
+            }
+
+            do_lua_action(TEST_LUA_CODE_URL,code,on_normal,on_problem,on_error)
+        });
+    });
+</script>

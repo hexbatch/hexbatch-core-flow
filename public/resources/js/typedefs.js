@@ -423,6 +423,22 @@
  */
 
 
+/**
+ *
+ * @typedef {FlowBasicResponse} FlowBasicLuaResponse
+ * @property {number} code
+ * @property {*} result
+ */
+
+/**
+ *
+ * @callback FlowBasicLuaResponseCallback
+ * @param {FlowBasicLuaResponse} params
+ */
+
+
+
+
 
 
 
