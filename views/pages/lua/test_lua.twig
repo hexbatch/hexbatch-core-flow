@@ -9,11 +9,17 @@
         <div class="card-header">
             <h4>Lua Test Bed</h4>
         </div>
-        <div class="card-body">
-            <label for="hexflow-code-test-lua">Code</label>
+        <div class="card-title p-1">
+            <label for="hexflow-code-test-lua" class="ms-1 me-2">Code and name</label>
+            <input type="text" class="form-control w-50 d-inline-block" id="hexflow-code-test-name"
+                   value="" placeholder="Text Name" title="Text Name">
+        </div>
+        <div class="card-body  " >
+
             <textarea
                     id="hexflow-code-test-lua"
-                    class="form-control h-50"
+                    class="form-control"
+                    style="min-height: 50vh;"
                     placeholder="Type in Lua code"
                     autocomplete="off"
                     spellcheck="false"
@@ -37,9 +43,10 @@
 <script>
     jQuery(function($){
         $(`button#hexflow-run-test-lua`).on('click',function() {
-           let code = $(`input#hexflow-code-test-lua`).val();
+           let code = $(`textarea#hexflow-code-test-lua`).val();
+           let code_name = $(`input#hexflow-code-test-name`).val();
 
-           let result_panel = $(`hexflow-test-results`);
+           let result_panel = $(`#hexflow-test-results`);
            let output = result_panel.find(`.hexflow-test-problem-output`);
            output.html('');
 
@@ -99,7 +106,7 @@
                 output.html(a_string);
             }
 
-            do_lua_action(TEST_LUA_CODE_URL,code,on_normal,on_problem,on_error)
+            do_lua_action(TEST_LUA_CODE_URL,code,code_name,on_normal,on_problem,on_error)
         });
     });
 </script>

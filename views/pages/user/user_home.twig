@@ -1,7 +1,16 @@
 
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item">{{ user.getFlowUserName() }} Home</li>
+        <li class="breadcrumb-item">
+            <span class="text-success fw-bold">
+                {{ user.getFlowUserName() }}
+            </span>
+
+            <span>
+                <i class="bi bi-house-door-fill"></i>
+                Home
+            </span>
+        </li>
     </ol>
 </nav>
 
@@ -38,7 +47,34 @@
                     </div>
 
                 </div>
-            </div>
+            </div> <!-- card -->
+
+            <div class="card  mt-4" >
+
+                <div class="card-header">
+                    <h3>Links</h3>
+                </div>
+
+                <div class="card-body">
+
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            <a href="{{ url_for('test_bed') }}" class="text-decoration-none">
+                                <img style="width: 2em; height: auto; margin-right: 0.5em"
+                                     src="{{ root_url }}/public/resources/images/lua.svg" alt="Lua">
+                                <span class="fw-bold ">
+                                    Lua Test Bed
+                                </span>
+                            </a>
+                        </li>
+
+
+
+                    </ul>
+
+                </div>
+            </div> <!-- card -->
+
         </div>
     </div><!-- /.col -->
 
