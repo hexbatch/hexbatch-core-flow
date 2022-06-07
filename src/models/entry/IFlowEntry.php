@@ -2,7 +2,7 @@
 
 namespace app\models\entry;
 
-use app\models\entry\entry_node\EntryNodeDocument;
+use app\models\entry_node\EntryNodeDocument;
 use app\models\entry\public_json\IFlowEntryJson;
 use app\models\project\IFlowProject;
 use Exception;

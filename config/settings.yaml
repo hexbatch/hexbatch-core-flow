@@ -6,6 +6,11 @@ logger:
   name: slim-app
   level: debug
   file_name: app.log
+lau:
+  logger:
+    name: lau
+    level: debug
+    file_name: lau.log
 session:
   session_name: hexbatch_flow_session
   flash_key : hexbatch_flow_flash

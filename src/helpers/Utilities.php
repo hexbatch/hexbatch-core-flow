@@ -103,7 +103,7 @@ class Utilities extends BaseHelper {
     /**
      * @throws JsonException
      */
-    public static function convert_to_object($what) : null|array|object {
+     protected static function convert_to_type($what,$b_to_array = false ) : null|array|object {
         if (is_null($what)) { return null;}
         if (is_array($what) || is_object($what)) {
             $json = JsonHelper::toString($what);
@@ -113,11 +113,31 @@ class Utilities extends BaseHelper {
             throw new InvalidArgumentException(
                 "[convert_to_object] This cannot be converted to an object: ".print_r($what,true));
         }
-        $converted =  JsonHelper::fromString($json,true,false);
+        $converted =  JsonHelper::fromString($json,true,$b_to_array);
         if (! (is_object($converted) || is_array($converted) || is_null($converted))) {
             throw new JsonHelperException("[convert_to_object] not an array, object or null ! ". $json);
         }
         return $converted;
+    }
+
+    /**
+     * @throws JsonException
+     */
+    public static function convert_to_object($what) : null|array|object {
+       return static::convert_to_type($what);
+    }
+
+    /**
+     * @throws JsonException
+     */
+    public static function convert_to_array($what) : array {
+        if ($what === null) {return [];}
+        if (is_array($what) || is_object($what)) {
+            $what =  static::convert_to_type($what,true);
+        }
+
+        if (is_array($what)) {return $what;}
+        return [$what];
     }
 
     /**

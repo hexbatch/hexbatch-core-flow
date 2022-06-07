@@ -2,7 +2,7 @@
 namespace app\controllers\entry;
 
 use app\hexlet\BBHelper;
-use app\models\entry\entry_node\EntryNodeDocument;
+use app\models\entry_node\EntryNodeDocument;
 use app\models\entry\FlowEntrySearch;
 use app\models\entry\FlowEntrySearchParams;
 use app\models\entry\IFlowEntry;

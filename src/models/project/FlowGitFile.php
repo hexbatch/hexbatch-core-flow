@@ -4,7 +4,7 @@ namespace app\models\project;
 
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\IFlowEntryArchive;
-use app\models\entry\entry_node\IFlowEntryNodeDocument;
+use app\models\entry_node\IFlowEntryNodeDocument;
 use app\models\entry\FlowEntryYaml;
 use Exception;
 

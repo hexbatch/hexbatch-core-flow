@@ -1,6 +1,6 @@
 <?php
 
-namespace app\models\entry\entry_node;
+namespace app\models\entry_node;
 
 
 use app\helpers\Utilities;
@@ -90,7 +90,7 @@ class EntryNodeDocument extends EntryNodeContainer implements  IFlowEntryNodeDoc
         }
         $stuff_yaml = Yaml::dump(Utilities::deep_copy($public_data,true));
 
-        $yaml_path = $this->entry->get_entry_folder(). DIRECTORY_SEPARATOR . IFlowEntryNodeDocument::ENTRY_NODE_FILE_NAME;
+        $yaml_path = $this->entry->get_entry_folder() . DIRECTORY_SEPARATOR . IFlowEntryNodeDocument::ENTRY_NODE_FILE_NAME;
         $b_ok = file_put_contents($yaml_path,$stuff_yaml);
         if ($b_ok === false) {throw new RuntimeException("[save_as_yaml] Could not write to $yaml_path");}
     }

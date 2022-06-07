@@ -1,5 +1,5 @@
 <?php
-namespace app\controllers\home;
+namespace app\controllers\entry;
 
 use app\controllers\base\BasePages;
 use app\helpers\AjaxCallData;
@@ -56,7 +56,6 @@ class LuaPages extends BasePages
     public function test_lua_no_project( ServerRequestInterface $request,ResponseInterface $response) :ResponseInterface {
 
         $call = null;
-        $lua_return = null;
 
 
         try {
@@ -88,9 +87,13 @@ class LuaPages extends BasePages
             if ($code_name) {
                 $_SESSION[static::SESSION_NAME_TEST_CODES][$code_name] = $lua_return;
             }
-
-            $data = ['success'=>true,'message'=>'','result'=>$lua_return,
-                        'code'=>0,'token'=> $call->get_token_with_project_hash($call?->project)];
+            $data = [   'success'=>true,
+                        'message'=>'',
+                        'result'=>$lua_return,
+                        'logs' => $this->getHelper()->get_lua_log_records(),
+                        'code'=>0,
+                        'token'=> $call->get_token_with_project_hash($call?->project)
+            ];
             $payload = JsonHelper::toString($data);
 
             $response->getBody()->write($payload);
@@ -116,7 +119,13 @@ class LuaPages extends BasePages
                 'success'=>$b_success,
                 'message'=>$e->getMessage(),
                 'code'=>$code,
-                'result'=>$lua_return,
+                'logs' => $this->getHelper()->get_lua_log_records(),
+                'error'=>[
+                    'type' => 'Lua Script Error',
+                    'title' => '',
+                    'message'=>$e->getMessage(),
+                    'code'=>$e->getCode(),
+                ],
                 'token'=> $call->get_token_with_project_hash($call?->project)
             ];
 

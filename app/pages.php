@@ -7,7 +7,7 @@ use app\controllers\entry\EntryNodes;
 use app\controllers\entry\EntryPages;
 use app\controllers\home\AdminPages;
 use app\controllers\home\HomePages;
-use app\controllers\home\LuaPages;
+use app\controllers\entry\LuaPages;
 use app\controllers\project\GitProjectController;
 use app\controllers\project\PageProjectController;
 use app\controllers\project\ResourceProjectController;

@@ -9,7 +9,7 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Processor\UidProcessor;
 use Psr\Container\ContainerInterface;
 
-const HEXBATCH_LOG_ROOT = 'storage/logs';
+
 return function (Container $container) {
     $container->set(LoggerInterface::class, function (ContainerInterface $container) {
         $settings = $container->get('settings')->logger;

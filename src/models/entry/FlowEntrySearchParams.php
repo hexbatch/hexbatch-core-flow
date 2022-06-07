@@ -4,7 +4,7 @@ namespace app\models\entry;
 
 use app\hexlet\JsonHelper;
 use app\models\base\SearchParamBase;
-use app\models\entry\entry_node\IFlowEntryNode;
+use app\models\entry_node\IFlowEntryNode;
 use JsonException;
 
 class FlowEntrySearchParams extends SearchParamBase {

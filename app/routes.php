@@ -62,10 +62,10 @@ return function (App $app) {
 
         $group->group('/lua', function (RouteCollectorProxy $group) {
 
-            /** @uses \app\controllers\home\LuaPages::test_bed() */
+            /** @uses \app\controllers\entry\LuaPages::test_bed() */
             $group->get('/test_bed_page', ['luaPages', 'test_bed'])->setName('test_bed');
 
-            /** @uses \app\controllers\home\LuaPages::test_lua_no_project() */
+            /** @uses \app\controllers\entry\LuaPages::test_lua_no_project() */
             $group->post('/test_lua_no_project', ['luaPages', 'test_lua_no_project'])->setName('test_lua_code_no_project');
         })->add('checkLoggedInMiddleware');
 

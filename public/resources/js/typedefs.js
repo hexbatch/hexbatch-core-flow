@@ -425,9 +425,30 @@
 
 /**
  *
+ * @typedef {Object} LuaLog
+ * @property {string} level
+ * @property {string} pre
+ * @property {*} data
+ *
+ */
+
+/**
+ *
+ * @typedef {Object} LuaServerError
+ * @property {string} type
+ * @property {string} title
+ * @property {string} message
+ * @property {boolean} success
+ *
+ */
+
+/**
+ *
  * @typedef {FlowBasicResponse} FlowBasicLuaResponse
  * @property {number} code
+ * @property {LuaLog[]} logs
  * @property {*} result
+ * @property {LuaServerError} [error]
  */
 
 /**

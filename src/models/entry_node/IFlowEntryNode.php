@@ -1,6 +1,6 @@
 <?php
 
-namespace app\models\entry\entry_node;
+namespace app\models\entry_node;
 
 use app\models\tag\FlowTag;
 use app\models\tag\IFlowAppliedTag;

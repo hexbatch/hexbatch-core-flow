@@ -8,7 +8,7 @@ use app\helpers\Utilities;
 use app\hexlet\BBHelper;
 use app\hexlet\WillFunctions;
 use app\models\entry\archive\IFlowEntryArchive;
-use app\models\entry\entry_node\EntryNodeDocument;
+use app\models\entry_node\EntryNodeDocument;
 use app\models\entry\FlowEntryYaml;
 use app\models\entry\IFlowEntry;
 use app\models\entry\IFlowEntryReadBasicProperties;

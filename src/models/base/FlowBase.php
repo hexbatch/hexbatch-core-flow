@@ -54,6 +54,16 @@ class FlowBase  {
     }
 
     /**
+     * @return Container
+     */
+    public static function getContainer(): Container
+    {
+        return self::$container;
+    }
+
+
+
+    /**
      * @return EasyDB
      */
     protected static function get_connection() : EasyDB {

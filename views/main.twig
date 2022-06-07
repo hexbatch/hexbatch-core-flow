@@ -94,7 +94,7 @@
     let general_search_url = "{{-  url_for('general_search') -}}";
 
     const MAX_LENGTH_FOR_CHAPTER = {{ constant('app\\models\\project\\IFlowProject::MAX_SIZE_READ_ME_IN_CHARACTERS') }};
-    const FLOW_TAG_BB_CODE = "{{ constant('app\\models\\entry\\entry_node\\IFlowEntryNode::FLOW_TAG_BB_CODE_NAME') }}";
+    const FLOW_TAG_BB_CODE = "{{ constant('app\\models\\entry_node\\IFlowEntryNode::FLOW_TAG_BB_CODE_NAME') }}";
     const SCEDITOR_STYLE_LINK = '{{ root_url }}/node_modules/sceditor/minified/themes/content/default.min.css';
     const SCEDITOR_EMOTICONS_ROOT = '{{ root_url }}/node_modules/sceditor/';
     const TAG_STYLE_LINK = `{{ root_url }}/public/resources/css/tag/tag.css`;
