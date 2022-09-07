@@ -1,0 +1,85 @@
+ plans
+
+https://github.com/helion3/inspire-tree
+https://medium.com/@deltazero/mysql-as-smart-json-storage-200e6758f37e
+
+https://github.com/thephpleague/openapi-psr7-validator
+
+https://github.com/zircote/swagger-php
+http://zircote.github.io/swagger-php/guide/cookbook.html#x-taggroups
+
+https://swagger.io/docs/specification/basic-structure/
+
+-- to make client stubs
+https://github.com/OpenAPITools/openapi-generator
+
+https://github.com/tuupola/slim-basic-auth
+https://github.com/thephpleague/oauth2-server
+
+https://tactician.thephpleague.com/
+https://tactician.thephpleague.com/plugins/container/
+
+https://maks-rafalko.github.io/tactician-domain-events/doc/domain_events.html
+to help gather events, and act on them each step of the api
+api call:
+  incoming middleware
+    * each api call gets its own in memory uuid and new row for its:
+        api name, uuid, headers, raw data, processed input (null), processed output (null), final output (null)
+    * sets a static variable in a class to have uuid, and sets a current db sesssion variable for its integer id pk ,
+            triggers in the db will update new table with this uuid, the db table being modified,
+                new table has the pk, its uuid, and a create|update|delete and a json column for the values then, and a timestamp
+
+
+  1) A: run api specific middleware gathering input data, and generating intermediate data models, these are read only when returned
+        * these can validate, and throw if failed or be quiet if succeeded
+        * can gather additional data needed
+        * add middleware to validate data in the request to open api
+        * middleware can add to the input collection, or do error, or do something else
+        * middleware can fire transient actions and filters of their own
+        * collection is stored in static class member
+
+  2) B: organize the input collection
+    * call api specific middleware to populate single api processed input from collection
+    * middleware can fire transient actions and filters of their own
+    * processed input is stored in static class member
+
+  3) C: act on the processed input.
+      * Start recording domain events fired by php.
+      * call api specific middleware for acting on the processed input
+      * data from these listeners is not collected, they can add their own domain events if needed for later
+      * middleware can fire transient actions and filters of their own
+
+   4) D: run api specific middleware to build output collection
+        * before doing that, add db domain events from table domain-events using api call uuid
+        * then get all domain events, add to request object, and run the middleware
+        * collection is stored in static class member
+        * middleware can fire transient actions and filters of their own
+
+  5) E: organize the output collection
+      * call api specific middleware to populate single api processed output from collection
+      * middleware can fire transient actions and filters of their own
+      * processed output is stored in static class member
+
+  7) F: convert the processed output to the api output
+      *  call output fractal for this api  to convert processed output to desired final output
+
+   outgoing middleware:
+      * updates api call table with the processed input and processed output
+      * each api call clears out older table stuff (than x seconds old) (done in middleware)
+
+https://fractal.thephpleague.com/
+
+
+https://www.slimframework.com/docs/v4/cookbook/database-doctrine.html
+
+maybe https://github.com/woohoolabs/harmony for middleware
+maybe https://github.com/filips123/eventy for action filters
+
+fibers https://php.watch/versions/8.1/fibers
+
+https://reactphp.org/
+
+https://www.php.net/manual/en/pdo.begintransaction.php first note, add method of easy db to do this or orerride it, savepoints
+see for collection https://github.com/middlewares/psr15-middlewares
+
+https://github.com/thephpleague/iso3166 country and territories

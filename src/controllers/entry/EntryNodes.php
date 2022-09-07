@@ -72,6 +72,13 @@ class EntryNodes extends EntryBase {
 
     }
 
+    public function basic_node_combinations() {
+//todo maybe this basic combinations?
+        /*
+         Basic strategy: easy way to find tags and their surrounding context
+         */
+    }
+
     /**
      * @param ServerRequestInterface $request
      * @param string|null $bb_code

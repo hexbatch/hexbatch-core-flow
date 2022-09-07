@@ -53,11 +53,13 @@ class GeneralSearch extends FlowBase {
      * @param int[] $project_ids
      * @param int[] $user_ids
      * @param int[] $entry_ids
+     * @param int[] $node_ids
      */
-    public static function sort_ids_into_arrays(array $matches,array &$project_ids, array &$user_ids, array &$entry_ids) {
+    public static function sort_ids_into_arrays(array $matches,array &$project_ids, array &$user_ids, array &$entry_ids, array &$node_ids) {
         $project_ids=[];
         $user_ids = [];
         $entry_ids = [];
+        $node_ids = [];
         foreach ($matches as $match) {
             switch ($match->type) {
                 case GeneralSearch::TYPE_USER: {
@@ -70,6 +72,10 @@ class GeneralSearch extends FlowBase {
                 }
                 case GeneralSearch::TYPE_PROJECT: {
                     $project_ids[] = $match->id;
+                    break;
+                }
+                case GeneralSearch::TYPE_NODE: {
+                    $node_ids[] = $match->id;
                     break;
                 }
                 case null: {

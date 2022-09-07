@@ -39,8 +39,9 @@ class Utilities extends BaseHelper {
         $dashes_and_underscores_to_points = str_replace('-','.',$version_string);
         $dashes_and_underscores_to_points = str_replace('_','.',$dashes_and_underscores_to_points);
         $only_numbers_and_points = preg_replace('/[^\d.]+/', '', $dashes_and_underscores_to_points);
-        if (($pos = strpos($only_numbers_and_points, '.')) !== false) {
-            $no_extra_points = substr($only_numbers_and_points, 0, $pos+1).str_replace('.', '', substr($only_numbers_and_points, $pos+1));
+        if (($pos = mb_strpos($only_numbers_and_points, '.')) !== false) {
+            $no_extra_points = mb_substr($only_numbers_and_points, 0, $pos+1).
+                str_replace('.', '', mb_substr($only_numbers_and_points, $pos+1));
         } else {
             $no_extra_points = $only_numbers_and_points;
         }

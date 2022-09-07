@@ -451,7 +451,7 @@ class ProjectHelper extends BaseHelper {
          */
 
         $search_php = preg_quote('<?php');
-        $replace_php = htmlentities('<?php');
+        $replace_php = htmlentities('<?php',ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');
         exec(
             "find $directory \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i 's/$search_php/$replace_php/g' 2>&1",
             $output,$result_code);
@@ -463,7 +463,7 @@ class ProjectHelper extends BaseHelper {
 
 
         $search_php = preg_quote('<?=');
-        $replace_php = htmlentities('<?=');
+        $replace_php = htmlentities('<?=',ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');
         exec(
             "find $directory \( -type d -name .git -prune \) -o -type f -print0 | xargs -0 sed -i 's/$search_php/$replace_php/g' 2>&1",
             $output,$result_code);

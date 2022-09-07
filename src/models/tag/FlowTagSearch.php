@@ -126,7 +126,10 @@ class FlowTagSearch  extends FlowBase{
             $applied_project_ids=[];
             $applied_user_ids = [];
             $applied_entry_ids = [];
-            GeneralSearch::sort_ids_into_arrays($gmatches,$applied_project_ids,$applied_user_ids,$applied_entry_ids);
+            $applied_node_ids = [];
+            GeneralSearch::sort_ids_into_arrays($gmatches,$applied_project_ids,$applied_user_ids,
+                $applied_entry_ids,$applied_node_ids );
+
             $where_part_guid_match = [];
             if (count($applied_project_ids)) {
                 $comma_list_applied_projects = implode(',',$applied_project_ids);
@@ -137,11 +140,17 @@ class FlowTagSearch  extends FlowBase{
                 $where_part_guid_match[] = "driver_applied.tagged_flow_user_id in ($comma_list_applied_users)";
             }
             if (count($applied_entry_ids)) {
-                $comma_list_applied_projects = implode(',',$applied_entry_ids);
-                $where_part_guid_match[] = "driver_applied.tagged_flow_entry_id in ($comma_list_applied_projects)";
+                $comma_list_applied_entries = implode(',',$applied_entry_ids);
+                $where_part_guid_match[] = "driver_applied.tagged_flow_entry_id in ($comma_list_applied_entries)";
             }
 
-            if (count($search->only_applied_to_guids) !== (count($applied_project_ids) + count($applied_user_ids) + count($applied_entry_ids))) {
+            if (count($applied_node_ids)) {
+                $comma_list_applied_nodes = implode(',',$applied_node_ids);
+                $where_part_guid_match[] = "driver_applied.tagged_flow_entry_node_id in ($comma_list_applied_nodes)";
+            }
+
+            if (count($search->only_applied_to_guids) !==
+                (count($applied_project_ids) + count($applied_user_ids) + count($applied_entry_ids) + count($applied_node_ids))) {
                 throw new InvalidArgumentException("One or more invalid guids in the only_applied_to_guids");
             }
 
@@ -161,7 +170,10 @@ class FlowTagSearch  extends FlowBase{
             $applied_project_ids=[];
             $applied_user_ids = [];
             $applied_entry_ids = [];
-            GeneralSearch::sort_ids_into_arrays($gmatches,$applied_project_ids,$applied_user_ids,$applied_entry_ids);
+            $applied_node_ids = [];
+            GeneralSearch::sort_ids_into_arrays($gmatches,$applied_project_ids,
+                $applied_user_ids,$applied_entry_ids,$applied_node_ids);
+
             $where_part_guid_match = [];
             if (count($applied_project_ids)) {
                 $comma_list_applied_projects = implode(',',$applied_project_ids);
@@ -172,11 +184,17 @@ class FlowTagSearch  extends FlowBase{
                 $where_part_guid_match[] = "driver_applied.tagged_flow_user_id NOT IN ($comma_list_applied_users)";
             }
             if (count($applied_entry_ids)) {
-                $comma_list_applied_projects = implode(',',$applied_entry_ids);
-                $where_part_guid_match[] = "driver_applied.tagged_flow_entry_id NOT IN ($comma_list_applied_projects)";
+                $comma_list_applied_entries = implode(',',$applied_entry_ids);
+                $where_part_guid_match[] = "driver_applied.tagged_flow_entry_id NOT IN ($comma_list_applied_entries)";
             }
 
-            if (count($search->not_applied_to_guids) !== (count($applied_project_ids) + count($applied_user_ids) + count($applied_entry_ids))) {
+            if (count($applied_node_ids)) {
+                $comma_list_applied_nodes = implode(',',$applied_node_ids);
+                $where_part_guid_match[] = "driver_applied.tagged_flow_entry_node_id NOT in ($comma_list_applied_nodes)";
+            }
+
+            if (count($search->not_applied_to_guids) !==
+                    (count($applied_project_ids) + count($applied_user_ids) + count($applied_entry_ids) + count($applied_node_ids))) {
                 throw new InvalidArgumentException("One or more invalid guids in the not_applied_to_guids");
             }
             $where_only_applied_to = '( driver_applied.tagged_flow_project_id IS NULL OR ' . implode(' OR ',$where_part_guid_match) . ')';

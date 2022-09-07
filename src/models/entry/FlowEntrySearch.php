@@ -166,7 +166,7 @@ class FlowEntrySearch extends FlowBase {
 
 
        /**
-        * @var IFlowEntry $unsorted_ret
+        * @var IFlowEntry[] $unsorted_ret
         */
        $unsorted_ret = [];
 
@@ -185,6 +185,7 @@ class FlowEntrySearch extends FlowBase {
            $project_guids = array_keys($projects);
            if (count($project_guids)) {
                $params = new FlowProjectSearchParams();
+               $params->setCanRead(true);
                $params->addProjectTitleGuidOrId($project_guids);
                $projects_found = FlowProjectSearch::find_projects($params);
                foreach ($projects_found as $found_project) {

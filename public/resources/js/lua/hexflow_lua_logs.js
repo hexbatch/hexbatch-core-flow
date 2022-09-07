@@ -128,9 +128,12 @@ function lau_logs_to_panels(logs) {
         }
 
         let what =  `
-            <div class="card ${card_class}">
-                <div class="card-header">${title}</div>
-                <div class="card-body"><pre>${body_processed}</pre></div>
+            <div class="col-12 col-md-6 col-xl-4 col-xxl-3">
+                <div class="card ">
+                    <div class="card-header" >${title}</div>
+                    <div class="card-body ${card_class}"><pre>${body_processed}</pre></div>
+                </div>
+                
             </div>
         `;
         return what;

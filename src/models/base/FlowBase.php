@@ -91,7 +91,7 @@ class FlowBase  {
 
         if (empty($words)) {return false;}
 
-        if (is_numeric(substr($words, 0, 1)) ) {
+        if (is_numeric(mb_substr($words, 0, 1)) ) {
             return false;
         }
 
